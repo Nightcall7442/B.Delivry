@@ -68,19 +68,17 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   // The green pill slides to the active tab: layouts are measured once, the position springs.
   const slots = useRef<Record<string, { x: number; width: number }>>({});
   const pill = useRef(new Animated.ValueXY({ x: -100, y: 0 })).current;
-  const pillWidth = useRef(new Animated.Value(0)).current;
   const moveTo = (name: string | undefined) => {
     const slot = name ? slots.current[name] : undefined;
     if (!slot) return;
-    Animated.parallel([
-      Animated.spring(pill, {
-        toValue: { x: slot.x + slot.width / 2 - 14, y: 0 },
-        useNativeDriver: true,
-        speed: 18,
-        bounciness: 6,
-      }),
-      Animated.timing(pillWidth, { toValue: 28, duration: 200, useNativeDriver: false }),
-    ]).start();
+    // Native driver only: RN 0.86 throws if a JS-driven animation touches a
+    // view that already has a native one (it was a warning on 0.76).
+    Animated.spring(pill, {
+      toValue: { x: slot.x + slot.width / 2 - 14, y: 0 },
+      useNativeDriver: true,
+      speed: 18,
+      bounciness: 6,
+    }).start();
   };
   useEffect(() => {
     moveTo(current);
@@ -116,13 +114,13 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
         <BlurView
           intensity={30}
           tint={color.blurTint}
-          experimentalBlurMethod="dimezisBlurView"
+          blurMethod="dimezisBlurView"
           style={s.barFill}
           pointerEvents="none"
         />
         <Animated.View
           pointerEvents="none"
-          style={[s.pill, { width: pillWidth, transform: [{ translateX: pill.x }] }]}
+          style={[s.pill, { transform: [{ translateX: pill.x }] }]}
         />
         {left.map(Tab)}
         <Pressable
@@ -176,6 +174,7 @@ const s = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
+    width: 28,
     height: 3,
     borderRadius: 2,
     backgroundColor: ui.brand,

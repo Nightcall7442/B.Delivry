@@ -126,7 +126,7 @@ export function Page({
           <BlurView
             intensity={36}
             tint={color.blurTint}
-            experimentalBlurMethod="dimezisBlurView"
+            blurMethod="dimezisBlurView"
             style={s.glassFillBar}
             pointerEvents="none"
           />
@@ -228,7 +228,7 @@ export function Round({
         <BlurView
           intensity={40}
           tint={color.blurTint}
-          experimentalBlurMethod="dimezisBlurView"
+          blurMethod="dimezisBlurView"
           style={s.glassFill}
         />
       ) : null}
