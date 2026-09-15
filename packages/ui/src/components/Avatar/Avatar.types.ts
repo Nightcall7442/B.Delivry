@@ -1,0 +1,6 @@
+/**
+ * Avatar props.
+ *
+ */
+
+export {};

@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: bazar
+    folder: Bazar Delivery
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

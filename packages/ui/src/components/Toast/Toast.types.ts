@@ -1,0 +1,6 @@
+/**
+ * Toast props.
+ *
+ */
+
+export {};

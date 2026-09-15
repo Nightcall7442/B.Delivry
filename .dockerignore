@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+.git
+.turbo
+dist
+.next
+.expo
+coverage
+.env
+.env.*
+!.env.example

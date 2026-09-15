@@ -1,0 +1,287 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Design tokens as variables so a white-label tenant can restyle at runtime. */
+  :root {
+    --brand-50: 238 243 254;
+    --brand-100: 220 230 253;
+    --brand-200: 185 204 250;
+    --brand-300: 143 174 244;
+    --brand-400: 95 136 236;
+    --brand-500: 59 107 227;
+    --brand-600: 44 86 196;
+    --brand-700: 36 69 160;
+    --brand-800: 28 54 125;
+    --brand-900: 21 42 96;
+    --brand-950: 12 26 62;
+    --saffron-100: 254 243 215;
+    --saffron-300: 251 216 126;
+    --saffron-400: 251 191 59;
+    --saffron-500: 245 165 36;
+    --saffron-600: 217 132 7;
+    --saffron-900: 74 46 5;
+  }
+
+  /* Neutrals. Light is the default; a subtree stamped data-theme="light" (the invoice) stays light in the dark theme. */
+  :root,
+  [data-theme='light'] {
+    --ink: 22 26 31;
+    --ink-muted: 111 119 131;
+    --ink-faint: 163 170 181;
+    --line: 231 234 238;
+    --line-strong: 203 209 217;
+    --surface: 255 255 255;
+    --surface-soft: 244 245 247;
+    --surface-mute: 239 241 244;
+    --surface-raise: 255 255 255;
+    --sand-50: 251 248 242;
+    --sand-100: 244 237 225;
+    --sand-200: 233 221 203;
+    --sand-300: 217 199 172;
+  }
+  /* Dark: a blue-cool near-black, tiles one step up, raised things one more; tints of the brand and saffron flip. */
+  :root[data-theme='dark'],
+  [data-theme='dark'] {
+    --ink: 236 238 242;
+    --ink-muted: 152 161 173;
+    --ink-faint: 105 114 127;
+    --line: 39 45 54;
+    --line-strong: 59 67 79;
+    --surface: 15 18 22;
+    --surface-soft: 24 28 34;
+    --surface-mute: 31 36 43;
+    --surface-raise: 42 48 58;
+    --sand-50: 31 28 24;
+    --sand-100: 42 37 30;
+    --sand-200: 58 51 40;
+    --sand-300: 90 78 59;
+    --brand-50: 20 32 61;
+    --brand-100: 26 42 80;
+    --brand-200: 32 56 110;
+    --brand-700: 95 136 236;
+    --brand-800: 143 174 244;
+    --brand-900: 220 230 253;
+    --saffron-100: 74 46 5;
+    --saffron-900: 254 243 215;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --ink: 236 238 242;
+      --ink-muted: 152 161 173;
+      --ink-faint: 105 114 127;
+      --line: 39 45 54;
+      --line-strong: 59 67 79;
+      --surface: 15 18 22;
+      --surface-soft: 24 28 34;
+      --surface-mute: 31 36 43;
+      --surface-raise: 42 48 58;
+      --sand-50: 31 28 24;
+      --sand-100: 42 37 30;
+      --sand-200: 58 51 40;
+      --sand-300: 90 78 59;
+      --brand-50: 20 32 61;
+      --brand-100: 26 42 80;
+      --brand-200: 32 56 110;
+      --brand-700: 95 136 236;
+      --brand-800: 143 174 244;
+      --brand-900: 220 230 253;
+      --saffron-100: 74 46 5;
+      --saffron-900: 254 243 215;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme='light'] {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    color-scheme: light dark;
+  }
+
+  body {
+    @apply bg-surface font-sans text-ink antialiased;
+  }
+
+  /* The site is Russian-first and the layout is built mobile-up. */
+  ::selection {
+    @apply bg-brand-100 text-brand-900;
+  }
+}
+
+@layer components {
+  .container-site {
+    @apply mx-auto w-full max-w-container px-4 md:px-6 lg:px-8;
+  }
+
+  /* Button: 48px tall, 10px radius, uppercase — the shape the whole site uses. */
+  .btn {
+    @apply inline-flex h-12 items-center justify-center gap-2 rounded-control px-6
+           text-sm font-medium uppercase tracking-[0.03em] transition-colors
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-500 text-white hover:bg-brand-400 active:bg-brand-600;
+  }
+
+  .btn-ghost {
+    @apply btn border border-line bg-white text-ink hover:border-brand-400 hover:text-brand-600;
+  }
+}
+
+/* Map screens: floating buttons, sheet furniture, markers. */
+@layer components {
+  /* One focus treatment for every interactive thing on the sheets. */
+  .go-fab,
+  .go-row,
+  .go-chip,
+  .btn-go,
+  .btn-go-secondary {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2;
+  }
+
+  .go-fab {
+    @apply flex h-11 w-11 items-center justify-center rounded-full bg-surface-mute text-ink transition-colors hover:bg-surface-soft;
+  }
+
+  /* The grey tile every marketplace card sits on: no border, no shadow. */
+  .tile {
+    @apply rounded-3xl bg-surface-soft;
+  }
+
+  /* «Базар сегодня»: the tape slides by half its width (content is doubled) for a seamless loop. */
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  .marquee {
+    animation: marquee 40s linear infinite;
+  }
+  .marquee:hover {
+    animation-play-state: paused;
+  }
+  /* A story's progress bar fills over its five seconds. */
+  @keyframes story-fill {
+    from {
+      width: 0%;
+    }
+    to {
+      width: 100%;
+    }
+  }
+  .story-fill {
+    animation: story-fill 5s linear forwards;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee {
+      animation: none;
+    }
+    .story-fill {
+      animation: none;
+      width: 100%;
+    }
+  }
+
+  /* A row in a sheet: icon, text, chevron — the address line, a store, a setting. */
+  .go-row {
+    @apply flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors hover:bg-surface-soft active:bg-surface-mute;
+  }
+
+  .go-field {
+    @apply flex h-14 w-full items-center rounded-2xl bg-surface-mute px-4 text-base outline-none placeholder:text-ink-faint focus:ring-2 focus:ring-brand-300;
+  }
+
+  .go-chip {
+    @apply inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-surface-mute px-3.5 text-sm font-medium transition-colors hover:bg-surface-soft;
+  }
+  .go-chip[aria-pressed='true'] {
+    @apply bg-brand-500 text-white hover:bg-brand-500;
+  }
+
+  .btn-go {
+    @apply btn h-14 w-full rounded-2xl bg-brand-500 font-display text-base font-bold normal-case tracking-normal text-white hover:bg-brand-400 active:bg-brand-600;
+  }
+  .btn-go-secondary {
+    @apply btn h-14 w-full rounded-2xl bg-surface-mute font-display text-base font-bold normal-case tracking-normal text-ink hover:bg-surface-soft;
+  }
+
+  /* MapLibre chrome, kept quiet: tiny attribution, no logo. */
+  .maplibregl-ctrl-attrib {
+    @apply rounded-md bg-surface/80 text-[10px] text-ink-muted;
+  }
+  /* Keep the control clear of the sheet's rounded top edge. */
+  .maplibregl-ctrl-bottom-right {
+    bottom: 30px;
+  }
+  .maplibregl-ctrl-bottom-left .maplibregl-ctrl-logo {
+    display: none;
+  }
+
+  /* Kraft paper with a faint dot grid: the map when no engine can load. */
+  .map-fallback {
+    background-color: #f4ede1;
+    background-image: radial-gradient(rgba(27, 31, 34, 0.14) 1px, transparent 1.5px);
+    background-size: 28px 28px;
+  }
+
+  /*
+   * Markers are majolica tiles: a rotated square with the glyph set straight.
+   * The tile's lower corner is the point on the map.
+   */
+  /* Engines that anchor at the element's top-left get this wrapper; MapLibre anchors itself. */
+  .map-pin-anchor {
+    transform: translate(-50%, -100%);
+  }
+  .map-pin {
+    @apply pointer-events-none flex flex-col-reverse items-center gap-2;
+  }
+  .map-pin__glyph {
+    @apply flex h-9 w-9 rotate-45 items-center justify-center rounded-[10px] bg-brand-500 text-white shadow-pop;
+    margin: 6px 0 8px;
+  }
+  .map-pin__glyph > svg {
+    @apply h-5 w-5 -rotate-45;
+  }
+  .map-pin--home .map-pin__glyph {
+    @apply bg-saffron-500 text-ink;
+  }
+  .map-pin--courier .map-pin__glyph {
+    @apply h-11 w-11 rotate-0 rounded-full bg-white text-brand-600 ring-4 ring-brand-500/30;
+    margin: 0;
+  }
+  .map-pin--courier .map-pin__glyph > svg {
+    @apply h-6 w-6 rotate-0;
+  }
+  .map-pin--centre .map-pin__glyph {
+    @apply h-11 w-11 bg-saffron-500 text-ink;
+  }
+  .map-pin__label {
+    @apply max-w-[150px] truncate rounded-lg bg-white/95 px-2 py-0.5 font-display text-[11px] font-bold text-ink shadow-card;
+  }
+
+  /* Order progress: five tiles on a thread. */
+  .tile-step {
+    @apply relative flex flex-1 flex-col items-center gap-2;
+  }
+  .tile-step__tile {
+    @apply h-4 w-4 rotate-45 rounded-[4px] border-2 border-sand-300 bg-white transition-colors;
+  }
+  .tile-step[data-state='done'] .tile-step__tile {
+    @apply border-brand-500 bg-brand-500;
+  }
+  .tile-step[data-state='active'] .tile-step__tile {
+    @apply border-saffron-500 bg-saffron-400 motion-safe:animate-pulse;
+  }
+  .tile-step + .tile-step::before {
+    @apply absolute right-1/2 top-[7px] -z-10 h-0.5 w-full bg-sand-300 content-[''];
+  }
+  .tile-step[data-state='done'] + .tile-step::before,
+  .tile-step[data-state='active'] + .tile-step::before {
+    @apply bg-brand-500;
+  }
+}

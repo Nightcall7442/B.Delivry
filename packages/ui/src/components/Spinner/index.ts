@@ -1,0 +1,6 @@
+/**
+ * Spinner barrel.
+ *
+ */
+
+export {};

@@ -1,0 +1,20 @@
+{
+  "name": "@bazar/config",
+  "version": "0.0.1",
+  "private": true,
+  "files": [
+    "tsconfig",
+    "eslint",
+    "prettier",
+    "tailwind"
+  ],
+  "exports": {
+    "./tsconfig/*": "./tsconfig/*",
+    "./eslint": "./eslint/index.mjs",
+    "./prettier": "./prettier/index.json",
+    "./tailwind/preset": "./tailwind/preset.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

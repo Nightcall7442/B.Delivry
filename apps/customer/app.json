@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Bazar Delivery",
+    "slug": "bazar-customer",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "scheme": "bazar-customer",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "uz.bazardelivery.customer"
+    },
+    "android": {
+      "package": "uz.bazardelivery.customer"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-location",
+      "expo-notifications",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Фото для отзыва о заказе",
+          "cameraPermission": "Снять фото для отзыва"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
+  }
+}

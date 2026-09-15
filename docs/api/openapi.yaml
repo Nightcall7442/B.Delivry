@@ -1,0 +1,6 @@
+openapi: 3.1.0
+info:
+  title: Bazar Delivery API
+  version: 0.0.1
+paths: {}
+# TODO: generate from Zod schemas

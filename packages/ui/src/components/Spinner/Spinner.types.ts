@@ -1,0 +1,6 @@
+/**
+ * Spinner props.
+ *
+ */
+
+export {};

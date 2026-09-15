@@ -1,0 +1,6 @@
+/**
+ * Table props.
+ *
+ */
+
+export {};

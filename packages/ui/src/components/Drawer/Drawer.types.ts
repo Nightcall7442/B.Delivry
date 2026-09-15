@@ -1,0 +1,6 @@
+/**
+ * Drawer props.
+ *
+ */
+
+export {};

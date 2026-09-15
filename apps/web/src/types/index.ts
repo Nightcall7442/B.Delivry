@@ -1,0 +1,6 @@
+/**
+ * App-local types.
+ *
+ */
+
+export {};

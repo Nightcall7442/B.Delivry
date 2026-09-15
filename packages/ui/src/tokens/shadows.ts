@@ -1,0 +1,6 @@
+/**
+ * Design tokens: shadows.
+ *
+ */
+
+export {};

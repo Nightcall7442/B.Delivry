@@ -1,0 +1,6 @@
+/**
+ * ErrorState props.
+ *
+ */
+
+export {};

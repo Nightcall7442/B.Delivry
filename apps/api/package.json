@@ -1,0 +1,62 @@
+{
+  "name": "@bazar/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "tsx watch --env-file=../../.env src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "node --env-file=../../.env node_modules/prisma/build/index.js generate",
+    "db:migrate": "node --env-file=../../.env node_modules/prisma/build/index.js migrate dev",
+    "db:migrate:deploy": "node --env-file=../../.env node_modules/prisma/build/index.js migrate deploy",
+    "db:studio": "node --env-file=../../.env node_modules/prisma/build/index.js studio",
+    "db:seed": "tsx --env-file=../../.env prisma/seed.ts",
+    "clean": "rm -rf dist .turbo coverage",
+    "db:local": "tsx --env-file=../../.env scripts/local-db.ts",
+    "db:reset": "node --env-file=../../.env node_modules/prisma/build/index.js migrate reset --force"
+  },
+  "dependencies": {
+    "@bazar/auth": "workspace:*",
+    "@bazar/constants": "workspace:*",
+    "@bazar/maps": "workspace:*",
+    "@bazar/notifications": "workspace:*",
+    "@bazar/payments": "workspace:*",
+    "@bazar/storefront": "workspace:*",
+    "@bazar/types": "workspace:*",
+    "@bazar/utils": "workspace:*",
+    "@bazar/validation": "workspace:*",
+    "@fastify/cors": "^10.0.0",
+    "@fastify/helmet": "^12.0.0",
+    "@fastify/websocket": "^11.0.0",
+    "@prisma/client": "^6.0.0",
+    "bullmq": "^5.34.0",
+    "fastify": "^5.2.0",
+    "ioredis": "^5.4.0",
+    "jose": "^5.9.0",
+    "pino": "^9.5.0",
+    "prom-client": "^15.1.0",
+    "tesseract.js": "^7.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@bazar/config": "workspace:*",
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.0",
+    "embedded-postgres": "18.4.0-beta.17",
+    "pino-pretty": "^13.0.0",
+    "prisma": "^6.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma",
+    "seed": "tsx prisma/seed.ts"
+  }
+}

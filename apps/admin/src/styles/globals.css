@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Design tokens as variables so a white-label tenant can restyle at runtime. */
+  :root {
+    --brand-50: 238 243 254;
+    --brand-100: 220 230 253;
+    --brand-200: 185 204 250;
+    --brand-300: 143 174 244;
+    --brand-400: 95 136 236;
+    --brand-500: 59 107 227;
+    --brand-600: 44 86 196;
+    --brand-700: 36 69 160;
+    --brand-800: 28 54 125;
+    --brand-900: 21 42 96;
+    --brand-950: 12 26 62;
+    --saffron-100: 254 243 215;
+    --saffron-300: 251 216 126;
+    --saffron-400: 251 191 59;
+    --saffron-500: 245 165 36;
+    --saffron-600: 217 132 7;
+    --saffron-900: 74 46 5;
+    /* Neutrals as variables (the preset reads them); the admin stays light. */
+    --ink: 22 26 31;
+    --ink-muted: 111 119 131;
+    --ink-faint: 163 170 181;
+    --line: 231 234 238;
+    --line-strong: 203 209 217;
+    --surface: 255 255 255;
+    --surface-soft: 244 245 247;
+    --surface-mute: 239 241 244;
+    --surface-raise: 255 255 255;
+    --sand-50: 251 248 242;
+    --sand-100: 244 237 225;
+    --sand-200: 233 221 203;
+    --sand-300: 217 199 172;
+  }
+
+  body {
+    @apply bg-sand-50 font-sans text-ink antialiased;
+  }
+  ::selection {
+    @apply bg-brand-100 text-brand-900;
+  }
+}
+
+@layer components {
+  /* The dispatcher works with a mouse and a phone in the other hand: big targets, quiet chrome. */
+  .btn {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-control px-4 text-sm font-medium transition-colors
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand-500 text-white hover:bg-brand-400 active:bg-brand-600;
+  }
+  .btn-secondary {
+    @apply btn border border-line bg-white text-ink hover:border-brand-400 hover:text-brand-600;
+  }
+  .btn-danger {
+    @apply btn border border-danger/30 bg-white text-danger hover:bg-danger/5;
+  }
+  .field {
+    @apply h-10 w-full rounded-control border border-line bg-white px-3 text-sm text-ink
+           placeholder:text-ink-faint focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100;
+  }
+  .card {
+    @apply rounded-panel border border-line bg-white;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+  }
+  .nav-link {
+    @apply flex h-10 items-center rounded-control px-3 text-sm text-ink-muted hover:bg-sand-100 hover:text-ink;
+  }
+  .nav-link[aria-current='page'] {
+    @apply bg-brand-50 font-medium text-brand-700;
+  }
+}

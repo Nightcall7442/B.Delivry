@@ -1,0 +1,35 @@
+{
+  "name": "bazar-delivery",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Bazar Delivery — goods delivery platform for Uzbekistan (modular monolith monorepo)",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "playwright test --config tests/e2e/playwright.config.ts",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,md,yml,yaml}\"",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:generate": "pnpm --filter @bazar/api db:generate",
+    "db:migrate": "pnpm --filter @bazar/api db:migrate",
+    "db:studio": "pnpm --filter @bazar/api db:studio",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "check:structure": "bash scripts/check-structure.sh"
+  },
+  "devDependencies": {
+    "@bazar/config": "workspace:*",
+    "prettier": "^3.3.0",
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.0"
+  }
+}

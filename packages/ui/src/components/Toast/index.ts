@@ -1,0 +1,6 @@
+/**
+ * Toast barrel.
+ *
+ */
+
+export {};

@@ -1,0 +1,6 @@
+/**
+ * App config barrel.
+ *
+ */
+
+export {};

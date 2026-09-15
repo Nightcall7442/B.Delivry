@@ -1,0 +1,6 @@
+/**
+ * Shared hooks barrel.
+ *
+ */
+
+export {};

@@ -1,0 +1,6 @@
+/**
+ * LoadingState props.
+ *
+ */
+
+export {};

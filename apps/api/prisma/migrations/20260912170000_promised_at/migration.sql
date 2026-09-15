@@ -1,0 +1,1 @@
+ALTER TABLE "orders" ADD COLUMN "promisedAt" TIMESTAMP(3);

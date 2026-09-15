@@ -1,0 +1,6 @@
+/**
+ * ErrorState barrel.
+ *
+ */
+
+export {};

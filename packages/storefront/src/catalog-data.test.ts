@@ -1,0 +1,93 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  getStore,
+  isProductSort,
+  listCategories,
+  listProducts,
+  listStores,
+} from './catalog-data.js';
+import { plural } from './text.js';
+
+describe('listProducts', () => {
+  it('sorts by price in both directions', async () => {
+    const asc = await listProducts({ categoryId: 'meat', sort: 'price-asc' });
+    const desc = await listProducts({ categoryId: 'meat', sort: 'price-desc' });
+
+    expect(asc.map((p) => p.price.amount)).toEqual(
+      [...asc.map((p) => p.price.amount)].sort((a, b) => a - b),
+    );
+    expect(desc[0]?.id).toBe(asc[asc.length - 1]?.id);
+  });
+
+  it('keeps out-of-stock goods out of the top of the popular list', async () => {
+    const popular = await listProducts({ categoryId: 'household' });
+    const unavailable = popular.findIndex((p) => !p.available);
+    expect(unavailable).toBe(popular.length - 1);
+  });
+
+  it('filters by store and by category independently', async () => {
+    const byStore = await listProducts({ storeId: 'non-uyi' });
+    expect(byStore.every((p) => p.storeId === 'non-uyi')).toBe(true);
+
+    const byCategory = await listProducts({ categoryId: 'fruits' });
+    expect(byCategory.every((p) => p.categoryId === 'fruits')).toBe(true);
+    expect(byCategory.length).toBeGreaterThan(0);
+  });
+
+  it('searches across every translation, not just the current locale', async () => {
+    const ru = await listProducts({ search: 'персик' });
+    const uz = await listProducts({ search: 'shaftoli' });
+    expect(ru.map((p) => p.id)).toEqual(uz.map((p) => p.id));
+    expect(ru[0]?.id).toBe('p-peach');
+  });
+
+  it('prices are whole tiyin — no float dust from the soum conversion', async () => {
+    const all = await listProducts();
+    expect(all.every((p) => Number.isInteger(p.price.amount))).toBe(true);
+  });
+});
+
+describe('listCategories', () => {
+  it('counts only the products that exist', async () => {
+    const categories = await listCategories();
+    const bakery = categories.find((c) => c.id === 'bakery');
+    const bakeryProducts = await listProducts({ categoryId: 'bakery' });
+    expect(bakery?.productCount).toBe(bakeryProducts.length);
+  });
+});
+
+describe('listStores', () => {
+  it('filters by type and finds one by id', async () => {
+    const supermarkets = await listStores({ type: 'SUPERMARKET' });
+    expect(supermarkets.map((s) => s.id)).toEqual(['makro-yunusabad']);
+    expect(await getStore('makro-yunusabad')).not.toBeNull();
+    expect(await getStore('nope')).toBeNull();
+  });
+});
+
+describe('isProductSort', () => {
+  it('rejects anything that is not a known sort', () => {
+    expect(isProductSort('price-asc')).toBe(true);
+    expect(isProductSort('drop table')).toBe(false);
+    expect(isProductSort(undefined)).toBe(false);
+  });
+});
+
+describe('plural', () => {
+  it('picks the Russian form for the tricky counts', () => {
+    const форма = (n: number) => plural(n, 'товар', 'товара', 'товаров');
+    expect([1, 2, 5, 11, 14, 21, 22, 25, 101, 112].map(форма)).toEqual([
+      'товар',
+      'товара',
+      'товаров',
+      'товаров',
+      'товаров',
+      'товар',
+      'товара',
+      'товаров',
+      'товар',
+      'товаров',
+    ]);
+  });
+});

@@ -1,0 +1,71 @@
+# Local development stack. Production compose lives in infrastructure/docker.
+# Secrets come from .env (never committed). See .env.example.
+name: bazar-delivery
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bazar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bazar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-bazar_delivery}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bazar} -d ${POSTGRES_DB:-bazar_delivery}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: bazar-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: development
+    container_name: bazar-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bazar}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-bazar_delivery}?schema=public
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "${API_PORT:-4000}:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./packages:/app/packages
+      - /app/node_modules
+    # TODO: enable once apps/api has a runnable entrypoint
+    profiles: ["api"]
+
+  # Observability stack (optional): docker compose --profile observability up
+  # See infrastructure/monitoring/docker-compose.observability.yml
+
+volumes:
+  postgres_data:
+  redis_data:
