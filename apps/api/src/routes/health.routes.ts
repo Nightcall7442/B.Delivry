@@ -4,6 +4,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { Container } from '../app/container.js';
 import { checkLiveness, checkReadiness } from '../infrastructure/health/index.js';
+import { ConsoleSmsProvider } from '../integrations/sms/providers/console.provider.js';
 import { metricsContentType, renderMetrics } from '../infrastructure/telemetry/metrics.js';
 
 const VERSION = process.env.npm_package_version ?? '0.0.1';
@@ -37,5 +38,30 @@ export function healthRoutes(container: Container) {
       void reply.header('content-type', metricsContentType);
       return reply.send(await renderMetrics());
     });
+
+    // Dev only (the env schema refuses the console provider in production):
+    // the "SMS" the console provider swallowed, so a tester can read their own
+    // OTP from a phone instead of the server log. Refreshes itself.
+    if (container.config.notifications.sms.provider === 'console') {
+      app.get('/dev/sms', async (_request, reply) => {
+        const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
+        const rows = ConsoleSmsProvider.recent
+          .map(
+            (m) =>
+              `<li><b>${esc(m.text.match(/\d{6}/)?.[0] ?? '')}</b> → ${esc(m.to)}` +
+              `<small>${m.at.toLocaleTimeString('ru-RU', { timeZone: 'Asia/Tashkent' })} · ${esc(m.text)}</small></li>`,
+          )
+          .join('');
+        void reply.header('content-type', 'text/html; charset=utf-8');
+        return reply.send(
+          `<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="5">` +
+            `<meta name="viewport" content="width=device-width,initial-scale=1">` +
+            `<title>SMS (console)</title><style>body{font:18px system-ui;padding:16px;max-width:520px;margin:auto}` +
+            `li{list-style:none;padding:12px 0;border-bottom:1px solid #ddd}b{font-size:32px;letter-spacing:4px;display:block}` +
+            `small{display:block;color:#666;font-size:13px}</style>` +
+            `<h3>Коды подтверждения (console SMS)</h3><ul>${rows || '<li>пока ничего — запросите код в приложении</li>'}</ul>`,
+        );
+      });
+    }
   };
 }
