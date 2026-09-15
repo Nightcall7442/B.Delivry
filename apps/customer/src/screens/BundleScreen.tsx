@@ -150,7 +150,7 @@ const s = StyleSheet.create({
     backgroundColor: color.brand950,
     overflow: 'hidden',
   },
-  shade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(4,43,41,0.45)' },
+  shade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(4,43,41,0.45)' },
   heroText: { flex: 1, justifyContent: 'flex-end', padding: 16, gap: 4 },
   line: {
     flexDirection: 'row',

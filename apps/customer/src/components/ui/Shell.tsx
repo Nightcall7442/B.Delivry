@@ -227,7 +227,7 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
   },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(27,31,34,0.4)' },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(27,31,34,0.4)' },
   menu: {
     position: 'absolute',
     left: 0,

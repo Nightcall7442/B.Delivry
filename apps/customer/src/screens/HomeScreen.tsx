@@ -886,7 +886,7 @@ const s = StyleSheet.create({
     padding: 6,
   },
   catPhoto: { borderRadius: 16, overflow: 'hidden', backgroundColor: color.field },
-  catFallback: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+  catFallback: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   catBody: { paddingHorizontal: 6, paddingTop: 8, paddingBottom: 2, gap: 1 },
   catLabel: { color: color.ink, fontSize: 12, lineHeight: 15, fontWeight: '700' },
   catCaption: { color: color.inkMuted, fontSize: 11, lineHeight: 14 },

@@ -2,7 +2,10 @@
  * The bottom bar of the redesign: four tabs and the cart as a green disc in
  * the middle with the item count. Floats over the page ground with a shadow.
  */
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+// SDK 57: expo-router's <Tabs> now ships its own bottom-tabs types instead of
+// re-exporting @react-navigation/bottom-tabs, so the prop type has to come
+// from there or the two copies don't structurally match.
+import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs/types';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, type ComponentType } from 'react';
@@ -167,7 +170,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 8,
     height: 64,
   },
-  barFill: { ...StyleSheet.absoluteFillObject, overflow: 'hidden' },
+  barFill: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, height: 64 },
   pill: {
     position: 'absolute',

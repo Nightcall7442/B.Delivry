@@ -208,7 +208,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  photo: { ...StyleSheet.absoluteFillObject },
+  photo: { ...StyleSheet.absoluteFill },
   badge: {
     position: 'absolute',
     left: 8,

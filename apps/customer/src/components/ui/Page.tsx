@@ -396,7 +396,7 @@ const s = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: color.line,
   },
-  glassFillBar: { ...StyleSheet.absoluteFillObject, overflow: 'hidden' },
+  glassFillBar: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
   glyph: { alignItems: 'center', justifyContent: 'center' },
   round: {
     width: 40,
@@ -407,7 +407,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   glass: { backgroundColor: color.glassSoft },
-  glassFill: { ...StyleSheet.absoluteFillObject, borderRadius: 20, overflow: 'hidden' },
+  glassFill: { ...StyleSheet.absoluteFill, borderRadius: 20, overflow: 'hidden' },
   badge: {
     position: 'absolute',
     top: -2,

@@ -295,7 +295,7 @@ const s = StyleSheet.create({
   },
   bazaar: { color: color.inkMuted, fontSize: 10, lineHeight: 12, maxWidth: 76, marginTop: -2 },
   viewer: { flex: 1, backgroundColor: '#0B1020', overflow: 'hidden' },
-  zone: { ...StyleSheet.absoluteFillObject, ...(noOutline as object) },
+  zone: { ...StyleSheet.absoluteFill, ...(noOutline as object) },
   top: { position: 'absolute', left: 0, right: 0, top: 0, paddingHorizontal: 12, gap: 10 },
   bars: { flexDirection: 'row', gap: 4 },
   bar: { flex: 1, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.35)' },
