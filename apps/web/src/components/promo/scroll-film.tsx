@@ -148,7 +148,7 @@ export function ScrollFilm({
     void Promise.all(Array.from({ length: PARALLEL }, worker));
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
       cv.width = Math.round(window.innerWidth * dpr);
       cv.height = Math.round(window.innerHeight * dpr);
       shown = -1;

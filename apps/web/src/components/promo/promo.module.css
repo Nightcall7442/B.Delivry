@@ -789,10 +789,10 @@
   }
   .phoneSticky {
     grid-template-columns: 1fr;
-    align-content: center;
+    align-content: start;
     justify-items: center;
-    gap: 20px;
-    padding-top: 72px;
+    gap: 18px;
+    padding-top: calc(96px + env(safe-area-inset-top));
   }
   .phoneCopy {
     text-align: center;
@@ -811,7 +811,8 @@
     justify-items: center;
   }
   .phone {
-    height: min(520px, 58vh);
+    height: min(520px, 54vh);
+    height: min(520px, 54dvh);
   }
 }
 @media (max-width: 640px) {
