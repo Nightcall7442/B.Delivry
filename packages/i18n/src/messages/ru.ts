@@ -586,6 +586,7 @@ export const ru = {
   'scene.sayHint': '«кило помидор, зелень и три лепёшки»',
   'scene.sayEvening': 'Что на ужин?',
   'scene.stalls': 'прилавки',
+  'scene.onCounterToday': 'На прилавках сегодня',
   'scene.onCounter': 'На прилавке сейчас',
   'scene.counterPhotoAt': 'фото {time}',
   'scene.moreOnCounter': 'Ещё {count}',

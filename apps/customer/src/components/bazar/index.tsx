@@ -249,6 +249,7 @@ export function KraftTag({ children, tilt = -2 }: { children: ReactNode; tilt?: 
 export function Sign({
   title,
   price,
+  say,
   note,
   count = 0,
   countLabel,
@@ -260,6 +261,8 @@ export function Sign({
 }: {
   title: string;
   price?: string | undefined;
+  /** The vendor's own line, in their handwriting: «выбираю по хвостику». */
+  say?: string | undefined;
   note?: string | undefined;
   count?: number;
   countLabel?: string;
@@ -288,6 +291,11 @@ export function Sign({
         {title}
       </Text>
       {price ? <Text style={[s.signPrice, accent && { color: scene.ink }]}>{price}</Text> : null}
+      {say ? (
+        <Text style={s.signSay} numberOfLines={2}>
+          «{say}»
+        </Text>
+      ) : null}
       {note ? (
         <Text style={[s.signNote, accent && { color: '#5A3E12' }]} numberOfLines={1}>
           {note}
@@ -305,6 +313,52 @@ export function Sign({
         </Pressable>
       ) : null}
     </Pressable>
+  );
+}
+
+/**
+ * A product on the counter: its photograph with the cardboard sign pinned
+ * over the bottom edge — the sign carries the name, the price and the "+".
+ */
+export function ProductCard({
+  photo,
+  tilt = 0,
+  side = 'left',
+  onPress,
+  style,
+  ...sign
+}: {
+  photo: string | null;
+  tilt?: number;
+  /** Which corner of the photograph the sign hangs from. */
+  side?: 'left' | 'right';
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
+  title: string;
+  price?: string | undefined;
+  say?: string | undefined;
+  note?: string | undefined;
+  count?: number;
+  countLabel?: string;
+  onAdd?: () => void;
+}) {
+  return (
+    <View style={[s.card, style]}>
+      <Pressable onPress={onPress} style={({ pressed }) => [s.cardPhoto, pressed && { opacity: 0.9 }]}>
+        {photo ? (
+          <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" transition={FADE} cachePolicy="memory-disk" />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: '#5A3E22' }]} />
+        )}
+        <LinearGradient colors={['transparent', 'rgba(20,12,4,0.55)']} locations={[0.5, 1]} style={StyleSheet.absoluteFill} />
+      </Pressable>
+      <Sign
+        {...sign}
+        tilt={tilt}
+        {...(onPress ? { onPress } : {})}
+        style={[s.cardSign, side === 'right' && { marginLeft: 56, marginRight: 14 }]}
+      />
+    </View>
   );
 }
 
@@ -480,8 +534,9 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#8E1F26',
   },
-  signTitle: { fontFamily: sceneFont.hand, fontSize: 21, lineHeight: 22, color: '#1F1A14', textTransform: 'uppercase' },
+  signTitle: { fontFamily: sceneFont.hand, fontSize: 21, lineHeight: 22, color: '#1F1A14', textTransform: 'uppercase', paddingRight: 16 },
   signPrice: { fontFamily: sceneFont.hand, fontSize: 17, lineHeight: 18, color: scene.pomegranate },
+  signSay: { fontFamily: sceneFont.hand, fontSize: 17, lineHeight: 19, color: '#3A2A1A', marginTop: 2 },
   signNote: { fontFamily: sceneFont.ui, fontSize: 12, lineHeight: 14, color: scene.inkSoft },
   plus: {
     position: 'absolute',
@@ -500,8 +555,22 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
   },
-  plusChosen: { backgroundColor: scene.saffron, paddingHorizontal: 8 },
+  // Chosen: the badge hangs off the bottom corner so it never sits on the name.
+  plusChosen: { backgroundColor: scene.saffron, paddingHorizontal: 8, top: 'auto', bottom: -10 },
   plusText: { fontFamily: sceneFont.uiHeavy, fontSize: 17, lineHeight: 19, color: scene.cream },
+  card: { paddingBottom: 6 },
+  cardPhoto: {
+    aspectRatio: 1.3,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#3A2A1A',
+    shadowColor: '#000',
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
+  },
+  cardSign: { marginTop: -30, marginLeft: 14, marginRight: 56 },
   rowSign: {
     backgroundColor: scene.paper,
     borderWidth: 1,

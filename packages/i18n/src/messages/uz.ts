@@ -556,6 +556,7 @@ export const uz: Catalogue = {
   'scene.sayHint': '«bir kilo pomidor, koʻkat va uchta non»',
   'scene.sayEvening': 'Kechki ovqatga nima?',
   'scene.stalls': 'peshtaxtalar',
+  'scene.onCounterToday': 'Bugun peshtaxtalarda',
   'scene.onCounter': 'Hozir peshtaxtada',
   'scene.counterPhotoAt': 'surat {time}',
   'scene.moreOnCounter': 'Yana {count}',

@@ -334,6 +334,7 @@ async function seedStorefront(tenantId: string): Promise<{ stores: number; produ
     const data = {
       categoryId,
       name: product.name,
+      description: product.description ?? Prisma.JsonNull,
       unit: product.unit,
       price: product.price.amount,
       oldPrice: product.oldPrice?.amount ?? null,
