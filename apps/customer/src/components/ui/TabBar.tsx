@@ -46,7 +46,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const count = useCartCount();
   const current = state.routes[state.index]?.name;
   // The front door is a scene: the row is its navigation, the cart its disc.
-  if (current === 'index') return null;
+  if (current === 'index' || current === 'cart') return null;
   // Something landed in the cart: the disc pops once.
   const pop = useRef(new Animated.Value(1)).current;
   const previous = useRef(count);

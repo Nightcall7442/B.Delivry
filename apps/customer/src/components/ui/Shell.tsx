@@ -33,12 +33,14 @@ import {
 export interface ShellProps extends Omit<BottomSheetProps, 'children'> {
   /** Omitted = no map, the screen is a plain Page. */
   map?: Omit<MapViewProps, 'inset'>;
+  /** A translucent wash over the map (the kraft order slip warms the grey tiles). */
+  tint?: string;
   /** Where the top-left arrow goes; omitted = burger menu. */
   back?: Href | 'history';
   children: ReactNode;
 }
 
-export function Shell({ map, back, peek = 0.46, children, ...sheet }: ShellProps) {
+export function Shell({ map, back, peek = 0.46, tint, children, ...sheet }: ShellProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [menu, setMenu] = useState(false);
@@ -70,6 +72,7 @@ export function Shell({ map, back, peek = 0.46, children, ...sheet }: ShellProps
   return (
     <View style={s.root}>
       <MapView {...map} inset={peek} />
+      {tint ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tint }]} /> : null}
 
       <View style={[s.top, { paddingTop: insets.top + 12 }]}>
         {back ? (

@@ -62,6 +62,7 @@ import {
   useAuth,
   useLocale,
   useT,
+  isDark,
 } from '@bazar/mobile';
 import { AfterDelivery } from '@/components/order/AfterDelivery';
 import { Shell } from '@/components/ui/Shell';
@@ -73,6 +74,13 @@ import { useLiveOrder } from '@/features/orders/store';
 const VEHICLES = ['FOOT', 'BICYCLE', 'SCOOTER', 'MOTORBIKE', 'CAR', 'VAN'];
 
 const WEB_URL = process.env['EXPO_PUBLIC_WEB_URL'] ?? 'http://localhost:3000';
+
+/** The order slip lives on kraft, the map under it gets a warm wash; dark kraft at night. */
+const KRAFT = isDark ? '#2A2014' : '#E4D3AE';
+const KRAFT_TINT = isDark ? 'rgba(42,32,20,0.55)' : 'rgba(228,211,174,0.42)';
+const PAPER = isDark ? '#3A2E1E' : '#FBF5E6';
+const POMEGRANATE = '#9E2A2B';
+const SAFFRON = '#E39B2F';
 
 export function OrderScreen({ orderId }: { orderId: string }) {
   const router = useRouter();
@@ -86,6 +94,8 @@ export function OrderScreen({ orderId }: { orderId: string }) {
       <Shell
         back="/orders"
         expanded
+        ground={KRAFT}
+        tint={KRAFT_TINT}
         map={{ center: DEFAULT_POINT, zoom: 12, interactive: false }}
         header={<Text role="display">{t('order.title')}</Text>}
       >
@@ -241,6 +251,8 @@ function OrderSheet({
     <Shell
       back="/"
       peek={0.42}
+      ground={KRAFT}
+      tint={KRAFT_TINT}
       map={{ center, zoom, markers, interactive: true }}
       header={
         <>
@@ -248,11 +260,11 @@ function OrderSheet({
             <View style={{ flex: 1, minWidth: 0 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
                 {!terminal ? <Pulse /> : null}
-                <Text role="display" style={{ flex: 1, fontSize: 20, lineHeight: 26 }}>
+                <Text role="display" style={{ flex: 1, fontSize: 26, lineHeight: 28, fontFamily: 'Alegreya_700Bold' }}>
                   {text.title}
                 </Text>
               </View>
-              <Text role="muted" style={{ marginTop: 2 }}>
+              <Text role="muted" style={{ marginTop: 4, fontFamily: 'Caveat_700Bold', fontSize: 20, lineHeight: 22, color: isDark ? '#D9B36A' : '#7A5A2B' }}>
                 {text.hint}
               </Text>
             </View>
@@ -288,15 +300,15 @@ function OrderSheet({
                   <View key={step.label} style={s.step}>
                     {index > 0 ? (
                       <View
-                        style={[s.thread, state !== 'todo' && { backgroundColor: color.brand500 }]}
+                        style={[s.thread, state !== 'todo' && { backgroundColor: POMEGRANATE }]}
                       />
                     ) : null}
                     <View
                       style={[
                         s.tile,
                         state === 'done' && {
-                          backgroundColor: color.brand500,
-                          borderColor: color.brand500,
+                          backgroundColor: POMEGRANATE,
+                          borderColor: POMEGRANATE,
                         },
                         state === 'active' && {
                           backgroundColor: color.saffron400,
@@ -325,7 +337,7 @@ function OrderSheet({
       footer={terminal ? <Button label={t('order.repeat')} onPress={repeat} /> : undefined}
     >
       {hasCourier && courierInfo ? (
-        <Panel style={s.courier}>
+        <Panel style={[s.courier, s.paper]}>
           <View style={s.avatar}>
             <RNText style={s.avatarText}>{courierInfo.firstName[0]}</RNText>
           </View>
@@ -360,7 +372,7 @@ function OrderSheet({
       ) : null}
 
       {story.length > 0 ? (
-        <Panel style={{ marginTop: 12, padding: 14 }}>
+        <Panel style={[s.paper, { marginTop: 12, padding: 14 }]}>
           <Text role="title" style={{ marginBottom: 10 }}>
             {t('order.story')}
           </Text>
@@ -452,20 +464,20 @@ function OrderSheet({
           </View>
         </View>
       ) : payDue === 'waiting' ? (
-        <Panel style={{ marginTop: 12, padding: 12 }}>
+        <Panel style={[s.paper, { marginTop: 12, padding: 12 }]}>
           <Text role="muted">{t('order.payLater')}</Text>
         </Panel>
       ) : null}
 
       {terminal ? (
-        <Panel style={{ marginTop: 12, padding: 12, gap: 8 }}>
+        <Panel style={[s.paper, { marginTop: 12, padding: 12, gap: 8 }]}>
           {subscribed ? (
             <Text role="muted">
               {t('subs.subscribed', { when: slotLabel(subscribed, locale) })}
             </Text>
           ) : !subscribing ? (
             <Pressable onPress={() => setSubscribing(true)}>
-              <Text role="body" style={{ color: color.brand600, fontWeight: '500' }}>
+              <Text role="body" style={{ color: POMEGRANATE, fontWeight: '500' }}>
                 {t('subs.repeatWeekly')}
               </Text>
               <Text role="caption">{t('subs.intro')}</Text>
@@ -505,7 +517,7 @@ function OrderSheet({
                   style={{
                     marginTop: 8,
                     textAlign: 'center',
-                    color: color.brand600,
+                    color: POMEGRANATE,
                     fontWeight: '500',
                   }}
                 >
@@ -530,7 +542,7 @@ function OrderSheet({
         </View>
       ) : null}
       {status === ORDER_STATUS.DELIVERED && freshnessOpen(order) ? (
-        <Panel style={{ marginTop: 12, padding: 12, gap: 8 }}>
+        <Panel style={[s.paper, { marginTop: 12, padding: 12, gap: 8 }]}>
           {complaintSent ? (
             <Text role="muted">{t('order.freshnessSent', { number: complaintSent })}</Text>
           ) : (
@@ -600,7 +612,7 @@ function OrderSheet({
             onPress={() => Linking.openURL(`${WEB_URL}/${locale}/orders/${order.id}/invoice`)}
             hitSlop={6}
           >
-            <Text role="caption" style={{ paddingHorizontal: 12, color: color.brand600 }}>
+            <Text role="caption" style={{ paddingHorizontal: 12, color: POMEGRANATE }}>
               {order.dueAt ? `${t('order.invoiceDue', { date: t.date(order.dueAt) })} · ` : ''}
               {t('order.invoice')} ↗
             </Text>
@@ -609,7 +621,7 @@ function OrderSheet({
       </View>
 
       {details ? (
-        <Panel style={{ marginTop: 4, padding: 12 }}>
+        <Panel style={[s.paper, { marginTop: 4, padding: 12 }]}>
           {order.items.map((item) => (
             <View key={item.id} style={s.item}>
               {item.weighingPhotoUrl ? (
@@ -708,6 +720,7 @@ function Pulse() {
 }
 
 const s = StyleSheet.create({
+  paper: { backgroundColor: PAPER, borderRadius: 6, shadowColor: '#3A2A1A', shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
   eta: {
     backgroundColor: color.saffron100,
     borderRadius: 16,
@@ -746,7 +759,7 @@ const s = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: color.brand500,
+    backgroundColor: POMEGRANATE,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -755,7 +768,7 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: color.brand50,
+    backgroundColor: '#F6EBD3',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -783,7 +796,7 @@ const s = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     marginTop: 6,
-    backgroundColor: color.brand500,
+    backgroundColor: POMEGRANATE,
   },
   storyDotLive: {
     backgroundColor: color.saffron400,
@@ -825,7 +838,7 @@ const s = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: color.brand400,
+    backgroundColor: SAFFRON,
   },
-  pulseDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: color.brand500 },
+  pulseDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: POMEGRANATE },
 });

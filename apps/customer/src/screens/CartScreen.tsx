@@ -1,9 +1,12 @@
 /**
- * The basket, one white card per stall: a bazaar order is picked up at one
- * place, so two stalls are two courier trips and two orders. One stall (or one
- * bazaar) gets a sticky "Оформить · total" button.
+ * The basket as a receipt from the bazaar: one paper slip per stall, lines
+ * in the vendor's handwriting, the stamp «взвесим при сборке» when anything
+ * is sold by weight, delivery and cashback under the rule, and one
+ * pomegranate «Оформить». A bazaar order is picked up at one place, so two
+ * stalls are two slips; stalls on one bazaar can share a courier.
  */
 import {
+  cashbackFor,
   decodeShare,
   encodeShare,
   estimateDelivery,
@@ -11,43 +14,33 @@ import {
   sameBazaar,
   tr,
   type CartLine,
+  type MapStoreDto,
   unitLabel,
 } from '@bazar/storefront';
-import { useLocalSearchParams, useRootNavigationState, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Share, StyleSheet, View } from 'react-native';
-
-import {
-  Button,
-  Field,
-  Leaf,
-  Line,
-  Minus,
-  Photo,
-  Plus,
-  Share as ShareIcon,
-  Text,
-  api,
-  color,
-  useAuth,
-  useLocale,
-  Basket,
-} from '@bazar/mobile';
+import { CASHBACK } from '@bazar/constants';
 import { isApiError, room } from '@bazar/api-client';
 import { WS_EVENT, type HaggleDto } from '@bazar/types';
+import { Image } from 'expo-image';
+import { useLocalSearchParams, useRootNavigationState, useRouter } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { FreeDeliveryBar } from '@/components/shop/FreeDeliveryBar';
-import { Card, Page, ui, Glyph } from '@/components/ui/Page';
-
-import { useAddress } from '@/features/address/store';
 import {
-  groupByStore,
-  useCartActions,
-  useCartQuantities,
-  useCartReady,
-} from '@/features/cart/store';
+  Display,
+  Glass,
+  Hand,
+  Scene,
+  SceneButton,
+  scene,
+  sceneFont,
+  useSceneTop,
+} from '@/components/bazar';
+import { useAddress } from '@/features/address/store';
+import { groupByStore, useCartActions, useCartQuantities, useCartReady } from '@/features/cart/store';
 import { listProducts, listStores } from '@/lib/catalog';
 import { useData } from '@/lib/use-data';
+import { ArrowLeft, Clock, Minus, Pin, Plus, Share as ShareIcon, api, useAuth, useLocale } from '@bazar/mobile';
 
 const WEB_URL = process.env['EXPO_PUBLIC_WEB_URL'] ?? 'http://localhost:3000';
 
@@ -55,6 +48,8 @@ export function CartScreen() {
   const router = useRouter();
   const { locale, t } = useLocale();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
+  const top = useSceneTop();
   // Торг: the customer's open asks and agreed prices, refreshed when the stall answers.
   const [haggles, setHaggles] = useState<HaggleDto[]>([]);
   const [haggleError, setHaggleError] = useState<string | null>(null);
@@ -86,7 +81,6 @@ export function CartScreen() {
   const products = useData(() => listProducts(), []) ?? [];
   // Семейная корзина: a `?share=` link merges the sender's cart into this one, once.
   const { share } = useLocalSearchParams<{ share?: string }>();
-  // A deep link mounts this screen before the navigator is ready to take setParams.
   const navReady = useRootNavigationState()?.key !== undefined;
   const cartReady = useCartReady();
   const [notice, setNotice] = useState<string | null>(null);
@@ -124,12 +118,7 @@ export function CartScreen() {
   const estimates = groups.map((group) => {
     const store = storeById.get(group.storeId);
     return store && address
-      ? estimateDelivery(
-          store.point,
-          address.point,
-          store.preparationMinutes,
-          group.subtotal.amount,
-        )
+      ? estimateDelivery(store.point, address.point, store.preparationMinutes, group.subtotal.amount)
       : null;
   });
   const grandTotal = groups.reduce(
@@ -137,172 +126,240 @@ export function CartScreen() {
     0,
   );
   const toCheckout = (ids: string[]) =>
-    router.push({
-      pathname: '/checkout',
-      params: { store: ids[0] ?? '', stores: ids.slice(1).join(',') },
-    });
-  // One stall, or every stall on one bazaar: a single sticky button; otherwise each card has its own.
-  const footer =
-    groups.length === 1 ? (
-      <Button
-        label={t('cart.checkout')}
-        trailing={t.money(grandTotal)}
-        style={{ justifyContent: 'space-between' }}
-        onPress={() => toCheckout([groups[0]!.storeId])}
-      />
-    ) : oneTrip && oneTrip.length === groups.length ? (
-      <Button
-        label={t('cart.checkout')}
-        trailing={t.money(grandTotal)}
-        style={{ justifyContent: 'space-between' }}
-        onPress={() => toCheckout(oneTrip)}
-      />
-    ) : undefined;
+    router.push({ pathname: '/checkout', params: { store: ids[0] ?? '', stores: ids.slice(1).join(',') } });
+  // One stall, or every stall on one bazaar: a single «Оформить»; otherwise each slip has its own.
+  const single =
+    groups.length === 1 ? [groups[0]!.storeId] : oneTrip && oneTrip.length === groups.length ? oneTrip : null;
+  const backdrop = storeById.get(groups[0]?.storeId ?? '')?.coverUrl ?? null;
+  const firstEta = estimates.find((e) => e)?.etaMinutes ?? null;
+  const subtitle =
+    groups.length === 0
+      ? ''
+      : single
+        ? groups.length === 1
+          ? t('receipt.stall')
+          : t('receipt.stalls', { count: groups.length })
+        : t('receipt.separate', { count: groups.length });
 
   return (
-    <Page
-      tabs
-      back="history"
-      title={t('cart.title')}
-      right={
-        groups.length > 0 ? (
-          <Pressable onPress={shareCart} style={s.round} hitSlop={6}>
-            <ShareIcon size={20} />
+    <View style={{ flex: 1, backgroundColor: scene.night }}>
+      <Scene source={backdrop} style={StyleSheet.absoluteFill}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(20,12,4,0.55)' }]} />
+      </Scene>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: top + 64, paddingBottom: (single ? 170 : 110) + insets.bottom, gap: 18 }}
+      >
+        {groups.length === 0 ? (
+          <View style={{ paddingHorizontal: 24, paddingTop: 60, gap: 12 }}>
+            <Display size={34}>{t('cart.empty')}</Display>
+            <Hand size={24} color={scene.creamMuted}>
+              {t('receipt.emptyLine')}
+            </Hand>
+            <Pressable onPress={() => router.replace('/')} style={s.emptyCta}>
+              <Text style={s.emptyCtaText}>{t('scene.walkRow')} →</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {notice ? <Hand size={20} color={scene.saffronLight} style={{ paddingHorizontal: 24 }}>{notice}</Hand> : null}
+        {groups.length > 1 && !single ? (
+          <Text style={s.hint}>{oneTrip ? t('cart.oneTripHint', { count: oneTrip.length }) : t('cart.multi')}</Text>
+        ) : null}
+        {oneTrip && !single ? (
+          <Pressable onPress={() => toCheckout(oneTrip)} style={[s.cta, { marginHorizontal: 20 }]}>
+            <Text style={s.ctaLabel}>{t('cart.oneTrip')}</Text>
           </Pressable>
-        ) : undefined
-      }
-      footer={footer}
-    >
-      {groups.length === 0 ? (
-        <Card style={s.empty}>
-          <Glyph icon={Basket} size={84} />
-          <Text role="title" style={{ marginTop: 12 }}>
-            {t('cart.empty')}
-          </Text>
-          <Text role="muted" style={{ marginTop: 4, textAlign: 'center' }}>
-            {t('cart.emptyHint')}
-          </Text>
-          <Button
-            label={t('common.toStores')}
-            style={{ marginTop: 24, alignSelf: 'stretch' }}
-            onPress={() => router.replace('/')}
-          />
-        </Card>
-      ) : (
-        <>
-          {groups.length > 1 ? (
-            <Text role="muted" style={{ marginTop: 6 }}>
-              {oneTrip && footer
-                ? t('cart.oneTripHint', { count: oneTrip.length })
-                : t('cart.multi')}
-            </Text>
-          ) : null}
-          {oneTrip && !footer ? (
-            <>
-              <Button
-                label={t('cart.oneTrip')}
-                style={{ marginTop: 10 }}
-                onPress={() => toCheckout(oneTrip)}
-              />
-              <Text role="caption" style={{ marginTop: 6 }}>
-                {t('cart.oneTripHint', { count: oneTrip.length })}
+        ) : null}
+
+        {groups.map((group, i) => {
+          const store = storeById.get(group.storeId);
+          const estimate = estimates[i];
+          const ids = [...group.lines, ...group.unavailable].map((l) => l.product.id);
+          const total = group.subtotal.amount + (estimate?.fee.amount ?? 0);
+          const weighed = group.lines.some((l) => l.product.unit === 'KG');
+          return (
+            <Receipt
+              key={group.storeId}
+              store={store ?? null}
+              lines={group.lines}
+              unavailable={group.unavailable.map((l) => tr(l.product.name, locale))}
+              subtotal={group.subtotal.amount}
+              fee={estimate?.fee.amount ?? null}
+              total={total}
+              weighed={weighed}
+              tilt={i % 2 === 0 ? -0.6 : 0.5}
+              haggles={haggles}
+              haggleError={haggleError}
+              onAsk={ask}
+              onChange={setQuantity}
+              onClear={() => clear(ids)}
+              onClearUnavailable={() => clear(group.unavailable.map((l) => l.product.id))}
+              onCheckout={single ? null : () => toCheckout([group.storeId])}
+            />
+          );
+        })}
+      </ScrollView>
+
+      <View style={[s.top, { top }]}>
+        <SceneButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}>
+          <ArrowLeft size={20} color={scene.ink} />
+        </SceneButton>
+        <View style={{ alignItems: 'center', gap: 2, flex: 1 }}>
+          <Display size={22}>{t('cart.title')}</Display>
+          {subtitle ? <Text style={s.subtitle}>{subtitle}</Text> : null}
+        </View>
+        {groups.length > 0 ? (
+          <SceneButton onPress={shareCart}>
+            <ShareIcon size={20} color={scene.ink} />
+          </SceneButton>
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
+      </View>
+
+      {single ? (
+        <View style={[s.bottom, { bottom: 24 + insets.bottom }]}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Glass style={s.chip} onPress={() => router.push('/checkout')}>
+              <Clock size={16} color={scene.saffron} />
+              <Text style={s.chipText} numberOfLines={1}>
+                {firstEta ? t('receipt.when', { time: etaClock(firstEta) }) : t('receipt.whenAfter')}
               </Text>
-            </>
-          ) : null}
-          {notice ? (
-            <Text role="muted" style={{ marginTop: 8, color: ui.brandDeep, fontWeight: '500' }}>
-              {notice}
-            </Text>
-          ) : null}
-          {groups.map((group, i) => {
-            const store = storeById.get(group.storeId);
-            const ids = [...group.lines, ...group.unavailable].map((l) => l.product.id);
-            const estimate = estimates[i];
-            const total = group.subtotal.amount + (estimate?.fee.amount ?? 0);
-
-            return (
-              <Card key={group.storeId} style={s.group}>
-                <View style={s.groupHead}>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text role="title" numberOfLines={1}>
-                      {store ? tr(store.name, locale) : group.storeId}
-                    </Text>
-                    <Text role="caption">
-                      {t.n('cart.items', group.lines.length)}
-                      {estimate ? ` · ${t('common.eta', { minutes: estimate.etaMinutes })}` : ''}
-                    </Text>
-                  </View>
-                  <Pressable onPress={() => clear(ids)} hitSlop={8}>
-                    <Text role="muted" style={{ color: color.inkFaint }}>
-                      {t('cart.clear')}
-                    </Text>
-                  </Pressable>
-                </View>
-
-                {group.lines.map((line) => (
-                  <CartRow
-                    key={line.product.id}
-                    line={line}
-                    haggle={haggleFor(haggles, line.product.id)}
-                    onAsk={ask}
-                    onChange={(q) => setQuantity(line.product.id, q)}
-                  />
-                ))}
-
-                {haggleError ? (
-                  <Text role="caption" style={{ color: color.danger, marginTop: 4 }}>
-                    {haggleError}
-                  </Text>
-                ) : null}
-                {group.unavailable.length > 0 ? (
-                  <View style={{ marginTop: 8, flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-                    <Text role="caption">
-                      {t('cart.unavailable')}{' '}
-                      {group.unavailable.map((l) => tr(l.product.name, locale)).join(', ')}.
-                    </Text>
-                    <Pressable
-                      onPress={() => clear(group.unavailable.map((l) => l.product.id))}
-                      hitSlop={8}
-                    >
-                      <Text role="caption" style={{ textDecorationLine: 'underline' }}>
-                        {t('common.remove')}
-                      </Text>
-                    </Pressable>
-                  </View>
-                ) : null}
-
-                <FreeDeliveryBar subtotal={group.subtotal.amount} style={{ marginTop: 12 }} />
-
-                <View style={s.totals}>
-                  <Line label={t('cart.goods')} value={t.money(group.subtotal.amount)} />
-                  <Line
-                    label={t('cart.delivery')}
-                    value={estimate ? t.money(estimate.fee.amount) : t('cart.afterAddress')}
-                  />
-                  <Line label={t('cart.total')} value={t.money(total)} strong />
-                </View>
-
-                {footer ? null : (
-                  <Button
-                    label={t('cart.checkout')}
-                    trailing={t.money(total)}
-                    style={{ marginTop: 12, justifyContent: 'space-between' }}
-                    onPress={() => toCheckout([group.storeId])}
-                  />
-                )}
-              </Card>
-            );
-          })}
-          <Text role="caption" style={{ marginTop: 12, textAlign: 'center' }}>
-            {t('cart.shareHint')}
-          </Text>
-        </>
-      )}
-    </Page>
+            </Glass>
+            <Glass style={s.chip} onPress={() => router.push('/address')}>
+              <Pin size={16} color={scene.saffron} />
+              <Text style={s.chipText} numberOfLines={1}>
+                {address ? address.text : t('receipt.addressNone')}
+              </Text>
+            </Glass>
+          </View>
+          <Pressable onPress={() => toCheckout(single)} style={({ pressed }) => [s.cta, pressed && { opacity: 0.92 }]}>
+            <Text style={s.ctaLabel}>{t('cart.checkout')}</Text>
+            <Display size={20}>≈ {t.money(grandTotal)}</Display>
+          </Pressable>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
-function CartRow({
+/** Tashkent clock for «now + minutes». */
+function etaClock(minutes: number): string {
+  return new Date(Date.now() + minutes * 60_000).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' });
+}
+
+function Receipt({
+  store,
+  lines,
+  unavailable,
+  subtotal,
+  fee,
+  total,
+  weighed,
+  tilt,
+  haggles,
+  haggleError,
+  onAsk,
+  onChange,
+  onClear,
+  onClearUnavailable,
+  onCheckout,
+}: {
+  store: MapStoreDto | null;
+  lines: CartLine[];
+  unavailable: string[];
+  subtotal: number;
+  fee: number | null;
+  total: number;
+  weighed: boolean;
+  tilt: number;
+  haggles: HaggleDto[];
+  haggleError: string | null;
+  onAsk: (productId: string, price: number) => Promise<void>;
+  onChange: (productId: string, quantity: number) => void;
+  onClear: () => void;
+  onClearUnavailable: () => void;
+  onCheckout: (() => void) | null;
+}) {
+  const { locale, t } = useLocale();
+  const date = new Date().toLocaleString('ru-RU', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' });
+  const person = store?.ownerPhotoUrl ?? store?.coverUrl ?? null;
+  return (
+    <View style={[s.paper, { transform: [{ rotate: `${tilt}deg` }] }]}>
+      <View style={s.perforation} />
+      <View style={{ gap: 2 }}>
+        <Text style={s.paperTitle}>{t('receipt.title')}</Text>
+        <Text style={s.paperDate}>{date.toUpperCase()}</Text>
+      </View>
+      {weighed ? <Text style={s.stamp}>{t('receipt.weighed')}</Text> : null}
+
+      <View style={s.vendor}>
+        {person ? <Image source={{ uri: person }} style={s.vendorPhoto} contentFit="cover" cachePolicy="memory-disk" /> : null}
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={s.vendorName} numberOfLines={1}>
+            {store?.ownerName ?? (store ? tr(store.name, locale) : '')}
+          </Text>
+          <Text style={s.vendorMeta} numberOfLines={1}>
+            {store?.ownerName ? tr(store.name, locale) : ''}
+            {store?.standNumber ? ` · ${store.standNumber}` : ''}
+          </Text>
+        </View>
+        <Pressable onPress={onClear} hitSlop={8}>
+          <Text style={s.clear}>{t('cart.clear')}</Text>
+        </Pressable>
+      </View>
+
+      {lines.map((line) => (
+        <ReceiptRow key={line.product.id} line={line} haggle={haggleFor(haggles, line.product.id)} onAsk={onAsk} onChange={(q) => onChange(line.product.id, q)} />
+      ))}
+      {haggleError ? <Text style={[s.small, { color: scene.pomegranate }]}>{haggleError}</Text> : null}
+      {unavailable.length > 0 ? (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, paddingTop: 6 }}>
+          <Text style={s.small}>
+            {t('cart.unavailable')} {unavailable.join(', ')}.
+          </Text>
+          <Pressable onPress={onClearUnavailable} hitSlop={8}>
+            <Text style={[s.small, { textDecorationLine: 'underline' }]}>{t('common.remove')}</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      <View style={s.totals}>
+        <View style={s.totalRow}>
+          <Text style={s.totalLabel}>{t('cart.goods')}</Text>
+          <Text style={s.totalValue}>{weighed ? '≈ ' : ''}{t.money(subtotal)}</Text>
+        </View>
+        <View style={s.totalRow}>
+          <Text style={s.totalLabel}>{t('cart.delivery')}</Text>
+          <Text style={s.totalValue}>{fee !== null ? t.money(fee) : t('cart.afterAddress')}</Text>
+        </View>
+        <View style={s.totalRow}>
+          <Text style={[s.totalLabel, { color: scene.pomegranate }]}>{t('receipt.cashback', { percent: CASHBACK.PERCENT })}</Text>
+          <Text style={[s.totalValue, { color: scene.pomegranate }]}>+ {t.money(cashbackFor(subtotal))}</Text>
+        </View>
+        <View style={[s.totalRow, { alignItems: 'baseline', marginTop: 4 }]}>
+          <Text style={s.grand}>{t('cart.total')}</Text>
+          <Text style={s.grandValue}>
+            {weighed ? '≈ ' : ''}
+            {t.money(total)}
+          </Text>
+        </View>
+        {weighed ? <Text style={s.small}>{t('receipt.exact')}</Text> : null}
+      </View>
+
+      {onCheckout ? (
+        <Pressable onPress={onCheckout} style={({ pressed }) => [s.cta, { marginTop: 12 }, pressed && { opacity: 0.92 }]}>
+          <Text style={s.ctaLabel}>{t('cart.checkout')}</Text>
+          <Display size={18}>{t.money(total)}</Display>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+function ReceiptRow({
   line,
   haggle,
   onChange,
@@ -320,72 +377,55 @@ function CartRow({
   const step = product.quantityStep || 1;
   const min = product.minQuantity || step;
   const unit = unitLabel(locale)[product.unit];
+  const photo = product.images[0]?.url ?? null;
 
   return (
     <View style={s.row}>
-      <Photo
-        uri={product.images[0]?.url}
-        style={s.thumb}
-        fallback={<Leaf color={color.sand300} />}
-      />
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text role="body" numberOfLines={2} style={s.name}>
-          {tr(product.name, locale)}
-        </Text>
-        <Text role="caption">
-          {t.money(product.price.amount)} / {unit}
-        </Text>
-        <View style={s.rowBottom}>
-          <Text role="price" style={{ fontSize: 16, lineHeight: 20 }}>
-            {t.money(line.total.amount)}
+      <View style={s.rowMain}>
+        {photo ? <Image source={{ uri: photo }} style={s.thumb} contentFit="cover" cachePolicy="memory-disk" /> : <View style={s.thumb} />}
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+          <Text style={s.rowName} numberOfLines={2}>
+            {tr(product.name, locale)}
           </Text>
-          <View style={s.stepper}>
-            <Pressable
-              onPress={() => onChange(quantity - step < min ? 0 : quantity - step)}
-              style={s.step}
-              hitSlop={6}
-            >
-              <Minus size={14} color={ui.brandDeep} strokeWidth={2.6} />
-            </Pressable>
-            <Text role="caption" style={s.stepValue} numberOfLines={1}>
-              {t.qty(quantity)} {unit}
-            </Text>
-            <Pressable onPress={() => onChange(quantity + step)} style={s.step} hitSlop={6}>
-              <Plus size={14} color={ui.brandDeep} strokeWidth={2.6} />
-            </Pressable>
-          </View>
+          <Text style={s.small}>
+            {t.money(product.price.amount)} / {unit}
+            {product.stock !== null && quantity > product.stock ? ` · ${t('store.left', { count: product.stock })}` : ''}
+          </Text>
         </View>
-        {product.stock !== null && quantity > product.stock ? (
-          <Text role="caption" style={{ color: color.danger }}>
-            {t('store.left', { count: product.stock ?? 0 })}
+        <Text style={s.rowPrice}>
+          {product.unit === 'KG' ? '≈ ' : ''}
+          {t.money(line.total.amount)}
+        </Text>
+      </View>
+      <View style={s.rowBottom}>
+        <View style={s.stepper}>
+          <Pressable onPress={() => onChange(quantity - step < min ? 0 : quantity - step)} style={s.step} hitSlop={6}>
+            <Minus size={14} color={scene.ink} strokeWidth={2.6} />
+          </Pressable>
+          <Text style={s.stepValue}>
+            {t.qty(quantity)} {unit}
           </Text>
-        ) : null}
+          <Pressable onPress={() => onChange(quantity + step)} style={s.step} hitSlop={6}>
+            <Plus size={14} color={scene.ink} strokeWidth={2.6} />
+          </Pressable>
+        </View>
         {haggle?.status === 'ACCEPTED' && haggle.offeredPrice ? (
-          <Text role="caption" style={{ color: ui.brandDeep, fontWeight: '500' }}>
-            ✓{' '}
-            {t('haggle.accepted', {
-              price: t.money(haggle.offeredPrice.amount),
-              unit,
-              time: new Date(haggle.expiresAt).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
-            })}
+          <Text style={[s.small, { color: scene.pomegranate, flex: 1 }]} numberOfLines={2}>
+            ✓ {t('haggle.accepted', { price: t.money(haggle.offeredPrice.amount), unit, time: new Date(haggle.expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}
           </Text>
         ) : haggle?.status === 'PENDING' ? (
-          <Text role="caption">
-            {t('haggle.pending', { price: t.money(haggle.askedPrice.amount), unit })}
-          </Text>
+          <Text style={[s.small, { flex: 1 }]} numberOfLines={2}>{t('haggle.pending', { price: t.money(haggle.askedPrice.amount), unit })}</Text>
         ) : haggle?.status === 'DECLINED' ? (
-          <Text role="caption">{t('haggle.declined')}</Text>
+          <Text style={[s.small, { flex: 1 }]}>{t('haggle.declined')}</Text>
         ) : asking ? (
-          <View style={{ flexDirection: 'row', gap: 6, marginTop: 6, alignItems: 'center' }}>
-            <Field
+          <View style={{ flex: 1, flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+            <TextInput
               value={price}
               onChangeText={(v) => setPrice(v.replace(/\D/g, ''))}
               placeholder={t('haggle.placeholder', { unit })}
+              placeholderTextColor={scene.inkSoft}
               keyboardType="number-pad"
-              style={{ flex: 1, height: 36 }}
+              style={s.askInput}
             />
             <Pressable
               onPress={() => {
@@ -394,16 +434,12 @@ function CartRow({
               }}
               hitSlop={6}
             >
-              <Text role="caption" style={{ color: ui.brandDeep, fontWeight: '500' }}>
-                {t('haggle.send')}
-              </Text>
+              <Text style={[s.small, { color: scene.pomegranate, fontFamily: sceneFont.uiHeavy }]}>{t('haggle.send')}</Text>
             </Pressable>
           </View>
         ) : (
-          <Pressable onPress={() => setAsking(true)} hitSlop={6} style={{ marginTop: 4 }}>
-            <Text role="caption" style={{ color: ui.brandDeep }}>
-              {t('haggle.ask')}
-            </Text>
+          <Pressable onPress={() => setAsking(true)} hitSlop={6}>
+            <Text style={[s.small, { color: scene.pomegranate, fontFamily: sceneFont.uiHeavy }]}>{t('haggle.ask')}</Text>
           </Pressable>
         )}
       </View>
@@ -412,62 +448,82 @@ function CartRow({
 }
 
 const s = StyleSheet.create({
-  round: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: color.field,
-    alignItems: 'center',
-    justifyContent: 'center',
+  top: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  subtitle: { fontFamily: sceneFont.ui, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: scene.creamMuted },
+  hint: { fontFamily: sceneFont.uiText, fontSize: 12, color: scene.creamMuted, paddingHorizontal: 24 },
+  emptyCta: { alignSelf: 'flex-start', height: 48, paddingHorizontal: 18, borderRadius: 16, backgroundColor: scene.pomegranate, justifyContent: 'center', marginTop: 8 },
+  emptyCtaText: { fontFamily: sceneFont.uiHeavy, fontSize: 14, color: scene.cream },
+  paper: {
+    marginHorizontal: 24,
+    backgroundColor: '#FBF5E6',
+    borderRadius: 6,
+    padding: 18,
+    paddingBottom: 16,
+    gap: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.55,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 18 },
+    elevation: 10,
   },
-  empty: { alignItems: 'center', padding: 24, paddingVertical: 40, marginTop: 8 },
-  group: { marginTop: 12, padding: 14 },
-  groupHead: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.line,
+  perforation: { position: 'absolute', left: 0, right: 0, top: -1, height: 3, borderStyle: 'dashed', borderTopWidth: 3, borderColor: scene.night, opacity: 0.35 },
+  paperTitle: { fontFamily: sceneFont.display, fontSize: 22, color: scene.ink },
+  paperDate: { fontFamily: sceneFont.uiHeavy, fontSize: 10.5, letterSpacing: 1, color: '#7A6248' },
+  stamp: {
+    position: 'absolute',
+    right: 16,
+    top: 36,
+    color: scene.pomegranate,
+    borderWidth: 2.5,
+    borderColor: scene.pomegranate,
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    fontFamily: sceneFont.uiHeavy,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    transform: [{ rotate: '-10deg' }],
+    opacity: 0.85,
   },
-  thumb: {
-    width: 72,
-    height: 72,
+  vendor: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 12, paddingBottom: 4 },
+  vendorPhoto: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: scene.saffron, backgroundColor: '#3A2A1A' },
+  vendorName: { fontFamily: sceneFont.uiHeavy, fontSize: 12, color: scene.ink },
+  vendorMeta: { fontFamily: sceneFont.uiText, fontSize: 11, color: '#7A6248' },
+  clear: { fontFamily: sceneFont.ui, fontSize: 11, color: '#9A8A72' },
+  row: { paddingVertical: 9, borderBottomWidth: 1, borderStyle: 'dashed', borderColor: '#D8C7A2', gap: 8 },
+  rowMain: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  thumb: { width: 44, height: 44, borderRadius: 8, borderWidth: 2, borderColor: '#FFFFFF', backgroundColor: '#E4D3AE' },
+  rowName: { fontFamily: sceneFont.hand, fontSize: 22, lineHeight: 23, color: scene.ink },
+  rowPrice: { fontFamily: sceneFont.hand, fontSize: 22, lineHeight: 23, color: scene.ink, marginLeft: 'auto' },
+  small: { fontFamily: sceneFont.ui, fontSize: 11, color: '#7A6248' },
+  rowBottom: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#EFE4CB', borderRadius: 999, padding: 3 },
+  step: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#FBF5E6', alignItems: 'center', justifyContent: 'center' },
+  stepValue: { fontFamily: sceneFont.uiHeavy, fontSize: 12, color: scene.ink, minWidth: 54, textAlign: 'center' },
+  askInput: { flex: 1, height: 32, borderRadius: 8, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#D8C7A2', paddingHorizontal: 8, fontFamily: sceneFont.ui, fontSize: 12, color: scene.ink },
+  totals: { marginTop: 8, paddingTop: 10, borderTopWidth: 2, borderColor: scene.ink, gap: 6 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  totalLabel: { fontFamily: sceneFont.ui, fontSize: 12, color: '#7A6248' },
+  totalValue: { fontFamily: sceneFont.hand, fontSize: 20, lineHeight: 21, color: scene.ink },
+  grand: { fontFamily: sceneFont.display, fontSize: 20, color: scene.ink },
+  grandValue: { fontFamily: sceneFont.hand, fontSize: 32, lineHeight: 34, color: scene.ink },
+  bottom: { position: 'absolute', left: 20, right: 20, gap: 8 },
+  chip: { flex: 1, height: 50, borderRadius: 14, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  chipText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream, flex: 1 },
+  cta: {
+    height: 56,
     borderRadius: 18,
-    backgroundColor: color.field,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  name: { fontSize: 15, lineHeight: 20, fontWeight: '500' },
-  rowBottom: {
-    marginTop: 6,
+    backgroundColor: scene.pomegranate,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    paddingHorizontal: 20,
+    shadowColor: scene.pomegranate,
+    shadowOpacity: 0.6,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
-  stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: color.raise,
-    borderRadius: 17,
-    height: 34,
-    paddingHorizontal: 4,
-  },
-  step: { width: 28, height: 26, alignItems: 'center', justifyContent: 'center' },
-  stepValue: {
-    minWidth: 40,
-    textAlign: 'center',
-    color: ui.brandDeep,
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  totals: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: color.line,
-    gap: 2,
-  },
+  ctaLabel: { fontFamily: sceneFont.uiHeavy, fontSize: 14, color: scene.cream },
 });
