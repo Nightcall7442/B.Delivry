@@ -1,0 +1,432 @@
+/* The landing keeps the scene palette of the customer app: night, cream, kraft, pomegranate, saffron. */
+.page {
+  --cream: #fbf1de;
+  --cream-muted: #d9c7a6;
+  --ink: #2b1b0e;
+  --night: #1e1408;
+  --paper: #f4efe4;
+  --paper-edge: #c9b99a;
+  --kraft: #ead8b2;
+  --pomegranate: #9e2a2b;
+  --saffron: #e39b2f;
+  --saffron-light: #f2c56b;
+  background: var(--night);
+  color: var(--cream);
+  font-family: var(--font-display), 'Manrope', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.serif {
+  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.hand {
+  font-family: var(--font-hand), 'Caveat', cursive;
+}
+
+/* ---- top bar ---- */
+.bar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background: linear-gradient(rgba(30, 20, 8, 0.75), rgba(30, 20, 8, 0));
+}
+.wordmark {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--cream);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+.wordmark b {
+  color: var(--saffron);
+}
+.barLink {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cream);
+  text-decoration: none;
+  padding: 9px 14px;
+  border: 1px solid rgba(251, 241, 222, 0.35);
+  border-radius: 999px;
+  background: rgba(30, 20, 8, 0.4);
+  backdrop-filter: blur(6px);
+}
+
+/* ---- film ---- */
+.track {
+  position: relative;
+}
+.sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+}
+.scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    rgba(20, 12, 4, 0.55) 0%,
+    rgba(20, 12, 4, 0.05) 22%,
+    rgba(20, 12, 4, 0) 40%,
+    rgba(24, 14, 4, 0.5) 65%,
+    rgba(24, 14, 4, 0.92) 100%
+  );
+}
+.copy {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 clamp(20px, 6vw, 96px) clamp(40px, 8vh, 96px);
+  display: grid;
+  gap: 10px;
+  will-change: opacity, transform;
+  transition: none;
+}
+.copyTop {
+  bottom: auto;
+  top: clamp(96px, 18vh, 160px);
+}
+.eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--saffron-light);
+}
+.display {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(40px, 8vw, 96px);
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  color: var(--cream);
+  text-wrap: balance;
+  max-width: 12ch;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+}
+.line {
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(26px, 3.6vw, 44px);
+  line-height: 1.05;
+  color: var(--saffron-light);
+  max-width: 24ch;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
+}
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cream);
+  background: rgba(30, 20, 8, 0.45);
+  border: 1px solid rgba(251, 241, 222, 0.28);
+  backdrop-filter: blur(8px);
+}
+.pill i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--saffron);
+}
+
+/* cardboard price sign, pushpin on the top edge */
+.sign {
+  position: relative;
+  display: inline-grid;
+  gap: 2px;
+  padding: 14px 18px 12px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  color: #1f1a14;
+  transform: rotate(-1.5deg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  justify-self: start;
+}
+.sign::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: #b42a31;
+  border: 1px solid #8e1f26;
+}
+.signTitle {
+  font-family: var(--font-hand), cursive;
+  font-size: 30px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.signPrice {
+  font-family: var(--font-hand), cursive;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--pomegranate);
+}
+.signPrice small {
+  font-size: 18px;
+  color: #6a5a45;
+}
+.signNote {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6a5a45;
+  letter-spacing: 0.04em;
+}
+
+/* kraft luggage tag */
+.tag {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 10px;
+  background: var(--kraft);
+  color: var(--ink);
+  font-family: var(--font-hand), cursive;
+  font-size: 22px;
+  border-radius: 3px;
+  transform: rotate(2deg);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.tag::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid #b8a27a;
+}
+
+/* stats written on the frame */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 18px 28px;
+  max-width: 720px;
+}
+.stat b {
+  display: block;
+  font-family: var(--font-hand), cursive;
+  font-weight: 700;
+  font-size: clamp(44px, 6vw, 72px);
+  line-height: 1;
+  color: var(--saffron-light);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.6);
+}
+.stat span {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cream);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
+}
+
+/* paper receipt with a quote */
+.receipt {
+  position: relative;
+  justify-self: start;
+  max-width: 440px;
+  padding: 18px 20px 16px;
+  background: var(--paper);
+  color: #1f1a14;
+  border-radius: 6px;
+  transform: rotate(1deg);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+}
+.receipt::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  border-top: 3px dashed rgba(43, 27, 14, 0.3);
+}
+.quote {
+  font-family: var(--font-hand), cursive;
+  font-size: 28px;
+  line-height: 1.05;
+  color: var(--pomegranate);
+}
+.who {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6a5a45;
+}
+.stars {
+  color: var(--saffron);
+  letter-spacing: 2px;
+}
+
+/* ---- closing paper section ---- */
+.paper {
+  position: relative;
+  background: var(--kraft);
+  color: var(--ink);
+  padding: clamp(96px, 14vh, 160px) clamp(20px, 6vw, 96px) clamp(64px, 12vh, 140px);
+}
+.paper::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  border-top: 4px dashed rgba(43, 27, 14, 0.25);
+}
+.paperInner {
+  max-width: 980px;
+  margin: 0 auto;
+  display: grid;
+  gap: 28px;
+}
+.paperTitle {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 72px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  max-width: 14ch;
+  text-wrap: balance;
+}
+.paperLine {
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(24px, 3vw, 34px);
+  color: var(--pomegranate);
+  line-height: 1.05;
+}
+.rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.row {
+  position: relative;
+  padding: 18px 16px 14px;
+  background: var(--paper);
+  border: 1.5px dashed var(--ink);
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.15s ease;
+}
+.row:hover {
+  transform: translateY(-2px);
+}
+.rowSign {
+  position: absolute;
+  top: -14px;
+  left: 12px;
+  padding: 3px 10px;
+  background: #fbf5e6;
+  border: 1px solid var(--paper-edge);
+  font-family: var(--font-hand), cursive;
+  font-size: 19px;
+  text-transform: uppercase;
+  line-height: 1;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+}
+.rowSign::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: #b42a31;
+  border: 1px solid #8e1f26;
+}
+.rowBody {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6a5a45;
+}
+.rowCount {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--pomegranate);
+}
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  padding: 0 26px;
+  border-radius: 18px;
+  background: var(--pomegranate);
+  color: var(--cream);
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 700;
+  font-size: 19px;
+  text-decoration: none;
+  box-shadow: 0 12px 30px rgba(158, 42, 43, 0.4);
+}
+.ctaPaper {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--paper-edge);
+  box-shadow: none;
+}
+.foot {
+  margin-top: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6a5a45;
+}
+
+@media (max-width: 640px) {
+  .display {
+    max-width: 10ch;
+  }
+  .signTitle {
+    font-size: 24px;
+  }
+  .signPrice {
+    font-size: 28px;
+  }
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    transition: none;
+  }
+}

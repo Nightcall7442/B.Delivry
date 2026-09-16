@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "customer-web", "runtimeExecutable": "node", "runtimeArgs": ["C:/Users/support/AppData/Local/Temp/claude/C--Users-support-Downloads-bazar-delivery/643ac2ce-e131-45ce-ad89-dfebd0ff34fd/scratchpad/customer-web.cjs"], "port": 8083 },
+    { "name": "web", "runtimeExecutable": "node", "runtimeArgs": ["C:/Users/support/AppData/Local/Temp/claude/C--Users-support-Downloads-bazar-delivery/643ac2ce-e131-45ce-ad89-dfebd0ff34fd/scratchpad/web-dev.cjs"], "port": 3000 }
+  ]
+}
