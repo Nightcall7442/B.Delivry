@@ -3,46 +3,54 @@
  * A film you scrub with the scroll wheel — the Apple product-page trick. The
  * track is `height` viewports tall; inside it a sticky viewport holds a canvas
  * that shows the frame `toFrame(progress)` picks (linear by default; the
- * landing maps its segments onto the track so a bridge can scrub faster than
- * a scene). Frames are plain image files (`src(i)`), loaded nearest-first
- * around where the reader is, so the picture under the thumb arrives before
- * the rest. The shown frame eases towards the wanted one, so a flick of the
- * wheel plays as motion rather than a jump. Children get the progress to
- * place copy.
+ * landing maps its shots onto the track so one can scrub faster than another).
+ * Frames come in strips — `per` frames stacked in one WebP (`strip(k)`) — so a
+ * 96-frame shot is a dozen requests, not a hundred; strips load nearest-first
+ * around the reader. Until the film is in, a veil shows the poster and how
+ * much has arrived; the shown frame eases towards the wanted one so a flick
+ * of the wheel plays as motion rather than a jump. Children get the progress
+ * to place copy.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import styles from './promo.module.css';
 
-const PARALLEL = 6;
+const PARALLEL = 4;
 
 export function ScrollFilm({
   id,
   frames,
-  src,
+  per,
+  strip,
+  poster,
   height = 300,
   toFrame,
-  onLoad,
+  loading,
   children,
 }: {
   id?: string;
   frames: number;
-  src: (index: number) => string;
+  /** Frames per strip. */
+  per: number;
+  /** Strip index → file. */
+  strip: (index: number) => string;
+  /** First frame alone, for the veil and the canvas background. */
+  poster: string;
   /** Scroll track height in viewport heights: more = slower scrub. */
   height?: number;
   /** Progress 0..1 → frame index; linear when omitted. */
   toFrame?: (progress: number) => number;
-  /** Loaded-frame count, for a progress line. */
-  onLoad?: (loaded: number, total: number) => void;
+  /** The veil's line: «Открываем ряд». */
+  loading: string;
   children: (progress: number) => ReactNode;
 }) {
   const track = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [progress, setProgress] = useState(0);
+  const [loaded, setLoaded] = useState(0);
   const map = useRef(toFrame);
   map.current = toFrame;
-  const load = useRef(onLoad);
-  load.current = onLoad;
+  const strips = Math.ceil(frames / per);
 
   useEffect(() => {
     const el = track.current;
@@ -53,27 +61,29 @@ export function ScrollFilm({
 
     const images: (HTMLImageElement | undefined)[] = [];
     const ready: boolean[] = [];
-    let loaded = 0;
+    let done = 0;
     let shown = -1;
     let wanted = 0;
     let current = 0;
     let cancelled = false;
 
-    // Cover-fit the frame into the canvas, like `object-fit: cover`.
+    // Cover-fit one frame of its strip into the canvas, like `object-fit: cover`.
     const draw = (index: number) => {
-      const img = images[index];
-      if (!img || !ready[index]) return;
+      const img = images[Math.floor(index / per)];
+      if (!img) return;
+      const fw = img.naturalWidth;
+      const fh = img.naturalHeight / per;
       const { width, height } = cv;
-      const scale = Math.max(width / img.naturalWidth, height / img.naturalHeight);
-      const w = img.naturalWidth * scale;
-      const h = img.naturalHeight * scale;
-      ctx.drawImage(img, (width - w) / 2, (height - h) / 2, w, h);
+      const scale = Math.max(width / fw, height / fh);
+      const w = fw * scale;
+      const h = fh * scale;
+      ctx.drawImage(img, 0, (index % per) * fh, fw, fh, (width - w) / 2, (height - h) / 2, w, h);
       shown = index;
     };
     // The nearest loaded frame at or below the one we want, so scrubbing never blanks.
     const show = (index: number) => {
       for (let i = index; i >= 0; i -= 1) {
-        if (ready[i]) {
+        if (ready[Math.floor(i / per)]) {
           if (i !== shown) draw(i);
           return;
         }
@@ -88,7 +98,7 @@ export function ScrollFilm({
       if (Math.abs(gap) < 0.45) {
         current = wanted;
       } else {
-        current += gap * 0.28;
+        current += gap * 0.22;
         motion = requestAnimationFrame(settle);
       }
       show(Math.round(current));
@@ -97,13 +107,14 @@ export function ScrollFilm({
       if (!motion) motion = requestAnimationFrame(settle);
     };
 
-    // Nearest-first loading: whichever unloaded frame is closest to the reader.
-    const pending = new Set(Array.from({ length: frames }, (_, i) => i));
+    // Nearest-first loading: whichever unloaded strip is closest to the reader.
+    const pending = new Set(Array.from({ length: strips }, (_, i) => i));
     const next = () => {
+      const here = Math.floor(wanted / per);
       let best = -1;
       let dist = Infinity;
       for (const i of pending) {
-        const d = Math.abs(i - wanted);
+        const d = Math.abs(i - here);
         if (d < dist) {
           dist = d;
           best = i;
@@ -117,13 +128,13 @@ export function ScrollFilm({
         img.decoding = 'async';
         img.onload = () => {
           ready[index] = true;
-          loaded += 1;
-          load.current?.(loaded, frames);
-          if (index <= Math.round(current) || shown < 0) nudge();
+          done += 1;
+          setLoaded(done / strips);
+          if (index <= Math.floor(current / per) || shown < 0) nudge();
           resolve();
         };
         img.onerror = () => resolve();
-        img.src = src(index);
+        img.src = strip(index);
         images[index] = img;
       });
     const worker = async () => {
@@ -134,9 +145,7 @@ export function ScrollFilm({
         await fetchOne(i);
       }
     };
-    // The first frame alone, then the pool — the page has a picture before the rest arrive.
-    pending.delete(0);
-    void fetchOne(0).then(() => Promise.all(Array.from({ length: PARALLEL }, worker)));
+    void Promise.all(Array.from({ length: PARALLEL }, worker));
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -170,14 +179,22 @@ export function ScrollFilm({
       if (raf) cancelAnimationFrame(raf);
       if (motion) cancelAnimationFrame(motion);
     };
-  }, [frames, src]);
+  }, [frames, per, strip, strips]);
 
+  const veiled = loaded < 1;
   return (
     <section id={id} ref={track} className={styles.track} style={{ height: `${height}vh` }}>
       <div className={styles.sticky}>
-        <canvas ref={canvas} className={styles.canvas} style={{ backgroundImage: `url(${src(0)})` }} />
+        <canvas ref={canvas} className={styles.canvas} style={{ backgroundImage: `url(${poster})` }} />
         <div className={styles.grain} />
         {children(progress)}
+        <div className={styles.veil} style={{ opacity: veiled ? 1 : 0, pointerEvents: veiled ? 'auto' : 'none' }} aria-hidden={!veiled}>
+          <div className={styles.veilLine}>{loading}</div>
+          <div className={styles.veilBar}>
+            <i style={{ transform: `scaleX(${loaded})` }} />
+          </div>
+          <div className={styles.veilPct}>{Math.round(loaded * 100)} %</div>
+        </div>
       </div>
     </section>
   );

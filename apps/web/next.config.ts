@@ -3,6 +3,9 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  // The dev server is shown to the client through an Expo ws-tunnel; without this Next
+  // refuses the tunnel host's HMR requests.
+  allowedDevOrigins: ['*.boltexpo.dev'],
   transpilePackages: [
     '@bazar/ui',
     '@bazar/i18n',

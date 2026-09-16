@@ -15,10 +15,11 @@ import { ScrollFilm, reveal } from './scroll-film';
 
 /** The film: one 8-second walk through the Chorsu dome hall (12 fps) over seven viewports of scroll. */
 const SEGMENTS = [{ key: 'bazaar', frames: 96, vh: 760 }] as const;
+/** Frames stacked per strip file (see the ffmpeg `tile=1x8` in the frame build). */
+const PER = 8;
 type Key = (typeof SEGMENTS)[number]['key'];
 const TOTAL_FRAMES = SEGMENTS.reduce((n, s) => n + s.frames, 0);
 const TOTAL_VH = SEGMENTS.reduce((n, s) => n + s.vh, 0);
-const pad = (i: number) => String(i + 1).padStart(3, '0');
 
 /** Global progress at `local` (0..1) of a shot. */
 function at(key: Key, local: number): number {
@@ -41,14 +42,15 @@ function toFrame(p: number): number {
   }
   return TOTAL_FRAMES - 1;
 }
-/** Frame index → file, by shot. */
-function frameSrc(size: 'd' | 'm', index: number): string {
+/** Strip index → file, by shot (each shot's strips are numbered from 1). */
+function stripSrc(size: 'd' | 'm', index: number): string {
   let i = index;
   for (const s of SEGMENTS) {
-    if (i < s.frames) return `/promo/${size}/${s.key}/${pad(i)}.webp`;
-    i -= s.frames;
+    const n = Math.ceil(s.frames / PER);
+    if (i < n) return `/promo/${size}/${s.key}/s${String(i + 1).padStart(2, '0')}.webp`;
+    i -= n;
   }
-  return `/promo/${size}/bazaar/${pad(95)}.webp`;
+  return `/promo/${size}/bazaar/s01.webp`;
 }
 
 /** Three chapters over the one shot: the hall, the row, the counter. */
@@ -62,6 +64,7 @@ const COPY = {
   ru: {
     signIn: 'Войти',
     scroll: 'листайте',
+    loading: 'Открываем ряд',
     dome: { eyebrow: 'Ташкент · Чорсу · 6:30', title: 'Хуш келибсиз', line: '«Базар начинается с купола»' },
     row: {
       sign: ['Арбуз хорезмский', '25 000', 'шт', 'Дилноза-опа · павильон Б, место 7'],
@@ -127,6 +130,7 @@ const COPY = {
   uz: {
     signIn: 'Kirish',
     scroll: 'varaqlang',
+    loading: 'Rastani ochamiz',
     dome: { eyebrow: 'Toshkent · Chorsu · 6:30', title: 'Xush kelibsiz', line: '«Bozor gumbazdan boshlanadi»' },
     row: {
       sign: ['Xorazm tarvuzi', '25 000', 'dona', 'Dilnoza opa · B pavilyon, 7-joy'],
@@ -200,10 +204,8 @@ export function PromoLanding({ locale }: { locale: string }) {
   useEffect(() => {
     setSize(window.innerWidth < 720 ? 'm' : 'd');
   }, []);
-  const src = useCallback((i: number) => frameSrc(size, i), [size]);
-  const [loaded, setLoaded] = useState(0);
+  const strip = useCallback((i: number) => stripSrc(size, i), [size]);
   const [p, setP] = useState(0);
-  const onLoad = useCallback((n: number, total: number) => setLoaded(n / total), []);
   const chapters = useMemo(
     () =>
       CHAPTERS.map((ch) => ({ ...ch, fill: Math.min(1, Math.max(0, (p - ch.from) / (ch.to - ch.from))) })),
@@ -229,10 +231,18 @@ export function PromoLanding({ locale }: { locale: string }) {
         <a href={`${home}/login`} className={styles.barLink}>
           {c.signIn}
         </a>
-        <span className={styles.loader} style={{ transform: `scaleX(${loaded})`, opacity: loaded < 1 ? 1 : 0 }} />
       </header>
 
-      <ScrollFilm id="film" frames={TOTAL_FRAMES} src={src} height={TOTAL_VH} toFrame={toFrame} onLoad={onLoad}>
+      <ScrollFilm
+        id="film"
+        frames={TOTAL_FRAMES}
+        per={PER}
+        strip={strip}
+        poster={`/promo/${size}/bazaar/poster.webp`}
+        height={TOTAL_VH}
+        toFrame={toFrame}
+        loading={c.loading}
+      >
         {(p) => <Film p={p} c={c} onP={setP} />}
       </ScrollFilm>
 

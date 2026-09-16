@@ -136,6 +136,43 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 220px 220px;
 }
+/* the veil: poster behind, the line and the bar, until every strip is in */
+.veil {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  align-content: end;
+  justify-items: start;
+  gap: 10px;
+  padding: 0 clamp(20px, 6vw, 96px) calc(clamp(40px, 8vh, 96px) + env(safe-area-inset-bottom));
+  background: linear-gradient(rgba(30, 20, 8, 0.2), rgba(30, 20, 8, 0.85));
+  transition: opacity 0.6s ease;
+}
+.veilLine {
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(28px, 4vw, 44px);
+  color: var(--saffron-light);
+}
+.veilBar {
+  width: min(320px, 60vw);
+  height: 3px;
+  background: rgba(251, 241, 222, 0.18);
+  overflow: hidden;
+}
+.veilBar i {
+  display: block;
+  height: 100%;
+  background: var(--saffron);
+  transform-origin: left;
+  transition: transform 0.25s ease;
+}
+.veilPct {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--cream-muted);
+}
 .copyRight {
   justify-items: end;
   text-align: right;
