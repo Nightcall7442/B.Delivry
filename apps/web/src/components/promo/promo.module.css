@@ -44,6 +44,45 @@
 .wordmark b {
   color: var(--saffron);
 }
+.chapters {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 18px;
+}
+.chapter {
+  display: grid;
+  gap: 6px;
+  width: clamp(56px, 9vw, 120px);
+}
+.chapter i {
+  display: block;
+  height: 2px;
+  background: var(--saffron);
+  transform-origin: left;
+  transition: transform 0.15s linear;
+  box-shadow: 0 0 0 1px rgba(251, 241, 222, 0.12);
+}
+.chapter em {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cream-muted);
+}
+.loader {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--saffron);
+  transform-origin: left;
+  transition: transform 0.2s ease, opacity 0.6s ease 0.4s;
+}
 .barLink {
   font-size: 13px;
   font-weight: 700;
@@ -87,12 +126,74 @@
     rgba(24, 14, 4, 0.92) 100%
   );
 }
+/* film grain: an SVG noise tile, barely there — hides the softness of 720p and reads as film */
+.grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+}
+.copyRight {
+  justify-items: end;
+  text-align: right;
+}
+.copyRight .sign,
+.copyRight .tag,
+.copyRight .receipt {
+  justify-self: end;
+}
+.copyCenter {
+  bottom: 0;
+  top: 0;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  padding-bottom: 0;
+}
+.copyCenter .line {
+  max-width: 28ch;
+}
+.scrollHint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  font-family: var(--font-hand), cursive;
+  font-size: 20px;
+  color: var(--cream-muted);
+}
+.scrollHint i {
+  width: 1px;
+  height: 34px;
+  background: linear-gradient(var(--saffron), transparent);
+  animation: drip 1.6s ease-in-out infinite;
+}
+@keyframes drip {
+  0% {
+    transform: scaleY(0.2);
+    transform-origin: top;
+  }
+  60% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
 .copy {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 0 clamp(20px, 6vw, 96px) clamp(40px, 8vh, 96px);
+  padding: 0 clamp(20px, 6vw, 96px) calc(clamp(40px, 8vh, 96px) + env(safe-area-inset-bottom));
   display: grid;
   gap: 10px;
   will-change: opacity, transform;
@@ -286,6 +387,240 @@
   letter-spacing: 2px;
 }
 
+/* ---- after the film ---- */
+.inner {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+.head {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 36px;
+}
+.h2 {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(34px, 5.5vw, 64px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  margin: 0;
+}
+.lineDark {
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.05;
+  color: var(--saffron-light);
+}
+.eyebrowDark {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--saffron);
+}
+.tableSection {
+  position: relative;
+  background: var(--night);
+  padding: clamp(72px, 12vh, 140px) clamp(20px, 6vw, 96px);
+}
+.tableSection::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 160px;
+  background: linear-gradient(rgba(30, 20, 8, 0), var(--night));
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+.products {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 28px 22px;
+}
+.product {
+  position: relative;
+  display: block;
+  text-decoration: none;
+  color: #1f1a14;
+  padding-bottom: 8px;
+  transition: transform 0.2s ease;
+}
+.product:hover {
+  transform: translateY(-4px) rotate(0deg) !important;
+}
+.productPhoto {
+  display: block;
+  aspect-ratio: 1.1;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center;
+  background-color: #3a2a1a;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+.productSign {
+  position: relative;
+  display: grid;
+  gap: 3px;
+  margin: -26px 12px 0 10px;
+  padding: 12px 14px 10px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+.productSign::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: #b42a31;
+  border: 1px solid #8e1f26;
+}
+.productSign b {
+  font-family: var(--font-hand), cursive;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1;
+  text-transform: uppercase;
+  padding-right: 22px;
+}
+.productPrice {
+  font-family: var(--font-hand), cursive;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--pomegranate);
+}
+.productPrice small {
+  font-size: 15px;
+  color: #6a5a45;
+}
+.productSay {
+  font-family: var(--font-hand), cursive;
+  font-size: 18px;
+  line-height: 1.05;
+  color: #3a2a1a;
+}
+.productWho {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6a5a45;
+}
+.productPlus {
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--pomegranate);
+  color: var(--cream);
+  font-weight: 800;
+  font-size: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+/* the phone */
+.phoneTrack {
+  position: relative;
+  height: 320vh;
+  background: var(--night);
+}
+.phoneSticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: clamp(24px, 6vw, 96px);
+  padding: 0 clamp(20px, 8vw, 140px);
+  overflow: hidden;
+}
+.phoneCopy {
+  display: grid;
+  gap: 18px;
+  max-width: 520px;
+}
+.phoneList {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.phoneItem,
+.phoneItemOn {
+  display: grid;
+  gap: 4px;
+  padding-left: 18px;
+  border-left: 2px solid rgba(251, 241, 222, 0.15);
+  color: var(--cream-muted);
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+.phoneItemOn {
+  border-color: var(--saffron);
+  color: var(--cream);
+}
+.phoneItem b,
+.phoneItemOn b {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 22px;
+  line-height: 1.1;
+}
+.phoneItem span,
+.phoneItemOn span {
+  font-size: 14px;
+  line-height: 1.4;
+  max-width: 44ch;
+}
+.phone {
+  position: relative;
+  height: min(760px, 82vh);
+  max-width: 74vw;
+  aspect-ratio: 390 / 844;
+  border-radius: 48px;
+  background: #0b0704;
+  padding: 12px;
+  box-shadow:
+    0 0 0 2px #3a2a1a,
+    0 40px 90px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(251, 241, 222, 0.08);
+  transition: transform 0.2s ease-out;
+}
+.phoneScreen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 38px;
+  overflow: hidden;
+  background: #1e1408;
+}
+.phoneScreen img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.35s ease;
+}
+.phoneIsland {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  width: 92px;
+  height: 26px;
+  transform: translateX(-50%);
+  border-radius: 14px;
+  background: #0b0704;
+}
+
 /* ---- closing paper section ---- */
 .paper {
   position: relative;
@@ -411,9 +746,49 @@
   color: #6a5a45;
 }
 
+@media (max-width: 900px) {
+  .chapters {
+    display: none;
+  }
+  .phoneSticky {
+    grid-template-columns: 1fr;
+    align-content: center;
+    justify-items: center;
+    gap: 20px;
+    padding-top: 72px;
+  }
+  .phoneCopy {
+    text-align: center;
+    justify-items: center;
+    gap: 10px;
+  }
+  .phoneList {
+    gap: 0;
+  }
+  .phoneItem {
+    display: none;
+  }
+  .phoneItemOn {
+    border: 0;
+    padding: 0;
+    justify-items: center;
+  }
+  .phone {
+    height: min(520px, 58vh);
+  }
+}
 @media (max-width: 640px) {
   .display {
     max-width: 10ch;
+  }
+  .copyRight {
+    justify-items: start;
+    text-align: left;
+  }
+  .copyRight .sign,
+  .copyRight .tag,
+  .copyRight .receipt {
+    justify-self: start;
   }
   .signTitle {
     font-size: 24px;
