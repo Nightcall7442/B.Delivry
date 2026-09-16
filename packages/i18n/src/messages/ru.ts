@@ -607,5 +607,6 @@ export const ru = {
   'receipt.whenAfter': 'время — после адреса',
   'receipt.address': 'Адрес доставки',
   'receipt.addressNone': 'указать адрес',
+  'orders.reorderHint': 'откройте, чтобы повторить',
   'common.retry': 'Повторить',
 } as const;

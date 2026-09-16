@@ -577,5 +577,6 @@ export const uz: Catalogue = {
   'receipt.whenAfter': 'vaqt — manzildan keyin',
   'receipt.address': 'Yetkazish manzili',
   'receipt.addressNone': 'manzil kiriting',
+  'orders.reorderHint': 'takrorlash uchun oching',
   'common.retry': 'Qayta urinish',
 };

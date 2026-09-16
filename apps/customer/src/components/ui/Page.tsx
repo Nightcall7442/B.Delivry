@@ -139,7 +139,7 @@ export function Page({
         {header ? (
           <View style={s.headerSlot}>{header}</View>
         ) : (
-          <Text role="section" numberOfLines={1} style={{ flex: 1, fontSize: 20 }}>
+          <Text role="section" numberOfLines={1} style={{ flex: 1, fontSize: 22 }}>
             {title ?? ''}
           </Text>
         )}
