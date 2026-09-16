@@ -1,9 +1,10 @@
 'use client';
 /**
- * The landing as one shot scrubbed by the scroll: a walk down the main aisle
- * of the Chorsu dome hall, 2D anime, ending on the vendor holding out a
- * watermelon. Captions appear at fixed points of the walk; the bar keeps the
- * three chapters (the hall, the row, the counter). After the film: what was on the table (the real
+ * The landing as one continuous 2D-anime film scrubbed by the scroll: the
+ * dome at dawn, the walk down the Chorsu hall, the watermelon into the bag
+ * and out to the street, the road to the door, the home. Each shot starts on
+ * the previous one's last frame. Captions appear at fixed points of each
+ * shot; the bar keeps the three chapters. After the film: what was on the table (the real
  * products), the app on a phone, and a kraft sheet with the way in. Copy is
  * inline: it is marketing text, not product strings.
  */
@@ -13,11 +14,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './promo.module.css';
 import { ScrollFilm, reveal } from './scroll-film';
 
-/** The film: one 8-second walk through the Chorsu dome hall (12 fps) over seven viewports of scroll. */
-const SEGMENTS = [{ key: 'bazaar', frames: 96, vh: 760 }] as const;
+/**
+ * The film, shot by shot: strips on disk (12 fps) and how many viewports of
+ * scroll each gets. Every shot was generated from the previous one's last
+ * frame, so they join without a cut.
+ */
+const SEGMENTS = [
+  { key: 'dome', frames: 96, vh: 260 },
+  { key: 'bazaar', frames: 96, vh: 400 },
+  { key: 'bag', frames: 96, vh: 240 },
+] as const;
 /** Frames stacked per strip file (see the ffmpeg `tile=1x8` in the frame build). */
 const PER = 8;
-type Key = (typeof SEGMENTS)[number]['key'];
+type Key = 'dome' | 'bazaar' | 'bag' | 'road' | 'home';
 const TOTAL_FRAMES = SEGMENTS.reduce((n, s) => n + s.frames, 0);
 const TOTAL_VH = SEGMENTS.reduce((n, s) => n + s.vh, 0);
 
@@ -50,15 +59,16 @@ function stripSrc(size: 'd' | 'm', index: number): string {
     if (i < n) return `/promo/${size}/${s.key}/s${String(i + 1).padStart(2, '0')}.webp`;
     i -= n;
   }
-  return `/promo/${size}/bazaar/s01.webp`;
+  return `/promo/${size}/dome/s01.webp`;
 }
 
-/** Three chapters over the one shot: the hall, the row, the counter. */
-const CHAPTERS: { title: { ru: string; uz: string }; from: number; to: number }[] = [
-  { title: { ru: 'Купол', uz: 'Gumbaz' }, from: 0, to: 0.36 },
-  { title: { ru: 'Ряд', uz: 'Rasta' }, from: 0.36, to: 0.7 },
-  { title: { ru: 'Прилавок', uz: 'Peshtaxta' }, from: 0.7, to: 1 },
+/** Three chapters: the bazaar (dome, hall, bag), the road, the home. */
+const CHAPTERS: { title: { ru: string; uz: string }; from: Key; to: Key }[] = [
+  { title: { ru: 'Базар', uz: 'Bozor' }, from: 'dome', to: 'bag' },
+  { title: { ru: 'Дорога', uz: 'Yoʻl' }, from: 'road', to: 'road' },
+  { title: { ru: 'Дом', uz: 'Uy' }, from: 'home', to: 'home' },
 ];
+const has = (key: string) => SEGMENTS.some((s) => s.key === key);
 
 const COPY = {
   ru: {
@@ -208,7 +218,11 @@ export function PromoLanding({ locale }: { locale: string }) {
   const [p, setP] = useState(0);
   const chapters = useMemo(
     () =>
-      CHAPTERS.map((ch) => ({ ...ch, fill: Math.min(1, Math.max(0, (p - ch.from) / (ch.to - ch.from))) })),
+      CHAPTERS.filter((ch) => has(ch.from)).map((ch) => {
+        const from = at(ch.from, 0);
+        const to = at(ch.to, 1);
+        return { ...ch, fill: Math.min(1, Math.max(0, (p - from) / (to - from))) };
+      }),
     [p],
   );
 
@@ -238,7 +252,7 @@ export function PromoLanding({ locale }: { locale: string }) {
         frames={TOTAL_FRAMES}
         per={PER}
         strip={strip}
-        poster={`/promo/${size}/bazaar/poster.webp`}
+        poster={`/promo/${size}/dome/poster.webp`}
         height={TOTAL_VH}
         toFrame={toFrame}
         loading={c.loading}
@@ -304,19 +318,19 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
     <>
       <div className={styles.scrim} />
 
-      {/* the hall */}
-      <div className={`${styles.copy} ${styles.copyTop}`} style={reveal(p, 0, 0.14)}>
+      {/* dome: the greeting */}
+      <div className={`${styles.copy} ${styles.copyTop}`} style={reveal(p, 0, at('dome', 0.6))}>
         <div className={styles.eyebrow}>{c.dome.eyebrow}</div>
         <h1 className={styles.display}>{c.dome.title}</h1>
         <div className={styles.line}>{c.dome.line}</div>
       </div>
-      <div className={styles.scrollHint} style={reveal(p, 0, 0.05)}>
+      <div className={styles.scrollHint} style={reveal(p, 0, at('dome', 0.12))}>
         <span>{c.scroll}</span>
         <i />
       </div>
 
-      {/* the row: people first */}
-      <div className={styles.copy} style={reveal(p, 0.2, 0.42)}>
+      {/* hall: the people of the row, then the counter */}
+      <div className={styles.copy} style={reveal(p, at('bazaar', 0.12), at('bazaar', 0.5))}>
         <div className={styles.line} style={{ color: 'var(--cream)' }}>
           {c.row.about}
         </div>
@@ -329,26 +343,7 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
           ))}
         </div>
       </div>
-
-      {/* the promise */}
-      <div className={`${styles.copy} ${styles.copyTop}`} style={reveal(p, 0.47, 0.66)}>
-        <div className={styles.eyebrow}>{c.street.eyebrow}</div>
-        <h2 className={styles.display}>{c.street.title}</h2>
-        <div className={styles.line}>{c.street.line}</div>
-      </div>
-      <div className={styles.copy} style={reveal(p, 0.5, 0.68)}>
-        <div className={styles.stats}>
-          {c.street.stats.map(([n, label]) => (
-            <div key={label} className={styles.stat}>
-              <b>{n}</b>
-              <span>{label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* the counter: the sign */}
-      <div className={`${styles.copy} ${styles.copyRight}`} style={reveal(p, 0.72, 0.87)}>
+      <div className={`${styles.copy} ${styles.copyRight}`} style={reveal(p, at('bazaar', 0.72), at('bag', 0.08))}>
         <div className={styles.tag}>{c.row.tag}</div>
         <div className={styles.sign}>
           <div className={styles.signTitle}>{c.row.sign[0]}</div>
@@ -359,22 +354,70 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
         </div>
       </div>
 
-      {/* the vendor holds it out: the word of a regular */}
-      <div className={`${styles.copy} ${styles.copyTop}`} style={reveal(p, 0.89, 1)}>
-        <div className={styles.eyebrow}>{c.door.eyebrow}</div>
-        <h2 className={styles.display}>{c.door.title}</h2>
+      {/* bag */}
+      <div className={styles.copy} style={reveal(p, at('bag', 0.2), at('bag', 0.6))}>
+        <div className={styles.line}>{c.bag.line}</div>
       </div>
-      <div className={`${styles.copy} ${styles.copyRight}`} style={reveal(p, 0.9, 1)}>
-        <div className={styles.receipt}>
-          <div className={styles.quote}>{c.door.quote}</div>
-          <div className={styles.who}>
-            <span className={styles.stars}>★★★★★</span> {c.door.who}
+
+      {/* road: the promise */}
+      {has('road') ? (
+        <>
+          <div className={`${styles.copy} ${styles.copyTop}`} style={reveal(p, at('road', 0.02), at('road', 0.4))}>
+            <div className={styles.eyebrow}>{c.street.eyebrow}</div>
+            <h2 className={styles.display}>{c.street.title}</h2>
+            <div className={styles.line}>{c.street.line}</div>
+          </div>
+          <div className={styles.copy} style={reveal(p, at('road', 0.08), at('road', 0.5))}>
+            <div className={styles.stats}>
+              {c.street.stats.map(([n, label]) => (
+                <div key={label} className={styles.stat}>
+                  <b>{n}</b>
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className={styles.copy} style={reveal(p, at('road', 0.62), at('road', 0.95))}>
+            <div className={styles.line} style={{ color: 'var(--cream)' }}>
+              {c.stairs.line}
+            </div>
+          </div>
+        </>
+      ) : null}
+
+      {/* home */}
+      {has('home') ? (
+        <>
+          <div className={`${styles.copy} ${styles.copyTop}`} style={reveal(p, at('home', 0.04), at('home', 0.45))}>
+            <div className={styles.eyebrow}>{c.door.eyebrow}</div>
+            <h2 className={styles.display}>{c.door.title}</h2>
+          </div>
+          <div className={`${styles.copy} ${styles.copyRight}`} style={reveal(p, at('home', 0.5), at('home', 0.86))}>
+            <div className={styles.receipt}>
+              <div className={styles.quote}>{c.door.quote}</div>
+              <div className={styles.who}>
+                <span className={styles.stars}>★★★★★</span> {c.door.who}
+              </div>
+            </div>
+          </div>
+          <div className={`${styles.copy} ${styles.copyCenter}`} style={reveal(p, at('home', 0.88), 1)}>
+            <h2 className={styles.display}>{c.table.title}</h2>
+            <div className={styles.line}>{c.table.hint}</div>
+          </div>
+        </>
+      ) : (
+        <div className={`${styles.copy} ${styles.copyRight}`} style={reveal(p, at('bag', 0.7), 1)}>
+          <div className={styles.receipt}>
+            <div className={styles.quote}>{c.door.quote}</div>
+            <div className={styles.who}>
+              <span className={styles.stars}>★★★★★</span> {c.door.who}
+            </div>
+          </div>
+          <div className={styles.line} style={{ marginTop: 8 }}>
+            {c.table.hint}
           </div>
         </div>
-        <div className={styles.line} style={{ marginTop: 8 }}>
-          {c.table.hint}
-        </div>
-      </div>
+      )}
     </>
   );
 }
