@@ -30,6 +30,9 @@ export const scene = {
   glassEdge: 'rgba(251,241,222,0.22)',
 } as const;
 
+// expo-image's web cross-dissolve can stall at the first frame; native fades are fine.
+const FADE = Platform.OS === 'web' ? 0 : 250;
+
 export const sceneFont = {
   display: 'Alegreya_700Bold',
   displayItalic: 'Alegreya_700Bold_Italic',
@@ -61,7 +64,7 @@ export function Scene({
           source={uri}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
-          transition={Platform.OS === 'web' ? 0 : 300}
+          transition={FADE}
           priority="high"
           cachePolicy="memory-disk"
         />
@@ -243,8 +246,8 @@ export function Sign({
   style,
 }: {
   title: string;
-  price?: string;
-  note?: string;
+  price?: string | undefined;
+  note?: string | undefined;
   count?: number;
   countLabel?: string;
   /** Saffron card for "ещё N →". */
@@ -325,7 +328,7 @@ export function VendorCard({
       style={({ pressed }) => [s.vendor, { width, height: Math.round(width * 1.36) }, press.base, pressed && press.down]}
     >
       {photo ? (
-        <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+        <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" transition={FADE} cachePolicy="memory-disk" />
       ) : (
         <View style={[StyleSheet.absoluteFill, { backgroundColor: '#5A3E22' }]} />
       )}

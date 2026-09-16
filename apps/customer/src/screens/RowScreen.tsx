@@ -284,9 +284,9 @@ function StallPage({
                 title={tr(product.name, locale)}
                 price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
                 count={qty}
-                countLabel={t('scene.inCart', { count: qty })}
+                countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
                 onPress={() => onProduct(product.id)}
-                onAdd={() => setQuantity(product.id, qty + 1)}
+                onAdd={() => setQuantity(product.id, qty === 0 ? product.minQuantity || product.quantityStep || 1 : qty + (product.quantityStep || 1))}
               />
             );
           })}

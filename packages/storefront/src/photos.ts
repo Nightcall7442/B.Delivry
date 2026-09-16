@@ -10,6 +10,16 @@
  */
 
 export const PHOTOS: Record<string, string> = {
+  // People and counters for the bazaar scenes (all Wikimedia Commons).
+  // File:An Uzbek woman baking bread in a tandoor1.jpg (CC BY-SA 3.0)
+  'owner-tandoor':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/An_Uzbek_woman_baking_bread_in_a_tandoor1.jpg/500px-An_Uzbek_woman_baking_bread_in_a_tandoor1.jpg',
+  // File:Spice desk at Chorsu Bazaar.jpg (CC BY-SA 4.0)
+  'owner-spices':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Spice_desk_at_Chorsu_Bazaar.jpg/500px-Spice_desk_at_Chorsu_Bazaar.jpg',
+  // File:Mercado de Chorsu 09.jpg (CC BY-SA 4.0) — the handwritten price signs of the green row
+  'counter-signs':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Mercado_de_Chorsu_09.jpg/500px-Mercado_de_Chorsu_09.jpg',
   // File:Carrots of many colors.jpg (public domain)
   'p-carrot':
     'https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Carrots_of_many_colors.jpg/500px-Carrots_of_many_colors.jpg',

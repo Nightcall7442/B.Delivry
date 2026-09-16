@@ -1,323 +1,270 @@
 /**
- * A stall or shop: the morning counter photo as the hero, a white card with
- * name, rating and delivery, "arrived today" rail, category chips and the
- * tile grid; the cart bar sits under the list.
+ * A stall as a scene: the morning counter photo fills the screen, the person
+ * behind it and their line sit on it, then everything on the counter as
+ * cardboard signs — all of it, scrolling over the photo. Tapping the photo
+ * opens it full-size (the "counter now" story); the cart pill floats.
  */
-import { arrivedToday, estimateDelivery, storeTypeLabel, tr } from '@bazar/storefront';
+import { arrivedToday, estimateDelivery, tr, unitLabel } from '@bazar/storefront';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ProductTile } from '@/components/shop/ProductTile';
 import { StoryViewer } from '@/components/shop/Stories';
-import { Bone, Card, LoadError, Page, SectionHead, ui } from '@/components/ui/Page';
 import {
-  Basket,
-  Button,
-  Chip,
-  Clock,
-  Photo,
-  Scooter,
-  Star,
-  Text,
-  color,
-  useLocale,
-} from '@bazar/mobile';
-
+  BasketGlyph,
+  Display,
+  Eyebrow,
+  Glass,
+  Hand,
+  Scene,
+  SceneButton,
+  Sign,
+  scene,
+  sceneFont,
+  useSceneTop,
+} from '@/components/bazar';
+import { Bone, LoadError } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
-import { useCartQuantities } from '@/features/cart/store';
+import { useCart, useCartActions } from '@/features/cart/store';
 import { getStore, listCategories, listProducts } from '@/lib/catalog';
 import { useData, useLoad } from '@/lib/use-data';
+import { ArrowLeft, Clock, Heart, Scooter, Star, useLocale } from '@bazar/mobile';
 
 export function StoreScreen({ storeId }: { storeId: string }) {
   const router = useRouter();
   const { locale, t } = useLocale();
   const { address } = useAddress();
-  const quantities = useCartQuantities();
+  const { quantities } = useCart();
+  const { setQuantity } = useCartActions();
+  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const top = useSceneTop();
   const [category, setCategory] = useState<string | null>(null);
+  const [story, setStory] = useState(false);
 
   const storeLoad = useLoad(() => getStore(storeId), [storeId]);
   const productLoad = useLoad(() => listProducts({ storeId }), [storeId]);
   const store = storeLoad.data;
   const products = productLoad.data ?? [];
-  const refresh = () =>
-    Promise.all([storeLoad.reload(), productLoad.reload()]).then(() => undefined);
   const categories = useData(() => listCategories(), []) ?? [];
+  const units = unitLabel(locale);
 
   const present = useMemo(() => {
     const ids = new Set(products.map((p) => p.categoryId));
     return categories.filter((c) => ids.has(c.id));
   }, [products, categories]);
-  const shown = category ? products.filter((p) => p.categoryId === category) : products;
-  const fresh = products.filter((p) => arrivedToday(p) && p.available);
-
+  const shown = (category ? products.filter((p) => p.categoryId === category) : products).filter(
+    (p) => p.available,
+  );
   const inCart = products.filter((p) => quantities[p.id]);
   const total = inCart.reduce((sum, p) => sum + p.price.amount * (quantities[p.id] ?? 0), 0);
   const estimate =
-    store && address
-      ? estimateDelivery(store.point, address.point, store.preparationMinutes)
-      : null;
-
-  // Tiles two across: pair them up so each row is one flex line.
-  const rows = useMemo(() => {
-    const out: (typeof shown)[] = [];
-    for (let i = 0; i < shown.length; i += 2) out.push(shown.slice(i, i + 2));
-    return out;
-  }, [shown]);
-
+    store && address ? estimateDelivery(store.point, address.point, store.preparationMinutes) : null;
   const hero = store?.counterPhotoUrl ?? store?.coverUrl ?? null;
-  const [story, setStory] = useState(false);
+  const person = store?.ownerPhotoUrl ?? null;
+  const takenAt = store?.counterPhotoAt
+    ? new Date(store.counterPhotoAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })
+    : null;
 
   return (
-    <Page
-      back="/"
-      cart
-      title={store ? tr(store.name, locale) : ''}
-      onRefresh={refresh}
-      footer={
-        inCart.length > 0 ? (
-          <Button
-            label={t.n('cart.items', inCart.length)}
-            trailing={t.money(total)}
-            style={{ justifyContent: 'space-between' }}
-            onPress={() => router.push('/cart')}
-          />
-        ) : undefined
-      }
-    >
+    <View style={{ flex: 1, backgroundColor: scene.night }}>
+      <Scene source={hero} style={StyleSheet.absoluteFill}>
+        <View />
+      </Scene>
+
       {store ? (
-        <>
-          {hero ? (
-            <Pressable
-              onPress={() => setStory(true)}
-              style={s.hero}
-              accessibilityRole="button"
-              accessibilityLabel={t('store.counterNow')}
-            >
-              <Photo uri={hero} style={StyleSheet.absoluteFill} priority="high" />
-              {store.counterPhotoUrl ? (
-                <View style={s.heroTag}>
-                  <Text role="caption" style={{ color: color.white, fontWeight: '600' }}>
-                    {t('store.counterNow')} ·{' '}
-                    {t('store.counterAt', {
-                      time: store.counterPhotoAt
-                        ? new Date(store.counterPhotoAt).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
-                        : '',
-                    })}
-                  </Text>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingTop: Math.round(height * 0.36), paddingBottom: 120 + insets.bottom }}
+        >
+          <Pressable
+            onPress={() => hero && setStory(true)}
+            style={{ height: Math.round(height * 0.2) }}
+            accessibilityRole="button"
+            accessibilityLabel={t('store.counterNow')}
+          />
+          <View style={s.person}>
+            <Eyebrow>
+              {[store.standNumber, store.ownerSince ? t('store.ownerSince', { year: store.ownerSince }) : null]
+                .filter(Boolean)
+                .join(' · ') || tr(store.name, locale)}
+            </Eyebrow>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              {store.ownerName ? (
+                <View style={s.avatar}>
+                  <Text style={s.avatarInitial}>{store.ownerName.slice(0, 1)}</Text>
+                  {person ? (
+                    <Image source={{ uri: person }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
+                  ) : null}
                 </View>
               ) : null}
-            </Pressable>
-          ) : null}
-          {story ? (
-            <StoryViewer stores={[store]} start={0} cta={false} onClose={() => setStory(false)} />
-          ) : null}
-
-          <Card style={s.info}>
-            <View style={s.infoHead}>
-              <Photo
-                uri={store.logoUrl ?? store.coverUrl}
-                style={s.avatar}
-                fallback={<Basket color={color.sand300} />}
-              />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text role="title" numberOfLines={2}>
-                  {tr(store.name, locale)}
-                </Text>
-                <Text role="caption" numberOfLines={1}>
-                  {storeTypeLabel(locale)[store.type]}
-                  {store.description ? ` · ${tr(store.description, locale)}` : ''}
-                </Text>
-              </View>
+              <Display size={store.ownerName ? 40 : 32} style={{ flex: 1 }} numberOfLines={2}>
+                {store.ownerName ?? tr(store.name, locale)}
+              </Display>
             </View>
-            <View style={s.stats}>
-              <View style={s.stat}>
-                <Star size={16} color={color.saffron500} fill={color.saffron500} />
-                <Text role="muted" style={s.statText}>
+            {store.ownerName ? (
+              <Text style={s.storeName} numberOfLines={1}>
+                {tr(store.name, locale)}
+              </Text>
+            ) : null}
+            {store.ownerMotto ? (
+              <Hand size={25} numberOfLines={3}>
+                «{tr(store.ownerMotto, locale)}»
+              </Hand>
+            ) : store.description ? (
+              <Hand size={22} color={scene.creamMuted} numberOfLines={2}>
+                {tr(store.description, locale)}
+              </Hand>
+            ) : null}
+            <View style={s.pills}>
+              <Glass style={s.pill}>
+                <Star size={14} color={scene.saffron} fill={scene.saffron} />
+                <Text style={s.pillText}>
                   {store.rating.toFixed(1)}
+                  {store.reviewCount ? ` · ${store.reviewCount}` : ''}
                 </Text>
-              </View>
-              <View style={s.stat}>
-                <Clock size={16} color={ui.brandDeep} />
-                <Text role="muted" style={s.statText}>
-                  {estimate
-                    ? t('common.eta', { minutes: estimate.etaMinutes })
-                    : t('store.prep', { minutes: store.preparationMinutes })}
+              </Glass>
+              <Glass style={s.pill}>
+                <Clock size={14} color={scene.cream} />
+                <Text style={s.pillText}>
+                  {estimate ? t('common.eta', { minutes: estimate.etaMinutes }) : t('store.prep', { minutes: store.preparationMinutes })}
                 </Text>
-              </View>
+              </Glass>
               {estimate ? (
-                <View style={s.stat}>
-                  <Scooter size={16} color={ui.brandDeep} />
-                  <Text role="muted" style={s.statText}>
-                    {t('store.delivery', { fee: t.money(estimate.fee.amount) })}
-                  </Text>
-                </View>
+                <Glass style={s.pill}>
+                  <Scooter size={14} color={scene.cream} />
+                  <Text style={s.pillText}>{t('store.delivery', { fee: t.money(estimate.fee.amount) })}</Text>
+                </Glass>
               ) : null}
             </View>
             {!store.isOpen ? (
-              <View style={s.closed}>
-                <Text role="muted" style={{ color: color.saffron900 }}>
-                  {t('store.closedHint')}
-                </Text>
-              </View>
+              <Text style={s.closed}>{t('store.closedHint')}</Text>
             ) : null}
-          </Card>
+          </View>
 
-          {store.ownerName ? (
-            <Card style={s.owner}>
-              <View style={s.ownerHead}>
-                <Photo
-                  uri={store.ownerPhotoUrl}
-                  style={s.ownerPhoto}
-                  fallback={
-                    <Text role="section" style={{ color: ui.brandDeep }}>
-                      {store.ownerName.slice(0, 1)}
-                    </Text>
-                  }
-                />
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text role="caption" style={s.ownerEyebrow}>
-                    {t('store.owner').toUpperCase()}
-                  </Text>
-                  <Text role="title" numberOfLines={1}>
-                    {store.ownerName}
-                  </Text>
-                  {store.ownerSince ? (
-                    <Text role="caption">{t('store.ownerSince', { year: store.ownerSince })}</Text>
-                  ) : null}
-                </View>
-              </View>
-              {store.ownerMotto ? (
-                <Text role="body" style={s.ownerMotto}>
-                  «{tr(store.ownerMotto, locale)}»
-                </Text>
-              ) : null}
-            </Card>
-          ) : null}
-
-          {fresh.length > 0 && category === null ? (
-            <>
-              <SectionHead title={t('store.arrivedToday')} />
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={s.rail}
-                contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 12 }}
-              >
-                {fresh.map((product) => (
-                  <ProductTile key={product.id} product={product} compact />
+          <View style={s.counter}>
+            <Eyebrow>
+              {t('scene.onCounter')}
+              {store.counterPhotoUrl && takenAt ? ` · ${t('scene.counterPhotoAt', { time: takenAt })}` : ''}
+            </Eyebrow>
+            {present.length > 1 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips} style={{ marginHorizontal: -20 }}>
+                <Pressable onPress={() => setCategory(null)}>
+                  <Glass style={[s.chip, category === null && s.chipOn]}>
+                    <Text style={[s.chipText, category === null && s.chipTextOn]}>{t('common.all')}</Text>
+                  </Glass>
+                </Pressable>
+                {present.map((c) => (
+                  <Pressable key={c.id} onPress={() => setCategory(c.id)}>
+                    <Glass style={[s.chip, category === c.id && s.chipOn]}>
+                      <Text style={[s.chipText, category === c.id && s.chipTextOn]}>{tr(c.name, locale)}</Text>
+                    </Glass>
+                  </Pressable>
                 ))}
               </ScrollView>
-            </>
-          ) : null}
-
-          {present.length > 1 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={s.chips}
-              contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
-            >
-              <Chip
-                label={t('common.all')}
-                active={category === null}
-                onPress={() => setCategory(null)}
-              />
-              {present.map((c) => (
-                <Chip
-                  key={c.id}
-                  label={tr(c.name, locale)}
-                  active={category === c.id}
-                  onPress={() => setCategory(c.id)}
-                />
-              ))}
-            </ScrollView>
-          ) : null}
-
-          <View style={{ marginTop: 14, gap: 12 }}>
-            {rows.map((pair) => (
-              <View key={pair[0]?.id} style={{ flexDirection: 'row', gap: 12 }}>
-                {pair.map((product) => (
-                  <ProductTile key={product.id} product={product} />
-                ))}
-                {pair.length === 1 ? <View style={{ flex: 1 }} /> : null}
-              </View>
-            ))}
+            ) : null}
+            <View style={s.grid}>
+              {shown.map((product, i) => {
+                const qty = quantities[product.id] ?? 0;
+                return (
+                  <Sign
+                    key={product.id}
+                    style={s.sign}
+                    tilt={[-1, 1, 0.5, -0.5][i % 4] ?? 0}
+                    title={tr(product.name, locale)}
+                    price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
+                    note={arrivedToday(product) ? t('store.arrivedToday') : undefined}
+                    count={qty}
+                    countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
+                    onPress={() => router.push(`/product/${product.id}`)}
+                    onAdd={() => setQuantity(product.id, qty === 0 ? product.minQuantity || product.quantityStep || 1 : qty + (product.quantityStep || 1))}
+                  />
+                );
+              })}
+            </View>
           </View>
-        </>
+        </ScrollView>
       ) : storeLoad.error ? (
-        <LoadError onRetry={() => void refresh()} />
+        <View style={{ padding: 20, paddingTop: top + 60 }}>
+          <LoadError onRetry={() => void Promise.all([storeLoad.reload(), productLoad.reload()])} />
+        </View>
       ) : (
-        <>
-          <Bone style={{ height: 180, marginTop: 4, borderRadius: ui.radius }} />
-          <Bone style={{ height: 96, marginTop: 12 }} />
-          <View style={{ marginTop: 14, gap: 12 }}>
-            {[0, 1].map((row) => (
-              <View key={row} style={{ flexDirection: 'row', gap: 12 }}>
-                <Bone style={{ flex: 1, height: 250 }} />
-                <Bone style={{ flex: 1, height: 250 }} />
-              </View>
-            ))}
-          </View>
-        </>
+        <View style={{ padding: 20, paddingTop: Math.round(height * 0.4), gap: 12 }}>
+          <Bone style={{ height: 40, width: 200 }} />
+          <Bone style={{ height: 24, width: 280 }} />
+        </View>
       )}
-    </Page>
+
+      {story && store ? (
+        <StoryViewer stores={[store]} start={0} cta={false} onClose={() => setStory(false)} />
+      ) : null}
+
+      <View style={[s.top, { top }]}>
+        <SceneButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}>
+          <ArrowLeft size={20} color={scene.ink} />
+        </SceneButton>
+        <SceneButton>
+          <Heart size={20} color={scene.pomegranate} />
+        </SceneButton>
+      </View>
+
+      {inCart.length > 0 ? (
+        <Pressable
+          onPress={() => router.push('/(tabs)/cart')}
+          style={({ pressed }) => [s.cartBar, { bottom: 24 + insets.bottom }, pressed && { opacity: 0.92 }]}
+        >
+          <BasketGlyph color={scene.cream} size={22} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.cartTitle}>{t.n('cart.items', inCart.length)}</Text>
+            <Text style={s.cartSub} numberOfLines={1}>
+              {tr(store?.name ?? null, locale)}
+            </Text>
+          </View>
+          <Text style={s.cartTotal}>{t.money(total)} →</Text>
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  hero: {
-    height: 180,
-    borderRadius: ui.radius,
-    overflow: 'hidden',
-    backgroundColor: color.sand100,
-    marginTop: 4,
-  },
-  heroTag: {
+  top: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' },
+  person: { paddingHorizontal: 20, gap: 8 },
+  avatar: { width: 52, height: 52, borderRadius: 26, borderWidth: 3, borderColor: scene.saffron, backgroundColor: '#3A2A1A', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  avatarInitial: { fontFamily: sceneFont.display, fontSize: 22, color: scene.saffronLight },
+  storeName: { fontFamily: sceneFont.ui, fontSize: 13, color: scene.creamMuted, marginTop: -2 },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  pill: { height: 32, borderRadius: 16, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pillText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
+  closed: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.saffronLight },
+  counter: { paddingHorizontal: 20, paddingTop: 22, gap: 12 },
+  chips: { paddingHorizontal: 20, gap: 6 },
+  chip: { height: 32, borderRadius: 16, paddingHorizontal: 12, justifyContent: 'center' },
+  chipOn: { backgroundColor: scene.cream, borderColor: scene.cream },
+  chipText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
+  chipTextOn: { color: scene.ink },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 14, paddingTop: 4 },
+  sign: { width: '47%', flexGrow: 1 },
+  cartBar: {
     position: 'absolute',
-    left: 12,
-    bottom: 12,
-    backgroundColor: 'rgba(27,31,34,0.65)',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  info: { marginTop: 12, padding: 14 },
-  infoHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: color.sand100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 12 },
-  stat: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  statText: { color: color.ink, fontWeight: '500' },
-  closed: {
-    marginTop: 12,
-    backgroundColor: color.saffron100,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  owner: { marginTop: 12, padding: 14, gap: 10 },
-  ownerHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  ownerPhoto: {
-    width: 56,
+    left: 20,
+    right: 20,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: ui.brandSoft,
+    borderRadius: 18,
+    backgroundColor: scene.pomegranate,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: 18,
+    shadowColor: scene.pomegranate,
+    shadowOpacity: 0.6,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
-  ownerEyebrow: { fontSize: 10, letterSpacing: 1, fontWeight: '700', color: ui.brandDeep },
-  ownerMotto: { fontSize: 15, lineHeight: 22, color: color.ink },
-  rail: { marginHorizontal: -16 },
-  chips: { marginHorizontal: -16, marginTop: 8 },
+  cartTitle: { fontFamily: sceneFont.uiHeavy, fontSize: 13, color: scene.cream },
+  cartSub: { fontFamily: sceneFont.uiText, fontSize: 10.5, color: '#D9C7A6' },
+  cartTotal: { fontFamily: sceneFont.display, fontSize: 18, color: scene.cream },
 });

@@ -57,6 +57,13 @@ const CATEGORIES: CategoryDto[] = [
   category('household', 'Бытовое', 'Maishiy', 8),
 ];
 
+/** 07:40 Tashkent today: the hour the counters are set out. */
+function counterTime(): string {
+  const now = new Date();
+  const local = new Date(now.getTime() + 5 * 3600_000);
+  return `${local.toISOString().slice(0, 10)}T07:40:00+05:00`;
+}
+
 function store(
   id: string,
   ru: string,
@@ -73,6 +80,8 @@ function store(
     description?: string;
     /** The person behind the counter: name, first year here, a line of theirs (ru / uz), photo key. */
     owner?: { name: string; since: number; motto: [ru: string, uz: string]; photo?: string };
+    /** This morning's photo of the counter (photo key). */
+    counter?: string;
   },
 ): MapStoreDto {
   return {
@@ -87,8 +96,8 @@ function store(
     slug: id,
     logoUrl: null,
     coverUrl: PHOTOS[id] ?? null,
-    counterPhotoUrl: null,
-    counterPhotoAt: null,
+    counterPhotoUrl: options.counter ? (PHOTOS[options.counter] ?? null) : null,
+    counterPhotoAt: options.counter ? counterTime() : null,
     promotedUntil: null,
     tags: [],
     phone: '+998 71 200 00 00',
@@ -117,6 +126,7 @@ const STORES: MapStoreDto[] = [
     reviews: 312,
     prep: 20,
     description: 'Зелень и овощи с утренней поставки. Взвешиваем при вас.',
+    counter: 'counter-signs',
     owner: {
       name: 'Фарход-ака',
       since: 2011,
@@ -135,6 +145,7 @@ const STORES: MapStoreDto[] = [
       address: 'Алайский базар, Мирабад',
       point: [41.312, 69.286],
       stand: 'Павильон Б, место 7',
+      counter: 'alay-fruits',
       rating: 4.6,
       reviews: 189,
       prep: 25,
@@ -162,6 +173,7 @@ const STORES: MapStoreDto[] = [
       name: 'Фархад',
       since: 2008,
       motto: ['Разделываю как для своей семьи.', 'Oʻz oilamga kesgandek kesaman.'],
+      photo: 'farhad-meat',
     },
   }),
   store('makro-yunusabad', 'Makro Юнусабад', 'Makro Yunusobod', STORE_TYPE.SUPERMARKET, {
@@ -179,7 +191,15 @@ const STORES: MapStoreDto[] = [
     reviews: 96,
     prep: 10,
     open: false,
+    stand: 'У входа, тандыр',
     description: 'Тандырный хлеб и выпечка. Открываемся в 06:00.',
+    counter: 'owner-tandoor',
+    owner: {
+      name: 'Мунира-опа',
+      since: 2009,
+      motto: ['Тандыр горячий с шести. Оби нон — до десяти, патир по пятницам.', 'Tandir oltidan qizigan. Obi non — oʻngacha, patir juma kuni.'],
+      photo: 'owner-tandoor',
+    },
   }),
   store('ziravor', 'Лавка специй «Зиравор»', 'Ziravor doʻkoni', STORE_TYPE.ENTREPRENEUR, {
     address: 'Базар Чорсу, купольный зал',
@@ -189,6 +209,13 @@ const STORES: MapStoreDto[] = [
     reviews: 63,
     prep: 20,
     description: 'Специи на развес, сухофрукты и орехи.',
+    counter: 'owner-spices',
+    owner: {
+      name: 'Рустам-ака',
+      since: 2014,
+      motto: ['Зиру для плова беру только из Ферганы.', 'Palov uchun zirani faqat Fargʻonadan olaman.'],
+      photo: 'owner-spices',
+    },
   }),
 ];
 
