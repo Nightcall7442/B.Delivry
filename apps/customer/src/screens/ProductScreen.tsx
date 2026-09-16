@@ -325,7 +325,7 @@ const s = StyleSheet.create({
   pillText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
   amount: { paddingHorizontal: 20, paddingTop: 24, gap: 10 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  round: { width: 52, height: 52, borderRadius: 26, backgroundColor: scene.glass, borderWidth: 1, borderColor: 'rgba(251,241,222,0.3)', alignItems: 'center', justifyContent: 'center' },
+  round: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(30,20,8,0.42)', borderWidth: 1, borderColor: 'rgba(251,241,222,0.3)', alignItems: 'center', justifyContent: 'center' },
   roundAccent: { backgroundColor: scene.saffron, borderColor: scene.saffron },
   amountSub: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.creamMuted, textAlign: 'center' },
   lines: { gap: 6, paddingTop: 4 },

@@ -515,8 +515,9 @@ const s = StyleSheet.create({
   vendorText: { position: 'absolute', left: 10, right: 10, bottom: 10, gap: 2 },
   vendorName: { fontFamily: sceneFont.uiHeavy, fontSize: 12.5, color: scene.cream },
   vendorLine: { fontFamily: sceneFont.hand, fontSize: 15, lineHeight: 16, color: scene.saffronLight },
+  // A smoked-glass pill: dark enough to read on a bright melon, light enough to sit on night.
   glass: {
-    backgroundColor: scene.glass,
+    backgroundColor: 'rgba(30,20,8,0.42)',
     borderWidth: 1,
     borderColor: scene.glassEdge,
     borderRadius: 18,

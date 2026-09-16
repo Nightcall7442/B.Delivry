@@ -118,7 +118,7 @@ export const shadow = {
   },
   /** Under primary buttons and the cart disc: the brand colour bleeds into the ground. */
   glow: {
-    shadowColor: '#2C56C4',
+    shadowColor: '#9E2A2B',
     shadowOpacity: 0.32,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },

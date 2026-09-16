@@ -39,23 +39,23 @@ interface Item {
   key: MessageKey;
   href: Href;
   icon: IconComponent;
-  /** A pastel behind the icon on white; in the dark theme every row gets the field grey. */
+  /** The tile behind the icon: pomegranate, saffron or sand tint of the paper. */
   tint: string;
 }
 
 const SERVICES: Item[] = [
   { key: 'menu.subscriptions', href: '/subscriptions', icon: Receipt, tint: color.brand50 },
-  { key: 'menu.plus', href: '/plus', icon: Star, tint: '#FFF4D6' },
-  { key: 'menu.list', href: '/list', icon: Mic, tint: '#EAF0FB' },
-  { key: 'menu.invite', href: '/invite', icon: Heart, tint: '#FDE7E7' },
-  { key: 'menu.business', href: '/business', icon: Basket, tint: '#EDE9FB' },
-  { key: 'menu.docs', href: '/documents', icon: Receipt, tint: '#F3EFE6' },
-  { key: 'menu.neighbour', href: '/neighbour', icon: Scooter, tint: '#E6F6F9' },
+  { key: 'menu.plus', href: '/plus', icon: Star, tint: color.saffron100 },
+  { key: 'menu.list', href: '/list', icon: Mic, tint: color.sand100 },
+  { key: 'menu.invite', href: '/invite', icon: Heart, tint: color.brand50 },
+  { key: 'menu.business', href: '/business', icon: Basket, tint: color.saffron100 },
+  { key: 'menu.docs', href: '/documents', icon: Receipt, tint: color.sand100 },
+  { key: 'menu.neighbour', href: '/neighbour', icon: Scooter, tint: color.saffron100 },
 ];
 const MORE: Item[] = [
-  { key: 'menu.address', href: '/address', icon: Home, tint: '#FDEBD9' },
+  { key: 'menu.address', href: '/address', icon: Home, tint: color.saffron100 },
   { key: 'menu.support', href: '/support', icon: Chat, tint: color.brand50 },
-  { key: 'menu.rules', href: '/rules', icon: Leaf, tint: '#EAF0FB' },
+  { key: 'menu.rules', href: '/rules', icon: Leaf, tint: color.sand100 },
 ];
 
 export function ProfileScreen() {
@@ -168,7 +168,7 @@ export function ProfileScreen() {
             }
             style={s.row}
           >
-            <View style={[s.iconTile, { backgroundColor: '#E6F0FA' }]}>
+            <View style={[s.iconTile, { backgroundColor: color.sand100 }]}>
               <Chat size={20} color={color.ink} />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>

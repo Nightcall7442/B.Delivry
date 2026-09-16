@@ -67,7 +67,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     if (!event.defaultPrevented) navigation.navigate(name);
   };
   const [left, right] = [TABS.slice(0, 2), TABS.slice(2)];
-  // The green pill slides to the active tab: layouts are measured once, the position springs.
+  // The pomegranate pill slides to the active tab: layouts are measured once, the position springs.
   const slots = useRef<Record<string, { x: number; width: number }>>({});
   const pill = useRef(new Animated.ValueXY({ x: -100, y: 0 })).current;
   const moveTo = (name: string | undefined) => {
@@ -102,7 +102,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
         accessibilityState={{ selected: active }}
         accessibilityLabel={t(label)}
       >
-        <Icon size={22} color={active ? ui.brand : color.inkMuted} strokeWidth={active ? 2.4 : 2} />
+        <Icon size={22} color={active ? ui.brand : color.inkMuted} strokeWidth={active ? 2.6 : 2.2} />
         <Text role="caption" style={{ color: active ? ui.brand : color.inkMuted, fontSize: 11 }}>
           {t(label)}
         </Text>
