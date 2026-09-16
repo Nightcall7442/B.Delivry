@@ -19,7 +19,9 @@ import {
   Glass,
   KraftTag,
   RowSign,
+  SCENES,
   Scene,
+  isEvening,
   SceneButton,
   SceneHead,
   VendorCard,
@@ -33,15 +35,6 @@ import { listCategories, listStores } from '@/lib/catalog';
 import { useLoad } from '@/lib/use-data';
 import { Bell, Mic, useAuth, useLocale } from '@bazar/mobile';
 
-const MORNING = require('../../assets/scenes/morning.jpg');
-const EVENING = require('../../assets/scenes/evening.jpg');
-
-/** Tashkent hour: the bazaar lives on its own clock, not the phone's. */
-function tashkentHour(now = new Date()): number {
-  return (now.getUTCHours() + 5) % 24;
-}
-
-const isEvening = (hour: number) => hour >= 17 || hour < 5;
 const TILTS = [-1.5, 1, -1, 1.5, -1, 1];
 
 export function SceneHomeScreen() {
@@ -53,7 +46,7 @@ export function SceneHomeScreen() {
   const count = useCartCount();
   const storeLoad = useLoad(() => listStores(), []);
   const categoryLoad = useLoad(() => listCategories(), []);
-  const evening = isEvening(tashkentHour());
+  const evening = isEvening();
 
   const stores = storeLoad.data ?? [];
   const categories = categoryLoad.data ?? [];
@@ -74,7 +67,7 @@ export function SceneHomeScreen() {
   const failed = !storeLoad.data && storeLoad.error;
 
   return (
-    <Scene source={evening ? EVENING : MORNING} evening={evening}>
+    <Scene source={evening ? SCENES.evening : SCENES.morning} evening={evening}>
       <View style={[s.top, { top }]}>
         <KraftTag>{evening ? 'Чорсу · вечер · до 21:00' : 'Чорсу · утро · +18°'}</KraftTag>
         <View style={{ flexDirection: 'row', gap: 8 }}>

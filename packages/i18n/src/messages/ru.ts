@@ -427,6 +427,7 @@ export const ru = {
   'product.perUnit': 'за {unit}',
   'product.store': 'Продавец',
   'profile.title': 'Профиль',
+  'profile.regular': 'Постоянный покупатель',
   'profile.guest': 'Гость',
   'profile.guestHint': 'Войдите, чтобы видеть заказы, подписки и баланс',
   'profile.account': 'Аккаунт',

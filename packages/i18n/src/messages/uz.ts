@@ -399,6 +399,7 @@ export const uz: Catalogue = {
   'product.perUnit': '{unit} uchun',
   'product.store': 'Sotuvchi',
   'profile.title': 'Profil',
+  'profile.regular': 'Doimiy xaridor',
   'profile.guest': 'Mehmon',
   'profile.guestHint': 'Buyurtmalar, obunalar va balansni koʻrish uchun kiring',
   'profile.account': 'Hisob',

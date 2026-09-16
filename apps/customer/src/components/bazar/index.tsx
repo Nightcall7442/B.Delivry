@@ -43,6 +43,19 @@ export const sceneFont = {
   uiText: 'Manrope_600SemiBold',
 } as const;
 
+/** The two photographs of the rows every scene falls back to, and which one it is now. */
+export const SCENES = {
+  morning: require('../../../assets/scenes/morning.jpg') as ImageSource,
+  evening: require('../../../assets/scenes/evening.jpg') as ImageSource,
+};
+
+/** Tashkent hour: the bazaar lives on its own clock, not the phone's. */
+export function tashkentHour(now = new Date()): number {
+  return (now.getUTCHours() + 5) % 24;
+}
+
+export const isEvening = (hour = tashkentHour()) => hour >= 17 || hour < 5;
+
 /** Full-bleed photograph with the warm scrims; children are laid out on top. */
 export function Scene({
   source,
