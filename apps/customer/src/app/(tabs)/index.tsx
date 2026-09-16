@@ -1,3 +1,3 @@
-import { HomeScreen } from '@/screens/HomeScreen';
+import { SceneHomeScreen } from '@/screens/SceneHomeScreen';
 
-export default HomeScreen;
+export default SceneHomeScreen;

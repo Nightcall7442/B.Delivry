@@ -341,6 +341,12 @@ importers:
       '@bazar/validation':
         specifier: workspace:*
         version: link:../../packages/validation
+      '@expo-google-fonts/alegreya':
+        specifier: ^0.4.1
+        version: 0.4.2
+      '@expo-google-fonts/caveat':
+        specifier: ^0.4.1
+        version: 0.4.2
       '@expo-google-fonts/manrope':
         specifier: ^0.4.2
         version: 0.4.2
@@ -1553,6 +1559,12 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@expo-google-fonts/alegreya@0.4.2':
+    resolution: {integrity: sha512-fE6ckTCI9YMEdTu1TUvbV3RKDZZ14A+rhEik0dn7gXhfoYaaQnFO/ogSgFGl/aIC0PK4OIbqvmM1cfE7ejNw9g==}
+
+  '@expo-google-fonts/caveat@0.4.2':
+    resolution: {integrity: sha512-kCG35tRUX8Wi+u0Jh5ck3K1u7vZkdLnwRTuKMrEnlVmikvxQFXN1KjF5cL2vqRG7Hwm7648Zl8xe1BWAoIsPCA==}
 
   '@expo-google-fonts/manrope@0.4.2':
     resolution: {integrity: sha512-BZsKe8d9BJrVnIQIZcTS7/Kac0TbXnqs/+8EBSiQxrmK6GoCO6eTkmr50D1weIk/EoF20pTmAkpWICnovATr/g==}
@@ -7297,6 +7309,10 @@ snapshots:
 
   '@esbuild/win32-x64@0.28.2':
     optional: true
+
+  '@expo-google-fonts/alegreya@0.4.2': {}
+
+  '@expo-google-fonts/caveat@0.4.2': {}
 
   '@expo-google-fonts/manrope@0.4.2': {}
 
