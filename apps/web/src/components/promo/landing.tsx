@@ -23,6 +23,8 @@ const SEGMENTS = [
   { key: 'dome', frames: 96, vh: 260 },
   { key: 'bazaar', frames: 96, vh: 400 },
   { key: 'bag', frames: 96, vh: 240 },
+  { key: 'road', frames: 120, vh: 320 },
+  { key: 'home', frames: 120, vh: 360 },
 ] as const;
 /** Frames stacked per strip file (see the ffmpeg `tile=1x8` in the frame build). */
 const PER = 8;
