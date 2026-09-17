@@ -9,20 +9,16 @@
 'use client';
 
 import { createT } from '@bazar/i18n';
-import { arrivedToday, photo, tr, unitLabel } from '@bazar/storefront';
+import { arrivedToday, photo, tr } from '@bazar/storefront';
 import type { CategoryDto, ProductDto, StoreDto } from '@bazar/types';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
-import { Bag, Bell, Mic } from '@/components/go/icons';
+import { Bell } from '@/components/go/icons';
 import { useAuth } from '@/features/auth';
-import { useCartActions, useCartQuantities } from '@/features/cart';
 
+import { BasketBar, ProductCard, isEvening } from './index';
 import s from './bazar.module.css';
-
-/** Tashkent hour: the bazaar lives on its own clock, not the visitor's. */
-const tashkentHour = (now = new Date()) => (now.getUTCHours() + 5) % 24;
-const isEvening = (hour = tashkentHour()) => hour >= 17 || hour < 5;
 
 /** The motto is a sentence; the card has room for four words of it. */
 function shortLine(text: string): string {
@@ -42,10 +38,7 @@ export function BazaarHome({
   locale: string;
 }) {
   const t = createT(locale);
-  const units = unitLabel(locale);
   const { user } = useAuth();
-  const quantities = useCartQuantities();
-  const { setQuantity } = useCartActions();
   const evening = isEvening();
   const home = `/${locale}`;
 
@@ -65,12 +58,6 @@ export function BazaarHome({
       .filter((p) => p.available && (open.size === 0 || open.has(p.storeId)))
       .sort((a, b) => fresh(b) - fresh(a) || a.storeId.localeCompare(b.storeId));
   }, [products, stores]);
-  const inCart = counter.filter((p) => quantities[p.id]);
-  const total = inCart.reduce((sum, p) => sum + p.price.amount * (quantities[p.id] ?? 0), 0);
-  const stalls = new Set(inCart.map((p) => p.storeId));
-  // One stall goes straight to checkout; several — the receipts decide how many trips it is.
-  const checkoutHref =
-    stalls.size === 1 ? `${home}/checkout?store=${[...stalls][0]}` : `${home}/cart`;
 
   const dateLine = new Intl.DateTimeFormat(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', {
     weekday: 'long',
@@ -161,80 +148,21 @@ export function BazaarHome({
           <h2 className={s.headTitle}>{t('scene.onCounterToday')}</h2>
         </div>
         <div className={s.grid}>
-          {counter.map((product, i) => {
-            const qty = quantities[product.id] ?? 0;
-            const stall = stores.find((store) => store.id === product.storeId);
-            const image = product.images[0]?.url ?? null;
-            const step = product.quantityStep || 1;
-            const add = () => setQuantity(product.id, qty === 0 ? product.minQuantity || step : qty + step);
-            return (
-              <div key={product.id} className={s.card}>
-                <Link
-                  href={`${home}/stores/${product.storeId}`}
-                  className={s.cardPhoto}
-                  style={image ? { backgroundImage: `url(${photo(image, 960)})` } : undefined}
-                  aria-label={tr(product.name, locale)}
-                />
-                <div
-                  className={`${s.sign} ${i % 2 ? s.signRight : ''} ${qty > 0 ? s.signChosen : ''}`}
-                  style={{ transform: `rotate(${[-1.2, 1, 0.6, -0.8][i % 4]}deg)` }}
-                >
-                  <div className={s.signTitle}>{tr(product.name, locale)}</div>
-                  <div className={s.signPrice}>
-                    {t.money(product.price.amount)} <small>/ {units[product.unit]}</small>
-                  </div>
-                  {product.description ? <div className={s.signSay}>«{tr(product.description, locale)}»</div> : null}
-                  <div className={s.signNote}>
-                    {[stall ? (stall.ownerName ?? tr(stall.name, locale)) : null, arrivedToday(product) ? t('store.arrivedToday') : null]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </div>
-                  <button type="button" onClick={add} className={`${s.plus} ${qty > 0 ? s.plusChosen : ''}`} aria-label={t('common.add')}>
-                    {qty > 0 ? t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` }) : '+'}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          {counter.map((product, i) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              stall={stores.find((store) => store.id === product.storeId)}
+              locale={locale}
+              t={t}
+              index={i}
+              href={`${home}/stores/${product.storeId}`}
+            />
+          ))}
         </div>
       </div>
 
-      <div className={s.bar}>
-        <div className={s.barInner}>
-          {inCart.length > 0 ? (
-            <>
-              <Link href={checkoutHref} className={s.checkout}>
-                <Bag />
-                <span>
-                  <div className={s.checkoutTitle}>{t('cart.checkout')}</div>
-                  <div className={s.checkoutSub}>
-                    {t.n('cart.items', inCart.length)} · {t.money(total)}
-                  </div>
-                </span>
-                <span className={s.checkoutArrow}>→</span>
-              </Link>
-              <Link href={`${home}/list`} className={s.disc} style={{ background: 'rgba(30,20,8,0.55)', boxShadow: 'none' }} aria-label={t('scene.say')}>
-                <Mic />
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href={`${home}/list`} className={s.glass}>
-                <span style={{ color: 'var(--saffron)' }}>
-                  <Mic />
-                </span>
-                <span style={{ minWidth: 0 }}>
-                  <div className={s.glassTitle}>{t(evening ? 'scene.sayEvening' : 'scene.say')}</div>
-                  <div className={s.glassHint}>{t('scene.sayHint')}</div>
-                </span>
-              </Link>
-              <Link href={`${home}/cart`} className={`${s.disc} ${evening ? s.discEvening : ''}`} aria-label={t('cart.title')}>
-                <Bag />
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
+      <BasketBar products={counter} locale={locale} t={t} evening={evening} />
     </main>
   );
 }

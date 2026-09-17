@@ -470,3 +470,84 @@
     min-height: 36vh;
   }
 }
+
+/* ---- the stall: person block, pills, chips ---- */
+.person {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.avatar {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid var(--saffron);
+  background: #3a2a1a center / cover no-repeat;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--saffron-light);
+  overflow: hidden;
+}
+.storeName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cream-muted);
+  margin-top: 2px;
+}
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cream);
+  background: rgba(30, 20, 8, 0.45);
+  border: 1px solid rgba(251, 241, 222, 0.28);
+  backdrop-filter: blur(8px);
+}
+.pill svg {
+  color: var(--saffron);
+}
+.pillWarn {
+  color: var(--saffron-light);
+}
+.headMeta {
+  font-family: var(--font-display), 'Manrope', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cream-muted);
+}
+.chip {
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(251, 241, 222, 0.28);
+  background: rgba(30, 20, 8, 0.45);
+  color: var(--cream);
+  font: 700 12px var(--font-display), 'Manrope', sans-serif;
+  cursor: pointer;
+}
+.chipOn {
+  background: var(--cream);
+  color: var(--ink);
+  border-color: var(--cream);
+}
+.discGlass {
+  background: rgba(30, 20, 8, 0.55);
+  border: 1px solid rgba(251, 241, 222, 0.28);
+  box-shadow: none;
+}
