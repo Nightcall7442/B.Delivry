@@ -1,4 +1,4 @@
-import { CartScreen } from '@/components/go/cart-screen';
+import { BazaarCart } from '@/components/bazar/cart';
 import { listProducts, listStores } from '@/lib/catalog';
 
 export const metadata = { title: 'Корзина — Bazar Delivery' };
@@ -9,5 +9,5 @@ export default async function CartPage({ params }: { params: Promise<{ locale: s
   // ponytail: the basket holds product ids only, so the page loads the whole
   // catalogue to price it. Fine at 24 products; a by-ids endpoint replaces this.
   const [products, stores] = await Promise.all([listProducts(locale), listStores(locale)]);
-  return <CartScreen products={products} stores={stores} locale={locale} />;
+  return <BazaarCart products={products} stores={stores} locale={locale} />;
 }

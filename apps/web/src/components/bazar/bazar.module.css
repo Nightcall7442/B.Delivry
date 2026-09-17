@@ -551,3 +551,300 @@
   border: 1px solid rgba(251, 241, 222, 0.28);
   box-shadow: none;
 }
+
+/* ---- the receipts: one paper slip per stall ---- */
+.photoDim::after {
+  background: linear-gradient(180deg, rgba(30, 20, 8, 0.55) 0%, rgba(30, 20, 8, 0.78) 40%, rgba(30, 20, 8, 0.92) 100%);
+}
+.narrow {
+  max-width: 640px;
+}
+.notice {
+  margin: 0 0 14px;
+  font: 700 20px/1.2 var(--font-hand), 'Caveat', cursive;
+  color: var(--saffron-light);
+}
+.oneTrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: var(--pomegranate);
+  color: var(--cream);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+  text-decoration: none;
+}
+.oneTrip b {
+  display: block;
+  font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.oneTrip small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+.receipt {
+  position: relative;
+  margin: 0 0 22px;
+  padding: 22px 22px 20px;
+  color: var(--ink);
+  /* the shadow follows the perforated edge, so it goes on the section, the paper on a masked layer */
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.42));
+}
+.receipt::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--paper);
+  mask-image:
+    linear-gradient(#000, #000),
+    radial-gradient(circle at 50% 0, #000 6px, transparent 6.5px),
+    radial-gradient(circle at 50% 100%, #000 6px, transparent 6.5px);
+  mask-size: 100% 100%, 20px 12px, 20px 12px;
+  mask-position: 0 0, 0 0, 0 100%;
+  mask-repeat: no-repeat, repeat-x, repeat-x;
+  mask-composite: subtract;
+}
+.rcHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--paper-edge);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7a6749;
+}
+.rcTitle {
+  color: var(--pomegranate);
+}
+.rcVendor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 6px;
+  color: inherit;
+  text-decoration: none;
+}
+.avatarSmall {
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  flex: none;
+}
+.rcVendorName {
+  display: block;
+  font: 700 22px/1.15 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.rcVendorMeta {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: #7a6749;
+}
+.rcLines {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.rcLine {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px dashed var(--paper-edge);
+}
+.thumb {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--kraft) center / cover;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+.rcName {
+  font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.rcUnit {
+  margin-top: 2px;
+  font-size: 13px;
+  color: #7a6749;
+}
+.rcSum {
+  flex: none;
+  font: 700 26px/1 var(--font-hand), 'Caveat', cursive;
+  color: var(--pomegranate);
+  padding-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.rcHaggle {
+  margin-top: 4px;
+  font: 700 17px/1.2 var(--font-hand), 'Caveat', cursive;
+  color: var(--pomegranate);
+}
+.rcAsk {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+.rcField {
+  width: 130px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--paper-edge);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+.rcLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 700 17px/1.2 var(--font-hand), 'Caveat', cursive;
+  color: var(--pomegranate);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: var(--kraft);
+  overflow: hidden;
+}
+.stepper button {
+  width: 38px;
+  height: 34px;
+  border: 0;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ink);
+  cursor: pointer;
+}
+.stepper button:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+.stepper span {
+  min-width: 64px;
+  text-align: center;
+  font: 700 18px/1 var(--font-hand), 'Caveat', cursive;
+}
+.rcTotals {
+  margin: 4px 0 0;
+  padding-top: 12px;
+  border-top: 1px dashed var(--paper-edge);
+}
+.rcRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  font-size: 14px;
+  color: #7a6749;
+  font-variant-numeric: tabular-nums;
+}
+.rcRow dd {
+  margin: 0;
+}
+.rcRowStrong {
+  margin-top: 4px;
+  color: var(--ink);
+  font: 700 22px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.rcRowStrong dd {
+  font: 700 30px/1 var(--font-hand), 'Caveat', cursive;
+  color: var(--pomegranate);
+}
+.rcHint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #7a6749;
+}
+.rcWarn {
+  color: var(--pomegranate);
+}
+.rcEmpty {
+  margin: 22px 0 0;
+  font: 700 30px/1.1 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.stamp {
+  display: inline-block;
+  margin: 12px 0 0;
+  padding: 6px 12px;
+  border: 2px solid var(--pomegranate);
+  border-radius: 8px;
+  font: 700 18px/1 var(--font-hand), 'Caveat', cursive;
+  color: var(--pomegranate);
+  transform: rotate(-3deg);
+  opacity: 0.8;
+}
+.rcActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+}
+.rcCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: var(--pomegranate);
+  color: var(--cream);
+  font: 700 18px/1 var(--font-serif), 'Alegreya', Georgia, serif;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(158, 42, 43, 0.35);
+}
+.rcCta:hover {
+  background: #7e1f21;
+}
+.share {
+  display: block;
+  width: 100%;
+  margin: 8px 0 0;
+  padding: 16px 18px;
+  border: 1px dashed rgba(251, 241, 222, 0.4);
+  border-radius: 18px;
+  background: rgba(251, 241, 222, 0.06);
+  color: var(--cream);
+  text-align: left;
+  cursor: pointer;
+}
+.share b {
+  display: block;
+  font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.share small {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--cream-muted);
+}
+@media (max-width: 640px) {
+  .receipt {
+    padding: 18px 16px 16px;
+    margin-left: -4px;
+    margin-right: -4px;
+  }
+  .rcSum {
+    font-size: 22px;
+  }
+}
