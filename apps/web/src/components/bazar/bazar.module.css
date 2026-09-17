@@ -1,0 +1,472 @@
+/*
+ * The bazaar language on the web — the same pieces the customer app has:
+ * a photograph as the ground, cardboard price signs on pushpins, kraft tags,
+ * smoked-glass pills, people as tall cards. Colours are the scene's own
+ * (they sit on a photo, so they do not follow the site theme).
+ */
+.scene {
+  --cream: #fbf1de;
+  --cream-muted: #d9c7a6;
+  --ink: #2b1b0e;
+  --night: #1e1408;
+  --paper: #f4efe4;
+  --paper-edge: #c9b99a;
+  --kraft: #ead8b2;
+  --pomegranate: #9e2a2b;
+  --saffron: #e39b2f;
+  --saffron-light: #f2c56b;
+  position: relative;
+  min-height: 100dvh;
+  background: var(--night);
+  color: var(--cream);
+  font-family: var(--font-display), 'Manrope', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.photo {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+}
+.photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(20, 12, 4, 0.55) 0%,
+    rgba(20, 12, 4, 0.05) 22%,
+    rgba(20, 12, 4, 0) 40%,
+    rgba(24, 14, 4, 0.55) 60%,
+    rgba(24, 14, 4, 0.95) 100%
+  );
+}
+.photoEvening::after {
+  background:
+    linear-gradient(to bottom left, rgba(242, 169, 59, 0.45), rgba(242, 169, 59, 0) 45%),
+    linear-gradient(
+      rgba(20, 16, 12, 0.7) 0%,
+      rgba(20, 16, 12, 0.1) 22%,
+      rgba(20, 16, 12, 0.05) 40%,
+      rgba(20, 16, 12, 0.7) 60%,
+      rgba(20, 16, 12, 0.98) 100%
+    );
+}
+.body {
+  position: relative;
+  z-index: 1;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 4vw, 40px) 140px;
+}
+
+/* ---- top row: tag left, round buttons right ---- */
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: clamp(16px, 3vh, 28px);
+}
+.round {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(251, 241, 222, 0.92);
+  color: var(--ink);
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease;
+}
+.round:hover {
+  transform: translateY(-1px);
+}
+.round b {
+  color: var(--pomegranate);
+}
+
+/* ---- type ---- */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--saffron-light);
+}
+.display {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(44px, 7vw, 84px);
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  color: var(--cream);
+  text-wrap: balance;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+  margin: 6px 0 0;
+}
+.displayEvening {
+  font-style: italic;
+}
+.hand {
+  font-family: var(--font-hand), cursive;
+  color: var(--saffron-light);
+  line-height: 1.05;
+}
+.greeting {
+  padding-top: clamp(28px, 6vh, 64px);
+  min-height: 42vh;
+}
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 28px 0 12px;
+}
+.headTitle {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(22px, 2.6vw, 30px);
+  color: var(--cream);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+  margin: 0;
+}
+.headAction {
+  font-family: var(--font-hand), cursive;
+  font-size: 20px;
+  color: var(--saffron-light);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* ---- kraft luggage tag ---- */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 10px;
+  background: var(--kraft);
+  color: var(--ink);
+  font-family: var(--font-hand), cursive;
+  font-size: 20px;
+  line-height: 1;
+  border-radius: 3px;
+  transform: rotate(-2deg);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.tag::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid #b8a27a;
+}
+
+/* ---- rails ---- */
+.rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 6px 0 14px;
+  margin: 0 calc(-1 * clamp(20px, 4vw, 40px));
+  padding-left: clamp(20px, 4vw, 40px);
+  padding-right: clamp(20px, 4vw, 40px);
+}
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* a person: tall photo card, name and their line */
+.vendor {
+  position: relative;
+  flex: 0 0 auto;
+  width: 132px;
+  height: 180px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #3a2a1a center / cover no-repeat;
+  text-decoration: none;
+  color: var(--cream);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+  transition: transform 0.15s ease;
+}
+.vendor:hover {
+  transform: translateY(-3px);
+}
+.vendor::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 40%, rgba(20, 12, 4, 0.92));
+}
+.vendorText {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 1;
+  display: grid;
+  gap: 2px;
+}
+.vendorName {
+  font-size: 13px;
+  font-weight: 800;
+}
+.vendorLine {
+  font-family: var(--font-hand), cursive;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--saffron-light);
+}
+
+/* row-name sign: the uppercase word on cardboard with a pushpin */
+.rowSign {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 6px 12px 5px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  color: #1f1a14;
+  font-family: var(--font-hand), cursive;
+  font-size: 20px;
+  line-height: 1;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  margin-top: 6px;
+}
+.pin {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: #b42a31;
+  border: 1px solid #8e1f26;
+}
+
+/* ---- product cards: photo with the sign hanging off a corner ---- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 28px 20px;
+  padding-top: 6px;
+}
+.card {
+  position: relative;
+  padding-bottom: 6px;
+}
+.cardPhoto {
+  display: block;
+  aspect-ratio: 1.3;
+  border-radius: 12px;
+  background: #3a2a1a center / cover no-repeat;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+.cardPhoto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(transparent 55%, rgba(20, 12, 4, 0.5));
+  pointer-events: none;
+}
+.sign {
+  position: relative;
+  display: grid;
+  gap: 3px;
+  margin: -30px 56px 0 14px;
+  padding: 10px 14px 10px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  color: #1f1a14;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+  transform: rotate(-1deg);
+}
+.signRight {
+  margin: -30px 14px 0 56px;
+  transform: rotate(1deg);
+}
+.signChosen {
+  border-color: var(--saffron);
+  box-shadow: 0 0 0 2px var(--saffron), 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+.signTitle {
+  font-family: var(--font-hand), cursive;
+  font-size: 22px;
+  line-height: 1;
+  text-transform: uppercase;
+  padding-right: 18px;
+}
+.signPrice {
+  font-family: var(--font-hand), cursive;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--pomegranate);
+}
+.signPrice small {
+  font-size: 15px;
+  color: #6a5a45;
+}
+.signSay {
+  font-family: var(--font-hand), cursive;
+  font-size: 17px;
+  line-height: 1.05;
+  color: #3a2a1a;
+}
+.signNote {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6a5a45;
+}
+.plus {
+  position: absolute;
+  right: -8px;
+  top: -8px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pomegranate);
+  color: var(--cream);
+  font-weight: 800;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+.plusChosen {
+  top: auto;
+  bottom: -10px;
+  background: var(--saffron);
+  color: var(--ink);
+  font-size: 12px;
+  font-family: var(--font-display), 'Manrope', sans-serif;
+}
+
+/* ---- the bottom bar: voice line + basket disc, or «Оформить» ---- */
+.bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px calc(20px + env(safe-area-inset-bottom));
+  pointer-events: none;
+  background: linear-gradient(rgba(30, 20, 8, 0), rgba(30, 20, 8, 0.85));
+}
+.barInner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(560px, 100%);
+  pointer-events: auto;
+}
+.glass {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 16px;
+  border-radius: 18px;
+  background: rgba(30, 20, 8, 0.55);
+  border: 1px solid rgba(251, 241, 222, 0.28);
+  backdrop-filter: blur(10px);
+  color: var(--cream);
+  text-decoration: none;
+}
+.glassTitle {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 17px;
+}
+.glassHint {
+  font-size: 11px;
+  color: var(--cream-muted);
+}
+.disc {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--pomegranate);
+  color: var(--cream);
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(158, 42, 43, 0.5);
+}
+.discEvening {
+  background: var(--saffron);
+  color: var(--night);
+}
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--saffron);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+.checkout {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 18px;
+  border-radius: 18px;
+  background: var(--pomegranate);
+  color: var(--cream);
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(158, 42, 43, 0.5);
+}
+.checkoutTitle {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+.checkoutSub {
+  font-size: 11px;
+  color: #d9c7a6;
+}
+.checkoutArrow {
+  margin-left: auto;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 20px;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .greeting {
+    min-height: 36vh;
+  }
+}

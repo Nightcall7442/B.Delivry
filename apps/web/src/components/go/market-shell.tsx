@@ -99,10 +99,10 @@ export function MarketShell({
           ) : null}
           <Link
             href={`/${locale}`}
-            className="hidden shrink-0 font-display text-2xl font-extrabold tracking-tight text-ink md:block"
+            className="hidden shrink-0 font-serif text-[26px] font-bold tracking-tight text-ink md:block"
           >
             {appName}
-            <span className="text-brand-500">.</span>
+            <span className="text-saffron-500">.</span>
           </Link>
           <Link
             href={`/${locale}/address`}

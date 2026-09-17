@@ -4,7 +4,7 @@
  */
 import { brandingCss } from '@bazar/storefront';
 import type { Metadata, Viewport } from 'next';
-import { Manrope, Roboto } from 'next/font/google';
+import { Alegreya, Caveat, Manrope, Roboto } from 'next/font/google';
 import { headers } from 'next/headers';
 
 import { Providers } from '@/app/providers';
@@ -25,6 +25,21 @@ const manrope = Manrope({
   subsets: ['latin', 'cyrillic'],
   weight: ['600', '700', '800'],
   variable: '--font-display',
+  display: 'swap',
+});
+
+const alegreya = Alegreya({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['500', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-serif',
+  display: 'swap',
+});
+
+const caveat = Caveat({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['700'],
+  variable: '--font-hand',
   display: 'swap',
 });
 
@@ -67,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="ru"
-      className={`${roboto.variable} ${manrope.variable}`}
+      className={`${roboto.variable} ${manrope.variable} ${alegreya.variable} ${caveat.variable}`}
       data-tenant={tenant.slug}
       // The theme stamp is added before hydration by the inline script above.
       suppressHydrationWarning
