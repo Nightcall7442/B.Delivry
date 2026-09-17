@@ -46,7 +46,7 @@ export function BazaarLogin({ locale }: { locale: string }) {
   const router = useRouter();
   // `next` must stay on this site: a relative path, never `//evil` or a full URL.
   const raw = useSearchParams().get('next');
-  const next = raw && raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/\') ? raw : null;
+  const next = raw && raw.startsWith('/') && !['/', '\\'].includes(raw.charAt(1)) ? raw : null;
   const { user, ready, requestCode, verifyCode } = useAuth();
   const evening = isEvening();
   const home = `/${locale}`;
