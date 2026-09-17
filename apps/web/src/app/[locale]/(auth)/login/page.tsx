@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
-import { LoginScreen } from '@/components/go/login-screen';
+import { BazaarLogin } from '@/components/bazar/login';
 
 export const metadata: Metadata = { title: 'Вход — Bazar Delivery' };
 
@@ -9,7 +9,7 @@ export default async function LoginPage({ params }: { params: Promise<{ locale: 
   const { locale } = await params;
   return (
     <Suspense>
-      <LoginScreen locale={locale} />
+      <BazaarLogin locale={locale} />
     </Suspense>
   );
 }

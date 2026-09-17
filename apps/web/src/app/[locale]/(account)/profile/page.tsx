@@ -1,10 +1,8 @@
-/**
- * Route (account)/profile/page.tsx
- *
- */
-import { PagePlaceholder } from '@/components/layout/page-placeholder';
+import { BazaarProfile } from '@/components/bazar/profile';
+
+export const metadata = { title: 'Профиль — Bazar Delivery' };
 
 export default async function ProfilePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  return <PagePlaceholder title="Профиль" locale={locale} />;
+  return <BazaarProfile locale={locale} />;
 }
