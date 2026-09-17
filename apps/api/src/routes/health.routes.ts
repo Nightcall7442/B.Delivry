@@ -42,8 +42,15 @@ export function healthRoutes(container: Container) {
     // Dev only (the env schema refuses the console provider in production):
     // the "SMS" the console provider swallowed, so a tester can read their own
     // OTP from a phone instead of the server log. Refreshes itself.
+    // Off the local machine the page is a way into every account, so a public
+    // host guards it with DEV_SMS_KEY: /dev/sms?key=… (no key set → local only).
     if (container.config.notifications.sms.provider === 'console') {
-      app.get('/dev/sms', async (_request, reply) => {
+      app.get('/dev/sms', async (request, reply) => {
+        const key = process.env.DEV_SMS_KEY;
+        const given = (request.query as { key?: string }).key;
+        if (key ? given !== key : !['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(request.ip)) {
+          return reply.code(404).send({ ok: false });
+        }
         const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
         const rows = ConsoleSmsProvider.recent
           .map(
