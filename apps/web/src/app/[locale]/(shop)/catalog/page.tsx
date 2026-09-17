@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 
-import { CatalogScreen } from '@/components/go/catalog-screen';
+import { BazaarCatalog } from '@/components/bazar/catalog';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 
-export const metadata: Metadata = { title: 'Поиск — Bazar Delivery' };
+export const metadata: Metadata = { title: 'Карта рядов — Bazar Delivery' };
 export const dynamic = 'force-dynamic';
 
 type Search = { category?: string; q?: string };
@@ -28,7 +28,7 @@ export default async function CatalogPage({
   ]);
 
   return (
-    <CatalogScreen
+    <BazaarCatalog
       products={products}
       stores={stores}
       categories={categories}

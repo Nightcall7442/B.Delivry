@@ -1109,3 +1109,156 @@
 .rcPre {
   white-space: pre-line;
 }
+
+/* ---- the map of rows: a plan of the hall on kraft ---- */
+.search {
+  margin-top: 14px;
+  max-width: 560px;
+}
+.search input {
+  width: 100%;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(251, 241, 222, 0.28);
+  background: rgba(30, 20, 8, 0.55);
+  backdrop-filter: blur(10px);
+  color: var(--cream);
+  font: italic 500 17px var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.search input::placeholder {
+  color: var(--cream-muted);
+}
+.search input:focus {
+  outline: none;
+  border-color: var(--saffron);
+}
+.narrowSlip {
+  max-width: 640px;
+}
+.kraft {
+  max-width: 760px;
+  margin: 0 0 30px;
+  padding: 16px 16px 20px;
+  border-radius: 6px;
+  background: var(--kraft);
+  color: var(--ink);
+  transform: rotate(-0.4deg);
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.4);
+}
+.kraftEyebrow {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7a6749;
+}
+.gate {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 8px;
+}
+.gate > span:not(.gateText) {
+  flex: 1;
+  border-top: 2px dashed rgba(43, 27, 14, 0.35);
+}
+.gateText {
+  font: 700 20px/1 var(--font-hand), 'Caveat', cursive;
+}
+.hall {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+.hall::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  border-left: 1.5px dashed rgba(43, 27, 14, 0.3);
+}
+.pair {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 28px 1fr;
+  align-items: stretch;
+  gap: 4px;
+}
+.stepDown {
+  align-self: center;
+  justify-self: center;
+  padding: 2px 0;
+  background: var(--kraft);
+  font: 700 16px/1 var(--font-hand), 'Caveat', cursive;
+  opacity: 0.45;
+}
+.counter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 112px;
+  padding: 14px 10px 10px;
+  border: 1.5px dashed var(--ink);
+  border-radius: 4px;
+  background: var(--paper);
+  color: inherit;
+  text-decoration: none;
+}
+.counter:hover {
+  background: #fbf7ec;
+}
+.counterEmpty {
+  opacity: 0.55;
+  cursor: default;
+}
+.counterHint {
+  font: 700 17px/1.2 var(--font-hand), 'Caveat', cursive;
+  color: #7a6749;
+}
+.faces {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+.face {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--saffron);
+  background: var(--kraft) center / cover;
+  font: 700 13px var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.face + .face {
+  margin-left: -8px;
+}
+.faceNames {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #7a6749;
+}
+.counterCount {
+  margin-top: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--pomegranate);
+}
+.dome {
+  margin-top: 12px;
+  text-align: center;
+  font: 700 18px/1.2 var(--font-hand), 'Caveat', cursive;
+  color: #7a6749;
+}
