@@ -7,11 +7,11 @@
 FROM node:22-alpine
 RUN corepack enable && corepack prepare pnpm@10.28.0 --activate && apk add --no-cache openssl
 WORKDIR /app
-COPY --chown=node:node . .
-USER node
+COPY . .
 RUN pnpm install --frozen-lockfile --filter "@bazar/api..."
 WORKDIR /app/apps/api
-RUN node node_modules/prisma/build/index.js generate && mkdir -p .storage .tessdata
+RUN node node_modules/prisma/build/index.js generate && mkdir -p .storage .tessdata && chown -R node:node .storage .tessdata
+USER node
 ENV NODE_ENV=production API_HOST=0.0.0.0
 EXPOSE 4000
 # SEED_ON_BOOT=1 runs the (idempotent) reference seed before the server: set it for one deploy, then unset.
