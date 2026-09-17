@@ -5,8 +5,14 @@ node_modules
 **/.turbo
 **/dist
 **/coverage
+**/.storage
 apps/api/.local
 apps/api/.tessdata
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
 .git
 .claude
 *.log
