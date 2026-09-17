@@ -14,4 +14,5 @@ WORKDIR /app/apps/api
 RUN node node_modules/prisma/build/index.js generate && mkdir -p .storage .tessdata
 ENV NODE_ENV=production API_HOST=0.0.0.0
 EXPOSE 4000
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && API_PORT=${PORT:-4000} pnpm exec tsx src/main.ts"]
+# SEED_ON_BOOT=1 runs the (idempotent) reference seed before the server: set it for one deploy, then unset.
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && if [ \"$SEED_ON_BOOT\" = 1 ]; then pnpm exec tsx prisma/seed.ts; fi && API_PORT=${PORT:-4000} pnpm exec tsx src/main.ts"]
