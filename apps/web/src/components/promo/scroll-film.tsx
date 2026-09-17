@@ -188,10 +188,18 @@ export function ScrollFilm({
   return (
     <section id={id} ref={track} className={styles.track} style={{ height: `${height}vh` }}>
       <div className={styles.sticky}>
-        <canvas ref={canvas} className={styles.canvas} style={{ backgroundImage: `url(${poster})` }} />
+        <canvas
+          ref={canvas}
+          className={styles.canvas}
+          style={{ backgroundImage: `url(${poster})` }}
+        />
         <div className={styles.grain} />
         {children(progress)}
-        <div className={styles.veil} style={{ opacity: veiled ? 1 : 0, pointerEvents: veiled ? 'auto' : 'none' }} aria-hidden={!veiled}>
+        <div
+          className={styles.veil}
+          style={{ opacity: veiled ? 1 : 0, pointerEvents: veiled ? 'auto' : 'none' }}
+          aria-hidden={!veiled}
+        >
           <div className={styles.veilLine}>{loading}</div>
           <div className={styles.veilBar}>
             <i style={{ transform: `scaleX(${loaded})` }} />

@@ -20,7 +20,6 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 import { GoShell } from '@/components/go/go-shell';
-import { DEFAULT_POINT, useAddress } from '@/features/address';
 import { useCartActions, useCartQuantities } from '@/features/cart';
 
 export function BundleScreen({
@@ -36,7 +35,6 @@ export function BundleScreen({
 }) {
   const t = createT(locale);
   const router = useRouter();
-  const { address } = useAddress();
   const quantities = useCartQuantities();
   const { setQuantity } = useCartActions();
   const [added, setAdded] = useState(false);

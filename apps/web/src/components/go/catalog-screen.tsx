@@ -13,7 +13,6 @@ import { createT } from '@bazar/i18n';
 import { GoShell } from '@/components/go/go-shell';
 import { Chevron } from '@/components/go/icons';
 import { ProductTile } from '@/components/go/product-tile';
-import { DEFAULT_POINT, useAddress } from '@/features/address';
 
 export function CatalogScreen({
   products,
@@ -32,7 +31,6 @@ export function CatalogScreen({
 }) {
   const t = createT(locale);
   const router = useRouter();
-  const { address } = useAddress();
   const base = `/${locale}/catalog`;
   const href = (next: { q?: string; category?: string | null }) => {
     const params = new URLSearchParams();

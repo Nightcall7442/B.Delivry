@@ -93,8 +93,15 @@ export function CategoriesScreen() {
       <Pressable
         key={category.id}
         disabled={empty}
-        onPress={() => router.push({ pathname: '/ryad/[categoryId]', params: { categoryId: category.id } })}
-        style={({ pressed }) => [s.counter, empty && { opacity: 0.55 }, press.base, pressed && press.down]}
+        onPress={() =>
+          router.push({ pathname: '/ryad/[categoryId]', params: { categoryId: category.id } })
+        }
+        style={({ pressed }) => [
+          s.counter,
+          empty && { opacity: 0.55 },
+          press.base,
+          pressed && press.down,
+        ]}
       >
         <View style={[s.sign, { transform: [{ rotate: `${tilt}deg` }] }]}>
           <View style={s.pin} />
@@ -113,7 +120,12 @@ export function CategoriesScreen() {
                   <View key={store.id} style={[s.face, i > 0 && { marginLeft: -8 }]}>
                     <RNText style={s.faceInitial}>{names[i]?.slice(0, 1)}</RNText>
                     {photo ? (
-                      <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
+                      <Image
+                        source={{ uri: photo }}
+                        style={StyleSheet.absoluteFill}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                      />
                     ) : null}
                   </View>
                 );
@@ -145,14 +157,46 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     elevation: 6,
   },
-  eyebrow: { fontFamily: sceneFont.uiHeavy, fontSize: 10, letterSpacing: 1.2, color: color.inkMuted, textTransform: 'uppercase', textAlign: 'center' },
+  eyebrow: {
+    fontFamily: sceneFont.uiHeavy,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    color: color.inkMuted,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
   gate: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, marginBottom: 6 },
-  gateLine: { flex: 1, height: 0, borderTopWidth: 2, borderStyle: 'dashed', borderColor: color.ink, opacity: 0.35 },
+  gateLine: {
+    flex: 1,
+    height: 0,
+    borderTopWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: color.ink,
+    opacity: 0.35,
+  },
   gateText: { fontFamily: sceneFont.hand, fontSize: 20, color: color.ink },
   hall: { gap: 12, paddingVertical: 6 },
   pair: { flexDirection: 'row', alignItems: 'stretch', gap: 6 },
-  aisleLine: { position: 'absolute', top: 0, bottom: 0, left: '50%', width: 0, borderLeftWidth: 1.5, borderStyle: 'dashed', borderColor: color.ink, opacity: 0.3 },
-  step: { alignSelf: 'center', fontFamily: sceneFont.hand, fontSize: 16, color: color.ink, opacity: 0.45, backgroundColor: KRAFT, paddingVertical: 2 },
+  aisleLine: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: '50%',
+    width: 0,
+    borderLeftWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: color.ink,
+    opacity: 0.3,
+  },
+  step: {
+    alignSelf: 'center',
+    fontFamily: sceneFont.hand,
+    fontSize: 16,
+    color: color.ink,
+    opacity: 0.45,
+    backgroundColor: KRAFT,
+    paddingVertical: 2,
+  },
   counterGhost: { flex: 1 },
   counter: {
     flex: 1,
@@ -183,13 +227,46 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 3,
   },
-  pin: { position: 'absolute', top: -5, left: '50%', marginLeft: -4, width: 9, height: 9, borderRadius: 5, backgroundColor: '#B42A31', borderWidth: 1, borderColor: '#8E1F26' },
-  signText: { fontFamily: sceneFont.hand, fontSize: 16, lineHeight: 18, color: color.ink, textTransform: 'uppercase' },
+  pin: {
+    position: 'absolute',
+    top: -5,
+    left: '50%',
+    marginLeft: -4,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#B42A31',
+    borderWidth: 1,
+    borderColor: '#8E1F26',
+  },
+  signText: {
+    fontFamily: sceneFont.hand,
+    fontSize: 16,
+    lineHeight: 18,
+    color: color.ink,
+    textTransform: 'uppercase',
+  },
   faces: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
-  face: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.5, borderColor: color.saffron500, backgroundColor: color.field, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  face: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1.5,
+    borderColor: color.saffron500,
+    backgroundColor: color.field,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   faceInitial: { fontFamily: sceneFont.display, fontSize: 13, color: color.ink },
   names: { flex: 1, fontFamily: sceneFont.uiText, fontSize: 11, color: color.inkMuted },
   count: { marginTop: 'auto', fontFamily: sceneFont.uiHeavy, fontSize: 11, color: color.brand500 },
   empty: { fontFamily: sceneFont.hand, fontSize: 17, color: color.inkMuted },
-  dome: { fontFamily: sceneFont.hand, fontSize: 18, color: color.inkMuted, textAlign: 'center', marginTop: 10 },
+  dome: {
+    fontFamily: sceneFont.hand,
+    fontSize: 18,
+    color: color.inkMuted,
+    textAlign: 'center',
+    marginTop: 10,
+  },
 });

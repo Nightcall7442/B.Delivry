@@ -100,7 +100,9 @@ export function ProfileScreen() {
             {user && !user.firstName ? (
               <User size={26} color="#FBF1DE" strokeWidth={2.4} />
             ) : (
-              <RNText style={s.avatarText}>{(user?.firstName ?? '?').slice(0, 1).toUpperCase()}</RNText>
+              <RNText style={s.avatarText}>
+                {(user?.firstName ?? '?').slice(0, 1).toUpperCase()}
+              </RNText>
             )}
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
@@ -118,15 +120,28 @@ export function ProfileScreen() {
 
         {user ? (
           <View style={s.stamps}>
-            <Pressable onPress={() => router.push('/plus')} style={({ pressed }) => [s.stamp, press.base, pressed && press.down]}>
+            <Pressable
+              onPress={() => router.push('/plus')}
+              style={({ pressed }) => [s.stamp, press.base, pressed && press.down]}
+            >
               <RNText style={s.stampLabel}>{t('menu.balance')}</RNText>
               <RNText style={s.stampValue}>{balance === null ? '…' : t.money(balance)}</RNText>
             </Pressable>
-            <Pressable onPress={() => router.push('/plus')} style={({ pressed }) => [s.stamp, plus && s.stampPlus, press.base, pressed && press.down]}>
+            <Pressable
+              onPress={() => router.push('/plus')}
+              style={({ pressed }) => [
+                s.stamp,
+                plus && s.stampPlus,
+                press.base,
+                pressed && press.down,
+              ]}
+            >
               {plus ? <View style={s.pin} /> : null}
               <RNText style={s.stampLabel}>Bazar Plus</RNText>
               <RNText style={[s.stampValue, plus && { color: color.brand500 }]} numberOfLines={1}>
-                {plus ? t('plus.activeUntil', { date: t.date(user.plusUntil ?? '') }) : t.money(PLUS.PRICE_MINOR)}
+                {plus
+                  ? t('plus.activeUntil', { date: t.date(user.plusUntil ?? '') })
+                  : t.money(PLUS.PRICE_MINOR)}
               </RNText>
             </Pressable>
           </View>
@@ -224,8 +239,20 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: { fontFamily: sceneFont.display, fontSize: 26, color: '#FBF1DE' },
-  eyebrow: { fontFamily: sceneFont.uiHeavy, fontSize: 10, letterSpacing: 1.2, color: color.inkMuted, textTransform: 'uppercase' },
-  name: { fontFamily: sceneFont.display, fontSize: 26, lineHeight: 30, color: color.ink, marginTop: 2 },
+  eyebrow: {
+    fontFamily: sceneFont.uiHeavy,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    color: color.inkMuted,
+    textTransform: 'uppercase',
+  },
+  name: {
+    fontFamily: sceneFont.display,
+    fontSize: 26,
+    lineHeight: 30,
+    color: color.ink,
+    marginTop: 2,
+  },
   phone: { fontFamily: sceneFont.uiText, fontSize: 13, color: color.inkMuted },
   stamps: { flexDirection: 'row', gap: 10, marginTop: 16 },
   stamp: {
@@ -239,10 +266,36 @@ const s = StyleSheet.create({
     borderColor: color.lineStrong,
   },
   stampPlus: { borderColor: color.saffron500, borderStyle: 'dashed' },
-  pin: { position: 'absolute', top: -6, left: '50%', marginLeft: -6, width: 12, height: 12, borderRadius: 6, backgroundColor: color.saffron500, borderWidth: 1.5, borderColor: color.saffron600 },
-  stampLabel: { fontFamily: sceneFont.uiHeavy, fontSize: 10, letterSpacing: 1, color: color.inkMuted, textTransform: 'uppercase' },
+  pin: {
+    position: 'absolute',
+    top: -6,
+    left: '50%',
+    marginLeft: -6,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: color.saffron500,
+    borderWidth: 1.5,
+    borderColor: color.saffron600,
+  },
+  stampLabel: {
+    fontFamily: sceneFont.uiHeavy,
+    fontSize: 10,
+    letterSpacing: 1,
+    color: color.inkMuted,
+    textTransform: 'uppercase',
+  },
   stampValue: { fontFamily: sceneFont.hand, fontSize: 24, lineHeight: 28, color: color.ink },
-  section: { fontFamily: sceneFont.uiHeavy, fontSize: 10, letterSpacing: 1.2, color: color.inkMuted, textTransform: 'uppercase', marginTop: 24, marginBottom: 10, marginLeft: 4 },
+  section: {
+    fontFamily: sceneFont.uiHeavy,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    color: color.inkMuted,
+    textTransform: 'uppercase',
+    marginTop: 24,
+    marginBottom: 10,
+    marginLeft: 4,
+  },
   slip: {
     backgroundColor: PAPER,
     borderRadius: 6,
@@ -254,7 +307,17 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 3,
   },
-  perforation: { position: 'absolute', left: 0, right: 0, top: -1, height: 3, borderStyle: 'dashed', borderTopWidth: 3, borderColor: color.ink, opacity: 0.22 },
+  perforation: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: -1,
+    height: 3,
+    borderStyle: 'dashed',
+    borderTopWidth: 3,
+    borderColor: color.ink,
+    opacity: 0.22,
+  },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 13 },
   signOut: { fontFamily: sceneFont.hand, fontSize: 20, color: color.inkMuted },
 });

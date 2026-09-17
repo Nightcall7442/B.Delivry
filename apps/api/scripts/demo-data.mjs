@@ -151,8 +151,15 @@ async function placeOrder(store, count, until) {
   const home = order.address.point;
   if (until === 'ON_THE_WAY') {
     // Halfway there, and it stays there: the tracking screen has a courier to show.
-    await drive(store.point, { lat: (store.point.lat + home.lat) / 2, lng: (store.point.lng + home.lng) / 2 }, 4, order.id);
-    console.log(`  ${order.number}: courier on the way, handover code ${accepted.handoverCode ?? '—'}`);
+    await drive(
+      store.point,
+      { lat: (store.point.lat + home.lat) / 2, lng: (store.point.lng + home.lng) / 2 },
+      4,
+      order.id,
+    );
+    console.log(
+      `  ${order.number}: courier on the way, handover code ${accepted.handoverCode ?? '—'}`,
+    );
     return order;
   }
   await drive(store.point, home, 5, order.id);

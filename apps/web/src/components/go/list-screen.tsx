@@ -12,14 +12,12 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GoShell } from '@/components/go/go-shell';
-import { DEFAULT_POINT, useAddress } from '@/features/address';
 import { useCartActions, useCartQuantities } from '@/features/cart';
 import { api } from '@/lib/api';
 
 export function ListScreen({ products, locale }: { products: ProductDto[]; locale: string }) {
   const t = createT(locale);
   const router = useRouter();
-  const { address } = useAddress();
   const quantities = useCartQuantities();
   const { setQuantity } = useCartActions();
   const units = unitLabel(locale);

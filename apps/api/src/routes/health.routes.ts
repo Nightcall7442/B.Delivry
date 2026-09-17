@@ -60,7 +60,8 @@ export function healthRoutes(container: Container) {
         if (a.length !== b.length || !timingSafeEqual(a, b)) {
           return reply.code(401).header('www-authenticate', 'Basic realm="dev-sms"').send('');
         }
-        const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
+        const esc = (s: string) =>
+          s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
         const rows = ConsoleSmsProvider.recent
           .map(
             (m) =>

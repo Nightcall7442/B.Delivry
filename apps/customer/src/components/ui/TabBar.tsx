@@ -45,8 +45,6 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const { t } = useLocale();
   const count = useCartCount();
   const current = state.routes[state.index]?.name;
-  // The front door is a scene: the row is its navigation, the cart its disc.
-  if (current === 'index' || current === 'cart') return null;
   // Something landed in the cart: the disc pops once.
   const pop = useRef(new Animated.Value(1)).current;
   const previous = useRef(count);
@@ -86,6 +84,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     moveTo(current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current]);
+  // The front door is a scene: the row is its navigation, the cart its disc.
+  // (After the hooks — the bar keeps its hook order when the tab changes.)
+  if (current === 'index' || current === 'cart') return null;
   const Tab = ({ name, icon: Icon, label }: (typeof TABS)[number]) => {
     const active = current === name;
     return (
@@ -102,7 +103,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
         accessibilityState={{ selected: active }}
         accessibilityLabel={t(label)}
       >
-        <Icon size={22} color={active ? ui.brand : color.inkMuted} strokeWidth={active ? 2.6 : 2.2} />
+        <Icon
+          size={22}
+          color={active ? ui.brand : color.inkMuted}
+          strokeWidth={active ? 2.6 : 2.2}
+        />
         <Text role="caption" style={{ color: active ? ui.brand : color.inkMuted, fontSize: 11 }}>
           {t(label)}
         </Text>

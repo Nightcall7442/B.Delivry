@@ -44,14 +44,26 @@ export default function LoginRoute() {
 
   return (
     <View style={{ flex: 1, backgroundColor: scene.night }}>
-      <Scene source={evening ? SCENES.evening : SCENES.morning} evening={evening} style={StyleSheet.absoluteFill}>
+      <Scene
+        source={evening ? SCENES.evening : SCENES.morning}
+        evening={evening}
+        style={StyleSheet.absoluteFill}
+      >
         <View />
       </Scene>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
         <ScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end', paddingTop: top + 56, paddingBottom: 16 + insets.bottom }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'flex-end',
+            paddingTop: top + 56,
+            paddingBottom: 16 + insets.bottom,
+          }}
         >
           <View style={s.pitch}>
             <KraftTag>{t('login.taglineHint')}</KraftTag>
@@ -94,7 +106,14 @@ export default function LoginRoute() {
 const s = StyleSheet.create({
   pitch: { paddingHorizontal: 20, alignItems: 'flex-start', gap: 4 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
-  pill: { height: 32, borderRadius: 16, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pill: {
+    height: 32,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   pillText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
   slip: {
     marginTop: 20,
@@ -109,5 +128,15 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 12 },
     elevation: 8,
   },
-  perforation: { position: 'absolute', left: 0, right: 0, top: -1, height: 3, borderStyle: 'dashed', borderTopWidth: 3, borderColor: isDark ? '#EAD8B2' : '#2B1B0E', opacity: 0.25 },
+  perforation: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: -1,
+    height: 3,
+    borderStyle: 'dashed',
+    borderTopWidth: 3,
+    borderColor: isDark ? '#EAD8B2' : '#2B1B0E',
+    opacity: 0.25,
+  },
 });

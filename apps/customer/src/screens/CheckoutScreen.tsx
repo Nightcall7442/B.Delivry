@@ -17,7 +17,6 @@ import {
   ensureServerAddress,
   orderReasonText,
   paymentMethodText,
-  plural,
   substitutionText,
   tr,
   plusActive,

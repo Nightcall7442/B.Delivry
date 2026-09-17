@@ -2,7 +2,11 @@
  * Root layout: fonts, the three local stores, a header-less stack. Every
  * screen draws its own top buttons over the map.
  */
-import { Alegreya_500Medium_Italic, Alegreya_700Bold, Alegreya_700Bold_Italic } from '@expo-google-fonts/alegreya';
+import {
+  Alegreya_500Medium_Italic,
+  Alegreya_700Bold,
+  Alegreya_700Bold_Italic,
+} from '@expo-google-fonts/alegreya';
 import { Caveat_700Bold } from '@expo-google-fonts/caveat';
 import {
   Manrope_500Medium,

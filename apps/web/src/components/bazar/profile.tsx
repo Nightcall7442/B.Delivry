@@ -11,7 +11,20 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { ArrowLeft, Bag, Basket, Chat, Coin, HomeGlyph, Leaf, ListGlyph, Mic, Receipt, Repeat, Star } from '@/components/go/icons';
+import {
+  ArrowLeft,
+  Bag,
+  Basket,
+  Chat,
+  Coin,
+  HomeGlyph,
+  Leaf,
+  ListGlyph,
+  Mic,
+  Receipt,
+  Repeat,
+  Star,
+} from '@/components/go/icons';
 import { useAuth } from '@/features/auth';
 import { api } from '@/lib/api';
 
@@ -86,20 +99,37 @@ export function BazaarProfile({ locale }: { locale: string }) {
             {t('profile.regular')}
           </div>
           <div className={s.rcVendor} style={{ margin: '12px 0 0' }}>
-            <span className={`${s.avatar} ${s.avatarSmall}`} style={{ width: 56, height: 56, fontSize: 26 }}>
-              {user ? (user.firstName ? user.firstName.slice(0, 1).toUpperCase() : user.phone.slice(-2)) : '·'}
+            <span
+              className={`${s.avatar} ${s.avatarSmall}`}
+              style={{ width: 56, height: 56, fontSize: 26 }}
+            >
+              {user
+                ? user.firstName
+                  ? user.firstName.slice(0, 1).toUpperCase()
+                  : user.phone.slice(-2)
+                : '·'}
             </span>
             <span style={{ minWidth: 0, flex: 1 }}>
               <span className={s.rcVendorName} style={{ fontSize: 26 }}>
                 {!ready ? '' : user ? user.firstName || user.phone : t('profile.guest')}
               </span>
-              <span className={s.rcVendorMeta}>{user ? (user.firstName ? user.phone : t('profile.regular')) : t('profile.guestHint')}</span>
+              <span className={s.rcVendorMeta}>
+                {user
+                  ? user.firstName
+                    ? user.phone
+                    : t('profile.regular')
+                  : t('profile.guestHint')}
+              </span>
             </span>
           </div>
           {user ? (
             <div className={s.chips} style={{ marginTop: 16 }}>
               {balance !== null ? (
-                <Link href={`${home}/plus`} className={s.stamp} style={{ margin: 0, textDecoration: 'none' }}>
+                <Link
+                  href={`${home}/plus`}
+                  className={s.stamp}
+                  style={{ margin: 0, textDecoration: 'none' }}
+                >
                   {t('menu.balance')} · {t.money(balance)}
                 </Link>
               ) : null}
@@ -110,7 +140,11 @@ export function BazaarProfile({ locale }: { locale: string }) {
               ) : null}
             </div>
           ) : ready ? (
-            <Link href={`${home}/login?next=${encodeURIComponent(`${home}/profile`)}`} className={s.rcCta} style={{ marginTop: 16 }}>
+            <Link
+              href={`${home}/login?next=${encodeURIComponent(`${home}/profile`)}`}
+              className={s.rcCta}
+              style={{ marginTop: 16 }}
+            >
               {t('common.signIn')} →
             </Link>
           ) : null}
@@ -148,7 +182,9 @@ export function BazaarProfile({ locale }: { locale: string }) {
                     <span className={s.rcName} style={{ fontSize: 18 }}>
                       {t('menu.telegram')}
                     </span>
-                    <span className={s.rcUnit}>{user.telegramLinked ? t('menu.telegramLinked') : t('menu.telegramHint')}</span>
+                    <span className={s.rcUnit}>
+                      {user.telegramLinked ? t('menu.telegramLinked') : t('menu.telegramHint')}
+                    </span>
                   </span>
                 </button>
               </li>
@@ -164,7 +200,10 @@ export function BazaarProfile({ locale }: { locale: string }) {
                 style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
                 onClick={() => {
                   // The API speaks the same language back: SMS, push, the Telegram bot.
-                  if (user) void api().customers.updateUser({ locale: code }).catch(() => undefined);
+                  if (user)
+                    void api()
+                      .customers.updateUser({ locale: code })
+                      .catch(() => undefined);
                 }}
               >
                 {code === 'ru' ? 'Русский' : "O'zbekcha"}

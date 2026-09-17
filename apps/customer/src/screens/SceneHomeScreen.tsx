@@ -62,7 +62,8 @@ export function SceneHomeScreen() {
   const vendors = useMemo(
     () =>
       [...stores].sort(
-        (a, b) => Number(b.isOpen) - Number(a.isOpen) || Number(!!b.ownerName) - Number(!!a.ownerName),
+        (a, b) =>
+          Number(b.isOpen) - Number(a.isOpen) || Number(!!b.ownerName) - Number(!!a.ownerName),
       ),
     [stores],
   );
@@ -94,7 +95,11 @@ export function SceneHomeScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: scene.night }}>
-      <Scene source={evening ? SCENES.evening : SCENES.morning} evening={evening} style={StyleSheet.absoluteFill}>
+      <Scene
+        source={evening ? SCENES.evening : SCENES.morning}
+        evening={evening}
+        style={StyleSheet.absoluteFill}
+      >
         <View />
       </Scene>
 
@@ -125,7 +130,11 @@ export function SceneHomeScreen() {
           action={t('scene.vendorsAll', { count: stores.length })}
           onAction={() => router.push('/(tabs)/categories')}
         />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.vendors}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.vendors}
+        >
           {vendors.map((store) => (
             <VendorCard
               key={store.id}
@@ -142,18 +151,28 @@ export function SceneHomeScreen() {
           action={t('scene.rowsAll')}
           onAction={() => router.push('/(tabs)/categories')}
         />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.rows}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.rows}
+        >
           {categories.slice(0, 6).map((category: CategoryDto, index) => (
             <RowSign
               key={category.id}
               title={tr(category.name, locale)}
               tilt={TILTS[index % TILTS.length] as number}
-              onPress={() => router.push({ pathname: '/ryad/[categoryId]', params: { categoryId: category.id } })}
+              onPress={() =>
+                router.push({ pathname: '/ryad/[categoryId]', params: { categoryId: category.id } })
+              }
             />
           ))}
         </ScrollView>
 
-        <SceneHead title={t('scene.onCounterToday')} action={t('scene.rowsAll')} onAction={() => router.push('/(tabs)/categories')} />
+        <SceneHead
+          title={t('scene.onCounterToday')}
+          action={t('scene.rowsAll')}
+          onAction={() => router.push('/(tabs)/categories')}
+        />
         <View style={s.grid}>
           {counter.map((product, i) => {
             const qty = quantities[product.id] ?? 0;
@@ -168,11 +187,25 @@ export function SceneHomeScreen() {
                 title={tr(product.name, locale)}
                 price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
                 say={product.description ? tr(product.description, locale) : undefined}
-                note={[stall ? (stall.ownerName ?? tr(stall.name, locale)) : null, arrivedToday(product) ? t('store.arrivedToday') : null].filter(Boolean).join(' · ') || undefined}
+                note={
+                  [
+                    stall ? (stall.ownerName ?? tr(stall.name, locale)) : null,
+                    arrivedToday(product) ? t('store.arrivedToday') : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ') || undefined
+                }
                 count={qty}
                 countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
                 onPress={() => router.push(`/product/${product.id}`)}
-                onAdd={() => setQuantity(product.id, qty === 0 ? product.minQuantity || product.quantityStep || 1 : qty + (product.quantityStep || 1))}
+                onAdd={() =>
+                  setQuantity(
+                    product.id,
+                    qty === 0
+                      ? product.minQuantity || product.quantityStep || 1
+                      : qty + (product.quantityStep || 1),
+                  )
+                }
               />
             );
           })}
@@ -194,7 +227,10 @@ export function SceneHomeScreen() {
       <View style={[s.bottom, { bottom: 24 + insets.bottom }]}>
         {count > 0 ? (
           <>
-            <Pressable onPress={checkout} style={({ pressed }) => [s.checkout, pressed && { opacity: 0.92 }]}>
+            <Pressable
+              onPress={checkout}
+              style={({ pressed }) => [s.checkout, pressed && { opacity: 0.92 }]}
+            >
               <BasketGlyph color={scene.cream} size={22} />
               <View style={{ flex: 1 }}>
                 <Text style={s.checkoutTitle}>{t('cart.checkout')}</Text>
@@ -259,7 +295,14 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  voice: { flex: 1, height: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 },
+  voice: {
+    flex: 1,
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+  },
   voiceTitle: { fontFamily: sceneFont.italic, fontSize: 17, color: scene.cream },
   voiceHint: { fontFamily: sceneFont.uiText, fontSize: 11, color: scene.creamDim },
   mic: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },

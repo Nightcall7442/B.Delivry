@@ -14,15 +14,11 @@ import {
 } from '@bazar/constants';
 import { TEMPLATE } from '@bazar/notifications';
 import { randomDigits, randomToken } from '@bazar/utils';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
 import { ERROR_CODE } from '../../../common/errors/error-codes.js';
-import {
-  ConflictError,
-  RateLimitedError,
-  UnauthorizedError,
-} from '../../../common/errors/domain.errors.js';
+import { RateLimitedError, UnauthorizedError } from '../../../common/errors/domain.errors.js';
 import type { AuthConfig } from '../../../config/index.js';
 import type { SessionStore } from '../../../infrastructure/redis/session.store.js';
 import type { NotificationSender } from '../../notifications/types/index.js';

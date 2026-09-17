@@ -7,7 +7,8 @@ import { PromoLanding } from '@/components/promo/landing';
 
 export const metadata = {
   title: 'Bazar Delivery — свежее с базара за 40 минут',
-  description: 'Продавцы Чорсу, Алайского и Фархадского — у вас в телефоне. Взвесим при вас, привезём за 40 минут.',
+  description:
+    'Продавцы Чорсу, Алайского и Фархадского — у вас в телефоне. Взвесим при вас, привезём за 40 минут.',
 };
 
 export default async function PromoPage({ params }: { params: Promise<{ locale: string }> }) {

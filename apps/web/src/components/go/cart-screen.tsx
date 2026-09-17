@@ -27,7 +27,7 @@ import { FreeDeliveryBar } from '@/components/go/free-delivery-bar';
 import { GoShell } from '@/components/go/go-shell';
 import { Basket, Leaf } from '@/components/go/icons';
 import { Photo } from '@/components/go/photo';
-import { DEFAULT_POINT, useAddress } from '@/features/address';
+import { useAddress } from '@/features/address';
 import { useAuth } from '@/features/auth';
 import {
   groupByStore,
@@ -121,10 +121,6 @@ export function CartScreen({
     }
     return null;
   }, [groups, storeById]);
-  const markers = groups.flatMap((g) => {
-    const store = storeById.get(g.storeId);
-    return store ? [{ id: store.id, point: store.point, kind: 'store' as const }] : [];
-  });
 
   return (
     <GoShell

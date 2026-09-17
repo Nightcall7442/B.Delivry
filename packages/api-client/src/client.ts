@@ -63,7 +63,7 @@ export class Http {
         method,
         headers,
         ...(options.raw !== undefined
-          ? { body: options.raw as BodyInit }
+          ? { body: options.raw as NonNullable<RequestInit['body']> }
           : options.body === undefined
             ? {}
             : { body: JSON.stringify(options.body) }),

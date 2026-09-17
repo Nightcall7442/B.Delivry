@@ -6,7 +6,7 @@
  * ponytail: two snap points, velocity only decides direction. Add a middle
  * snap when a screen needs one.
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   PanResponder,

@@ -61,11 +61,17 @@ export function StoreScreen({ storeId }: { storeId: string }) {
   const inCart = products.filter((p) => quantities[p.id]);
   const total = inCart.reduce((sum, p) => sum + p.price.amount * (quantities[p.id] ?? 0), 0);
   const estimate =
-    store && address ? estimateDelivery(store.point, address.point, store.preparationMinutes) : null;
+    store && address
+      ? estimateDelivery(store.point, address.point, store.preparationMinutes)
+      : null;
   const hero = store?.counterPhotoUrl ?? store?.coverUrl ?? null;
   const person = store?.ownerPhotoUrl ?? null;
   const takenAt = store?.counterPhotoAt
-    ? new Date(store.counterPhotoAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })
+    ? new Date(store.counterPhotoAt).toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Tashkent',
+      })
     : null;
 
   return (
@@ -77,7 +83,10 @@ export function StoreScreen({ storeId }: { storeId: string }) {
       {store ? (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingTop: Math.round(height * 0.36), paddingBottom: 120 + insets.bottom }}
+          contentContainerStyle={{
+            paddingTop: Math.round(height * 0.36),
+            paddingBottom: 120 + insets.bottom,
+          }}
         >
           <Pressable
             onPress={() => hero && setStory(true)}
@@ -87,7 +96,10 @@ export function StoreScreen({ storeId }: { storeId: string }) {
           />
           <View style={s.person}>
             <Eyebrow>
-              {[store.standNumber, store.ownerSince ? t('store.ownerSince', { year: store.ownerSince }) : null]
+              {[
+                store.standNumber,
+                store.ownerSince ? t('store.ownerSince', { year: store.ownerSince }) : null,
+              ]
                 .filter(Boolean)
                 .join(' · ') || tr(store.name, locale)}
             </Eyebrow>
@@ -96,7 +108,12 @@ export function StoreScreen({ storeId }: { storeId: string }) {
                 <View style={s.avatar}>
                   <Text style={s.avatarInitial}>{store.ownerName.slice(0, 1)}</Text>
                   {person ? (
-                    <Image source={{ uri: person }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
+                    <Image
+                      source={{ uri: person }}
+                      style={StyleSheet.absoluteFill}
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
+                    />
                   ) : null}
                 </View>
               ) : null}
@@ -129,37 +146,50 @@ export function StoreScreen({ storeId }: { storeId: string }) {
               <Glass style={s.pill}>
                 <Clock size={14} color={scene.cream} />
                 <Text style={s.pillText}>
-                  {estimate ? t('common.eta', { minutes: estimate.etaMinutes }) : t('store.prep', { minutes: store.preparationMinutes })}
+                  {estimate
+                    ? t('common.eta', { minutes: estimate.etaMinutes })
+                    : t('store.prep', { minutes: store.preparationMinutes })}
                 </Text>
               </Glass>
               {estimate ? (
                 <Glass style={s.pill}>
                   <Scooter size={14} color={scene.cream} />
-                  <Text style={s.pillText}>{t('store.delivery', { fee: t.money(estimate.fee.amount) })}</Text>
+                  <Text style={s.pillText}>
+                    {t('store.delivery', { fee: t.money(estimate.fee.amount) })}
+                  </Text>
                 </Glass>
               ) : null}
             </View>
-            {!store.isOpen ? (
-              <Text style={s.closed}>{t('store.closedHint')}</Text>
-            ) : null}
+            {!store.isOpen ? <Text style={s.closed}>{t('store.closedHint')}</Text> : null}
           </View>
 
           <View style={s.counter}>
             <Eyebrow>
               {t('scene.onCounter')}
-              {store.counterPhotoUrl && takenAt ? ` · ${t('scene.counterPhotoAt', { time: takenAt })}` : ''}
+              {store.counterPhotoUrl && takenAt
+                ? ` · ${t('scene.counterPhotoAt', { time: takenAt })}`
+                : ''}
             </Eyebrow>
             {present.length > 1 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips} style={{ marginHorizontal: -20 }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.chips}
+                style={{ marginHorizontal: -20 }}
+              >
                 <Pressable onPress={() => setCategory(null)}>
                   <Glass style={[s.chip, category === null && s.chipOn]}>
-                    <Text style={[s.chipText, category === null && s.chipTextOn]}>{t('common.all')}</Text>
+                    <Text style={[s.chipText, category === null && s.chipTextOn]}>
+                      {t('common.all')}
+                    </Text>
                   </Glass>
                 </Pressable>
                 {present.map((c) => (
                   <Pressable key={c.id} onPress={() => setCategory(c.id)}>
                     <Glass style={[s.chip, category === c.id && s.chipOn]}>
-                      <Text style={[s.chipText, category === c.id && s.chipTextOn]}>{tr(c.name, locale)}</Text>
+                      <Text style={[s.chipText, category === c.id && s.chipTextOn]}>
+                        {tr(c.name, locale)}
+                      </Text>
                     </Glass>
                   </Pressable>
                 ))}
@@ -177,9 +207,18 @@ export function StoreScreen({ storeId }: { storeId: string }) {
                     price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
                     note={arrivedToday(product) ? t('store.arrivedToday') : undefined}
                     count={qty}
-                    countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
+                    countLabel={t('scene.inCart', {
+                      count: `${t.qty(qty)} ${units[product.unit]}`,
+                    })}
                     onPress={() => router.push(`/product/${product.id}`)}
-                    onAdd={() => setQuantity(product.id, qty === 0 ? product.minQuantity || product.quantityStep || 1 : qty + (product.quantityStep || 1))}
+                    onAdd={() =>
+                      setQuantity(
+                        product.id,
+                        qty === 0
+                          ? product.minQuantity || product.quantityStep || 1
+                          : qty + (product.quantityStep || 1),
+                      )
+                    }
                   />
                 );
               })}
@@ -202,7 +241,9 @@ export function StoreScreen({ storeId }: { storeId: string }) {
       ) : null}
 
       <View style={[s.top, { top }]}>
-        <SceneButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}>
+        <SceneButton
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+        >
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
         <SceneButton>
@@ -213,7 +254,11 @@ export function StoreScreen({ storeId }: { storeId: string }) {
       {inCart.length > 0 ? (
         <Pressable
           onPress={() => router.push('/(tabs)/cart')}
-          style={({ pressed }) => [s.cartBar, { bottom: 24 + insets.bottom }, pressed && { opacity: 0.92 }]}
+          style={({ pressed }) => [
+            s.cartBar,
+            { bottom: 24 + insets.bottom },
+            pressed && { opacity: 0.92 },
+          ]}
         >
           <BasketGlyph color={scene.cream} size={22} />
           <View style={{ flex: 1 }}>
@@ -230,13 +275,36 @@ export function StoreScreen({ storeId }: { storeId: string }) {
 }
 
 const s = StyleSheet.create({
-  top: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' },
+  top: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   person: { paddingHorizontal: 20, gap: 8 },
-  avatar: { width: 52, height: 52, borderRadius: 26, borderWidth: 3, borderColor: scene.saffron, backgroundColor: '#3A2A1A', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 3,
+    borderColor: scene.saffron,
+    backgroundColor: '#3A2A1A',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarInitial: { fontFamily: sceneFont.display, fontSize: 22, color: scene.saffronLight },
   storeName: { fontFamily: sceneFont.ui, fontSize: 13, color: scene.creamMuted, marginTop: -2 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
-  pill: { height: 32, borderRadius: 16, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pill: {
+    height: 32,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   pillText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
   closed: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.saffronLight },
   counter: { paddingHorizontal: 20, paddingTop: 22, gap: 12 },

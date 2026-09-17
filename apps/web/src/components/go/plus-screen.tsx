@@ -9,7 +9,6 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { GoShell } from '@/components/go/go-shell';
-import { DEFAULT_POINT, useAddress } from '@/features/address';
 import { useAuth } from '@/features/auth';
 import { api } from '@/lib/api';
 
@@ -17,7 +16,6 @@ const PERKS = ['plus.perk1', 'plus.perk2', 'plus.perk3'] as const;
 
 export function PlusScreen({ locale }: { locale: string }) {
   const t = createT(locale);
-  const { address } = useAddress();
   const { user, ready, refresh } = useAuth();
   const [balance, setBalance] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);

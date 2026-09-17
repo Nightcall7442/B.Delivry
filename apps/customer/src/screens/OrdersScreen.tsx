@@ -65,19 +65,24 @@ export function OrdersScreen() {
             const failed = status === ORDER_STATUS.CANCELLED || status === ORDER_STATUS.FAILED;
             const store = storeOf(order.store.id);
             const person = store?.ownerPhotoUrl ?? store?.coverUrl ?? order.store.logoUrl ?? null;
-            const when = new Date(order.placedAt).toLocaleString(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', {
-              weekday: 'short',
-              day: 'numeric',
-              month: 'short',
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZone: 'Asia/Tashkent',
-            });
+            const when = new Date(order.placedAt).toLocaleString(
+              locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU',
+              {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Asia/Tashkent',
+              },
+            );
             const statusText = orderStatusText(locale)[status];
             return (
               <Pressable
                 key={order.id}
-                onPress={() => router.push({ pathname: '/order/[orderId]', params: { orderId: order.id } })}
+                onPress={() =>
+                  router.push({ pathname: '/order/[orderId]', params: { orderId: order.id } })
+                }
                 style={({ pressed }) => [
                   s.slip,
                   { transform: [{ rotate: `${i % 2 === 0 ? -0.5 : 0.5}deg` }] },
@@ -100,7 +105,12 @@ export function OrdersScreen() {
 
                 <View style={s.vendor}>
                   {person ? (
-                    <Image source={{ uri: person }} style={s.avatar} contentFit="cover" cachePolicy="memory-disk" />
+                    <Image
+                      source={{ uri: person }}
+                      style={s.avatar}
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
+                    />
                   ) : (
                     <View style={s.avatar} />
                   )}
@@ -116,10 +126,16 @@ export function OrdersScreen() {
                 </View>
 
                 <RNText
-                  style={[s.status, done && { color: color.inkMuted }, failed && { color: color.danger }]}
+                  style={[
+                    s.status,
+                    done && { color: color.inkMuted },
+                    failed && { color: color.danger },
+                  ]}
                   numberOfLines={2}
                 >
-                  {done ? statusText.title : `${statusText.title} — ${statusText.hint.charAt(0).toLowerCase()}${statusText.hint.slice(1)}`}
+                  {done
+                    ? statusText.title
+                    : `${statusText.title} — ${statusText.hint.charAt(0).toLowerCase()}${statusText.hint.slice(1)}`}
                 </RNText>
                 <RNText style={s.items}>
                   {t.n('cart.items', order.items.length)}
@@ -149,7 +165,17 @@ const s = StyleSheet.create({
     elevation: 5,
   },
   slipDone: { shadowOpacity: 0.14, opacity: 0.92 },
-  perforation: { position: 'absolute', left: 0, right: 0, top: -1, height: 3, borderStyle: 'dashed', borderTopWidth: 3, borderColor: color.ink, opacity: 0.25 },
+  perforation: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: -1,
+    height: 3,
+    borderStyle: 'dashed',
+    borderTopWidth: 3,
+    borderColor: color.ink,
+    opacity: 0.25,
+  },
   pin: {
     position: 'absolute',
     top: -6,
@@ -168,10 +194,23 @@ const s = StyleSheet.create({
   },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   number: { fontFamily: sceneFont.display, fontSize: 20, color: color.ink },
-  date: { fontFamily: sceneFont.uiHeavy, fontSize: 10, letterSpacing: 1, color: color.inkMuted, marginTop: 2 },
+  date: {
+    fontFamily: sceneFont.uiHeavy,
+    fontSize: 10,
+    letterSpacing: 1,
+    color: color.inkMuted,
+    marginTop: 2,
+  },
   total: { fontFamily: sceneFont.hand, fontSize: 26, lineHeight: 28, color: color.ink },
   vendor: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  avatar: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: color.saffron500, backgroundColor: color.field },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: color.saffron500,
+    backgroundColor: color.field,
+  },
   status: { fontFamily: sceneFont.hand, fontSize: 21, lineHeight: 22, color: color.brand500 },
   items: { fontFamily: sceneFont.ui, fontSize: 11, color: color.inkMuted },
 });
