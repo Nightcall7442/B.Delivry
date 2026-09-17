@@ -11,7 +11,6 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Photo } from '@/components/go/photo';
 
-const STORY_MS = 5000;
 const photoOf = (store: MapStoreDto) => store.counterPhotoUrl ?? store.coverUrl ?? null;
 /** «Зелёный ряд, Чорсу» → ['Зелёный ряд', 'Чорсу']: the stall first, the bazaar under it. */
 const stall = (name: string) => {

@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { GoShell } from '@/components/go/go-shell';
-import { DEFAULT_POINT, useAddress } from '@/features/address';
+import { useAddress } from '@/features/address';
 import { useAuth } from '@/features/auth';
 import { api } from '@/lib/api';
 

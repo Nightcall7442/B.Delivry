@@ -19,7 +19,6 @@ import {
 } from '@bazar/notifications';
 import type { Notification } from '@prisma/client';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
-import { NotFoundError } from '../../../common/errors/domain.errors.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import { notificationsSent } from '../../../infrastructure/telemetry/metrics.js';
 import type {

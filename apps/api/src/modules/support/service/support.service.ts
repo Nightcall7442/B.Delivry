@@ -6,11 +6,7 @@ import { TEMPLATE } from '@bazar/notifications';
 import { randomCode } from '@bazar/utils';
 import type { SupportMessage, SupportTicket } from '@prisma/client';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-} from '../../../common/errors/domain.errors.js';
+import { ConflictError, NotFoundError } from '../../../common/errors/domain.errors.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import type { NotificationSender } from '../../notifications/types/index.js';
 import type { SupportRepository, TicketWithMessages } from '../repository/support.repository.js';

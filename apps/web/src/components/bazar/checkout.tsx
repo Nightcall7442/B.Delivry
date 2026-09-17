@@ -237,8 +237,15 @@ export function BazaarCheckout({
   const ground = store.counterPhotoUrl ?? store.coverUrl ?? null;
   const lines = group?.lines ?? [];
   const count = lines.length + followers.reduce((n, f) => n + f.group.lines.length, 0);
-  const forgot = forgottenProducts(pastOrders, store.id, new Set(lines.map((line) => line.product.id)), products);
-  const free = quote ? freeDeliveryProgress(quote.totals.subtotal.amount, quote.freeDeliveryThreshold) : null;
+  const forgot = forgottenProducts(
+    pastOrders,
+    store.id,
+    new Set(lines.map((line) => line.product.id)),
+    products,
+  );
+  const free = quote
+    ? freeDeliveryProgress(quote.totals.subtotal.amount, quote.freeDeliveryThreshold)
+    : null;
   const chip = (on: boolean) => `${s.chipPaper} ${on ? s.chipPaperOn : ''}`;
 
   return (
@@ -259,9 +266,14 @@ export function BazaarCheckout({
             {t('checkout.title')}
           </h1>
           {followers.length > 0 ? (
-            <p className={s.hand} style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}>
+            <p
+              className={s.hand}
+              style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}
+            >
               {t('checkout.oneTrip', {
-                stores: [store, ...followers.map((f) => f.store)].map((row) => tr(row.name, locale)).join(' + '),
+                stores: [store, ...followers.map((f) => f.store)]
+                  .map((row) => tr(row.name, locale))
+                  .join(' + '),
               })}
             </p>
           ) : null}
@@ -272,7 +284,10 @@ export function BazaarCheckout({
             <span className={s.rcTitle}>{t('receipt.address')}</span>
           </div>
           <Link href={`/${locale}/address?next=${encodeURIComponent(here)}`} className={s.rcVendor}>
-            <span className={`${s.avatar} ${s.avatarSmall}`} style={{ background: 'var(--kraft)', color: 'var(--pomegranate)' }}>
+            <span
+              className={`${s.avatar} ${s.avatarSmall}`}
+              style={{ background: 'var(--kraft)', color: 'var(--pomegranate)' }}
+            >
               <HomeGlyph />
             </span>
             <span style={{ minWidth: 0, flex: 1 }}>
@@ -288,25 +303,61 @@ export function BazaarCheckout({
           {quote && !quote.deliverable ? (
             <p role="alert" className={`${s.rcHint} ${s.rcWarn}`}>
               {orderReasonText(quote.reason, locale) ?? quote.reason ?? t('checkout.undeliverable')}
-              {quote.reason?.includes('minimum') ? t('checkout.minimum', { amount: t.money(quote.minOrder.amount) }) : ''}
+              {quote.reason?.includes('minimum')
+                ? t('checkout.minimum', { amount: t.money(quote.minOrder.amount) })
+                : ''}
             </p>
           ) : null}
           <div className={s.fields}>
-            <input value={apartment} onChange={(e) => setApartment(e.target.value)} className={s.field} placeholder={t('checkout.apartment')} inputMode="numeric" />
-            <input value={entrance} onChange={(e) => setEntrance(e.target.value)} className={s.field} placeholder={t('checkout.entrance')} />
+            <input
+              value={apartment}
+              onChange={(e) => setApartment(e.target.value)}
+              className={s.field}
+              placeholder={t('checkout.apartment')}
+              inputMode="numeric"
+            />
+            <input
+              value={entrance}
+              onChange={(e) => setEntrance(e.target.value)}
+              className={s.field}
+              placeholder={t('checkout.entrance')}
+            />
           </div>
-          <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} className={s.field} placeholder={t('checkout.courierComment')} />
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={2}
+            className={s.field}
+            placeholder={t('checkout.courierComment')}
+          />
 
           <label className={s.rcToggle}>
-            <input type="checkbox" checked={forSomeone} onChange={(e) => setForSomeone(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={forSomeone}
+              onChange={(e) => setForSomeone(e.target.checked)}
+            />
             <span>{t('checkout.forSomeone')}</span>
           </label>
           {forSomeone ? (
             <>
               <p className={s.rcHint}>{t('checkout.forSomeoneHint')}</p>
               <div className={s.fields}>
-                <input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} className={s.field} placeholder={t('checkout.recipientName')} autoComplete="name" />
-                <input value={recipientPhone} onChange={(e) => setRecipientPhone(e.target.value)} className={s.field} placeholder={t('checkout.recipientPhone')} inputMode="tel" autoComplete="tel" />
+                <input
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  className={s.field}
+                  placeholder={t('checkout.recipientName')}
+                  autoComplete="name"
+                />
+                <input
+                  value={recipientPhone}
+                  onChange={(e) => setRecipientPhone(e.target.value)}
+                  className={s.field}
+                  placeholder={t('checkout.recipientPhone')}
+                  inputMode="tel"
+                  autoComplete="tel"
+                />
               </div>
             </>
           ) : null}
@@ -318,7 +369,12 @@ export function BazaarCheckout({
               {quote?.deliverable ? ` · ${t('common.eta', { minutes: quote.etaMinutes })}` : ''}
             </button>
             {slots.map((option) => (
-              <button key={option.id} type="button" className={chip(slot === option.startsAt)} onClick={() => setSlot(option.startsAt)}>
+              <button
+                key={option.id}
+                type="button"
+                className={chip(slot === option.startsAt)}
+                onClick={() => setSlot(option.startsAt)}
+              >
                 {option.label}
               </button>
             ))}
@@ -326,11 +382,23 @@ export function BazaarCheckout({
           {slot ? <p className={s.rcHint}>{t('checkout.slotHint')}</p> : null}
 
           <div className={s.rcSection}>{t('checkout.vendor')}</div>
-          <textarea value={vendorComment} onChange={(e) => setVendorComment(e.target.value)} rows={2} className={s.field} placeholder={t('checkout.vendorComment')} />
+          <textarea
+            value={vendorComment}
+            onChange={(e) => setVendorComment(e.target.value)}
+            rows={2}
+            className={s.field}
+            placeholder={t('checkout.vendorComment')}
+          />
           <p className={s.rcHint}>{t('checkout.ifMissing')}</p>
           <div className={s.chips}>
             {SUBSTITUTION_OPTIONS.map((option) => (
-              <button key={option} type="button" className={chip(policy === option)} title={substitution[option].hint} onClick={() => setPolicy(option)}>
+              <button
+                key={option}
+                type="button"
+                className={chip(policy === option)}
+                title={substitution[option].hint}
+                onClick={() => setPolicy(option)}
+              >
                 {substitution[option].title}
               </button>
             ))}
@@ -342,29 +410,42 @@ export function BazaarCheckout({
             {[
               ...METHODS,
               ...(balance > 0 ? [{ method: PAYMENT_METHOD.BALANCE, icon: <Card /> }] : []),
-              ...(business?.approved ? [{ method: PAYMENT_METHOD.INVOICE, icon: <Banknote /> }] : []),
+              ...(business?.approved
+                ? [{ method: PAYMENT_METHOD.INVOICE, icon: <Banknote /> }]
+                : []),
             ].map(({ method, icon }) => {
               const text = paymentMethodText(locale)[method];
               const active = payment === method;
               return (
                 <li key={method}>
-                  <button type="button" className={s.payRow} onClick={() => setPayment(method)} aria-pressed={active}>
+                  <button
+                    type="button"
+                    className={s.payRow}
+                    onClick={() => setPayment(method)}
+                    aria-pressed={active}
+                  >
                     <span className={s.payIcon} aria-hidden>
                       {icon}
                     </span>
                     <span style={{ minWidth: 0, flex: 1 }}>
                       <span className={s.rcName} style={{ fontSize: 17 }}>
-                        {method === PAYMENT_METHOD.BALANCE ? t('payment.BALANCE.withAmount', { amount: t.money(balance) }) : text.title}
+                        {method === PAYMENT_METHOD.BALANCE
+                          ? t('payment.BALANCE.withAmount', { amount: t.money(balance) })
+                          : text.title}
                       </span>
                       <span className={s.rcUnit}>{text.hint}</span>
                     </span>
-                    <span className={`${s.tick} ${active ? s.tickOn : ''}`}>{active ? <Check /> : null}</span>
+                    <span className={`${s.tick} ${active ? s.tickOn : ''}`}>
+                      {active ? <Check /> : null}
+                    </span>
                   </button>
                 </li>
               );
             })}
           </ul>
-          {payment === PAYMENT_METHOD.ONLINE ? <p className={s.rcHint}>{t('checkout.onlineHint')}</p> : null}
+          {payment === PAYMENT_METHOD.ONLINE ? (
+            <p className={s.rcHint}>{t('checkout.onlineHint')}</p>
+          ) : null}
         </section>
 
         <section className={s.receipt}>
@@ -375,10 +456,16 @@ export function BazaarCheckout({
           {[{ store, group }, ...followers].map((part) =>
             part.group ? (
               <div key={part.store.id}>
-                <div className={s.rcSection}>{part.store.ownerName ?? tr(part.store.name, locale)}</div>
+                <div className={s.rcSection}>
+                  {part.store.ownerName ?? tr(part.store.name, locale)}
+                </div>
                 <ul className={s.rcLines}>
                   {part.group.lines.map((line) => (
-                    <li key={line.product.id} className={s.rcLine} style={{ alignItems: 'center', padding: '10px 0' }}>
+                    <li
+                      key={line.product.id}
+                      className={s.rcLine}
+                      style={{ alignItems: 'center', padding: '10px 0' }}
+                    >
                       <span style={{ minWidth: 0, flex: 1 }}>
                         <span className={s.rcName} style={{ fontSize: 17 }}>
                           {tr(line.product.name, locale)}
@@ -388,7 +475,16 @@ export function BazaarCheckout({
                           {line.product.unit === 'KG' && part.store.id === store.id ? (
                             <>
                               {' · '}
-                              <button type="button" className={s.rcLink} onClick={() => setQuantity(line.product.id, Math.round((line.quantity + TOP_UP_KG) * 100) / 100)}>
+                              <button
+                                type="button"
+                                className={s.rcLink}
+                                onClick={() =>
+                                  setQuantity(
+                                    line.product.id,
+                                    Math.round((line.quantity + TOP_UP_KG) * 100) / 100,
+                                  )
+                                }
+                              >
                                 {t('checkout.topUp')}
                               </button>
                             </>
@@ -411,7 +507,14 @@ export function BazaarCheckout({
               </p>
               <div className={s.chips}>
                 {forgot.map((product) => (
-                  <button key={product.id} type="button" className={s.chipPaper} onClick={() => setQuantity(product.id, product.minQuantity || product.quantityStep || 1)}>
+                  <button
+                    key={product.id}
+                    type="button"
+                    className={s.chipPaper}
+                    onClick={() =>
+                      setQuantity(product.id, product.minQuantity || product.quantityStep || 1)
+                    }
+                  >
                     + {tr(product.name, locale)}
                   </button>
                 ))}
@@ -435,7 +538,9 @@ export function BazaarCheckout({
             <div className={s.rcRow}>
               <dt>
                 {t('cart.delivery')}
-                {quote ? ` · ${t('common.km', { km: (quote.distanceMeters / 1000).toFixed(1) })}` : ''}
+                {quote
+                  ? ` · ${t('common.km', { km: (quote.distanceMeters / 1000).toFixed(1) })}`
+                  : ''}
               </dt>
               <dd>{totals ? t.money(totals.deliveryFee.amount) : '—'}</dd>
             </div>
@@ -460,10 +565,14 @@ export function BazaarCheckout({
             <p className={s.rcHaggle}>✓ {t('checkout.plusDelivery')}</p>
           ) : free ? (
             <p className={free.reached ? s.rcHaggle : s.rcHint}>
-              {free.reached ? `✓ ${t('cart.freeReached')}` : t('cart.freeMore', { amount: t.money(free.remaining) })}
+              {free.reached
+                ? `✓ ${t('cart.freeReached')}`
+                : t('cart.freeMore', { amount: t.money(free.remaining) })}
             </p>
           ) : null}
-          {lines.some((line) => line.product.unit === 'KG') ? <span className={s.stamp}>{t('receipt.weighed')}</span> : null}
+          {lines.some((line) => line.product.unit === 'KG') ? (
+            <span className={s.stamp}>{t('receipt.weighed')}</span>
+          ) : null}
           {error ? (
             <p role="alert" className={`${s.rcHint} ${s.rcWarn}`}>
               {error}
@@ -480,10 +589,22 @@ export function BazaarCheckout({
 
       <div className={s.bar}>
         <div className={s.barInner}>
-          <button type="button" className={s.checkout} disabled={!ready} onClick={submit} style={{ opacity: ready ? 1 : 0.6 }}>
+          <button
+            type="button"
+            className={s.checkout}
+            disabled={!ready}
+            onClick={submit}
+            style={{ opacity: ready ? 1 : 0.6 }}
+          >
             <span style={{ flex: 1, textAlign: 'left' }}>
               <div className={s.checkoutTitle}>
-                {!address ? t('checkout.needAddress') : submitting ? t('checkout.placing') : quoting ? t('checkout.calculating') : t('checkout.order')}
+                {!address
+                  ? t('checkout.needAddress')
+                  : submitting
+                    ? t('checkout.placing')
+                    : quoting
+                      ? t('checkout.calculating')
+                      : t('checkout.order')}
               </div>
               {totals ? <div className={s.checkoutSub}>{t.money(totals.total.amount)}</div> : null}
             </span>

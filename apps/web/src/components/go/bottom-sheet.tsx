@@ -59,7 +59,6 @@ export function BottomSheet({
     return () => window.removeEventListener('resize', measure);
   }, []);
 
-  const { reducedMotion } = viewport;
   const full = Math.max(0, viewport.height - TOP_GAP);
   const peekHeight = Math.round(viewport.height * peek);
   const restHeight = expanded ? full : peekHeight;

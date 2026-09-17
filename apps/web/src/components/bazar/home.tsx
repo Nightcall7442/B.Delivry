@@ -46,7 +46,8 @@ export function BazaarHome({
   const vendors = useMemo(
     () =>
       [...stores].sort(
-        (a, b) => Number(b.isOpen) - Number(a.isOpen) || Number(!!b.ownerName) - Number(!!a.ownerName),
+        (a, b) =>
+          Number(b.isOpen) - Number(a.isOpen) || Number(!!b.ownerName) - Number(!!a.ownerName),
       ),
     [stores],
   );
@@ -74,7 +75,9 @@ export function BazaarHome({
       />
       <div className={s.body}>
         <div className={s.top}>
-          <span className={s.tag}>{evening ? 'Чорсу · вечер · до 21:00' : 'Чорсу · утро · +18°'}</span>
+          <span className={s.tag}>
+            {evening ? 'Чорсу · вечер · до 21:00' : 'Чорсу · утро · +18°'}
+          </span>
           <div style={{ display: 'flex', gap: 8 }}>
             <Link href={`${home}/orders`} className={s.round} aria-label={t('menu.orders')}>
               <b>
@@ -89,7 +92,8 @@ export function BazaarHome({
 
         <div className={s.greeting}>
           <div className={s.eyebrow}>
-            {dateLine.charAt(0).toUpperCase() + dateLine.slice(1)} · {t(evening ? 'scene.eveningLine' : 'scene.morningLine')}
+            {dateLine.charAt(0).toUpperCase() + dateLine.slice(1)} ·{' '}
+            {t(evening ? 'scene.eveningLine' : 'scene.morningLine')}
           </div>
           <h1 className={`${s.display} ${evening ? s.displayEvening : ''}`}>
             {t(evening ? 'scene.evening' : 'scene.morning')}
@@ -116,7 +120,9 @@ export function BazaarHome({
                 <span className={s.vendorText}>
                   <span className={s.vendorName}>{store.ownerName ?? tr(store.name, locale)}</span>
                   {store.ownerMotto ? (
-                    <span className={s.vendorLine}>«{shortLine(tr(store.ownerMotto, locale))}»</span>
+                    <span className={s.vendorLine}>
+                      «{shortLine(tr(store.ownerMotto, locale))}»
+                    </span>
                   ) : null}
                 </span>
               </Link>

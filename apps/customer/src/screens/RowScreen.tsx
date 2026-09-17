@@ -85,7 +85,15 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
         <Scene source={null}>
           <View style={{ padding: 20, paddingTop: top + 60, gap: 12 }}>
             {failed ? (
-              <LoadError onRetry={() => void Promise.all([categoryLoad.reload(), storeLoad.reload(), productLoad.reload()])} />
+              <LoadError
+                onRetry={() =>
+                  void Promise.all([
+                    categoryLoad.reload(),
+                    storeLoad.reload(),
+                    productLoad.reload(),
+                  ])
+                }
+              />
             ) : (
               <>
                 <Bone style={{ height: 32, width: 180 }} />
@@ -131,16 +139,16 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
 
       {/* Header, stall strip and the bottom bar float over every page. */}
       <View style={[s.top, { top }]}>
-        <SceneButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}>
+        <SceneButton
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+        >
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
         <View style={{ alignItems: 'center', gap: 2 }}>
           <Display size={22} numberOfLines={1}>
             {category ? tr(category.name, locale) : ''}
           </Display>
-          <Text style={s.subtitle}>
-            {current ? `${t('scene.stalls')} · ${stalls.length}` : ''}
-          </Text>
+          <Text style={s.subtitle}>{current ? `${t('scene.stalls')} · ${stalls.length}` : ''}</Text>
         </View>
         <SceneButton onPress={() => router.push('/search')}>
           <Search size={20} color={scene.ink} />
@@ -235,7 +243,11 @@ function StallPage({
   const photo = store.counterPhotoUrl ?? store.coverUrl;
   const person = store.ownerPhotoUrl ?? store.coverUrl;
   const takenAt = store.counterPhotoAt
-    ? new Date(store.counterPhotoAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })
+    ? new Date(store.counterPhotoAt).toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Tashkent',
+      })
     : null;
 
   return (
@@ -243,7 +255,12 @@ function StallPage({
       <View style={[s.person, { top: Math.round(height * 0.38) }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           {person ? (
-            <Image source={{ uri: person }} style={s.avatar} contentFit="cover" cachePolicy="memory-disk" />
+            <Image
+              source={{ uri: person }}
+              style={s.avatar}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
           ) : null}
           <View style={{ flex: 1, gap: 1 }}>
             <Display size={30} numberOfLines={1}>
@@ -286,7 +303,14 @@ function StallPage({
                 count={qty}
                 countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
                 onPress={() => onProduct(product.id)}
-                onAdd={() => setQuantity(product.id, qty === 0 ? product.minQuantity || product.quantityStep || 1 : qty + (product.quantityStep || 1))}
+                onAdd={() =>
+                  setQuantity(
+                    product.id,
+                    qty === 0
+                      ? product.minQuantity || product.quantityStep || 1
+                      : qty + (product.quantityStep || 1),
+                  )
+                }
               />
             );
           })}
@@ -334,17 +358,52 @@ const s = StyleSheet.create({
     color: scene.creamMuted,
   },
   strip: { position: 'absolute', right: 12, alignItems: 'center', gap: 8 },
-  stripLabel: { fontFamily: sceneFont.uiHeavy, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: scene.creamMuted },
-  thumb: { width: 34, height: 34, borderRadius: 17, borderWidth: 2, borderColor: 'rgba(251,241,222,0.5)', opacity: 0.8, backgroundColor: '#3A2A1A' },
-  thumbCurrent: { width: 44, height: 44, borderRadius: 22, borderWidth: 3, borderColor: scene.saffron, opacity: 1 },
+  stripLabel: {
+    fontFamily: sceneFont.uiHeavy,
+    fontSize: 9,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: scene.creamMuted,
+  },
+  thumb: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 2,
+    borderColor: 'rgba(251,241,222,0.5)',
+    opacity: 0.8,
+    backgroundColor: '#3A2A1A',
+  },
+  thumbCurrent: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 3,
+    borderColor: scene.saffron,
+    opacity: 1,
+  },
   stripCount: { fontFamily: sceneFont.uiHeavy, fontSize: 10, color: scene.creamMuted },
   person: { position: 'absolute', left: 20, right: 80, gap: 8 },
-  avatar: { width: 52, height: 52, borderRadius: 26, borderWidth: 3, borderColor: scene.saffron, backgroundColor: '#3A2A1A' },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 3,
+    borderColor: scene.saffron,
+    backgroundColor: '#3A2A1A',
+  },
   personMeta: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.creamMuted },
   signs: { position: 'absolute', left: 20, right: 20 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 14 },
   sign: { width: '47%', flexGrow: 1 },
-  bottom: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  bottom: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   next: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   nextTitle: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.creamMuted },
   nextSub: { fontFamily: sceneFont.uiText, fontSize: 12, color: scene.creamDim },

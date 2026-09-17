@@ -28,7 +28,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft } from '@/components/go/icons';
 import { useAddress } from '@/features/address';
 import { useAuth } from '@/features/auth';
-import { groupByStore, useCartActions, useCartQuantities, useCartReady, type CartLine } from '@/features/cart';
+import {
+  groupByStore,
+  useCartActions,
+  useCartQuantities,
+  useCartReady,
+  type CartLine,
+} from '@/features/cart';
 import { api } from '@/lib/api';
 
 import { isEvening } from './index';
@@ -134,11 +140,18 @@ export function BazaarCart({
     <main className={s.scene}>
       <div
         className={`${s.photo} ${s.photoDim} ${evening ? s.photoEvening : ''}`}
-        style={{ backgroundImage: `url(${ground ? photo(ground, 1280) : `/scenes/${evening ? 'evening' : 'morning'}.jpg`})` }}
+        style={{
+          backgroundImage: `url(${ground ? photo(ground, 1280) : `/scenes/${evening ? 'evening' : 'morning'}.jpg`})`,
+        }}
       />
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
-          <button type="button" onClick={() => router.back()} className={s.round} aria-label={t('common.back')}>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className={s.round}
+            aria-label={t('common.back')}
+          >
             <ArrowLeft />
           </button>
           <span className={s.tag}>{t('receipt.title')}</span>
@@ -150,7 +163,10 @@ export function BazaarCart({
             {t('cart.title')}
           </h1>
           {groups.length > 0 ? (
-            <p className={s.hand} style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}>
+            <p
+              className={s.hand}
+              style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}
+            >
               {oneTrip
                 ? t('receipt.stalls', { count: oneTrip.length })
                 : groups.length === 1
@@ -176,7 +192,10 @@ export function BazaarCart({
           <>
             {notice ? <p className={s.notice}>{notice}</p> : null}
             {oneTrip ? (
-              <Link href={`${home}/checkout?store=${oneTrip[0]}&stores=${oneTrip.slice(1).join(',')}`} className={s.oneTrip}>
+              <Link
+                href={`${home}/checkout?store=${oneTrip[0]}&stores=${oneTrip.slice(1).join(',')}`}
+                className={s.oneTrip}
+              >
                 <span>
                   <b>{t('cart.oneTrip')}</b>
                   <small>{t('cart.oneTripHint', { count: oneTrip.length })}</small>
@@ -190,25 +209,44 @@ export function BazaarCart({
               const ids = [...group.lines, ...group.unavailable].map((l) => l.product.id);
               const estimate =
                 store && address
-                  ? estimateDelivery(store.point, address.point, store.preparationMinutes, group.subtotal.amount)
+                  ? estimateDelivery(
+                      store.point,
+                      address.point,
+                      store.preparationMinutes,
+                      group.subtotal.amount,
+                    )
                   : null;
               const total = group.subtotal.amount + (estimate?.fee.amount ?? 0);
               const weighed = group.lines.some((l) => WEIGHED.has(l.product.unit));
               const face = store?.ownerPhotoUrl ?? null;
 
               return (
-                <section key={group.storeId} className={s.receipt} style={{ transform: `rotate(${[-0.4, 0.5, -0.3][i % 3]}deg)` }}>
+                <section
+                  key={group.storeId}
+                  className={s.receipt}
+                  style={{ transform: `rotate(${[-0.4, 0.5, -0.3][i % 3]}deg)` }}
+                >
                   <div className={s.rcHead}>
                     <span className={s.rcTitle}>{t('receipt.title')}</span>
                     <span className={s.rcDate}>{today}</span>
                   </div>
 
                   <Link href={`${home}/stores/${group.storeId}`} className={s.rcVendor}>
-                    <span className={`${s.avatar} ${s.avatarSmall}`} style={face ? { backgroundImage: `url(${photo(face, 250)})` } : undefined}>
-                      {face ? '' : (store ? (store.ownerName ?? tr(store.name, locale)) : group.storeId).slice(0, 1)}
+                    <span
+                      className={`${s.avatar} ${s.avatarSmall}`}
+                      style={face ? { backgroundImage: `url(${photo(face, 250)})` } : undefined}
+                    >
+                      {face
+                        ? ''
+                        : (store
+                            ? (store.ownerName ?? tr(store.name, locale))
+                            : group.storeId
+                          ).slice(0, 1)}
                     </span>
                     <span style={{ minWidth: 0 }}>
-                      <span className={s.rcVendorName}>{store ? (store.ownerName ?? tr(store.name, locale)) : group.storeId}</span>
+                      <span className={s.rcVendorName}>
+                        {store ? (store.ownerName ?? tr(store.name, locale)) : group.storeId}
+                      </span>
                       <span className={s.rcVendorMeta}>
                         {store?.ownerName ? `${tr(store.name, locale)} · ` : ''}
                         {t.n('cart.items', group.lines.length)}
@@ -233,8 +271,13 @@ export function BazaarCart({
                   {haggleError ? <p className={`${s.rcHint} ${s.rcWarn}`}>{haggleError}</p> : null}
                   {group.unavailable.length > 0 ? (
                     <p className={s.rcHint}>
-                      {t('cart.unavailable')} {group.unavailable.map((l) => tr(l.product.name, locale)).join(', ')}.{' '}
-                      <button type="button" className={s.rcLink} onClick={() => clear(group.unavailable.map((l) => l.product.id))}>
+                      {t('cart.unavailable')}{' '}
+                      {group.unavailable.map((l) => tr(l.product.name, locale)).join(', ')}.{' '}
+                      <button
+                        type="button"
+                        className={s.rcLink}
+                        onClick={() => clear(group.unavailable.map((l) => l.product.id))}
+                      >
                         {t('common.remove')}
                       </button>
                     </p>
@@ -242,7 +285,10 @@ export function BazaarCart({
 
                   <dl className={s.rcTotals}>
                     <Row label={t('cart.goods')} value={t.money(group.subtotal.amount)} />
-                    <Row label={t('cart.delivery')} value={estimate ? t.money(estimate.fee.amount) : t('cart.afterAddress')} />
+                    <Row
+                      label={t('cart.delivery')}
+                      value={estimate ? t.money(estimate.fee.amount) : t('cart.afterAddress')}
+                    />
                     <Row label={t('cart.total')} value={t.money(total)} strong />
                   </dl>
                   <p className={s.rcHint}>{t('receipt.cashback', { percent: CASHBACK.PERCENT })}</p>
@@ -310,7 +356,10 @@ function ReceiptLine({
 
   return (
     <li className={s.rcLine}>
-      <span className={s.thumb} style={image ? { backgroundImage: `url(${photo(image, 250)})` } : undefined} />
+      <span
+        className={s.thumb}
+        style={image ? { backgroundImage: `url(${photo(image, 250)})` } : undefined}
+      />
       <div style={{ minWidth: 0, flex: 1 }}>
         <div className={s.rcName}>{tr(product.name, locale)}</div>
         <div className={s.rcUnit}>
@@ -325,11 +374,16 @@ function ReceiptLine({
             {t('haggle.accepted', {
               price: t.money(haggle.offeredPrice.amount),
               unit,
-              time: new Date(haggle.expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              time: new Date(haggle.expiresAt).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
             })}
           </div>
         ) : haggle?.status === 'PENDING' ? (
-          <div className={s.rcUnit}>{t('haggle.pending', { price: t.money(haggle.askedPrice.amount), unit })}</div>
+          <div className={s.rcUnit}>
+            {t('haggle.pending', { price: t.money(haggle.askedPrice.amount), unit })}
+          </div>
         ) : haggle?.status === 'DECLINED' ? (
           <div className={s.rcUnit}>{t('haggle.declined')}</div>
         ) : asking ? (
@@ -358,13 +412,21 @@ function ReceiptLine({
           </button>
         )}
         <div className={s.stepper}>
-          <button type="button" onClick={() => onChange(quantity - step < min ? 0 : quantity - step)} aria-label={t('common.remove')}>
+          <button
+            type="button"
+            onClick={() => onChange(quantity - step < min ? 0 : quantity - step)}
+            aria-label={t('common.remove')}
+          >
             −
           </button>
           <span>
             {t.qty(quantity)} {unit}
           </span>
-          <button type="button" onClick={() => onChange(quantity + step)} aria-label={t('common.add')}>
+          <button
+            type="button"
+            onClick={() => onChange(quantity + step)}
+            aria-label={t('common.add')}
+          >
             +
           </button>
         </div>

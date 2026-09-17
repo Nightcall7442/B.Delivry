@@ -117,10 +117,16 @@ export function BazaarLogin({ locale }: { locale: string }) {
         </div>
         <div className={s.greeting} style={{ minHeight: '26vh', padding: '12px 0 22px' }}>
           <div className={s.eyebrow}>{t('login.taglineHint')}</div>
-          <h1 className={`${s.display} ${evening ? s.displayEvening : ''}`} style={{ fontSize: 'clamp(38px, 6vw, 64px)' }}>
+          <h1
+            className={`${s.display} ${evening ? s.displayEvening : ''}`}
+            style={{ fontSize: 'clamp(38px, 6vw, 64px)' }}
+          >
             {t(evening ? 'scene.evening' : 'scene.morning')}
           </h1>
-          <p className={s.hand} style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}>
+          <p
+            className={s.hand}
+            style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}
+          >
             {t('login.hint')}
           </p>
         </div>
@@ -133,7 +139,9 @@ export function BazaarLogin({ locale }: { locale: string }) {
           }}
         >
           <div className={s.rcHead}>
-            <span className={s.rcTitle}>{step === 'phone' ? t('login.title') : t('login.code')}</span>
+            <span className={s.rcTitle}>
+              {step === 'phone' ? t('login.title') : t('login.code')}
+            </span>
           </div>
           {step === 'phone' ? (
             <label className={s.phone}>
@@ -150,7 +158,9 @@ export function BazaarLogin({ locale }: { locale: string }) {
             </label>
           ) : (
             <>
-              <p className={s.rcHint}>{t('login.sent', { count: codeLength, phone: normalize(phone) })}</p>
+              <p className={s.rcHint}>
+                {t('login.sent', { count: codeLength, phone: normalize(phone) })}
+              </p>
               <input
                 ref={codeInput}
                 type="text"
@@ -175,7 +185,12 @@ export function BazaarLogin({ locale }: { locale: string }) {
                 >
                   {t('login.otherPhone')}
                 </button>
-                <button type="button" className={s.rcLink} disabled={retryIn > 0 || busy} onClick={sendCode}>
+                <button
+                  type="button"
+                  className={s.rcLink}
+                  disabled={retryIn > 0 || busy}
+                  onClick={sendCode}
+                >
                   {retryIn > 0 ? t('login.retryIn', { seconds: retryIn }) : t('login.resend')}
                 </button>
               </div>
@@ -187,8 +202,19 @@ export function BazaarLogin({ locale }: { locale: string }) {
             </p>
           ) : null}
           <div className={s.rcActions}>
-            <button type="submit" className={s.rcCta} disabled={step === 'phone' ? !canSend : !canEnter} style={{ opacity: (step === 'phone' ? canSend : canEnter) ? 1 : 0.55, width: '100%' }}>
-              {step === 'phone' ? (busy ? t('login.sending') : t('login.getCode')) : busy ? t('login.checking') : t('login.enter')}
+            <button
+              type="submit"
+              className={s.rcCta}
+              disabled={step === 'phone' ? !canSend : !canEnter}
+              style={{ opacity: (step === 'phone' ? canSend : canEnter) ? 1 : 0.55, width: '100%' }}
+            >
+              {step === 'phone'
+                ? busy
+                  ? t('login.sending')
+                  : t('login.getCode')
+                : busy
+                  ? t('login.checking')
+                  : t('login.enter')}
             </button>
           </div>
           <p className={s.rcHint}>{t('login.terms')}</p>

@@ -31,7 +31,10 @@ export function BazaarOrders({ locale }: { locale: string }) {
 
   return (
     <main className={s.scene}>
-      <div className={`${s.photo} ${s.photoDim} ${s.photoEvening}`} style={{ backgroundImage: 'url(/scenes/evening.jpg)' }} />
+      <div
+        className={`${s.photo} ${s.photoDim} ${s.photoEvening}`}
+        style={{ backgroundImage: 'url(/scenes/evening.jpg)' }}
+      />
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>
@@ -48,7 +51,11 @@ export function BazaarOrders({ locale }: { locale: string }) {
         {!authReady || !ready ? null : !user ? (
           <section className={s.receipt}>
             <p className={s.rcEmpty}>{t('orders.signIn')}</p>
-            <Link href={`${home}/login?next=${encodeURIComponent(`${home}/orders`)}`} className={s.rcCta} style={{ marginTop: 18 }}>
+            <Link
+              href={`${home}/login?next=${encodeURIComponent(`${home}/orders`)}`}
+              className={s.rcCta}
+              style={{ marginTop: 18 }}
+            >
               {t('common.signIn')} →
             </Link>
           </section>
@@ -71,13 +78,18 @@ export function BazaarOrders({ locale }: { locale: string }) {
                 style={{ transform: `rotate(${[-0.5, 0.4, -0.3, 0.6][i % 4]}deg)` }}
               >
                 <div className={s.rcHead}>
-                  <span className={s.rcTitle}>{t('order.number', { number: order.number ?? order.id.slice(0, 6) })}</span>
+                  <span className={s.rcTitle}>
+                    {t('order.number', { number: order.number ?? order.id.slice(0, 6) })}
+                  </span>
                   <span className={s.rcDate}>{day.format(new Date(order.placedAt))}</span>
                 </div>
                 <div className={s.slipBody}>
                   <span style={{ minWidth: 0, flex: 1 }}>
                     <span className={s.rcVendorName}>{tr(order.store.name, locale)}</span>
-                    <span className={`${s.rcHaggle} ${done ? s.rcUnit : ''}`} style={{ marginTop: 2 }}>
+                    <span
+                      className={`${s.rcHaggle} ${done ? s.rcUnit : ''}`}
+                      style={{ marginTop: 2 }}
+                    >
                       {status[order.status].title}
                       {done && order.status === 'DELIVERED' ? ` · ${t('orders.reorderHint')}` : ''}
                     </span>

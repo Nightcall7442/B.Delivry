@@ -49,7 +49,6 @@ import type { OrdersRepository, OrderWithRelations } from '../repository/orders.
 import type {
   ActualQuantity,
   CreateOrderInput,
-  FrozenAddress,
   OrderItemInput,
   OrderListFilters,
   OrderTotals,

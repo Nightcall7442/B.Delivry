@@ -10,7 +10,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { GoShell } from '@/components/go/go-shell';
-import { DEFAULT_POINT, useAddress } from '@/features/address';
 import { useAuth } from '@/features/auth';
 
 const KNOWN_ERRORS = [
@@ -41,7 +40,6 @@ export function LoginScreen({ locale }: { locale: string }) {
   const t = createT(locale);
   const router = useRouter();
   const next = useSearchParams().get('next');
-  const { address } = useAddress();
   const { user, ready, requestCode, verifyCode } = useAuth();
 
   const [phone, setPhone] = useState('');

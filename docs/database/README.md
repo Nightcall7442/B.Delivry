@@ -3,6 +3,7 @@
 PostgreSQL + Prisma. Schema: `apps/api/prisma/schema.prisma`.
 
 Conventions
+
 - UUID ids, `createdAt/updatedAt`, soft delete where business requires
 - Money as integer minor units + currency (UZS)
 - `tenantId` on tenant-scoped tables, composite indexes `(tenantId, ...)`

@@ -5,22 +5,10 @@
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
+      "@/*": ["src/*"]
     },
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "src",
-    "prisma",
-    "test",
-    "vitest.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src", "prisma", "test", "vitest.config.ts"],
+  "exclude": ["node_modules", "dist"]
 }

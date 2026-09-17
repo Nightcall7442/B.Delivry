@@ -17,35 +17,36 @@
   "dependencies": {
     "@bazar/api-client": "workspace:*",
     "@bazar/constants": "workspace:*",
+    "@bazar/i18n": "workspace:*",
     "@bazar/storefront": "workspace:*",
-    "@bazar/types": "workspace:*",
-    "@bazar/i18n": "workspace:*"
+    "@bazar/types": "workspace:*"
   },
   "peerDependencies": {
     "@react-native-async-storage/async-storage": "*",
+    "expo-blur": "*",
+    "expo-image": "*",
     "expo-secure-store": "*",
     "react": "*",
     "react-native": "*",
+    "react-native-reanimated": "*",
     "react-native-safe-area-context": "*",
     "react-native-svg": "*",
-    "react-native-webview": "*",
-    "expo-image": "*",
-    "react-native-reanimated": "*",
-    "expo-blur": "*"
+    "react-native-webview": "*"
   },
   "devDependencies": {
     "@bazar/config": "workspace:*",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@types/react": "~19.2.3",
+    "expo-blur": "~57.0.3",
+    "expo-image": "~57.0.5",
     "expo-secure-store": "~57.0.4",
     "react": "19.2.8",
     "react-native": "0.86.3",
+    "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-svg": "15.15.4",
     "react-native-webview": "13.16.1",
     "typescript": "^5.6.0",
-    "expo-image": "~57.0.5",
-    "react-native-reanimated": "4.5.1",
-    "expo-blur": "~57.0.3"
+    "vitest": "^3.2.7"
   }
 }

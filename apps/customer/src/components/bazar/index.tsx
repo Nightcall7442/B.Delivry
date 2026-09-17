@@ -8,7 +8,15 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, type ImageSource } from 'expo-image';
 import type { ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { press } from '@bazar/mobile';
@@ -85,8 +93,20 @@ export function Scene({
       <LinearGradient
         colors={
           evening
-            ? ['rgba(20,16,12,0.7)', 'rgba(20,16,12,0.1)', 'rgba(20,16,12,0.05)', 'rgba(20,16,12,0.7)', 'rgba(20,16,12,0.98)']
-            : ['rgba(20,12,4,0.55)', 'rgba(20,12,4,0.05)', 'rgba(20,12,4,0)', 'rgba(24,14,4,0.55)', 'rgba(24,14,4,0.95)']
+            ? [
+                'rgba(20,16,12,0.7)',
+                'rgba(20,16,12,0.1)',
+                'rgba(20,16,12,0.05)',
+                'rgba(20,16,12,0.7)',
+                'rgba(20,16,12,0.98)',
+              ]
+            : [
+                'rgba(20,12,4,0.55)',
+                'rgba(20,12,4,0.05)',
+                'rgba(20,12,4,0)',
+                'rgba(24,14,4,0.55)',
+                'rgba(24,14,4,0.95)',
+              ]
         }
         locations={[0, 0.22, 0.4, 0.6, 1]}
         style={StyleSheet.absoluteFill}
@@ -203,10 +223,14 @@ export function Hand({
 }
 
 /** Small caps label in saffron: dates, section eyebrows. */
-export function Eyebrow({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  return (
-    <Text style={[s.eyebrow, style as never]}>{children}</Text>
-  );
+export function Eyebrow({
+  children,
+  style,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return <Text style={[s.eyebrow, style as never]}>{children}</Text>;
 }
 
 /** Section head on a scene: serif title left, saffron link right. */
@@ -344,13 +368,26 @@ export function ProductCard({
 }) {
   return (
     <View style={[s.card, style]}>
-      <Pressable onPress={onPress} style={({ pressed }) => [s.cardPhoto, pressed && { opacity: 0.9 }]}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [s.cardPhoto, pressed && { opacity: 0.9 }]}
+      >
         {photo ? (
-          <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" transition={FADE} cachePolicy="memory-disk" />
+          <Image
+            source={{ uri: photo }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={FADE}
+            cachePolicy="memory-disk"
+          />
         ) : (
           <View style={[StyleSheet.absoluteFill, { backgroundColor: '#5A3E22' }]} />
         )}
-        <LinearGradient colors={['transparent', 'rgba(20,12,4,0.55)']} locations={[0.5, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient
+          colors={['transparent', 'rgba(20,12,4,0.55)']}
+          locations={[0.5, 1]}
+          style={StyleSheet.absoluteFill}
+        />
       </Pressable>
       <Sign
         {...sign}
@@ -363,11 +400,24 @@ export function ProductCard({
 }
 
 /** Row-name sign: just the uppercase word, for "Зелень · Фрукты · Нон". */
-export function RowSign({ title, tilt = 0, onPress }: { title: string; tilt?: number; onPress?: () => void }) {
+export function RowSign({
+  title,
+  tilt = 0,
+  onPress,
+}: {
+  title: string;
+  tilt?: number;
+  onPress?: () => void;
+}) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [s.rowSign, { transform: [{ rotate: `${tilt}deg` }] }, press.base, pressed && press.down]}
+      style={({ pressed }) => [
+        s.rowSign,
+        { transform: [{ rotate: `${tilt}deg` }] },
+        press.base,
+        pressed && press.down,
+      ]}
     >
       <View style={s.pin} />
       <Text style={s.rowSignText}>{title}</Text>
@@ -392,10 +442,21 @@ export function VendorCard({
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [s.vendor, { width, height: Math.round(width * 1.36) }, press.base, pressed && press.down]}
+      style={({ pressed }) => [
+        s.vendor,
+        { width, height: Math.round(width * 1.36) },
+        press.base,
+        pressed && press.down,
+      ]}
     >
       {photo ? (
-        <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" transition={FADE} cachePolicy="memory-disk" />
+        <Image
+          source={{ uri: photo }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={FADE}
+          cachePolicy="memory-disk"
+        />
       ) : (
         <View style={[StyleSheet.absoluteFill, { backgroundColor: '#5A3E22' }]} />
       )}
@@ -419,7 +480,15 @@ export function VendorCard({
 }
 
 /** The frosted pill/bar used for the voice line, chips and secondary buttons. */
-export function Glass({ children, style, onPress }: { children: ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void }) {
+export function Glass({
+  children,
+  style,
+  onPress,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
+}) {
   const body = <View style={[s.glass, style]}>{children}</View>;
   return onPress ? (
     <Pressable onPress={onPress} style={({ pressed }) => [press.base, pressed && press.down]}>
@@ -431,7 +500,15 @@ export function Glass({ children, style, onPress }: { children: ReactNode; style
 }
 
 /** Pomegranate cart disc with the count badge. */
-export function CartDisc({ count, onPress, evening = false }: { count: number; onPress: () => void; evening?: boolean }) {
+export function CartDisc({
+  count,
+  onPress,
+  evening = false,
+}: {
+  count: number;
+  onPress: () => void;
+  evening?: boolean;
+}) {
   return (
     <Pressable
       onPress={onPress}
@@ -453,9 +530,38 @@ export function BasketGlyph({ color = scene.cream, size = 24 }: { color?: string
   // A box-drawn basket keeps this file free of react-native-svg on web.
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'flex-end' }}>
-      <View style={{ width: size * 0.9, height: size * 0.5, borderWidth: 2, borderColor: color, borderRadius: 3, borderTopWidth: 2 }} />
-      <View style={{ position: 'absolute', top: size * 0.1, left: size * 0.22, width: 2, height: size * 0.36, backgroundColor: color, transform: [{ rotate: '30deg' }] }} />
-      <View style={{ position: 'absolute', top: size * 0.1, right: size * 0.22, width: 2, height: size * 0.36, backgroundColor: color, transform: [{ rotate: '-30deg' }] }} />
+      <View
+        style={{
+          width: size * 0.9,
+          height: size * 0.5,
+          borderWidth: 2,
+          borderColor: color,
+          borderRadius: 3,
+          borderTopWidth: 2,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          top: size * 0.1,
+          left: size * 0.22,
+          width: 2,
+          height: size * 0.36,
+          backgroundColor: color,
+          transform: [{ rotate: '30deg' }],
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          top: size * 0.1,
+          right: size * 0.22,
+          width: 2,
+          height: size * 0.36,
+          backgroundColor: color,
+          transform: [{ rotate: '-30deg' }],
+        }}
+      />
     </View>
   );
 }
@@ -485,7 +591,12 @@ const s = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 20 },
+  head: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    paddingHorizontal: 20,
+  },
   headAction: { fontFamily: sceneFont.uiHeavy, fontSize: 12, color: scene.saffronLight },
   tag: {
     backgroundColor: scene.kraft,
@@ -504,7 +615,14 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 3,
   },
-  tagHole: { position: 'absolute', left: 7, width: 5, height: 5, borderRadius: 3, backgroundColor: '#6E4A22' },
+  tagHole: {
+    position: 'absolute',
+    left: 7,
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#6E4A22',
+  },
   tagText: { fontFamily: sceneFont.hand, fontSize: 18, lineHeight: 20, color: scene.ink },
   sign: {
     backgroundColor: scene.paper,
@@ -534,9 +652,22 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#8E1F26',
   },
-  signTitle: { fontFamily: sceneFont.hand, fontSize: 21, lineHeight: 22, color: '#1F1A14', textTransform: 'uppercase', paddingRight: 16 },
+  signTitle: {
+    fontFamily: sceneFont.hand,
+    fontSize: 21,
+    lineHeight: 22,
+    color: '#1F1A14',
+    textTransform: 'uppercase',
+    paddingRight: 16,
+  },
   signPrice: { fontFamily: sceneFont.hand, fontSize: 17, lineHeight: 18, color: scene.pomegranate },
-  signSay: { fontFamily: sceneFont.hand, fontSize: 17, lineHeight: 19, color: '#3A2A1A', marginTop: 2 },
+  signSay: {
+    fontFamily: sceneFont.hand,
+    fontSize: 17,
+    lineHeight: 19,
+    color: '#3A2A1A',
+    marginTop: 2,
+  },
   signNote: { fontFamily: sceneFont.ui, fontSize: 12, lineHeight: 14, color: scene.inkSoft },
   plus: {
     position: 'absolute',
@@ -583,7 +714,13 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 3,
   },
-  rowSignText: { fontFamily: sceneFont.hand, fontSize: 19, lineHeight: 21, color: '#1F1A14', textTransform: 'uppercase' },
+  rowSignText: {
+    fontFamily: sceneFont.hand,
+    fontSize: 19,
+    lineHeight: 21,
+    color: '#1F1A14',
+    textTransform: 'uppercase',
+  },
   vendor: {
     borderRadius: 16,
     overflow: 'hidden',
@@ -596,7 +733,12 @@ const s = StyleSheet.create({
   },
   vendorText: { position: 'absolute', left: 10, right: 10, bottom: 10, gap: 2 },
   vendorName: { fontFamily: sceneFont.uiHeavy, fontSize: 12.5, color: scene.cream },
-  vendorLine: { fontFamily: sceneFont.hand, fontSize: 15, lineHeight: 16, color: scene.saffronLight },
+  vendorLine: {
+    fontFamily: sceneFont.hand,
+    fontSize: 15,
+    lineHeight: 16,
+    color: scene.saffronLight,
+  },
   // A smoked-glass pill: dark enough to read on a bright melon, light enough to sit on night.
   glass: {
     backgroundColor: 'rgba(30,20,8,0.42)',

@@ -8,13 +8,11 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
 import { GoShell } from '@/components/go/go-shell';
-import { DEFAULT_POINT, useAddress } from '@/features/address';
 import { useAuth } from '@/features/auth';
 import { api } from '@/lib/api';
 
 export function SubscriptionsScreen({ locale }: { locale: string }) {
   const t = createT(locale);
-  const { address } = useAddress();
   const { user, ready } = useAuth();
   const [rows, setRows] = useState<CartSubscriptionDto[] | null>(null);
 

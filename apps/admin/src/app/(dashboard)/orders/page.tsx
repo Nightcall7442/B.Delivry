@@ -1,6 +1,5 @@
 'use client';
 
-import { room } from '@bazar/api-client';
 import { isTerminalOrderStatus, type OrderStatus } from '@bazar/constants';
 import { tr } from '@bazar/storefront';
 import { WS_EVENT, type OrderDto } from '@bazar/types';

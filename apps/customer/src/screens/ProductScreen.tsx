@@ -5,13 +5,7 @@
  * the stall promises — weighing at the counter, freshness, haggling — sits as
  * pills; reviews and the rest of the counter follow, scrolling over the photo.
  */
-import {
-  arrivedToday,
-  cashbackFor,
-  estimateDelivery,
-  tr,
-  unitLabel,
-} from '@bazar/storefront';
+import { arrivedToday, cashbackFor, estimateDelivery, tr, unitLabel } from '@bazar/storefront';
 import type { MapStoreDto } from '@bazar/storefront';
 import type { ProductDto, ReviewDto } from '@bazar/types';
 import { Image } from 'expo-image';
@@ -37,7 +31,20 @@ import { useAddress } from '@/features/address/store';
 import { useCart, useCartActions, useCartItem } from '@/features/cart/store';
 import { getProduct, getStore, listProducts } from '@/lib/catalog';
 import { useData } from '@/lib/use-data';
-import { ArrowLeft, Heart, Leaf, Minus, Plus, Scale, Scooter, Star, Tag, Wallet, api, useLocale } from '@bazar/mobile';
+import {
+  ArrowLeft,
+  Heart,
+  Leaf,
+  Minus,
+  Plus,
+  Scale,
+  Scooter,
+  Star,
+  Tag,
+  Wallet,
+  api,
+  useLocale,
+} from '@bazar/mobile';
 
 export function ProductScreen({ productId }: { productId: string }) {
   const product = useData(() => getProduct(productId), [productId]);
@@ -57,16 +64,23 @@ export function ProductScreen({ productId }: { productId: string }) {
     ) ?? [];
   const { address } = useAddress();
   const estimate =
-    store && address ? estimateDelivery(store.point, address.point, store.preparationMinutes) : null;
+    store && address
+      ? estimateDelivery(store.point, address.point, store.preparationMinutes)
+      : null;
   const siblings = useData(
-    () => (product ? listProducts({ storeId: product.storeId }) : Promise.resolve([] as ProductDto[])),
+    () =>
+      product ? listProducts({ storeId: product.storeId }) : Promise.resolve([] as ProductDto[]),
     [product?.storeId],
   );
   const similar = useMemo(
     () =>
       (siblings ?? [])
         .filter((p) => p.id !== productId && p.available)
-        .sort((a, b) => Number(b.categoryId === product?.categoryId) - Number(a.categoryId === product?.categoryId))
+        .sort(
+          (a, b) =>
+            Number(b.categoryId === product?.categoryId) -
+            Number(a.categoryId === product?.categoryId),
+        )
         .slice(0, 4),
     [siblings, productId, product?.categoryId],
   );
@@ -74,12 +88,28 @@ export function ProductScreen({ productId }: { productId: string }) {
 
   if (!product)
     return (
-      <View style={{ flex: 1, backgroundColor: scene.night, padding: 20, paddingTop: top + 60, gap: 12 }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: scene.night,
+          padding: 20,
+          paddingTop: top + 60,
+          gap: 12,
+        }}
+      >
         <Bone style={{ height: 240 }} />
         <Bone style={{ height: 32, width: 220 }} />
       </View>
     );
-  return <ProductBody product={product} store={store ?? null} similar={similar} reviews={reviews} estimate={estimate} />;
+  return (
+    <ProductBody
+      product={product}
+      store={store ?? null}
+      similar={similar}
+      reviews={reviews}
+      estimate={estimate}
+    />
+  );
 }
 
 function ProductBody({
@@ -109,7 +139,9 @@ function ProductBody({
   const unit = units[product.unit];
   const shownQty = quantity > 0 ? quantity : min;
   const lineTotal = product.price.amount * shownQty;
-  const discount = product.oldPrice ? Math.round((1 - product.price.amount / product.oldPrice.amount) * 100) : 0;
+  const discount = product.oldPrice
+    ? Math.round((1 - product.price.amount / product.oldPrice.amount) * 100)
+    : 0;
   const description = product.description ? tr(product.description, locale) : '';
   const photo = product.images[0]?.url ?? null;
   const person = store?.ownerPhotoUrl ?? store?.coverUrl ?? null;
@@ -122,14 +154,21 @@ function ProductBody({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: Math.round(height * 0.34), paddingBottom: 110 + insets.bottom }}
+        contentContainerStyle={{
+          paddingTop: Math.round(height * 0.34),
+          paddingBottom: 110 + insets.bottom,
+        }}
       >
         <View style={s.tagWrap}>
           <View style={s.tag}>
             <View style={s.tagHole} />
             <Text style={s.tagName}>{tr(product.name, locale)}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
-              <Text style={s.tagPrice}>{t.money(product.price.amount, product.price.currency)}</Text>
+            <View
+              style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}
+            >
+              <Text style={s.tagPrice}>
+                {t.money(product.price.amount, product.price.currency)}
+              </Text>
               <Text style={s.tagUnit}>/ {unit}</Text>
               {product.oldPrice ? (
                 <Text style={s.tagOld}>{t.money(product.oldPrice.amount)}</Text>
@@ -151,7 +190,12 @@ function ProductBody({
         {store ? (
           <Pressable onPress={() => router.push(`/store/${store.id}`)} style={s.vendor}>
             {person ? (
-              <Image source={{ uri: person }} style={s.avatar} contentFit="cover" cachePolicy="memory-disk" />
+              <Image
+                source={{ uri: person }}
+                style={s.avatar}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+              />
             ) : null}
             <View style={{ flex: 1, gap: 2 }}>
               {store.ownerMotto ? (
@@ -186,7 +230,15 @@ function ProductBody({
         <View style={s.amount}>
           <Eyebrow>{t('product.perUnit', { unit })}</Eyebrow>
           <View style={s.stepper}>
-            <Pressable onPress={remove} disabled={quantity === 0} style={({ pressed }) => [s.round, quantity === 0 && { opacity: 0.4 }, pressed && { opacity: 0.8 }]}>
+            <Pressable
+              onPress={remove}
+              disabled={quantity === 0}
+              style={({ pressed }) => [
+                s.round,
+                quantity === 0 && { opacity: 0.4 },
+                pressed && { opacity: 0.8 },
+              ]}
+            >
               <Minus size={22} color={scene.cream} />
             </Pressable>
             <View style={{ alignItems: 'center', gap: 2, flex: 1 }}>
@@ -198,20 +250,28 @@ function ProductBody({
                 {t.money(lineTotal)}
               </Text>
             </View>
-            <Pressable onPress={add} style={({ pressed }) => [s.round, s.roundAccent, pressed && { opacity: 0.85 }]}>
+            <Pressable
+              onPress={add}
+              style={({ pressed }) => [s.round, s.roundAccent, pressed && { opacity: 0.85 }]}
+            >
               <Plus size={22} color={scene.ink} />
             </Pressable>
           </View>
           <View style={s.lines}>
             <View style={s.line}>
               <Wallet size={16} color={scene.saffron} />
-              <Text style={s.lineText}>{t('product.cashback', { amount: t.money(cashbackFor(product.price.amount)) })}</Text>
+              <Text style={s.lineText}>
+                {t('product.cashback', { amount: t.money(cashbackFor(product.price.amount)) })}
+              </Text>
             </View>
             {estimate ? (
               <View style={s.line}>
                 <Scooter size={16} color={scene.saffron} />
                 <Text style={s.lineText}>
-                  {t('product.delivery', { minutes: estimate.etaMinutes, fee: t.money(estimate.fee.amount) })}
+                  {t('product.delivery', {
+                    minutes: estimate.etaMinutes,
+                    fee: t.money(estimate.fee.amount),
+                  })}
                 </Text>
               </View>
             ) : null}
@@ -232,7 +292,12 @@ function ProductBody({
               <Glass key={review.id} style={s.review}>
                 <View style={{ flexDirection: 'row', gap: 3 }}>
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <Star key={n} size={12} color={scene.saffron} fill={n <= review.rating ? scene.saffron : 'transparent'} />
+                    <Star
+                      key={n}
+                      size={12}
+                      color={scene.saffron}
+                      fill={n <= review.rating ? scene.saffron : 'transparent'}
+                    />
                   ))}
                 </View>
                 <Hand size={20} color={scene.creamMuted}>
@@ -259,7 +324,14 @@ function ProductBody({
                     count={qty}
                     countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[p.unit]}` })}
                     onPress={() => router.push(`/product/${p.id}`)}
-                    onAdd={() => setQuantity(p.id, qty === 0 ? p.minQuantity || p.quantityStep || 1 : qty + (p.quantityStep || 1))}
+                    onAdd={() =>
+                      setQuantity(
+                        p.id,
+                        qty === 0
+                          ? p.minQuantity || p.quantityStep || 1
+                          : qty + (p.quantityStep || 1),
+                      )
+                    }
                   />
                 );
               })}
@@ -269,7 +341,9 @@ function ProductBody({
       </ScrollView>
 
       <View style={[s.top, { top }]}>
-        <SceneButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}>
+        <SceneButton
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+        >
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
         <SceneButton>
@@ -282,7 +356,9 @@ function ProductBody({
           onPress={() => (quantity > 0 ? router.push('/(tabs)/cart') : add())}
           style={({ pressed }) => [s.cta, pressed && { opacity: 0.92 }]}
         >
-          <Text style={s.ctaLabel}>{quantity > 0 ? t('product.toCart') : t('product.addToCart')}</Text>
+          <Text style={s.ctaLabel}>
+            {quantity > 0 ? t('product.toCart') : t('product.addToCart')}
+          </Text>
           <Display size={20}>{t.money(lineTotal)}</Display>
         </Pressable>
       </View>
@@ -291,7 +367,13 @@ function ProductBody({
 }
 
 const s = StyleSheet.create({
-  top: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' },
+  top: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   tagWrap: { paddingHorizontal: 20, alignItems: 'flex-start' },
   tag: {
     backgroundColor: '#EBD8B4',
@@ -311,23 +393,73 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 6,
   },
-  tagHole: { position: 'absolute', left: 11, top: '50%', marginTop: -5, width: 9, height: 9, borderRadius: 5, backgroundColor: scene.cream, borderWidth: 2, borderColor: '#B8975C' },
+  tagHole: {
+    position: 'absolute',
+    left: 11,
+    top: '50%',
+    marginTop: -5,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: scene.cream,
+    borderWidth: 2,
+    borderColor: '#B8975C',
+  },
   tagName: { fontFamily: sceneFont.hand, fontSize: 30, lineHeight: 31, color: scene.ink },
   tagPrice: { fontFamily: sceneFont.hand, fontSize: 40, lineHeight: 42, color: scene.pomegranate },
   tagUnit: { fontFamily: sceneFont.hand, fontSize: 22, color: scene.inkSoft },
-  tagOld: { fontFamily: sceneFont.hand, fontSize: 20, color: scene.inkSoft, textDecorationLine: 'line-through' },
+  tagOld: {
+    fontFamily: sceneFont.hand,
+    fontSize: 20,
+    color: scene.inkSoft,
+    textDecorationLine: 'line-through',
+  },
   tagNote: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.inkSoft, marginTop: 2 },
-  vendor: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 22 },
-  avatar: { width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: scene.saffron, backgroundColor: '#3A2A1A' },
+  vendor: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 22,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: scene.saffron,
+    backgroundColor: '#3A2A1A',
+  },
   vendorName: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.creamMuted },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 20, paddingTop: 14 },
-  pill: { height: 32, borderRadius: 16, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pill: {
+    height: 32,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   pillText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
   amount: { paddingHorizontal: 20, paddingTop: 24, gap: 10 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  round: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(30,20,8,0.42)', borderWidth: 1, borderColor: 'rgba(251,241,222,0.3)', alignItems: 'center', justifyContent: 'center' },
+  round: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(30,20,8,0.42)',
+    borderWidth: 1,
+    borderColor: 'rgba(251,241,222,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   roundAccent: { backgroundColor: scene.saffron, borderColor: scene.saffron },
-  amountSub: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.creamMuted, textAlign: 'center' },
+  amountSub: {
+    fontFamily: sceneFont.ui,
+    fontSize: 12,
+    color: scene.creamMuted,
+    textAlign: 'center',
+  },
   lines: { gap: 6, paddingTop: 4 },
   line: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   lineText: { fontFamily: sceneFont.uiText, fontSize: 12, color: scene.creamMuted, flex: 1 },

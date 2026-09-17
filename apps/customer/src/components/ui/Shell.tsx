@@ -72,7 +72,9 @@ export function Shell({ map, back, peek = 0.46, tint, children, ...sheet }: Shel
   return (
     <View style={s.root}>
       <MapView {...map} inset={peek} />
-      {tint ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tint }]} /> : null}
+      {tint ? (
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: tint }]} />
+      ) : null}
 
       <View style={[s.top, { paddingTop: insets.top + 12 }]}>
         {back ? (

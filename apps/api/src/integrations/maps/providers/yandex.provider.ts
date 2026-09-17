@@ -9,7 +9,6 @@ import type {
   LatLng,
   MapProvider,
   Route,
-  RouteOptions,
 } from '@bazar/maps';
 import type { MapsConfig } from '../../../config/index.js';
 import type { Logger } from '../../../infrastructure/logger/index.js';

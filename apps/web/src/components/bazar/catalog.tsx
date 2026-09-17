@@ -63,7 +63,11 @@ export function BazaarCatalog({
     }
     return categories.map((cat) => {
       const row = byCategory.get(cat.id);
-      return { category: cat, count: row?.count ?? 0, stalls: stores.filter((store) => row?.storeIds.has(store.id)) };
+      return {
+        category: cat,
+        count: row?.count ?? 0,
+        stalls: stores.filter((store) => row?.storeIds.has(store.id)),
+      };
     });
   }, [categories, stores, products]);
   const stallCount = new Set(rows.flatMap((row) => row.stalls.map((store) => store.id))).size;
@@ -71,7 +75,10 @@ export function BazaarCatalog({
   const pairs = rows.flatMap((row, i) => (i % 2 === 0 ? [[row, rows[i + 1]] as const] : []));
 
   const groups = stores
-    .map((store) => ({ store, items: products.filter((p) => p.storeId === store.id && p.available) }))
+    .map((store) => ({
+      store,
+      items: products.filter((p) => p.storeId === store.id && p.available),
+    }))
     .filter((g) => g.items.length > 0);
 
   return (
@@ -96,23 +103,41 @@ export function BazaarCatalog({
             className={s.search}
             onSubmit={(event) => {
               event.preventDefault();
-              router.push(href({ q: String(new FormData(event.currentTarget).get('q') ?? ''), category: null }));
+              router.push(
+                href({
+                  q: String(new FormData(event.currentTarget).get('q') ?? ''),
+                  category: null,
+                }),
+              );
             }}
           >
-            <input name="q" type="search" defaultValue={query} placeholder={t('search.placeholder')} autoComplete="off" />
+            <input
+              name="q"
+              type="search"
+              defaultValue={query}
+              placeholder={t('search.placeholder')}
+              autoComplete="off"
+            />
           </form>
         </div>
 
         {walking ? (
           <>
             <div className={s.rail}>
-              <Link href={href({ category: null, q: '' })} className={`${s.chip} ${!category && !query ? s.chipOn : ''}`}>
+              <Link
+                href={href({ category: null, q: '' })}
+                className={`${s.chip} ${!category && !query ? s.chipOn : ''}`}
+              >
                 {t('common.all')}
               </Link>
               {rows
                 .filter((row) => row.count > 0 || row.category.id === category)
                 .map((row) => (
-                  <Link key={row.category.id} href={href({ category: row.category.id, q: '' })} className={`${s.chip} ${category === row.category.id ? s.chipOn : ''}`}>
+                  <Link
+                    key={row.category.id}
+                    href={href({ category: row.category.id, q: '' })}
+                    className={`${s.chip} ${category === row.category.id ? s.chipOn : ''}`}
+                  >
                     {tr(row.category.name, locale)}
                   </Link>
                 ))}
@@ -133,7 +158,14 @@ export function BazaarCatalog({
                   </div>
                   <div className={s.grid}>
                     {items.map((product, i) => (
-                      <ProductCard key={product.id} product={product} locale={locale} t={t} index={i} href={`${home}/stores/${store.id}`} />
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        locale={locale}
+                        t={t}
+                        index={i}
+                        href={`${home}/stores/${store.id}`}
+                      />
                     ))}
                   </div>
                 </section>
@@ -177,7 +209,15 @@ export function BazaarCatalog({
         aria-disabled={empty}
         onClick={(e) => empty && e.preventDefault()}
       >
-        <span className={s.rowSign} style={{ transform: `rotate(${tilt}deg)`, marginTop: -22, fontSize: 17, alignSelf: 'flex-start' }}>
+        <span
+          className={s.rowSign}
+          style={{
+            transform: `rotate(${tilt}deg)`,
+            marginTop: -22,
+            fontSize: 17,
+            alignSelf: 'flex-start',
+          }}
+        >
           <span className={s.pin} />
           {tr(cat.name, locale)}
         </span>
@@ -189,7 +229,11 @@ export function BazaarCatalog({
               {stalls.slice(0, 4).map((store, i) => {
                 const face = store.ownerPhotoUrl ?? store.coverUrl;
                 return (
-                  <span key={store.id} className={s.face} style={face ? { backgroundImage: `url(${photo(face, 250)})` } : undefined}>
+                  <span
+                    key={store.id}
+                    className={s.face}
+                    style={face ? { backgroundImage: `url(${photo(face, 250)})` } : undefined}
+                  >
                     {face ? '' : names[i]?.slice(0, 1)}
                   </span>
                 );

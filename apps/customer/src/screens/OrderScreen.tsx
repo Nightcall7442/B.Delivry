@@ -260,11 +260,23 @@ function OrderSheet({
             <View style={{ flex: 1, minWidth: 0 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
                 {!terminal ? <Pulse /> : null}
-                <Text role="display" style={{ flex: 1, fontSize: 26, lineHeight: 28, fontFamily: 'Alegreya_700Bold' }}>
+                <Text
+                  role="display"
+                  style={{ flex: 1, fontSize: 26, lineHeight: 28, fontFamily: 'Alegreya_700Bold' }}
+                >
                   {text.title}
                 </Text>
               </View>
-              <Text role="muted" style={{ marginTop: 4, fontFamily: 'Caveat_700Bold', fontSize: 20, lineHeight: 22, color: isDark ? '#D9B36A' : '#7A5A2B' }}>
+              <Text
+                role="muted"
+                style={{
+                  marginTop: 4,
+                  fontFamily: 'Caveat_700Bold',
+                  fontSize: 20,
+                  lineHeight: 22,
+                  color: isDark ? '#D9B36A' : '#7A5A2B',
+                }}
+              >
                 {text.hint}
               </Text>
             </View>
@@ -720,7 +732,14 @@ function Pulse() {
 }
 
 const s = StyleSheet.create({
-  paper: { backgroundColor: PAPER, borderRadius: 6, shadowColor: '#3A2A1A', shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } },
+  paper: {
+    backgroundColor: PAPER,
+    borderRadius: 6,
+    shadowColor: '#3A2A1A',
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+  },
   eta: {
     backgroundColor: color.saffron100,
     borderRadius: 16,

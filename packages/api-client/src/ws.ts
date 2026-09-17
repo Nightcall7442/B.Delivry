@@ -58,7 +58,8 @@ export class RealtimeClient {
         listener(parsed.data as ServerEvents[WsEventName]);
       }
     };
-    socket.onclose = (event: CloseEvent) => {
+    // Typed structurally: `CloseEvent` is a DOM name and the API server compiles this file too.
+    socket.onclose = (event: { code: number }) => {
       this.socket = null;
       if (this.closed) return;
       // 1s, 2s, 4s … capped at 30s. A dead network costs nothing; a flapping one is not hammered.

@@ -4,6 +4,9 @@
 **Date:** YYYY-MM-DD
 
 ## Context
+
 ## Decision
+
 ## Consequences
+
 ## Alternatives considered

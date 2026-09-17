@@ -7,7 +7,6 @@ import Link from 'next/link';
 
 import { GoShell } from '@/components/go/go-shell';
 import { Chevron, Receipt } from '@/components/go/icons';
-import { DEFAULT_POINT, useAddress } from '@/features/address';
 import { useAuth } from '@/features/auth';
 import { useOrderList } from '@/features/orders';
 
@@ -15,7 +14,6 @@ export function OrdersScreen({ locale }: { locale: string }) {
   const t = createT(locale);
   const { user, ready: authReady } = useAuth();
   const { orders, ready } = useOrderList();
-  const { address } = useAddress();
 
   return (
     <GoShell

@@ -53,7 +53,6 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
   const { order, courier, courierInfo, etaMinutes, cancellable, ready, cancel } =
     useLiveOrder(orderId);
   const [confirming, setConfirming] = useState(false);
-  const [details, setDetails] = useState(false);
   const [chat, setChat] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   // Delivered: the two promises. Late → the fee is already back (API did it);
@@ -161,7 +160,10 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
   if (!order) {
     return (
       <main className={s.scene}>
-        <div className={`${s.photo} ${s.photoDim} ${s.photoEvening}`} style={{ backgroundImage: 'url(/scenes/evening.jpg)' }} />
+        <div
+          className={`${s.photo} ${s.photoDim} ${s.photoEvening}`}
+          style={{ backgroundImage: 'url(/scenes/evening.jpg)' }}
+        />
         <div className={`${s.body} ${s.narrow}`}>
           <div className={s.top}>
             <Link href={back} className={s.round} aria-label={t('common.back')}>
@@ -172,11 +174,17 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
             <h1 className={s.display} style={{ fontSize: 'clamp(36px, 5vw, 56px)' }}>
               {t('order.title')}
             </h1>
-            <p className={s.hand} style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}>
+            <p
+              className={s.hand}
+              style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}
+            >
               {!authReady || !ready ? (
                 t('common.loading')
               ) : !user ? (
-                <Link href={`/${locale}/login?next=${encodeURIComponent(`/${locale}/orders/${orderId}`)}`} style={{ color: 'inherit' }}>
+                <Link
+                  href={`/${locale}/login?next=${encodeURIComponent(`/${locale}/orders/${orderId}`)}`}
+                  style={{ color: 'inherit' }}
+                >
                   {t('order.signIn')} →
                 </Link>
               ) : (
@@ -202,7 +210,10 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
   const stall = order.store.point ?? home;
   const span = haversineMeters(stall, home);
   // Follow the courier while there is one; otherwise show the whole trip.
-  const center = courier && !terminal ? courier : { lat: (stall.lat + home.lat) / 2, lng: (stall.lng + home.lng) / 2 };
+  const center =
+    courier && !terminal
+      ? courier
+      : { lat: (stall.lat + home.lat) / 2, lng: (stall.lng + home.lng) / 2 };
   const zoom = courier && !terminal ? 14 : span > 6000 ? 11 : span > 3000 ? 12 : 13;
   const units = unitLabel(locale);
   const placed = new Intl.DateTimeFormat(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', {
@@ -233,7 +244,10 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
           <h1 className={s.display} style={{ fontSize: 'clamp(32px, 4.6vw, 52px)' }}>
             {text.title}
           </h1>
-          <p className={s.hand} style={{ fontSize: 22, margin: '6px 0 0', color: 'var(--cream-muted)' }}>
+          <p
+            className={s.hand}
+            style={{ fontSize: 22, margin: '6px 0 0', color: 'var(--cream-muted)' }}
+          >
             {text.hint}
           </p>
           {order.scheduledFor && !courier && !terminal ? (
@@ -248,9 +262,19 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
           {failed ? null : (
             <ol className={s.steps} aria-label={t('order.steps')}>
               {steps.map((step, index) => {
-                const state = index < stepIndex || (index === stepIndex && terminal) ? 'done' : index === stepIndex ? 'active' : 'todo';
+                const state =
+                  index < stepIndex || (index === stepIndex && terminal)
+                    ? 'done'
+                    : index === stepIndex
+                      ? 'active'
+                      : 'todo';
                 return (
-                  <li key={step.label} className={s.step} data-state={state} aria-current={index === stepIndex ? 'step' : undefined}>
+                  <li
+                    key={step.label}
+                    className={s.step}
+                    data-state={state}
+                    aria-current={index === stepIndex ? 'step' : undefined}
+                  >
                     <span className={s.stepTile} />
                     <span className={s.stepLabel}>{step.label}</span>
                   </li>
@@ -278,20 +302,34 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                       : courierInfo.vehicleType}
                 </span>
               </span>
-              <a href={`tel:${courierInfo.phone.replace(/[^\d+]/g, '')}`} className={s.payIcon} aria-label={t('order.call')}>
+              <a
+                href={`tel:${courierInfo.phone.replace(/[^\d+]/g, '')}`}
+                className={s.payIcon}
+                aria-label={t('order.call')}
+              >
                 <Phone />
               </a>
-              <button type="button" onClick={() => setChat((v) => !v)} className={`${s.payIcon} ${chat ? s.payIconOn : ''}`} aria-label={t('order.chat')} aria-pressed={chat}>
+              <button
+                type="button"
+                onClick={() => setChat((v) => !v)}
+                className={`${s.payIcon} ${chat ? s.payIconOn : ''}`}
+                aria-label={t('order.chat')}
+                aria-pressed={chat}
+              >
                 <Chat />
               </button>
             </div>
-            {chat ? <OrderChat orderId={order.id} locale={locale} onClose={() => setChat(false)} /> : null}
+            {chat ? (
+              <OrderChat orderId={order.id} locale={locale} onClose={() => setChat(false)} />
+            ) : null}
           </section>
         ) : null}
 
         {payDue === 'due' ? (
           <section className={s.receipt}>
-            <p className={s.rcName}>{t('order.payNow', { amount: t.money(order.totals.total.amount) })}</p>
+            <p className={s.rcName}>
+              {t('order.payNow', { amount: t.money(order.totals.total.amount) })}
+            </p>
             <div className={s.chips}>
               {ONLINE_PROVIDERS.map((option) => (
                 <button
@@ -299,9 +337,11 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                   type="button"
                   className={s.rcCta}
                   onClick={() => {
-                    void startOnlinePayment(api(), order.id, option.id, window.location.href).then((url) => {
-                      if (url) window.location.assign(url);
-                    });
+                    void startOnlinePayment(api(), order.id, option.id, window.location.href).then(
+                      (url) => {
+                        if (url) window.location.assign(url);
+                      },
+                    );
                   }}
                 >
                   {option.title}
@@ -311,10 +351,19 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
           </section>
         ) : null}
         {status === ORDER_STATUS.COURIER_ARRIVED ? (
-          <p className={s.notice}>{t('order.arrived', { entrance: order.address.entrance ? ` ${order.address.entrance}` : '' })}</p>
+          <p className={s.notice}>
+            {t('order.arrived', {
+              entrance: order.address.entrance ? ` ${order.address.entrance}` : '',
+            })}
+          </p>
         ) : null}
         {status === ORDER_STATUS.DELIVERED && lateRefundDue(order) ? (
-          <p className={s.notice}>{t('order.late', { minutes: lateMinutes(order), amount: t.money(order.totals.deliveryFee.amount) })}</p>
+          <p className={s.notice}>
+            {t('order.late', {
+              minutes: lateMinutes(order),
+              amount: t.money(order.totals.deliveryFee.amount),
+            })}
+          </p>
         ) : null}
 
         <section className={s.receipt}>
@@ -322,11 +371,16 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
             <span className={s.rcTitle}>{t('receipt.title')}</span>
             <span className={s.rcDate}>
               {paymentMethodText(locale)[order.paymentMethod].title}
-              {order.paymentMethod === 'ONLINE' ? ` · ${paymentStatusText(locale)[order.paymentStatus]}` : ''}
+              {order.paymentMethod === 'ONLINE'
+                ? ` · ${paymentStatusText(locale)[order.paymentStatus]}`
+                : ''}
             </span>
           </div>
           <div className={s.rcVendor} style={{ cursor: 'default' }}>
-            <span className={`${s.avatar} ${s.avatarSmall}`} style={{ background: 'var(--kraft)', color: 'var(--pomegranate)' }}>
+            <span
+              className={`${s.avatar} ${s.avatarSmall}`}
+              style={{ background: 'var(--kraft)', color: 'var(--pomegranate)' }}
+            >
               <HomeGlyph />
             </span>
             <span style={{ minWidth: 0, flex: 1 }}>
@@ -345,7 +399,8 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
           {payDue === 'waiting' ? <p className={s.rcHint}>{t('order.payLater')}</p> : null}
           {order.paymentMethod === 'INVOICE' ? (
             <p className={s.rcHint}>
-              {order.dueAt ? t('order.invoiceDue', { date: t.date(order.dueAt) }) : ''} · {paymentStatusText(locale)[order.paymentStatus]} ·{' '}
+              {order.dueAt ? t('order.invoiceDue', { date: t.date(order.dueAt) }) : ''} ·{' '}
+              {paymentStatusText(locale)[order.paymentStatus]} ·{' '}
               <Link href={`/${locale}/orders/${order.id}/invoice`} className={s.rcLink}>
                 {t('order.invoice')}
               </Link>
@@ -362,9 +417,24 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
           <div className={s.rcSection}>{tr(order.store.name, locale)}</div>
           <ul className={s.rcLines}>
             {order.items.map((item) => (
-              <li key={item.id} className={s.rcLine} style={{ alignItems: 'center', padding: '10px 0' }}>
+              <li
+                key={item.id}
+                className={s.rcLine}
+                style={{ alignItems: 'center', padding: '10px 0' }}
+              >
                 {item.weighingPhotoUrl ? (
-                  <a href={item.weighingPhotoUrl} target="_blank" rel="noreferrer" className={s.thumb} style={{ backgroundImage: `url(${item.weighingPhotoUrl})`, width: 44, height: 44 }} aria-label={t('order.photo')} />
+                  <a
+                    href={item.weighingPhotoUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={s.thumb}
+                    style={{
+                      backgroundImage: `url(${item.weighingPhotoUrl})`,
+                      width: 44,
+                      height: 44,
+                    }}
+                    aria-label={t('order.photo')}
+                  />
                 ) : null}
                 <span style={{ minWidth: 0, flex: 1 }}>
                   <span className={s.rcName} style={{ fontSize: 17 }}>
@@ -372,7 +442,9 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                   </span>
                   <span className={s.rcUnit}>
                     {t.qty(item.actualQuantity ?? item.quantity)} {units[item.unit]}
-                    {item.actualQuantity !== null && item.actualQuantity !== item.quantity ? t('order.ordered', { quantity: item.quantity }) : ''}
+                    {item.actualQuantity !== null && item.actualQuantity !== item.quantity
+                      ? t('order.ordered', { quantity: item.quantity })
+                      : ''}
                   </span>
                 </span>
                 <span className={s.rcSum} style={{ fontSize: 22, paddingTop: 0 }}>
@@ -424,12 +496,22 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                   >
                     {cancelling ? t('order.cancelling') : t('order.cancelYes')}
                   </button>
-                  <button type="button" className={s.rcLink} style={{ color: '#7a6749' }} onClick={() => setConfirming(false)}>
+                  <button
+                    type="button"
+                    className={s.rcLink}
+                    style={{ color: '#7a6749' }}
+                    onClick={() => setConfirming(false)}
+                  >
                     {t('order.keep')}
                   </button>
                 </>
               ) : (
-                <button type="button" className={s.rcLink} style={{ color: '#7a6749' }} onClick={() => setConfirming(true)}>
+                <button
+                  type="button"
+                  className={s.rcLink}
+                  style={{ color: '#7a6749' }}
+                  onClick={() => setConfirming(true)}
+                >
                   {t('order.cancel')}
                 </button>
               )}
@@ -451,12 +533,26 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
               <>
                 <p className={s.rcName}>
                   {t('order.freshness', {
-                    time: freshnessDeadline(order)?.toLocaleTimeString(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', { hour: '2-digit', minute: '2-digit' }) ?? '',
+                    time:
+                      freshnessDeadline(order)?.toLocaleTimeString(
+                        locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU',
+                        { hour: '2-digit', minute: '2-digit' },
+                      ) ?? '',
                   })}
                 </p>
-                <input value={complaint} onChange={(e) => setComplaint(e.target.value)} className={s.field} placeholder={t('order.freshnessPlaceholder')} />
+                <input
+                  value={complaint}
+                  onChange={(e) => setComplaint(e.target.value)}
+                  className={s.field}
+                  placeholder={t('order.freshnessPlaceholder')}
+                />
                 <div className={s.rcActions}>
-                  <button type="button" className={s.rcCta} disabled={!complaint.trim() || complaining} onClick={() => void reportFreshness()}>
+                  <button
+                    type="button"
+                    className={s.rcCta}
+                    disabled={!complaint.trim() || complaining}
+                    onClick={() => void reportFreshness()}
+                  >
                     {t('order.freshnessReport')}
                   </button>
                 </div>
@@ -468,9 +564,16 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
         {terminal ? (
           <section className={s.receipt}>
             {subscribed ? (
-              <p className={s.rcName}>{t('subs.subscribed', { when: slotLabel(subscribed, locale) })}</p>
+              <p className={s.rcName}>
+                {t('subs.subscribed', { when: slotLabel(subscribed, locale) })}
+              </p>
             ) : !subscribing ? (
-              <button type="button" className={s.payRow} style={{ borderTop: 0, padding: 0 }} onClick={() => setSubscribing(true)}>
+              <button
+                type="button"
+                className={s.payRow}
+                style={{ borderTop: 0, padding: 0 }}
+                onClick={() => setSubscribing(true)}
+              >
                 <span style={{ minWidth: 0, flex: 1 }}>
                   <span className={s.rcName}>{t('subs.repeatWeekly')}</span>
                   <span className={s.rcUnit}>{t('subs.intro')}</span>
@@ -486,7 +589,12 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                 </p>
                 <div className={s.chips}>
                   {WEEKDAY_ORDER.map((day) => (
-                    <button key={day} type="button" className={chip(subWeekday === day)} onClick={() => setSubWeekday(day)}>
+                    <button
+                      key={day}
+                      type="button"
+                      className={chip(subWeekday === day)}
+                      onClick={() => setSubWeekday(day)}
+                    >
                       {t(`weekday.${day}` as MessageKey)}
                     </button>
                   ))}
@@ -494,7 +602,12 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                 <p className={s.rcHint}>{t('subs.pickTime')}</p>
                 <div className={s.chips}>
                   {SLOT_HOURS.map((hour) => (
-                    <button key={hour} type="button" className={chip(subHour === hour)} onClick={() => setSubHour(hour)}>
+                    <button
+                      key={hour}
+                      type="button"
+                      className={chip(subHour === hour)}
+                      onClick={() => setSubHour(hour)}
+                    >
                       {slotTime(hour)}
                     </button>
                   ))}
@@ -503,7 +616,11 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                   <button type="button" className={s.rcCta} onClick={() => void subscribe()}>
                     {t('subs.subscribe')}
                   </button>
-                  <button type="button" className={s.rcLink} onClick={() => void subscribe([1, 2, 3, 4, 5, 6])}>
+                  <button
+                    type="button"
+                    className={s.rcLink}
+                    onClick={() => void subscribe([1, 2, 3, 4, 5, 6])}
+                  >
                     {t('order.repeatDaily')}
                   </button>
                 </div>

@@ -39,24 +39,38 @@ export function BazaarStore({
     const ids = new Set(products.map((p) => p.categoryId));
     return categories.filter((c) => ids.has(c.id));
   }, [products, categories]);
-  const shown = (category ? products.filter((p) => p.categoryId === category) : products).filter((p) => p.available);
-  const estimate = address ? estimateDelivery(store.point, address.point, store.preparationMinutes) : null;
+  const shown = (category ? products.filter((p) => p.categoryId === category) : products).filter(
+    (p) => p.available,
+  );
+  const estimate = address
+    ? estimateDelivery(store.point, address.point, store.preparationMinutes)
+    : null;
   const hero = store.counterPhotoUrl ?? store.coverUrl ?? null;
   const face = store.ownerPhotoUrl ?? null;
   const takenAt = store.counterPhotoAt
-    ? new Date(store.counterPhotoAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tashkent' })
+    ? new Date(store.counterPhotoAt).toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Tashkent',
+      })
     : null;
 
   return (
     <main className={s.scene}>
-      <div className={s.photo} style={hero ? { backgroundImage: `url(${photo(hero, 1280)})` } : undefined} />
+      <div
+        className={s.photo}
+        style={hero ? { backgroundImage: `url(${photo(hero, 1280)})` } : undefined}
+      />
       <div className={s.body}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>
             <ArrowLeft />
           </Link>
           <span className={s.tag}>
-            {[store.standNumber, store.ownerSince ? t('store.ownerSince', { year: store.ownerSince }) : null]
+            {[
+              store.standNumber,
+              store.ownerSince ? t('store.ownerSince', { year: store.ownerSince }) : null,
+            ]
               .filter(Boolean)
               .join(' · ') || tr(store.name, locale)}
           </span>
@@ -65,7 +79,10 @@ export function BazaarStore({
         <div className={s.greeting}>
           <div className={s.person}>
             {store.ownerName ? (
-              <span className={s.avatar} style={face ? { backgroundImage: `url(${photo(face, 250)})` } : undefined}>
+              <span
+                className={s.avatar}
+                style={face ? { backgroundImage: `url(${photo(face, 250)})` } : undefined}
+              >
                 {face ? '' : store.ownerName.slice(0, 1)}
               </span>
             ) : null}
@@ -77,11 +94,22 @@ export function BazaarStore({
             </div>
           </div>
           {store.ownerMotto ? (
-            <p className={s.hand} style={{ fontSize: 'clamp(24px, 3vw, 34px)', maxWidth: '28ch', margin: '10px 0 0' }}>
+            <p
+              className={s.hand}
+              style={{ fontSize: 'clamp(24px, 3vw, 34px)', maxWidth: '28ch', margin: '10px 0 0' }}
+            >
               «{tr(store.ownerMotto, locale)}»
             </p>
           ) : store.description ? (
-            <p className={s.hand} style={{ fontSize: 22, color: 'var(--cream-muted)', maxWidth: '40ch', margin: '10px 0 0' }}>
+            <p
+              className={s.hand}
+              style={{
+                fontSize: 22,
+                color: 'var(--cream-muted)',
+                maxWidth: '40ch',
+                margin: '10px 0 0',
+              }}
+            >
               {tr(store.description, locale)}
             </p>
           ) : null}
@@ -91,26 +119,45 @@ export function BazaarStore({
               {store.reviewCount ? ` · ${store.reviewCount}` : ''}
             </span>
             <span className={s.pill}>
-              {estimate ? t('common.eta', { minutes: estimate.etaMinutes }) : t('store.prep', { minutes: store.preparationMinutes })}
+              {estimate
+                ? t('common.eta', { minutes: estimate.etaMinutes })
+                : t('store.prep', { minutes: store.preparationMinutes })}
             </span>
-            {estimate ? <span className={s.pill}>{t('store.delivery', { fee: t.money(estimate.fee.amount) })}</span> : null}
-            {!store.isOpen ? <span className={`${s.pill} ${s.pillWarn}`}>{t('store.closedHint')}</span> : null}
+            {estimate ? (
+              <span className={s.pill}>
+                {t('store.delivery', { fee: t.money(estimate.fee.amount) })}
+              </span>
+            ) : null}
+            {!store.isOpen ? (
+              <span className={`${s.pill} ${s.pillWarn}`}>{t('store.closedHint')}</span>
+            ) : null}
           </div>
         </div>
 
         <div className={s.head}>
           <h2 className={s.headTitle}>
             {t('scene.onCounter')}
-            {store.counterPhotoUrl && takenAt ? <span className={s.headMeta}> · {t('scene.counterPhotoAt', { time: takenAt })}</span> : null}
+            {store.counterPhotoUrl && takenAt ? (
+              <span className={s.headMeta}> · {t('scene.counterPhotoAt', { time: takenAt })}</span>
+            ) : null}
           </h2>
         </div>
         {present.length > 1 ? (
           <div className={s.rail}>
-            <button type="button" onClick={() => setCategory(null)} className={`${s.chip} ${category === null ? s.chipOn : ''}`}>
+            <button
+              type="button"
+              onClick={() => setCategory(null)}
+              className={`${s.chip} ${category === null ? s.chipOn : ''}`}
+            >
               {t('common.all')}
             </button>
             {present.map((c) => (
-              <button key={c.id} type="button" onClick={() => setCategory(c.id)} className={`${s.chip} ${category === c.id ? s.chipOn : ''}`}>
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setCategory(c.id)}
+                className={`${s.chip} ${category === c.id ? s.chipOn : ''}`}
+              >
                 {tr(c.name, locale)}
               </button>
             ))}
@@ -118,7 +165,14 @@ export function BazaarStore({
         ) : null}
         <div className={s.grid}>
           {shown.map((product, i) => (
-            <ProductCard key={product.id} product={product} locale={locale} t={t} index={i} href={`${home}/stores/${store.id}`} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              locale={locale}
+              t={t}
+              index={i}
+              href={`${home}/stores/${store.id}`}
+            />
           ))}
         </div>
       </div>

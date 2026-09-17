@@ -36,7 +36,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { FreeDeliveryBar } from '@/components/go/free-delivery-bar';
 import { GoShell } from '@/components/go/go-shell';
 import { Banknote, Card, Check, Chevron, HomeGlyph, Smartphone } from '@/components/go/icons';
-import { DEFAULT_POINT, useAddress } from '@/features/address';
+import { useAddress } from '@/features/address';
 import { useAuth } from '@/features/auth';
 import { groupByStore, useCartActions, useCartQuantities } from '@/features/cart';
 import { useOrderList } from '@/features/orders';
@@ -230,12 +230,6 @@ export function CheckoutScreen({
       setSubmitting(false);
     }
   };
-
-  const markers = [
-    { id: store.id, point: store.point, kind: 'store' as const, label: tr(store.name, locale) },
-    ...followers.map((f) => ({ id: f.store.id, point: f.store.point, kind: 'store' as const })),
-    ...(address ? [{ id: 'home', point: address.point, kind: 'home' as const }] : []),
-  ];
 
   return (
     <GoShell

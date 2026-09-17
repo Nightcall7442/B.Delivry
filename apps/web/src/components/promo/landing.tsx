@@ -77,7 +77,11 @@ const COPY = {
     signIn: 'Войти',
     scroll: 'листайте',
     loading: 'Открываем ряд',
-    dome: { eyebrow: 'Ташкент · Чорсу · 6:30', title: 'Хуш келибсиз', line: '«Базар начинается с купола»' },
+    dome: {
+      eyebrow: 'Ташкент · Чорсу · 6:30',
+      title: 'Хуш келибсиз',
+      line: '«Базар начинается с купола»',
+    },
     row: {
       sign: ['Арбуз хорезмский', '25 000', 'шт', 'Дилноза-опа · павильон Б, место 7'],
       tag: 'взвесим при вас',
@@ -125,7 +129,10 @@ const COPY = {
       eyebrow: 'В приложении',
       title: 'Базар в кармане',
       screens: [
-        ['Прилавки на главной', 'Большие фото, ценник от руки и слова продавца. «+» — и в корзине.'],
+        [
+          'Прилавки на главной',
+          'Большие фото, ценник от руки и слова продавца. «+» — и в корзине.',
+        ],
         ['Ценник как на Чорсу', 'Цена за кило, «осталось 8», гарантия взвешивания при вас.'],
         ['Чек с базара', 'Один чек на несколько прилавков, торг прямо в строке, кешбэк на баланс.'],
         ['Карта рядов', 'Вход, проход, прилавки по обе стороны — идите, как по базару.'],
@@ -143,7 +150,11 @@ const COPY = {
     signIn: 'Kirish',
     scroll: 'varaqlang',
     loading: 'Rastani ochamiz',
-    dome: { eyebrow: 'Toshkent · Chorsu · 6:30', title: 'Xush kelibsiz', line: '«Bozor gumbazdan boshlanadi»' },
+    dome: {
+      eyebrow: 'Toshkent · Chorsu · 6:30',
+      title: 'Xush kelibsiz',
+      line: '«Bozor gumbazdan boshlanadi»',
+    },
     row: {
       sign: ['Xorazm tarvuzi', '25 000', 'dona', 'Dilnoza opa · B pavilyon, 7-joy'],
       tag: 'koʻz oldingizda tortamiz',
@@ -191,9 +202,15 @@ const COPY = {
       eyebrow: 'Ilovada',
       title: 'Choʻntakdagi bozor',
       screens: [
-        ['Bosh sahifada peshtaxtalar', 'Katta suratlar, qoʻlda yozilgan narx va sotuvchining soʻzi. «+» — va savatda.'],
+        [
+          'Bosh sahifada peshtaxtalar',
+          'Katta suratlar, qoʻlda yozilgan narx va sotuvchining soʻzi. «+» — va savatda.',
+        ],
         ['Chorsudagidek narx', 'Kilo narxi, «8 ta qoldi», koʻz oldingizda tortish kafolati.'],
-        ['Bozor cheki', 'Bir necha peshtaxtaga bitta chek, qatorda savdolashish, balansga keshbek.'],
+        [
+          'Bozor cheki',
+          'Bir necha peshtaxtaga bitta chek, qatorda savdolashish, balansga keshbek.',
+        ],
         ['Rastalar xaritasi', 'Kirish, yoʻlak, ikki tomonda peshtaxtalar — bozordagidek yuring.'],
       ],
     },
@@ -271,8 +288,16 @@ export function PromoLanding({ locale }: { locale: string }) {
           </div>
           <div className={styles.products}>
             {c.products.items.map(([id, name, price, unit, who, say], i) => (
-              <a key={id} href={home} className={styles.product} style={{ transform: `rotate(${[-0.6, 0.5, -0.4, 0.6][i]}deg)` }}>
-                <span className={styles.productPhoto} style={{ backgroundImage: `url(${photo(PHOTOS[id] ?? '', 960)})` }} />
+              <a
+                key={id}
+                href={home}
+                className={styles.product}
+                style={{ transform: `rotate(${[-0.6, 0.5, -0.4, 0.6][i]}deg)` }}
+              >
+                <span
+                  className={styles.productPhoto}
+                  style={{ backgroundImage: `url(${photo(PHOTOS[id] ?? '', 960)})` }}
+                />
                 <span className={styles.productSign}>
                   <b>{name}</b>
                   <span className={styles.productPrice}>
@@ -345,7 +370,10 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
           ))}
         </div>
       </div>
-      <div className={`${styles.copy} ${styles.copyRight}`} style={reveal(p, at('bazaar', 0.72), at('bag', 0.08))}>
+      <div
+        className={`${styles.copy} ${styles.copyRight}`}
+        style={reveal(p, at('bazaar', 0.72), at('bag', 0.08))}
+      >
         <div className={styles.tag}>{c.row.tag}</div>
         <div className={styles.sign}>
           <div className={styles.signTitle}>{c.row.sign[0]}</div>
@@ -364,7 +392,10 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
       {/* road: the promise */}
       {has('road') ? (
         <>
-          <div className={`${styles.copy} ${styles.copyTop}`} style={reveal(p, at('road', 0.02), at('road', 0.4))}>
+          <div
+            className={`${styles.copy} ${styles.copyTop}`}
+            style={reveal(p, at('road', 0.02), at('road', 0.4))}
+          >
             <div className={styles.eyebrow}>{c.street.eyebrow}</div>
             <h2 className={styles.display}>{c.street.title}</h2>
             <div className={styles.line}>{c.street.line}</div>
@@ -390,11 +421,17 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
       {/* home */}
       {has('home') ? (
         <>
-          <div className={`${styles.copy} ${styles.copyTop}`} style={reveal(p, at('home', 0.04), at('home', 0.45))}>
+          <div
+            className={`${styles.copy} ${styles.copyTop}`}
+            style={reveal(p, at('home', 0.04), at('home', 0.45))}
+          >
             <div className={styles.eyebrow}>{c.door.eyebrow}</div>
             <h2 className={styles.display}>{c.door.title}</h2>
           </div>
-          <div className={`${styles.copy} ${styles.copyRight}`} style={reveal(p, at('home', 0.5), at('home', 0.86))}>
+          <div
+            className={`${styles.copy} ${styles.copyRight}`}
+            style={reveal(p, at('home', 0.5), at('home', 0.86))}
+          >
             <div className={styles.receipt}>
               <div className={styles.quote}>{c.door.quote}</div>
               <div className={styles.who}>
@@ -402,7 +439,10 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
               </div>
             </div>
           </div>
-          <div className={`${styles.copy} ${styles.copyCenter}`} style={reveal(p, at('home', 0.88), 1)}>
+          <div
+            className={`${styles.copy} ${styles.copyCenter}`}
+            style={reveal(p, at('home', 0.88), 1)}
+          >
             <h2 className={styles.display}>{c.table.title}</h2>
             <div className={styles.line}>{c.table.hint}</div>
           </div>
@@ -466,10 +506,20 @@ function PhoneSection({ c }: { c: Copy }) {
             ))}
           </ol>
         </div>
-        <div className={styles.phone} style={{ transform: `translateY(${(1 - Math.min(1, p * 4)) * 40}px) rotate(${-2 + p * 2}deg)` }}>
+        <div
+          className={styles.phone}
+          style={{
+            transform: `translateY(${(1 - Math.min(1, p * 4)) * 40}px) rotate(${-2 + p * 2}deg)`,
+          }}
+        >
           <div className={styles.phoneScreen}>
             {screens.map((s, i) => (
-              <img key={s} src={`/promo/app/${s}.jpg`} alt="" style={{ opacity: i === active ? 1 : 0 }} />
+              <img
+                key={s}
+                src={`/promo/app/${s}.jpg`}
+                alt=""
+                style={{ opacity: i === active ? 1 : 0 }}
+              />
             ))}
           </div>
           <span className={styles.phoneIsland} />

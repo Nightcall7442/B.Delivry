@@ -5,11 +5,9 @@ import { GUARANTEE } from '@bazar/constants';
 import { createT } from '@bazar/i18n';
 
 import { GoShell } from '@/components/go/go-shell';
-import { DEFAULT_POINT, useAddress } from '@/features/address';
 
 export function RulesScreen({ locale }: { locale: string }) {
   const t = createT(locale);
-  const { address } = useAddress();
   return (
     <GoShell
       locale={locale}

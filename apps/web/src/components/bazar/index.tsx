@@ -63,9 +63,16 @@ export function ProductCard({
         <div className={s.signPrice}>
           {t.money(product.price.amount)} <small>/ {units[product.unit]}</small>
         </div>
-        {product.description ? <div className={s.signSay}>«{tr(product.description, locale)}»</div> : null}
+        {product.description ? (
+          <div className={s.signSay}>«{tr(product.description, locale)}»</div>
+        ) : null}
         {note ? <div className={s.signNote}>{note}</div> : null}
-        <button type="button" onClick={add} className={`${s.plus} ${qty > 0 ? s.plusChosen : ''}`} aria-label={t('common.add')}>
+        <button
+          type="button"
+          onClick={add}
+          className={`${s.plus} ${qty > 0 ? s.plusChosen : ''}`}
+          aria-label={t('common.add')}
+        >
           {qty > 0 ? t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` }) : '+'}
         </button>
       </div>
@@ -91,7 +98,8 @@ export function BasketBar({
   const total = inCart.reduce((sum, p) => sum + p.price.amount * (quantities[p.id] ?? 0), 0);
   const stalls = new Set(inCart.map((p) => p.storeId));
   // One stall goes straight to checkout; several — the receipts decide how many trips it is.
-  const checkoutHref = stalls.size === 1 ? `${home}/checkout?store=${[...stalls][0]}` : `${home}/cart`;
+  const checkoutHref =
+    stalls.size === 1 ? `${home}/checkout?store=${[...stalls][0]}` : `${home}/cart`;
   return (
     <div className={s.bar}>
       <div className={s.barInner}>
@@ -107,7 +115,11 @@ export function BasketBar({
               </span>
               <span className={s.checkoutArrow}>→</span>
             </Link>
-            <Link href={`${home}/list`} className={`${s.disc} ${s.discGlass}`} aria-label={t('scene.say')}>
+            <Link
+              href={`${home}/list`}
+              className={`${s.disc} ${s.discGlass}`}
+              aria-label={t('scene.say')}
+            >
               <Mic />
             </Link>
           </>
@@ -122,7 +134,11 @@ export function BasketBar({
                 <div className={s.glassHint}>{t('scene.sayHint')}</div>
               </span>
             </Link>
-            <Link href={`${home}/cart`} className={`${s.disc} ${evening ? s.discEvening : ''}`} aria-label={t('cart.title')}>
+            <Link
+              href={`${home}/cart`}
+              className={`${s.disc} ${evening ? s.discEvening : ''}`}
+              aria-label={t('cart.title')}
+            >
               <Bag />
             </Link>
           </>
