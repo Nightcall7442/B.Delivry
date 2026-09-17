@@ -211,7 +211,7 @@ export function PromoLanding({ locale }: { locale: string }) {
   const uz = locale === 'uz';
   const c = uz ? COPY.uz : COPY.ru;
   const home = `/${uz ? 'uz' : 'ru'}`;
-  // Phones get the 720-wide frames; everything else the 1280 set.
+  // Phones get the 840×1080 centre crop; everything else the 1920×1080 set.
   const [size, setSize] = useState<'d' | 'm'>('d');
   useEffect(() => {
     setSize(window.innerWidth < 720 ? 'm' : 'd');

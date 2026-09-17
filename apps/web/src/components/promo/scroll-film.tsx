@@ -151,6 +151,9 @@ export function ScrollFilm({
       const dpr = Math.min(window.devicePixelRatio || 1, 3);
       cv.width = Math.round(window.innerWidth * dpr);
       cv.height = Math.round(window.innerHeight * dpr);
+      // Resizing resets the context state; the frames are Full HD and get scaled either way.
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       shown = -1;
       show(Math.round(current));
     };

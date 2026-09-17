@@ -35,7 +35,10 @@ const nextConfig: NextConfig = {
   },
   images: {
     // Fixture photography (see packages/storefront/src/photos.ts); the storage bucket joins here.
-    remotePatterns: [{ protocol: 'https', hostname: 'upload.wikimedia.org' }],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'bazar-delivery.uz' },
+      { protocol: 'https', hostname: 'upload.wikimedia.org' },
+    ],
   },
   async headers() {
     return [

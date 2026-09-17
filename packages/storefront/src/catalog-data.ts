@@ -134,6 +134,7 @@ const STORES: MapStoreDto[] = [
         'Зелень режу на рассвете — к обеду её уже нет.',
         'Koʻkatni tongda oʻraman — tushga qolmaydi.',
       ],
+      photo: 'owner-greens',
     },
   }),
   store(
@@ -157,7 +158,7 @@ const STORES: MapStoreDto[] = [
           'Дыню выбираю по хвостику — ещё ни разу не ошиблась.',
           'Qovunni dumidan tanlayman — hali adashganim yoʻq.',
         ],
-        photo: 'bundle-fruit',
+        photo: 'owner-fruit',
       },
     },
   ),
@@ -173,7 +174,7 @@ const STORES: MapStoreDto[] = [
       name: 'Фархад',
       since: 2008,
       motto: ['Разделываю как для своей семьи.', 'Oʻz oilamga kesgandek kesaman.'],
-      photo: 'farhad-meat',
+      photo: 'owner-meat',
     },
   }),
   store('makro-yunusabad', 'Makro Юнусабад', 'Makro Yunusobod', STORE_TYPE.SUPERMARKET, {
