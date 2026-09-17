@@ -588,6 +588,27 @@
   opacity: 0.85;
 }
 .receipt {
+  /* Paper is always light: the old components inside get the light tokens whatever the theme. */
+  --ink-muted: 106 90 69;
+  --ink-faint: 160 143 118;
+  --line: 228 213 184;
+  --line-strong: 201 185 154;
+  --surface: 243 231 207;
+  --surface-soft: 251 245 230;
+  --surface-mute: 235 220 188;
+  --surface-raise: 253 249 240;
+  --sand-50: 251 245 230;
+  --sand-100: 244 237 225;
+  --sand-200: 234 216 178;
+  --sand-300: 201 185 154;
+  --brand-50: 248 233 230;
+  --brand-100: 238 200 196;
+  --brand-200: 226 164 165;
+  --brand-700: 100 24 25;
+  --brand-800: 74 18 19;
+  --brand-900: 51 16 15;
+  --saffron-100: 251 235 201;
+  --saffron-900: 74 46 5;
   position: relative;
   margin: 0 0 22px;
   padding: 22px 22px 20px;
@@ -943,6 +964,9 @@
 }
 .payIcon {
   flex: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: none;
   display: grid;
   place-items: center;
   width: 40px;
@@ -972,4 +996,116 @@
   .fields {
     grid-template-columns: 1fr;
   }
+}
+
+/* ---- orders: the stack of slips, the live map under the receipt ---- */
+.slip {
+  display: block;
+  padding: 16px 20px 18px;
+  margin-bottom: 18px;
+  color: inherit;
+  text-decoration: none;
+}
+.slipDone {
+  opacity: 0.86;
+}
+.slipBody {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.mapGround {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: var(--night);
+}
+.mapGround > div {
+  left: 0 !important;
+  bottom: 0 !important;
+}
+.mapGround::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    rgba(30, 20, 8, 0.96) 0%,
+    rgba(30, 20, 8, 0.7) 26%,
+    rgba(30, 20, 8, 0.08) 44%,
+    rgba(30, 20, 8, 0.08) 62%,
+    rgba(30, 20, 8, 0.85) 82%,
+    rgba(30, 20, 8, 0.96) 100%
+  );
+}
+.mapGroundDone::after {
+  background: rgba(30, 20, 8, 0.82);
+}
+.mapWindow {
+  height: min(38vh, 360px);
+}
+.steps {
+  display: flex;
+  gap: 0;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  max-width: 520px;
+}
+.step {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.step + .step::before {
+  content: '';
+  position: absolute;
+  right: 50%;
+  top: 7px;
+  width: 100%;
+  height: 2px;
+  background: rgba(251, 241, 222, 0.25);
+}
+.step[data-state='done'] + .step::before,
+.step[data-state='active'] + .step::before {
+  background: var(--saffron);
+}
+.stepTile {
+  position: relative;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  transform: rotate(45deg);
+  border: 2px solid rgba(251, 241, 222, 0.35);
+  background: var(--night);
+}
+.step[data-state='done'] .stepTile {
+  border-color: var(--saffron);
+  background: var(--saffron);
+}
+.step[data-state='active'] .stepTile {
+  border-color: var(--saffron-light);
+  background: var(--pomegranate);
+  box-shadow: 0 0 0 4px rgba(227, 155, 47, 0.3);
+}
+.stepLabel {
+  font-size: 11px;
+  color: var(--cream-muted);
+}
+.step[data-state='done'] .stepLabel,
+.step[data-state='active'] .stepLabel {
+  color: var(--cream);
+}
+.payIconOn {
+  background: var(--pomegranate);
+  color: var(--cream);
+}
+.rcPre {
+  white-space: pre-line;
 }
