@@ -32,16 +32,16 @@ export function preferredLocale(request: NextRequest): Locale {
   return DEFAULT_LOCALE;
 }
 
-/** The public site before the storefront launches: the domain root is the landing. */
+/** The domain root is the landing; the storefront lives under its locale (`/ru`, `/uz`). */
 const LANDING_ONLY = process.env.LANDING_ONLY === '1';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const [, first = '', rest = ''] = pathname.split('/');
+  const [, first = ''] = pathname.split('/');
 
-  if (LANDING_ONLY && (pathname === '/' || (isLocale(first) && rest === ''))) {
+  if (LANDING_ONLY && pathname === '/') {
     const url = request.nextUrl.clone();
-    url.pathname = `/${isLocale(first) ? first : preferredLocale(request)}/promo`;
+    url.pathname = `/${preferredLocale(request)}/promo`;
     return NextResponse.redirect(url);
   }
 
