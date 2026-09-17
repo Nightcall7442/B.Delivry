@@ -671,9 +671,11 @@
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
 .rcName {
+  display: block;
   font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
 }
 .rcUnit {
+  display: block;
   margin-top: 2px;
   font-size: 13px;
   color: #7a6749;
@@ -846,5 +848,128 @@
   }
   .rcSum {
     font-size: 22px;
+  }
+}
+
+/* ---- checkout: fields and choices on paper ---- */
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+.field {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1.5px dashed var(--paper-edge);
+  border-radius: 10px 10px 0 0;
+  background: rgba(234, 216, 178, 0.35);
+  font: 700 17px/1.3 var(--font-hand), 'Caveat', cursive;
+  color: var(--ink);
+  resize: none;
+}
+.fields .field {
+  margin-top: 0;
+}
+.field::placeholder {
+  color: #a08f76;
+  font-weight: 700;
+}
+.field:focus {
+  outline: none;
+  border-bottom-color: var(--pomegranate);
+  background: rgba(234, 216, 178, 0.55);
+}
+.rcSection {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--paper-edge);
+  font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.rcToggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  cursor: pointer;
+  font: 700 18px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.rcToggle input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--pomegranate);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.chipPaper {
+  flex: 0 0 auto;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
+  border: 1.5px solid var(--paper-edge);
+  background: transparent;
+  color: var(--ink);
+  font: 700 16px var(--font-hand), 'Caveat', cursive;
+  cursor: pointer;
+}
+.chipPaperOn {
+  background: var(--pomegranate);
+  border-color: var(--pomegranate);
+  color: var(--cream);
+}
+.payRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  border-top: 1px dashed var(--paper-edge);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rcLines li:first-child .payRow {
+  border-top: 0;
+}
+.payIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--kraft);
+  color: var(--pomegranate);
+}
+.tick {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--paper-edge);
+  color: var(--cream);
+}
+.tickOn {
+  background: var(--pomegranate);
+  border-color: var(--pomegranate);
+}
+.checkout:disabled {
+  cursor: default;
+}
+@media (max-width: 480px) {
+  .fields {
+    grid-template-columns: 1fr;
   }
 }
