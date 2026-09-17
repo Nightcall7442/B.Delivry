@@ -44,7 +44,9 @@ const normalize = (raw: string): string => {
 export function BazaarLogin({ locale }: { locale: string }) {
   const t = createT(locale);
   const router = useRouter();
-  const next = useSearchParams().get('next');
+  // `next` must stay on this site: a relative path, never `//evil` or a full URL.
+  const raw = useSearchParams().get('next');
+  const next = raw && raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/\') ? raw : null;
   const { user, ready, requestCode, verifyCode } = useAuth();
   const evening = isEvening();
   const home = `/${locale}`;
