@@ -1,40 +1,18 @@
-# syntax=docker/dockerfile:1.7
-# Multi-stage build for @bazar/api (pnpm monorepo)
-
-ARG NODE_VERSION=22
-FROM node:${NODE_VERSION}-alpine AS base
-RUN corepack enable && corepack prepare pnpm@10.28.0 --activate
+# The API (apps/api) as one image, built from the repo root (Railway:
+# RAILWAY_DOCKERFILE_PATH=apps/api/Dockerfile). Workspace packages are
+# source-only, so the server runs through tsx. Runs as the unprivileged
+# `node` user; `.storage` (local uploads) and `.tessdata` (OCR models) are
+# the only writable dirs. Migrations apply on start — one instance, so no
+# race; move `migrate deploy` to a release step before scaling out.
+FROM node:22-alpine
+RUN corepack enable && corepack prepare pnpm@10.28.0 --activate && apk add --no-cache openssl
 WORKDIR /app
-
-# ---------- deps: install workspace dependencies
-FROM base AS deps
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
-COPY apps/api/package.json apps/api/
-COPY packages/*/package.json packages/
-# TODO: use `pnpm fetch` + `pnpm install --offline` for better layer caching
-RUN pnpm install --frozen-lockfile
-
-# ---------- development: hot reload via tsx
-FROM deps AS development
 COPY . .
-RUN pnpm --filter @bazar/api db:generate
+RUN pnpm install --frozen-lockfile --filter "@bazar/api..."
+WORKDIR /app/apps/api
+RUN node node_modules/prisma/build/index.js generate && mkdir -p .storage .tessdata && chown -R node:node .storage .tessdata
+USER node
+ENV NODE_ENV=production API_HOST=0.0.0.0
 EXPOSE 4000
-CMD ["pnpm", "--filter", "@bazar/api", "dev"]
-
-# ---------- build
-FROM deps AS build
-COPY . .
-RUN pnpm --filter @bazar/api db:generate
-RUN pnpm --filter @bazar/api... build
-RUN pnpm --filter @bazar/api deploy --prod /pruned
-
-# ---------- production
-FROM node:${NODE_VERSION}-alpine AS production
-ENV NODE_ENV=production
-WORKDIR /app
-RUN addgroup -S bazar && adduser -S bazar -G bazar
-COPY --from=build --chown=bazar:bazar /pruned ./
-USER bazar
-EXPOSE 4000
-HEALTHCHECK --interval=30s --timeout=5s CMD wget -qO- http://localhost:4000/health || exit 1
-CMD ["node", "dist/main.js"]
+# SEED_ON_BOOT=1 runs the (idempotent) reference seed before the server: set it for one deploy, then unset.
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && if [ \"$SEED_ON_BOOT\" = 1 ]; then pnpm exec tsx prisma/seed.ts; fi && API_PORT=${PORT:-4000} pnpm exec tsx src/main.ts"]

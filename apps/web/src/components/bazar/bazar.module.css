@@ -1,0 +1,1305 @@
+/*
+ * The bazaar language on the web — the same pieces the customer app has:
+ * a photograph as the ground, cardboard price signs on pushpins, kraft tags,
+ * smoked-glass pills, people as tall cards. Colours are the scene's own
+ * (they sit on a photo, so they do not follow the site theme).
+ */
+.scene {
+  --cream: #fbf1de;
+  --cream-muted: #d9c7a6;
+  --ink: #2b1b0e;
+  --night: #1e1408;
+  --paper: #f4efe4;
+  --paper-edge: #c9b99a;
+  --kraft: #ead8b2;
+  --pomegranate: #9e2a2b;
+  --saffron: #e39b2f;
+  --saffron-light: #f2c56b;
+  position: relative;
+  min-height: 100dvh;
+  background: var(--night);
+  color: var(--cream);
+  font-family: var(--font-display), 'Manrope', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.photo {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+}
+.photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(20, 12, 4, 0.55) 0%,
+    rgba(20, 12, 4, 0.05) 22%,
+    rgba(20, 12, 4, 0) 40%,
+    rgba(24, 14, 4, 0.55) 60%,
+    rgba(24, 14, 4, 0.95) 100%
+  );
+}
+.photoEvening::after {
+  background:
+    linear-gradient(to bottom left, rgba(242, 169, 59, 0.45), rgba(242, 169, 59, 0) 45%),
+    linear-gradient(
+      rgba(20, 16, 12, 0.7) 0%,
+      rgba(20, 16, 12, 0.1) 22%,
+      rgba(20, 16, 12, 0.05) 40%,
+      rgba(20, 16, 12, 0.7) 60%,
+      rgba(20, 16, 12, 0.98) 100%
+    );
+}
+.body {
+  position: relative;
+  z-index: 1;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 4vw, 40px) 140px;
+}
+
+/* ---- top row: tag left, round buttons right ---- */
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: clamp(16px, 3vh, 28px);
+}
+.round {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(251, 241, 222, 0.92);
+  color: var(--ink);
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease;
+}
+.round:hover {
+  transform: translateY(-1px);
+}
+.round b {
+  color: var(--pomegranate);
+}
+
+/* ---- type ---- */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--saffron-light);
+}
+.display {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(44px, 7vw, 84px);
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  color: var(--cream);
+  text-wrap: balance;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+  margin: 6px 0 0;
+}
+.displayEvening {
+  font-style: italic;
+}
+.hand {
+  font-family: var(--font-hand), cursive;
+  color: var(--saffron-light);
+  line-height: 1.05;
+}
+.greeting {
+  padding-top: clamp(28px, 6vh, 64px);
+  min-height: 42vh;
+}
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 28px 0 12px;
+}
+.headTitle {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(22px, 2.6vw, 30px);
+  color: var(--cream);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+  margin: 0;
+}
+.headAction {
+  font-family: var(--font-hand), cursive;
+  font-size: 20px;
+  color: var(--saffron-light);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* ---- kraft luggage tag ---- */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 10px;
+  background: var(--kraft);
+  color: var(--ink);
+  font-family: var(--font-hand), cursive;
+  font-size: 20px;
+  line-height: 1;
+  border-radius: 3px;
+  transform: rotate(-2deg);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.tag::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid #b8a27a;
+}
+
+/* ---- rails ---- */
+.rail {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 6px 0 14px;
+  margin: 0 calc(-1 * clamp(20px, 4vw, 40px));
+  padding-left: clamp(20px, 4vw, 40px);
+  padding-right: clamp(20px, 4vw, 40px);
+}
+.rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* a person: tall photo card, name and their line */
+.vendor {
+  position: relative;
+  flex: 0 0 auto;
+  width: 132px;
+  height: 180px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #3a2a1a center / cover no-repeat;
+  text-decoration: none;
+  color: var(--cream);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+  transition: transform 0.15s ease;
+}
+.vendor:hover {
+  transform: translateY(-3px);
+}
+.vendor::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 40%, rgba(20, 12, 4, 0.92));
+}
+.vendorText {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 1;
+  display: grid;
+  gap: 2px;
+}
+.vendorName {
+  font-size: 13px;
+  font-weight: 800;
+}
+.vendorLine {
+  font-family: var(--font-hand), cursive;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--saffron-light);
+}
+
+/* row-name sign: the uppercase word on cardboard with a pushpin */
+.rowSign {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 6px 12px 5px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  color: #1f1a14;
+  font-family: var(--font-hand), cursive;
+  font-size: 20px;
+  line-height: 1;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  margin-top: 6px;
+}
+.pin {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: #b42a31;
+  border: 1px solid #8e1f26;
+}
+
+/* ---- product cards: photo with the sign hanging off a corner ---- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 28px 20px;
+  padding-top: 6px;
+}
+.card {
+  position: relative;
+  padding-bottom: 6px;
+}
+.cardPhoto {
+  display: block;
+  aspect-ratio: 1.3;
+  border-radius: 12px;
+  background: #3a2a1a center / cover no-repeat;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+.cardPhoto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(transparent 55%, rgba(20, 12, 4, 0.5));
+  pointer-events: none;
+}
+.sign {
+  position: relative;
+  display: grid;
+  gap: 3px;
+  margin: -30px 56px 0 14px;
+  padding: 10px 14px 10px;
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  color: #1f1a14;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+  transform: rotate(-1deg);
+}
+.signRight {
+  margin: -30px 14px 0 56px;
+  transform: rotate(1deg);
+}
+.signChosen {
+  border-color: var(--saffron);
+  box-shadow: 0 0 0 2px var(--saffron), 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+.signTitle {
+  font-family: var(--font-hand), cursive;
+  font-size: 22px;
+  line-height: 1;
+  text-transform: uppercase;
+  padding-right: 18px;
+}
+.signPrice {
+  font-family: var(--font-hand), cursive;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--pomegranate);
+}
+.signPrice small {
+  font-size: 15px;
+  color: #6a5a45;
+}
+.signSay {
+  font-family: var(--font-hand), cursive;
+  font-size: 17px;
+  line-height: 1.05;
+  color: #3a2a1a;
+}
+.signNote {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6a5a45;
+}
+.plus {
+  position: absolute;
+  right: -8px;
+  top: -8px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pomegranate);
+  color: var(--cream);
+  font-weight: 800;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+.plusChosen {
+  top: auto;
+  bottom: -10px;
+  background: var(--saffron);
+  color: var(--ink);
+  font-size: 12px;
+  font-family: var(--font-display), 'Manrope', sans-serif;
+}
+
+/* ---- the bottom bar: voice line + basket disc, or «Оформить» ---- */
+.bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px calc(20px + env(safe-area-inset-bottom));
+  pointer-events: none;
+  background: linear-gradient(rgba(30, 20, 8, 0), rgba(30, 20, 8, 0.85));
+}
+.barInner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(560px, 100%);
+  pointer-events: auto;
+}
+.glass {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 16px;
+  border-radius: 18px;
+  background: rgba(30, 20, 8, 0.55);
+  border: 1px solid rgba(251, 241, 222, 0.28);
+  backdrop-filter: blur(10px);
+  color: var(--cream);
+  text-decoration: none;
+}
+.glassTitle {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 17px;
+}
+.glassHint {
+  font-size: 11px;
+  color: var(--cream-muted);
+}
+.disc {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--pomegranate);
+  color: var(--cream);
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(158, 42, 43, 0.5);
+}
+.discEvening {
+  background: var(--saffron);
+  color: var(--night);
+}
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--saffron);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+.checkout {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 18px;
+  border-radius: 18px;
+  background: var(--pomegranate);
+  color: var(--cream);
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(158, 42, 43, 0.5);
+}
+.checkoutTitle {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+.checkoutSub {
+  font-size: 11px;
+  color: #d9c7a6;
+}
+.checkoutArrow {
+  margin-left: auto;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 20px;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .greeting {
+    min-height: 36vh;
+  }
+}
+
+/* ---- the stall: person block, pills, chips ---- */
+.person {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.avatar {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid var(--saffron);
+  background: #3a2a1a center / cover no-repeat;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--saffron-light);
+  overflow: hidden;
+}
+.storeName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cream-muted);
+  margin-top: 2px;
+}
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cream);
+  background: rgba(30, 20, 8, 0.45);
+  border: 1px solid rgba(251, 241, 222, 0.28);
+  backdrop-filter: blur(8px);
+}
+.pill svg {
+  color: var(--saffron);
+}
+.pillWarn {
+  color: var(--saffron-light);
+}
+.headMeta {
+  font-family: var(--font-display), 'Manrope', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cream-muted);
+}
+.chip {
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(251, 241, 222, 0.28);
+  background: rgba(30, 20, 8, 0.45);
+  color: var(--cream);
+  font: 700 12px var(--font-display), 'Manrope', sans-serif;
+  cursor: pointer;
+}
+.chipOn {
+  background: var(--cream);
+  color: var(--ink);
+  border-color: var(--cream);
+}
+.discGlass {
+  background: rgba(30, 20, 8, 0.55);
+  border: 1px solid rgba(251, 241, 222, 0.28);
+  box-shadow: none;
+}
+
+/* ---- the receipts: one paper slip per stall ---- */
+.photoDim::after {
+  background: linear-gradient(180deg, rgba(30, 20, 8, 0.55) 0%, rgba(30, 20, 8, 0.78) 40%, rgba(30, 20, 8, 0.92) 100%);
+}
+.narrow {
+  max-width: 640px;
+}
+.notice {
+  margin: 0 0 14px;
+  font: 700 20px/1.2 var(--font-hand), 'Caveat', cursive;
+  color: var(--saffron-light);
+}
+.oneTrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: var(--pomegranate);
+  color: var(--cream);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+  text-decoration: none;
+}
+.oneTrip b {
+  display: block;
+  font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.oneTrip small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+.receipt {
+  /* Paper is always light: the old components inside get the light tokens whatever the theme. */
+  --ink-muted: 106 90 69;
+  --ink-faint: 160 143 118;
+  --line: 228 213 184;
+  --line-strong: 201 185 154;
+  --surface: 243 231 207;
+  --surface-soft: 251 245 230;
+  --surface-mute: 235 220 188;
+  --surface-raise: 253 249 240;
+  --sand-50: 251 245 230;
+  --sand-100: 244 237 225;
+  --sand-200: 234 216 178;
+  --sand-300: 201 185 154;
+  --brand-50: 248 233 230;
+  --brand-100: 238 200 196;
+  --brand-200: 226 164 165;
+  --brand-700: 100 24 25;
+  --brand-800: 74 18 19;
+  --brand-900: 51 16 15;
+  --saffron-100: 251 235 201;
+  --saffron-900: 74 46 5;
+  position: relative;
+  margin: 0 0 22px;
+  padding: 22px 22px 20px;
+  color: var(--ink);
+  /* the shadow follows the perforated edge, so it goes on the section, the paper on a masked layer */
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.42));
+}
+.receipt::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--paper);
+  mask-image:
+    linear-gradient(#000, #000),
+    radial-gradient(circle at 50% 0, #000 6px, transparent 6.5px),
+    radial-gradient(circle at 50% 100%, #000 6px, transparent 6.5px);
+  mask-size: 100% 100%, 20px 12px, 20px 12px;
+  mask-position: 0 0, 0 0, 0 100%;
+  mask-repeat: no-repeat, repeat-x, repeat-x;
+  mask-composite: subtract;
+}
+.rcHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed var(--paper-edge);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7a6749;
+}
+.rcTitle {
+  color: var(--pomegranate);
+}
+.rcVendor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 6px;
+  color: inherit;
+  text-decoration: none;
+}
+.avatarSmall {
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  flex: none;
+}
+.rcVendorName {
+  display: block;
+  font: 700 22px/1.15 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.rcVendorMeta {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: #7a6749;
+}
+.rcLines {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.rcLine {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px dashed var(--paper-edge);
+}
+.thumb {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--kraft) center / cover;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+.rcName {
+  display: block;
+  font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.rcUnit {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: #7a6749;
+}
+.rcSum {
+  flex: none;
+  font: 700 26px/1 var(--font-hand), 'Caveat', cursive;
+  color: var(--pomegranate);
+  padding-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.rcHaggle {
+  margin-top: 4px;
+  font: 700 17px/1.2 var(--font-hand), 'Caveat', cursive;
+  color: var(--pomegranate);
+}
+.rcAsk {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+.rcField {
+  width: 130px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--paper-edge);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+.rcLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 700 17px/1.2 var(--font-hand), 'Caveat', cursive;
+  color: var(--pomegranate);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: var(--kraft);
+  overflow: hidden;
+}
+.stepper button {
+  width: 38px;
+  height: 34px;
+  border: 0;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ink);
+  cursor: pointer;
+}
+.stepper button:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+.stepper span {
+  min-width: 64px;
+  text-align: center;
+  font: 700 18px/1 var(--font-hand), 'Caveat', cursive;
+}
+.rcTotals {
+  margin: 4px 0 0;
+  padding-top: 12px;
+  border-top: 1px dashed var(--paper-edge);
+}
+.rcRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+  font-size: 14px;
+  color: #7a6749;
+  font-variant-numeric: tabular-nums;
+}
+.rcRow dd {
+  margin: 0;
+}
+.rcRowStrong {
+  margin-top: 4px;
+  color: var(--ink);
+  font: 700 22px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.rcRowStrong dd {
+  font: 700 30px/1 var(--font-hand), 'Caveat', cursive;
+  color: var(--pomegranate);
+}
+.rcHint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #7a6749;
+}
+.rcWarn {
+  color: var(--pomegranate);
+}
+.rcEmpty {
+  margin: 22px 0 0;
+  font: 700 30px/1.1 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.stamp {
+  display: inline-block;
+  margin: 12px 0 0;
+  padding: 6px 12px;
+  border: 2px solid var(--pomegranate);
+  border-radius: 8px;
+  font: 700 18px/1 var(--font-hand), 'Caveat', cursive;
+  color: var(--pomegranate);
+  transform: rotate(-3deg);
+  opacity: 0.8;
+}
+.rcActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+}
+.rcCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: var(--pomegranate);
+  color: var(--cream);
+  font: 700 18px/1 var(--font-serif), 'Alegreya', Georgia, serif;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(158, 42, 43, 0.35);
+}
+.rcCta:hover {
+  background: #7e1f21;
+}
+.share {
+  display: block;
+  width: 100%;
+  margin: 8px 0 0;
+  padding: 16px 18px;
+  border: 1px dashed rgba(251, 241, 222, 0.4);
+  border-radius: 18px;
+  background: rgba(251, 241, 222, 0.06);
+  color: var(--cream);
+  text-align: left;
+  cursor: pointer;
+}
+.share b {
+  display: block;
+  font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.share small {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--cream-muted);
+}
+@media (max-width: 640px) {
+  .receipt {
+    padding: 18px 16px 16px;
+    margin-left: -4px;
+    margin-right: -4px;
+  }
+  .rcSum {
+    font-size: 22px;
+  }
+}
+
+/* ---- checkout: fields and choices on paper ---- */
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+.field {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1.5px dashed var(--paper-edge);
+  border-radius: 10px 10px 0 0;
+  background: rgba(234, 216, 178, 0.35);
+  font: 700 17px/1.3 var(--font-hand), 'Caveat', cursive;
+  color: var(--ink);
+  resize: none;
+}
+.fields .field {
+  margin-top: 0;
+}
+.field::placeholder {
+  color: #a08f76;
+  font-weight: 700;
+}
+.field:focus {
+  outline: none;
+  border-bottom-color: var(--pomegranate);
+  background: rgba(234, 216, 178, 0.55);
+}
+.rcSection {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--paper-edge);
+  font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.rcToggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  cursor: pointer;
+  font: 700 18px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.rcToggle input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--pomegranate);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.chipPaper {
+  flex: 0 0 auto;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
+  border: 1.5px solid var(--paper-edge);
+  background: transparent;
+  color: var(--ink);
+  font: 700 16px var(--font-hand), 'Caveat', cursive;
+  cursor: pointer;
+}
+.chipPaperOn {
+  background: var(--pomegranate);
+  border-color: var(--pomegranate);
+  color: var(--cream);
+}
+.payRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  border-top: 1px dashed var(--paper-edge);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rcLines li:first-child .payRow {
+  border-top: 0;
+}
+.payIcon {
+  flex: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--kraft);
+  color: var(--pomegranate);
+}
+.tick {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--paper-edge);
+  color: var(--cream);
+}
+.tickOn {
+  background: var(--pomegranate);
+  border-color: var(--pomegranate);
+}
+.checkout:disabled {
+  cursor: default;
+}
+@media (max-width: 480px) {
+  .fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- orders: the stack of slips, the live map under the receipt ---- */
+.slip {
+  display: block;
+  padding: 16px 20px 18px;
+  margin-bottom: 18px;
+  color: inherit;
+  text-decoration: none;
+}
+.slipDone {
+  opacity: 0.86;
+}
+.slipBody {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.mapGround {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: var(--night);
+}
+.mapGround > div {
+  left: 0 !important;
+  bottom: 0 !important;
+}
+.mapGround::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    rgba(30, 20, 8, 0.96) 0%,
+    rgba(30, 20, 8, 0.7) 26%,
+    rgba(30, 20, 8, 0.08) 44%,
+    rgba(30, 20, 8, 0.08) 62%,
+    rgba(30, 20, 8, 0.85) 82%,
+    rgba(30, 20, 8, 0.96) 100%
+  );
+}
+.mapGroundDone::after {
+  background: rgba(30, 20, 8, 0.82);
+}
+.mapWindow {
+  height: min(38vh, 360px);
+}
+.steps {
+  display: flex;
+  gap: 0;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  max-width: 520px;
+}
+.step {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.step + .step::before {
+  content: '';
+  position: absolute;
+  right: 50%;
+  top: 7px;
+  width: 100%;
+  height: 2px;
+  background: rgba(251, 241, 222, 0.25);
+}
+.step[data-state='done'] + .step::before,
+.step[data-state='active'] + .step::before {
+  background: var(--saffron);
+}
+.stepTile {
+  position: relative;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  transform: rotate(45deg);
+  border: 2px solid rgba(251, 241, 222, 0.35);
+  background: var(--night);
+}
+.step[data-state='done'] .stepTile {
+  border-color: var(--saffron);
+  background: var(--saffron);
+}
+.step[data-state='active'] .stepTile {
+  border-color: var(--saffron-light);
+  background: var(--pomegranate);
+  box-shadow: 0 0 0 4px rgba(227, 155, 47, 0.3);
+}
+.stepLabel {
+  font-size: 11px;
+  color: var(--cream-muted);
+}
+.step[data-state='done'] .stepLabel,
+.step[data-state='active'] .stepLabel {
+  color: var(--cream);
+}
+.payIconOn {
+  background: var(--pomegranate);
+  color: var(--cream);
+}
+.rcPre {
+  white-space: pre-line;
+}
+
+/* ---- the map of rows: a plan of the hall on kraft ---- */
+.search {
+  margin-top: 14px;
+  max-width: 560px;
+}
+.search input {
+  width: 100%;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(251, 241, 222, 0.28);
+  background: rgba(30, 20, 8, 0.55);
+  backdrop-filter: blur(10px);
+  color: var(--cream);
+  font: italic 500 17px var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.search input::placeholder {
+  color: var(--cream-muted);
+}
+.search input:focus {
+  outline: none;
+  border-color: var(--saffron);
+}
+.narrowSlip {
+  max-width: 640px;
+}
+.kraft {
+  max-width: 760px;
+  margin: 0 0 30px;
+  padding: 16px 16px 20px;
+  border-radius: 6px;
+  background: var(--kraft);
+  color: var(--ink);
+  transform: rotate(-0.4deg);
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.4);
+}
+.kraftEyebrow {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7a6749;
+}
+.gate {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 8px;
+}
+.gate > span:not(.gateText) {
+  flex: 1;
+  border-top: 2px dashed rgba(43, 27, 14, 0.35);
+}
+.gateText {
+  font: 700 20px/1 var(--font-hand), 'Caveat', cursive;
+}
+.hall {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+.hall::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  border-left: 1.5px dashed rgba(43, 27, 14, 0.3);
+}
+.pair {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 28px 1fr;
+  align-items: stretch;
+  gap: 4px;
+}
+.stepDown {
+  align-self: center;
+  justify-self: center;
+  padding: 2px 0;
+  background: var(--kraft);
+  font: 700 16px/1 var(--font-hand), 'Caveat', cursive;
+  opacity: 0.45;
+}
+.counter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 112px;
+  padding: 14px 10px 10px;
+  border: 1.5px dashed var(--ink);
+  border-radius: 4px;
+  background: var(--paper);
+  color: inherit;
+  text-decoration: none;
+}
+.counter:hover {
+  background: #fbf7ec;
+}
+.counterEmpty {
+  opacity: 0.55;
+  cursor: default;
+}
+.counterHint {
+  font: 700 17px/1.2 var(--font-hand), 'Caveat', cursive;
+  color: #7a6749;
+}
+.faces {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+.face {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--saffron);
+  background: var(--kraft) center / cover;
+  font: 700 13px var(--font-serif), 'Alegreya', Georgia, serif;
+}
+.face + .face {
+  margin-left: -8px;
+}
+.faceNames {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #7a6749;
+}
+.counterCount {
+  margin-top: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--pomegranate);
+}
+.dome {
+  margin-top: 12px;
+  text-align: center;
+  font: 700 18px/1.2 var(--font-hand), 'Caveat', cursive;
+  color: #7a6749;
+}
+
+/* ---- login: the phone line on paper ---- */
+.phone {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 0 14px;
+  height: 56px;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1.5px dashed var(--paper-edge);
+  background: rgba(234, 216, 178, 0.35);
+  font: 700 26px/1 var(--font-hand), 'Caveat', cursive;
+  color: var(--ink);
+}
+.phone:focus-within {
+  border-bottom-color: var(--pomegranate);
+}
+.phone span {
+  color: #7a6749;
+}
+.phone input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  outline: none;
+}
+.phone input::placeholder {
+  color: #a08f76;
+}
+.codeField {
+  font-size: 30px;
+  letter-spacing: 0.35em;
+  text-align: center;
+}
+.rcCta:disabled {
+  cursor: default;
+}

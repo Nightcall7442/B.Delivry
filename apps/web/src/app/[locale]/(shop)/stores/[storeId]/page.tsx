@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { tr } from '@bazar/storefront';
 
-import { StoreScreen } from '@/components/go/store-screen';
+import { BazaarStore } from '@/components/bazar/store';
 import { getStore, listCategories, listProducts } from '@/lib/catalog';
 
 export const dynamic = 'force-dynamic';
@@ -24,5 +24,5 @@ export default async function StorePage({ params }: { params: Params }) {
     listProducts(locale, { storeId: store.id }),
     listCategories(locale),
   ]);
-  return <StoreScreen store={store} products={products} categories={categories} locale={locale} />;
+  return <BazaarStore store={store} products={products} categories={categories} locale={locale} />;
 }

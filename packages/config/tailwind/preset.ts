@@ -3,7 +3,7 @@ import type { Config } from 'tailwindcss';
 // Shared Tailwind preset — the single home of the design tokens.
 //
 // The scale is deliberately CDEK-shaped (same roles, same rhythm) with our own
-// palette: Registan cobalt as the brand, saffron as the accent.
+// palette: pomegranate as the brand, saffron as the accent, cream and kraft paper as the ground.
 const preset: Partial<Config> = {
   theme: {
     extend: {
@@ -22,8 +22,8 @@ const preset: Partial<Config> = {
           800: 'rgb(var(--brand-800) / <alpha-value>)',
           900: 'rgb(var(--brand-900) / <alpha-value>)',
           950: 'rgb(var(--brand-950) / <alpha-value>)',
-          // Fixed deep cobalt for text on a white pill over a photo — the same in both themes.
-          deep: '#2445A0',
+          // Fixed deep pomegranate for text on a cream pill over a photo — the same in both themes.
+          deep: '#7E1F21',
         },
         saffron: {
           100: 'rgb(var(--saffron-100) / <alpha-value>)',
@@ -63,6 +63,9 @@ const preset: Partial<Config> = {
         sans: ['var(--font-sans)', 'Roboto', 'system-ui', 'sans-serif'],
         // Headlines, prices, ETA — the numbers people glance at.
         display: ['var(--font-display)', 'Manrope', 'var(--font-sans)', 'system-ui', 'sans-serif'],
+        // The bazaar's two voices: serif for names and titles, handwriting for prices and asides.
+        serif: ['var(--font-serif)', 'Alegreya', 'Georgia', 'serif'],
+        hand: ['var(--font-hand)', 'Caveat', 'cursive'],
       },
       borderRadius: {
         // 8 for inputs and small cards, 10 for buttons, 16 for panels.

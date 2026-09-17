@@ -1,48 +1,45 @@
 /**
- * One product: the picture large on a soft ground, name, rating, price with
- * the old price and the discount, the stall it comes from, a description,
- * similar goods, and a sticky stepper + "В корзину".
+ * One product as a scene: the photograph fills the screen, a kraft tag with
+ * the name and the price hangs on it, the vendor says their line, and the
+ * amount is set in the vendor's units (a melon, half a kilo of greens). What
+ * the stall promises — weighing at the counter, freshness, haggling — sits as
+ * pills; reviews and the rest of the counter follow, scrolling over the photo.
  */
 import {
   arrivedToday,
   cashbackFor,
   estimateDelivery,
-  tagLabel,
   tr,
   unitLabel,
 } from '@bazar/storefront';
+import type { MapStoreDto } from '@bazar/storefront';
 import type { ProductDto, ReviewDto } from '@bazar/types';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useMemo, useRef } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ProductTile } from '@/components/shop/ProductTile';
-import { Card, Page, SectionHead, ui } from '@/components/ui/Page';
+import {
+  Display,
+  Eyebrow,
+  Glass,
+  Hand,
+  Scene,
+  SceneButton,
+  Sign,
+  scene,
+  sceneFont,
+  useSceneTop,
+} from '@/components/bazar';
+import { Bone } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
-import { useCartItem } from '@/features/cart/store';
+import { useCart, useCartActions, useCartItem } from '@/features/cart/store';
 import { getProduct, getStore, listProducts } from '@/lib/catalog';
 import { useData } from '@/lib/use-data';
-import {
-  Button,
-  Chevron,
-  Leaf,
-  Minus,
-  Photo,
-  Plus,
-  Scale,
-  Star,
-  Tag,
-  Text,
-  api,
-  color,
-  useLocale,
-  Wallet,
-  Scooter,
-} from '@bazar/mobile';
+import { ArrowLeft, Heart, Leaf, Minus, Plus, Scale, Scooter, Star, Tag, Wallet, api, useLocale } from '@bazar/mobile';
 
 export function ProductScreen({ productId }: { productId: string }) {
-  const { locale } = useLocale();
   const product = useData(() => getProduct(productId), [productId]);
   const store = useData(
     () => (product ? getStore(product.storeId) : Promise.resolve(null)),
@@ -60,407 +57,299 @@ export function ProductScreen({ productId }: { productId: string }) {
     ) ?? [];
   const { address } = useAddress();
   const estimate =
-    store && address
-      ? estimateDelivery(store.point, address.point, store.preparationMinutes)
-      : null;
+    store && address ? estimateDelivery(store.point, address.point, store.preparationMinutes) : null;
   const siblings = useData(
-    () =>
-      product ? listProducts({ storeId: product.storeId }) : Promise.resolve([] as ProductDto[]),
+    () => (product ? listProducts({ storeId: product.storeId }) : Promise.resolve([] as ProductDto[])),
     [product?.storeId],
   );
   const similar = useMemo(
     () =>
       (siblings ?? [])
         .filter((p) => p.id !== productId && p.available)
-        .sort(
-          (a, b) =>
-            Number(b.categoryId === product?.categoryId) -
-            Number(a.categoryId === product?.categoryId),
-        )
-        .slice(0, 6),
+        .sort((a, b) => Number(b.categoryId === product?.categoryId) - Number(a.categoryId === product?.categoryId))
+        .slice(0, 4),
     [siblings, productId, product?.categoryId],
   );
+  const top = useSceneTop();
 
   if (!product)
     return (
-      <Page back="history" cart>
-        {null}
-      </Page>
+      <View style={{ flex: 1, backgroundColor: scene.night, padding: 20, paddingTop: top + 60, gap: 12 }}>
+        <Bone style={{ height: 240 }} />
+        <Bone style={{ height: 32, width: 220 }} />
+      </View>
     );
-  return (
-    <ProductBody
-      product={product}
-      storeName={store ? tr(store.name, locale) : null}
-      similar={similar}
-      reviews={reviews}
-      estimate={estimate}
-    />
-  );
+  return <ProductBody product={product} store={store ?? null} similar={similar} reviews={reviews} estimate={estimate} />;
 }
 
 function ProductBody({
   product,
-  storeName,
+  store,
   similar,
   reviews,
   estimate,
 }: {
   product: ProductDto;
-  storeName: string | null;
+  store: MapStoreDto | null;
   similar: ProductDto[];
   reviews: ReviewDto[];
   estimate: { etaMinutes: number; fee: { amount: number } } | null;
 }) {
   const router = useRouter();
   const { locale, t } = useLocale();
+  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const top = useSceneTop();
+  const { quantities } = useCart();
+  const { setQuantity } = useCartActions();
   const step = product.quantityStep || 1;
   const min = product.minQuantity || step;
   const { quantity, add, remove } = useCartItem(product.id, step, min);
-  const unit = unitLabel(locale)[product.unit];
-  const discount = product.oldPrice
-    ? Math.round((1 - product.price.amount / product.oldPrice.amount) * 100)
-    : 0;
+  const units = unitLabel(locale);
+  const unit = units[product.unit];
+  const shownQty = quantity > 0 ? quantity : min;
+  const lineTotal = product.price.amount * shownQty;
+  const discount = product.oldPrice ? Math.round((1 - product.price.amount / product.oldPrice.amount) * 100) : 0;
   const description = product.description ? tr(product.description, locale) : '';
-  const scrollY = useRef(new Animated.Value(0)).current;
+  const photo = product.images[0]?.url ?? null;
+  const person = store?.ownerPhotoUrl ?? store?.coverUrl ?? null;
 
   return (
-    <Page
-      back="history"
-      cart
-      floating
-      scrollY={scrollY}
-      footer={
-        <View style={s.footer}>
-          <View style={s.stepper}>
-            <Pressable onPress={remove} style={s.step} hitSlop={6} disabled={quantity === 0}>
-              <Minus
-                size={18}
-                color={quantity === 0 ? color.inkFaint : color.ink}
-                strokeWidth={2.4}
-              />
-            </Pressable>
-            <Text role="title" style={{ minWidth: 48, textAlign: 'center', fontSize: 15 }}>
-              {t.qty(quantity === 0 ? min : quantity)} {unit}
+    <View style={{ flex: 1, backgroundColor: scene.night }}>
+      <Scene source={photo} style={StyleSheet.absoluteFill}>
+        <View />
+      </Scene>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: Math.round(height * 0.34), paddingBottom: 110 + insets.bottom }}
+      >
+        <View style={s.tagWrap}>
+          <View style={s.tag}>
+            <View style={s.tagHole} />
+            <Text style={s.tagName}>{tr(product.name, locale)}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+              <Text style={s.tagPrice}>{t.money(product.price.amount, product.price.currency)}</Text>
+              <Text style={s.tagUnit}>/ {unit}</Text>
+              {product.oldPrice ? (
+                <Text style={s.tagOld}>{t.money(product.oldPrice.amount)}</Text>
+              ) : null}
+            </View>
+            <Text style={s.tagNote}>
+              {[
+                discount > 0 ? `−${discount} %` : null,
+                arrivedToday(product) ? t('store.arrivedToday').toLowerCase() : null,
+                product.stock !== null ? t('store.left', { count: product.stock }) : null,
+                store ? tr(store.name, locale) : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </Text>
-            <Pressable onPress={add} style={s.step} hitSlop={6}>
-              <Plus size={18} color={color.ink} strokeWidth={2.4} />
-            </Pressable>
           </View>
-          <Button
-            label={quantity > 0 ? t('product.toCart') : t('product.addToCart')}
-            trailing={t.money(product.price.amount * (quantity || min))}
-            style={{ flex: 1, justifyContent: 'space-between', paddingHorizontal: 18 }}
-            onPress={quantity > 0 ? () => router.push('/cart') : add}
-            disabled={!product.available}
-          />
         </View>
-      }
-    >
-      <View style={s.hero}>
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              transform: [
-                {
-                  translateY: scrollY.interpolate({
-                    inputRange: [-300, 0, 380],
-                    outputRange: [-150, 0, 190],
-                    extrapolate: 'clamp',
-                  }),
-                },
-                {
-                  scale: scrollY.interpolate({
-                    inputRange: [-300, 0],
-                    outputRange: [1.8, 1],
-                    extrapolate: 'clamp',
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          <Photo
-            uri={product.images[0]?.url}
-            style={s.heroPhoto}
-            priority="high"
-            sharedTag={`product-${product.id}`}
-            fallback={<Leaf size={64} color={color.sand300} />}
-          />
-        </Animated.View>
-        <LinearGradient
-          colors={['rgba(0,0,0,0.18)', 'rgba(0,0,0,0)']}
-          style={s.heroShade}
-          pointerEvents="none"
-        />
-        {discount ? (
-          <View style={[s.badge, { backgroundColor: color.danger }]}>
-            <Text role="caption" style={s.badgeText}>
-              −{discount}%
-            </Text>
-          </View>
-        ) : arrivedToday(product) ? (
-          <View style={[s.badge, { backgroundColor: ui.brand }]}>
-            <Text role="caption" style={s.badgeText}>
-              {t('store.arrivedToday')}
-            </Text>
-          </View>
+
+        {store ? (
+          <Pressable onPress={() => router.push(`/store/${store.id}`)} style={s.vendor}>
+            {person ? (
+              <Image source={{ uri: person }} style={s.avatar} contentFit="cover" cachePolicy="memory-disk" />
+            ) : null}
+            <View style={{ flex: 1, gap: 2 }}>
+              {store.ownerMotto ? (
+                <Hand size={22} numberOfLines={3}>
+                  «{tr(store.ownerMotto, locale)}»
+                </Hand>
+              ) : null}
+              <Text style={s.vendorName}>
+                — {store.ownerName ?? tr(store.name, locale)}
+                {store.standNumber ? ` · ${store.standNumber}` : ''}
+              </Text>
+            </View>
+          </Pressable>
         ) : null}
-      </View>
 
-      <View style={{ marginTop: 16, gap: 6 }}>
-        <Text role="display" style={{ fontSize: 24, lineHeight: 30 }}>
-          {tr(product.name, locale)}
-        </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Star size={14} color={color.saffron500} fill={color.saffron500} strokeWidth={2} />
-            <Text role="caption" style={{ color: color.ink, fontWeight: '600' }}>
-              {product.rating.toFixed(1)}
-            </Text>
-            <Text role="caption">({product.reviewCount})</Text>
-          </View>
-          {product.tags[0] ? (
-            <View style={s.chip}>
-              <Text role="caption" style={{ color: ui.brandDeep, fontWeight: '600' }}>
-                {tagLabel(locale)[product.tags[0]]}
-              </Text>
-            </View>
-          ) : null}
-          {product.stock !== null && product.stock <= 10 ? (
-            <Text role="caption" style={{ color: color.danger }}>
-              {t('store.left', { count: product.stock ?? 0 })}
-            </Text>
-          ) : null}
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, marginTop: 4 }}>
-          <Text role="display" style={{ fontSize: 26, color: ui.brandDeep }}>
-            {t.money(product.price.amount)}
-          </Text>
-          {product.oldPrice ? (
-            <Text
-              role="muted"
-              style={{ textDecorationLine: 'line-through', color: color.inkFaint }}
-            >
-              {t.money(product.oldPrice.amount)}
-            </Text>
-          ) : null}
-          <Text role="caption">{t('product.perUnit', { unit })}</Text>
-        </View>
-      </View>
-
-      {cashbackFor(product.price.amount) > 0 || estimate ? (
-        <View style={s.facts}>
-          {cashbackFor(product.price.amount) > 0 ? (
-            <View style={s.fact}>
-              <Wallet size={20} color={color.brand600} />
-              <Text role="muted" style={s.factText}>
-                {t('product.cashback', { amount: t.money(cashbackFor(product.price.amount)) })}
-              </Text>
-            </View>
-          ) : null}
-          {estimate ? (
-            <View style={s.fact}>
-              <Scooter size={20} color={color.brand600} />
-              <Text role="muted" style={s.factText}>
-                {t('product.delivery', {
-                  minutes: estimate.etaMinutes,
-                  fee: t.money(estimate.fee.amount),
-                })}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      ) : null}
-
-      <View style={s.trust}>
-        {(
-          [
+        <View style={s.pills}>
+          {[
             [Scale, t('trust.weigh')],
             [Leaf, t('trust.fresh')],
             [Tag, t('trust.haggle')],
-          ] as const
-        ).map(([Icon, label]) => (
-          <View key={label} style={s.trustItem}>
-            <View style={s.trustIcon}>
-              <Icon size={16} color={ui.brandDeep} strokeWidth={2.2} />
-            </View>
-            <Text role="caption" numberOfLines={2} style={s.trustText}>
-              {label}
-            </Text>
-          </View>
-        ))}
-      </View>
+          ].map(([Icon, label]) => {
+            const I = Icon as typeof Scale;
+            return (
+              <Glass key={String(label)} style={s.pill}>
+                <I size={14} color={scene.saffron} />
+                <Text style={s.pillText}>{String(label)}</Text>
+              </Glass>
+            );
+          })}
+        </View>
 
-      {storeName ? (
-        <Pressable
-          onPress={() =>
-            router.push({ pathname: '/store/[storeId]', params: { storeId: product.storeId } })
-          }
-        >
-          <Card style={s.storeRow}>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text role="caption">{t('product.store')}</Text>
-              <Text role="body" numberOfLines={1} style={{ fontWeight: '600' }}>
-                {storeName}
+        <View style={s.amount}>
+          <Eyebrow>{t('product.perUnit', { unit })}</Eyebrow>
+          <View style={s.stepper}>
+            <Pressable onPress={remove} disabled={quantity === 0} style={({ pressed }) => [s.round, quantity === 0 && { opacity: 0.4 }, pressed && { opacity: 0.8 }]}>
+              <Minus size={22} color={scene.cream} />
+            </Pressable>
+            <View style={{ alignItems: 'center', gap: 2, flex: 1 }}>
+              <Hand size={42}>
+                {t.qty(shownQty)} {unit}
+              </Hand>
+              <Text style={s.amountSub} numberOfLines={2}>
+                {product.unit === 'KG' ? `${t('trust.weigh')} · ` : ''}
+                {t.money(lineTotal)}
               </Text>
             </View>
-            <Chevron size={20} color={color.inkFaint} />
-          </Card>
-        </Pressable>
-      ) : null}
-
-      {description ? (
-        <>
-          <SectionHead title={t('product.about')} />
-          <Text role="muted" style={{ color: color.ink, lineHeight: 22 }}>
-            {description}
-          </Text>
-        </>
-      ) : null}
-
-      {reviews.length > 0 ? (
-        <>
-          <SectionHead title={t('product.reviews')} />
-          <View style={{ gap: 10 }}>
-            {reviews.map((review) => (
-              <Card key={review.id} style={s.review}>
-                <View style={s.reviewHead}>
-                  <View style={s.reviewAvatar}>
-                    <Text role="caption" style={{ color: ui.brandDeep, fontWeight: '700' }}>
-                      {review.authorName.slice(0, 1)}
-                    </Text>
-                  </View>
-                  <Text role="body" style={{ flex: 1, fontWeight: '600', fontSize: 14 }}>
-                    {review.authorName}
-                  </Text>
-                  <View style={{ flexDirection: 'row', gap: 2 }}>
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <Star
-                        key={n}
-                        size={12}
-                        color={n <= review.rating ? color.saffron500 : color.lineStrong}
-                        fill={n <= review.rating ? color.saffron500 : 'none'}
-                        strokeWidth={2}
-                      />
-                    ))}
-                  </View>
-                </View>
-                <Text role="muted" style={{ color: color.ink, lineHeight: 20 }}>
-                  {review.comment}
+            <Pressable onPress={add} style={({ pressed }) => [s.round, s.roundAccent, pressed && { opacity: 0.85 }]}>
+              <Plus size={22} color={scene.ink} />
+            </Pressable>
+          </View>
+          <View style={s.lines}>
+            <View style={s.line}>
+              <Wallet size={16} color={scene.saffron} />
+              <Text style={s.lineText}>{t('product.cashback', { amount: t.money(cashbackFor(product.price.amount)) })}</Text>
+            </View>
+            {estimate ? (
+              <View style={s.line}>
+                <Scooter size={16} color={scene.saffron} />
+                <Text style={s.lineText}>
+                  {t('product.delivery', { minutes: estimate.etaMinutes, fee: t.money(estimate.fee.amount) })}
                 </Text>
-                {review.reply ? (
-                  <Text role="caption" style={{ marginTop: 6 }}>
-                    ↳ {review.reply}
-                  </Text>
-                ) : null}
-              </Card>
+              </View>
+            ) : null}
+          </View>
+        </View>
+
+        {description ? (
+          <View style={s.section}>
+            <Eyebrow>{t('product.about')}</Eyebrow>
+            <Text style={s.body}>{description}</Text>
+          </View>
+        ) : null}
+
+        {reviews.length > 0 ? (
+          <View style={s.section}>
+            <Eyebrow>{t('product.reviews')}</Eyebrow>
+            {reviews.map((review) => (
+              <Glass key={review.id} style={s.review}>
+                <View style={{ flexDirection: 'row', gap: 3 }}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Star key={n} size={12} color={scene.saffron} fill={n <= review.rating ? scene.saffron : 'transparent'} />
+                  ))}
+                </View>
+                <Hand size={20} color={scene.creamMuted}>
+                  «{review.comment}»
+                </Hand>
+              </Glass>
             ))}
           </View>
-        </>
-      ) : null}
+        ) : null}
 
-      {similar.length > 0 ? (
-        <>
-          <SectionHead title={t('product.similar')} />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ marginHorizontal: -16 }}
-            contentContainerStyle={{ gap: 12, paddingHorizontal: 16, paddingBottom: 12 }}
-          >
-            {similar.map((p) => (
-              <ProductTile key={p.id} product={p} compact />
-            ))}
-          </ScrollView>
-        </>
-      ) : null}
-    </Page>
+        {similar.length > 0 ? (
+          <View style={s.section}>
+            <Eyebrow>{t('scene.onCounter')}</Eyebrow>
+            <View style={s.grid}>
+              {similar.map((p, i) => {
+                const qty = quantities[p.id] ?? 0;
+                return (
+                  <Sign
+                    key={p.id}
+                    style={s.sign}
+                    tilt={[-1, 1, 0.5, -0.5][i % 4] ?? 0}
+                    title={tr(p.name, locale)}
+                    price={`${t.money(p.price.amount, p.price.currency)} / ${units[p.unit]}`}
+                    count={qty}
+                    countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[p.unit]}` })}
+                    onPress={() => router.push(`/product/${p.id}`)}
+                    onAdd={() => setQuantity(p.id, qty === 0 ? p.minQuantity || p.quantityStep || 1 : qty + (p.quantityStep || 1))}
+                  />
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
+      </ScrollView>
+
+      <View style={[s.top, { top }]}>
+        <SceneButton onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}>
+          <ArrowLeft size={20} color={scene.ink} />
+        </SceneButton>
+        <SceneButton>
+          <Heart size={20} color={scene.pomegranate} />
+        </SceneButton>
+      </View>
+
+      <View style={[s.footer, { bottom: 24 + insets.bottom }]}>
+        <Pressable
+          onPress={() => (quantity > 0 ? router.push('/(tabs)/cart') : add())}
+          style={({ pressed }) => [s.cta, pressed && { opacity: 0.92 }]}
+        >
+          <Text style={s.ctaLabel}>{quantity > 0 ? t('product.toCart') : t('product.addToCart')}</Text>
+          <Display size={20}>{t.money(lineTotal)}</Display>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  hero: {
-    marginHorizontal: -16,
-    height: 380,
-    backgroundColor: ui.mintDeep,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    ...ui.shadow,
+  top: { position: 'absolute', left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' },
+  tagWrap: { paddingHorizontal: 20, alignItems: 'flex-start' },
+  tag: {
+    backgroundColor: '#EBD8B4',
+    borderTopLeftRadius: 4,
+    borderBottomLeftRadius: 4,
+    borderTopRightRadius: 16,
+    borderBottomRightRadius: 16,
+    paddingVertical: 12,
+    paddingLeft: 30,
+    paddingRight: 20,
+    gap: 2,
+    maxWidth: '100%',
+    transform: [{ rotate: '-2deg' }],
+    shadowColor: '#000',
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
   },
-  heroPhoto: { width: '100%', height: '100%' },
-  heroShade: { position: 'absolute', left: 0, right: 0, top: 0, height: 120 },
-  badge: {
-    position: 'absolute',
-    left: 16,
-    bottom: 16,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  badgeText: { color: color.white, fontSize: 12, lineHeight: 14, fontWeight: '700' },
-  chip: {
-    backgroundColor: ui.brandSoft,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  facts: { marginTop: 14, gap: 8 },
-  fact: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  factText: { flex: 1, color: color.ink },
-  review: { padding: ui.pad, gap: 8 },
-  reviewHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  reviewAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: ui.brandSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  trust: { flexDirection: 'row', gap: 8, marginTop: 14 },
-  trustItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: color.tile,
-    borderRadius: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-  },
-  trustIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: color.raise,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  trustText: {
-    textAlign: 'center',
-    color: ui.brandDeep,
-    fontSize: 11,
-    lineHeight: 13,
-    fontWeight: '600',
-  },
-  storeRow: {
-    marginTop: 14,
-    padding: ui.pad,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  footer: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: color.field,
-    borderRadius: 28,
+  tagHole: { position: 'absolute', left: 11, top: '50%', marginTop: -5, width: 9, height: 9, borderRadius: 5, backgroundColor: scene.cream, borderWidth: 2, borderColor: '#B8975C' },
+  tagName: { fontFamily: sceneFont.hand, fontSize: 30, lineHeight: 31, color: scene.ink },
+  tagPrice: { fontFamily: sceneFont.hand, fontSize: 40, lineHeight: 42, color: scene.pomegranate },
+  tagUnit: { fontFamily: sceneFont.hand, fontSize: 22, color: scene.inkSoft },
+  tagOld: { fontFamily: sceneFont.hand, fontSize: 20, color: scene.inkSoft, textDecorationLine: 'line-through' },
+  tagNote: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.inkSoft, marginTop: 2 },
+  vendor: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingHorizontal: 20, paddingTop: 22 },
+  avatar: { width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: scene.saffron, backgroundColor: '#3A2A1A' },
+  vendorName: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.creamMuted },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 20, paddingTop: 14 },
+  pill: { height: 32, borderRadius: 16, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pillText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
+  amount: { paddingHorizontal: 20, paddingTop: 24, gap: 10 },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  round: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(30,20,8,0.42)', borderWidth: 1, borderColor: 'rgba(251,241,222,0.3)', alignItems: 'center', justifyContent: 'center' },
+  roundAccent: { backgroundColor: scene.saffron, borderColor: scene.saffron },
+  amountSub: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.creamMuted, textAlign: 'center' },
+  lines: { gap: 6, paddingTop: 4 },
+  line: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  lineText: { fontFamily: sceneFont.uiText, fontSize: 12, color: scene.creamMuted, flex: 1 },
+  section: { paddingHorizontal: 20, paddingTop: 24, gap: 10 },
+  body: { fontFamily: sceneFont.italic, fontSize: 17, lineHeight: 24, color: scene.creamMuted },
+  review: { borderRadius: 14, padding: 12, gap: 6 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 14, paddingTop: 4 },
+  sign: { width: '47%', flexGrow: 1 },
+  footer: { position: 'absolute', left: 20, right: 20 },
+  cta: {
     height: 56,
-    paddingHorizontal: 4,
+    borderRadius: 18,
+    backgroundColor: scene.pomegranate,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    shadowColor: scene.pomegranate,
+    shadowOpacity: 0.6,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
-  step: { width: 36, height: 44, alignItems: 'center', justifyContent: 'center' },
+  ctaLabel: { fontFamily: sceneFont.uiHeavy, fontSize: 14, color: scene.cream },
 });

@@ -24,24 +24,24 @@ type TextRole = 'display' | 'title' | 'section' | 'body' | 'muted' | 'caption' |
 
 const TEXT: Record<TextRole, TextStyle> = {
   display: {
-    fontFamily: font.display,
-    fontSize: 24,
-    lineHeight: 30,
-    letterSpacing: -0.4,
+    fontFamily: font.heading,
+    fontSize: 28,
+    lineHeight: 32,
+    letterSpacing: -0.3,
     color: color.ink,
   },
   title: {
-    fontFamily: font.displayBold,
-    fontSize: 17,
-    lineHeight: 22,
-    letterSpacing: -0.2,
+    fontFamily: font.heading,
+    fontSize: 19,
+    lineHeight: 23,
+    letterSpacing: 0,
     color: color.ink,
   },
   section: {
-    fontFamily: font.display,
-    fontSize: 19,
-    lineHeight: 24,
-    letterSpacing: -0.3,
+    fontFamily: font.heading,
+    fontSize: 21,
+    lineHeight: 25,
+    letterSpacing: 0,
     color: color.ink,
   },
   body: { fontFamily: font.body, fontSize: 16, lineHeight: 22, color: color.ink },
@@ -97,8 +97,9 @@ export function Button({
   variant?: 'primary' | 'secondary' | 'danger';
   style?: StyleProp<ViewStyle>;
 }) {
+  // Primary is the pomegranate stamp; secondary is a paper slip with a kraft edge.
   const bg =
-    variant === 'primary' ? color.brand500 : variant === 'danger' ? color.danger : color.sand100;
+    variant === 'primary' ? color.brand500 : variant === 'danger' ? color.danger : color.tile;
   const fg = variant === 'secondary' ? color.ink : color.white;
   return (
     <Pressable
@@ -107,6 +108,7 @@ export function Button({
         s.button,
         press.base,
         variant === 'primary' && shadow.glow,
+        variant === 'secondary' && s.buttonPaper,
         { backgroundColor: bg, opacity: disabled ? 0.5 : pressed ? 0.9 : 1 },
         pressed && press.down,
         style,
@@ -252,22 +254,28 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  buttonLabel: { fontFamily: font.displayBold, fontSize: 16, letterSpacing: -0.1 },
+  buttonLabel: { fontFamily: font.heading, fontSize: 18, letterSpacing: 0 },
+  buttonPaper: { borderWidth: 1, borderColor: color.lineStrong },
+  // A chip is a small paper sign: square-ish corners, a kraft edge; the chosen one is stamped.
   chip: {
-    height: 36,
-    borderRadius: radius.pill,
-    backgroundColor: color.field,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: color.tile,
+    borderWidth: 1,
+    borderColor: color.lineStrong,
     paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  chipActive: { backgroundColor: color.brand500 },
+  chipActive: { backgroundColor: color.brand500, borderColor: color.brand500 },
   chipLabel: { fontFamily: font.bodySemi, fontSize: 14, color: color.ink },
   field: {
     height: 56,
-    borderRadius: radius.panel,
+    borderRadius: 14,
     backgroundColor: color.field,
+    borderWidth: 1,
+    borderColor: color.line,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',

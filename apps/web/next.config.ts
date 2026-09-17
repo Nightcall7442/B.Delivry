@@ -1,8 +1,18 @@
+import path from 'node:path';
+
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  // Docker image = the standalone server + static + public (see /Dockerfile); the
+  // tracing root is the monorepo so workspace packages are followed into it.
+  output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../../'),
+  eslint: { ignoreDuringBuilds: true },
+  // The dev server is shown to the client through an Expo ws-tunnel; without this Next
+  // refuses the tunnel host's HMR requests.
+  allowedDevOrigins: ['*.boltexpo.dev'],
   transpilePackages: [
     '@bazar/ui',
     '@bazar/i18n',
@@ -25,7 +35,10 @@ const nextConfig: NextConfig = {
   },
   images: {
     // Fixture photography (see packages/storefront/src/photos.ts); the storage bucket joins here.
-    remotePatterns: [{ protocol: 'https', hostname: 'upload.wikimedia.org' }],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'bazar-delivery.uz' },
+      { protocol: 'https', hostname: 'upload.wikimedia.org' },
+    ],
   },
   async headers() {
     return [

@@ -57,6 +57,13 @@ const CATEGORIES: CategoryDto[] = [
   category('household', 'Бытовое', 'Maishiy', 8),
 ];
 
+/** 07:40 Tashkent today: the hour the counters are set out. */
+function counterTime(): string {
+  const now = new Date();
+  const local = new Date(now.getTime() + 5 * 3600_000);
+  return `${local.toISOString().slice(0, 10)}T07:40:00+05:00`;
+}
+
 function store(
   id: string,
   ru: string,
@@ -73,6 +80,8 @@ function store(
     description?: string;
     /** The person behind the counter: name, first year here, a line of theirs (ru / uz), photo key. */
     owner?: { name: string; since: number; motto: [ru: string, uz: string]; photo?: string };
+    /** This morning's photo of the counter (photo key). */
+    counter?: string;
   },
 ): MapStoreDto {
   return {
@@ -87,8 +96,8 @@ function store(
     slug: id,
     logoUrl: null,
     coverUrl: PHOTOS[id] ?? null,
-    counterPhotoUrl: null,
-    counterPhotoAt: null,
+    counterPhotoUrl: options.counter ? (PHOTOS[options.counter] ?? null) : null,
+    counterPhotoAt: options.counter ? counterTime() : null,
     promotedUntil: null,
     tags: [],
     phone: '+998 71 200 00 00',
@@ -117,6 +126,7 @@ const STORES: MapStoreDto[] = [
     reviews: 312,
     prep: 20,
     description: 'Зелень и овощи с утренней поставки. Взвешиваем при вас.',
+    counter: 'counter-signs',
     owner: {
       name: 'Фарход-ака',
       since: 2011,
@@ -124,6 +134,7 @@ const STORES: MapStoreDto[] = [
         'Зелень режу на рассвете — к обеду её уже нет.',
         'Koʻkatni tongda oʻraman — tushga qolmaydi.',
       ],
+      photo: 'owner-greens',
     },
   }),
   store(
@@ -135,6 +146,7 @@ const STORES: MapStoreDto[] = [
       address: 'Алайский базар, Мирабад',
       point: [41.312, 69.286],
       stand: 'Павильон Б, место 7',
+      counter: 'alay-fruits',
       rating: 4.6,
       reviews: 189,
       prep: 25,
@@ -146,7 +158,7 @@ const STORES: MapStoreDto[] = [
           'Дыню выбираю по хвостику — ещё ни разу не ошиблась.',
           'Qovunni dumidan tanlayman — hali adashganim yoʻq.',
         ],
-        photo: 'bundle-fruit',
+        photo: 'owner-fruit',
       },
     },
   ),
@@ -162,6 +174,7 @@ const STORES: MapStoreDto[] = [
       name: 'Фархад',
       since: 2008,
       motto: ['Разделываю как для своей семьи.', 'Oʻz oilamga kesgandek kesaman.'],
+      photo: 'owner-meat',
     },
   }),
   store('makro-yunusabad', 'Makro Юнусабад', 'Makro Yunusobod', STORE_TYPE.SUPERMARKET, {
@@ -179,7 +192,15 @@ const STORES: MapStoreDto[] = [
     reviews: 96,
     prep: 10,
     open: false,
+    stand: 'У входа, тандыр',
     description: 'Тандырный хлеб и выпечка. Открываемся в 06:00.',
+    counter: 'owner-tandoor',
+    owner: {
+      name: 'Мунира-опа',
+      since: 2009,
+      motto: ['Тандыр горячий с шести. Оби нон — до десяти, патир по пятницам.', 'Tandir oltidan qizigan. Obi non — oʻngacha, patir juma kuni.'],
+      photo: 'owner-tandoor',
+    },
   }),
   store('ziravor', 'Лавка специй «Зиравор»', 'Ziravor doʻkoni', STORE_TYPE.ENTREPRENEUR, {
     address: 'Базар Чорсу, купольный зал',
@@ -189,6 +210,13 @@ const STORES: MapStoreDto[] = [
     reviews: 63,
     prep: 20,
     description: 'Специи на развес, сухофрукты и орехи.',
+    counter: 'owner-spices',
+    owner: {
+      name: 'Рустам-ака',
+      since: 2014,
+      motto: ['Зиру для плова беру только из Ферганы.', 'Palov uchun zirani faqat Fargʻonadan olaman.'],
+      photo: 'owner-spices',
+    },
   }),
 ];
 
@@ -200,7 +228,7 @@ type ProductSeed = [
   uz: string,
   soum: number,
   unit: ProductDto['unit'],
-  extra?: { oldSoum?: number; available?: boolean; stock?: number | null; rating?: number },
+  extra?: { oldSoum?: number; available?: boolean; stock?: number | null; rating?: number; say?: [ru: string, uz: string] },
 ];
 
 const PRODUCT_SEEDS: ProductSeed[] = [
@@ -212,7 +240,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Sariq sabzi, palov uchun',
     6500,
     PRODUCT_UNIT.KG,
-    { rating: 4.8 },
+    { rating: 4.8, say: ['Жёлтая — для плова, другой не беру', 'Sariq — palov uchun, boshqasini olmayman'] },
   ],
   [
     'p-tomato',
@@ -222,7 +250,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Boku pomidori',
     18000,
     PRODUCT_UNIT.KG,
-    { oldSoum: 22000, rating: 4.7 },
+    { oldSoum: 22000, rating: 4.7, say: ['Бакинские, с куста — режьте с солью', 'Bokulik, tupdan — tuz bilan kesing'] },
   ],
   [
     'p-cucumber',
@@ -232,7 +260,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Bodring',
     12000,
     PRODUCT_UNIT.KG,
-    { rating: 4.5 },
+    { rating: 4.5, say: ['Грунтовые, колючие — значит настоящие', 'Ochiq yerdan, tikanli — demak haqiqiy'] },
   ],
   [
     'p-greens',
@@ -242,7 +270,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Koʻkat, bogʻlam',
     4000,
     PRODUCT_UNIT.PCS,
-    { rating: 4.9 },
+    { rating: 4.9, say: ['Режу на рассвете, к обеду уже не та', 'Tongda oʻraman, tushga qolsa u emas'] },
   ],
   [
     'p-potato',
@@ -252,7 +280,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Kartoshka',
     9500,
     PRODUCT_UNIT.KG,
-    { rating: 4.3 },
+    { rating: 4.3, say: ['Из Самарканда, на жарёшку самый', 'Samarqanddan, qovurishga eng zoʻri'] },
   ],
   [
     'p-onion',
@@ -262,7 +290,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Piyoz',
     7000,
     PRODUCT_UNIT.KG,
-    { rating: 4.2 },
+    { rating: 4.2, say: ['Сладкий, для салата — не заплачете', 'Shirin, salat uchun — yigʻlamaysiz'] },
   ],
 
   [
@@ -273,7 +301,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Shaftoli',
     34000,
     PRODUCT_UNIT.KG,
-    { oldSoum: 39000, rating: 4.8 },
+    { oldSoum: 39000, rating: 4.8, say: ['Наливные, ешьте сегодня', 'Suvli, bugun yeng'] },
   ],
   [
     'p-grape',
@@ -283,7 +311,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Husayni uzumi',
     28000,
     PRODUCT_UNIT.KG,
-    { rating: 4.9 },
+    { rating: 4.9, say: ['Хусайне — дамские пальчики, косточки нет', 'Husayni — xonim barmoqlari, danagi yoʻq'] },
   ],
   [
     'p-melon',
@@ -293,7 +321,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Mirzachoʻl qovuni',
     45000,
     PRODUCT_UNIT.PCS,
-    { stock: 8, rating: 5 },
+    { stock: 8, rating: 5, say: ['Выбираю по хвостику — ещё ни разу не ошиблась', 'Dumidan tanlayman — hali adashmadim'] },
   ],
   [
     'p-pomegranate',
@@ -303,7 +331,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Anor',
     32000,
     PRODUCT_UNIT.KG,
-    { rating: 4.6 },
+    { rating: 4.6, say: ['Тяжёлый — значит сочный, лёгкий не беру', 'Ogʻiri — sersuv, yengilini olmayman'] },
   ],
 
   [
@@ -314,7 +342,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Mol goʻshti',
     115000,
     PRODUCT_UNIT.KG,
-    { rating: 4.9 },
+    { rating: 4.9, say: ['Мякоть с утра — на шурпу и на стейк', 'Ertalabki goʻsht — shoʻrva va steyk uchun'] },
   ],
   [
     'p-lamb',
@@ -324,7 +352,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Qoʻy goʻshti',
     135000,
     PRODUCT_UNIT.KG,
-    { oldSoum: 145000, rating: 4.8 },
+    { oldSoum: 145000, rating: 4.8, say: ['На кости — для шурпы, разделываю при вас', 'Suyakli — shoʻrvaga, koʻz oldingizda boʻlaman'] },
   ],
   [
     'p-chicken',
@@ -334,7 +362,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Tovuq',
     42000,
     PRODUCT_UNIT.KG,
-    { rating: 4.4 },
+    { rating: 4.4, say: ['Домашняя, охлаждённая, не заморозка', 'Uy tovugʻi, sovutilgan, muzlatilmagan'] },
   ],
 
   [
@@ -345,7 +373,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Sut 3.2%',
     13500,
     PRODUCT_UNIT.L,
-    { rating: 4.5 },
+    { rating: 4.5, say: ['Пастеризованное, 3,2 %, до пятницы', 'Pasterlangan, 3,2 %, jumagacha'] },
   ],
   [
     'p-suzma',
@@ -355,7 +383,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Suzma',
     24000,
     PRODUCT_UNIT.KG,
-    { rating: 4.7 },
+    { rating: 4.7, say: ['Домашняя, густая — на ложке стоит', 'Uy suzmasi, quyuq — qoshiqda turadi'] },
   ],
   [
     'p-eggs',
@@ -365,7 +393,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Tuxum C1',
     19000,
     PRODUCT_UNIT.PACK,
-    { oldSoum: 21000, rating: 4.3 },
+    { oldSoum: 21000, rating: 4.3, say: ['С1, десяток, сегодняшние', 'C1, oʻntalik, bugungi'] },
   ],
   [
     'p-rice',
@@ -375,7 +403,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Devzira guruch',
     38000,
     PRODUCT_UNIT.KG,
-    { rating: 4.8 },
+    { rating: 4.8, say: ['Девзира — для плова, промыть семь раз', 'Devzira — palov uchun, yetti marta yuving'] },
   ],
   [
     'p-oil',
@@ -385,7 +413,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Paxta yogʻi',
     26000,
     PRODUCT_UNIT.L,
-    { rating: 4.1 },
+    { rating: 4.1, say: ['Хлопковое — на плов только оно', 'Paxta yogʻi — palovga faqat shu'] },
   ],
   [
     'p-soap',
@@ -395,7 +423,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Idish yuvish vositasi',
     22000,
     PRODUCT_UNIT.PCS,
-    { available: false, rating: 4.2 },
+    { available: false, rating: 4.2, say: ['Хозяйственное, 72 %', 'Xoʻjalik sovuni, 72 %'] },
   ],
 
   [
@@ -406,7 +434,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Obi non',
     6000,
     PRODUCT_UNIT.PCS,
-    { rating: 4.9 },
+    { rating: 4.9, say: ['Из тандыра с рассвета, ещё горячий', 'Tongdan tandirdan, hali issiq'] },
   ],
   [
     'p-patir',
@@ -416,7 +444,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Patir',
     9000,
     PRODUCT_UNIT.PCS,
-    { rating: 4.8 },
+    { rating: 4.8, say: ['Слоёный, на масле — к чаю', 'Qatlama, yogʻli — choyga'] },
   ],
   [
     'p-samsa',
@@ -426,7 +454,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Goʻshtli somsa',
     12000,
     PRODUCT_UNIT.PCS,
-    { stock: 24, rating: 4.7 },
+    { stock: 24, rating: 4.7, say: ['С мясом и луком, сок внутри', 'Goʻsht va piyozli, ichida shoʻrvasi'] },
   ],
 
   [
@@ -437,7 +465,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Zira, 100 g paket',
     8000,
     PRODUCT_UNIT.PACK,
-    { rating: 4.6 },
+    { rating: 4.6, say: ['Горная — разотрите в ладони, пахнет', 'Togʻ zirasi — kaftda ishqang, hidi keladi'] },
   ],
   [
     'p-raisin',
@@ -447,7 +475,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Qora mayiz',
     42000,
     PRODUCT_UNIT.KG,
-    { rating: 4.5 },
+    { rating: 4.5, say: ['Чёрный, без косточек — для плова', 'Qora, danaksiz — palovga'] },
   ],
   [
     'p-walnut',
@@ -457,7 +485,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'Yongʻoq magʻzi',
     98000,
     PRODUCT_UNIT.KG,
-    { oldSoum: 110000, rating: 4.9 },
+    { oldSoum: 110000, rating: 4.9, say: ['Ядро светлое, этого года', 'Magʻzi oq, shu yilgi'] },
   ],
 ];
 
@@ -471,7 +499,8 @@ const PRODUCTS: ProductDto[] = PRODUCT_SEEDS.map(
     storeId,
     categoryId,
     name: { ru, uz, en: ru },
-    description: null,
+    // The vendor's own line about it — what they would say handing it to you.
+    description: extra.say ? { ru: extra.say[0], uz: extra.say[1], en: extra.say[0] } : null,
     slug: id,
     unit,
     // Money is minor units everywhere: soum -> tiyin.

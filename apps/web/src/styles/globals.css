@@ -5,91 +5,92 @@
 @layer base {
   /* Design tokens as variables so a white-label tenant can restyle at runtime. */
   :root {
-    --brand-50: 238 243 254;
-    --brand-100: 220 230 253;
-    --brand-200: 185 204 250;
-    --brand-300: 143 174 244;
-    --brand-400: 95 136 236;
-    --brand-500: 59 107 227;
-    --brand-600: 44 86 196;
-    --brand-700: 36 69 160;
-    --brand-800: 28 54 125;
-    --brand-900: 21 42 96;
-    --brand-950: 12 26 62;
-    --saffron-100: 254 243 215;
-    --saffron-300: 251 216 126;
-    --saffron-400: 251 191 59;
-    --saffron-500: 245 165 36;
-    --saffron-600: 217 132 7;
+    /* Pomegranate is the brand, saffron the accent: the two colours of a Chorsu counter. */
+    --brand-50: 248 233 230;
+    --brand-100: 238 200 196;
+    --brand-200: 226 164 165;
+    --brand-300: 217 118 122;
+    --brand-400: 184 71 77;
+    --brand-500: 158 42 43;
+    --brand-600: 126 31 33;
+    --brand-700: 100 24 25;
+    --brand-800: 74 18 19;
+    --brand-900: 51 16 15;
+    --brand-950: 31 10 10;
+    --saffron-100: 251 235 201;
+    --saffron-300: 242 197 107;
+    --saffron-400: 236 178 74;
+    --saffron-500: 227 155 47;
+    --saffron-600: 196 128 32;
     --saffron-900: 74 46 5;
   }
 
   /* Neutrals. Light is the default; a subtree stamped data-theme="light" (the invoice) stays light in the dark theme. */
   :root,
   [data-theme='light'] {
-    --ink: 22 26 31;
-    --ink-muted: 111 119 131;
-    --ink-faint: 163 170 181;
-    --line: 231 234 238;
-    --line-strong: 203 209 217;
-    --surface: 255 255 255;
-    --surface-soft: 244 245 247;
-    --surface-mute: 239 241 244;
-    --surface-raise: 255 255 255;
-    --sand-50: 251 248 242;
+    --ink: 43 27 14;
+    --ink-muted: 106 90 69;
+    --ink-faint: 160 143 118;
+    --line: 228 213 184;
+    --line-strong: 201 185 154;
+    --surface: 243 231 207;
+    --surface-soft: 251 245 230;
+    --surface-mute: 235 220 188;
+    --surface-raise: 253 249 240;
+    --sand-50: 251 245 230;
     --sand-100: 244 237 225;
-    --sand-200: 233 221 203;
-    --sand-300: 217 199 172;
+    --sand-200: 234 216 178;
+    --sand-300: 201 185 154;
   }
   /* Dark: a blue-cool near-black, tiles one step up, raised things one more; tints of the brand and saffron flip. */
   :root[data-theme='dark'],
   [data-theme='dark'] {
-    --ink: 236 238 242;
-    --ink-muted: 152 161 173;
-    --ink-faint: 105 114 127;
-    --line: 39 45 54;
-    --line-strong: 59 67 79;
-    --surface: 15 18 22;
-    --surface-soft: 24 28 34;
-    --surface-mute: 31 36 43;
-    --surface-raise: 42 48 58;
-    --sand-50: 31 28 24;
-    --sand-100: 42 37 30;
-    --sand-200: 58 51 40;
-    --sand-300: 90 78 59;
-    --brand-50: 20 32 61;
-    --brand-100: 26 42 80;
-    --brand-200: 32 56 110;
-    --brand-700: 95 136 236;
-    --brand-800: 143 174 244;
-    --brand-900: 220 230 253;
-    --saffron-100: 74 46 5;
-    --saffron-900: 254 243 215;
+    --ink: 251 241 222;
+      --ink-muted: 217 199 166;
+      --ink-faint: 158 140 112;
+      --line: 58 42 26;
+      --line-strong: 90 74 46;
+      --surface: 30 20 8;
+      --surface-soft: 42 32 20;
+      --surface-mute: 51 40 26;
+      --surface-raise: 58 46 28;
+      --sand-50: 42 32 20;
+      --sand-100: 51 40 26;
+      --sand-200: 74 58 36;
+      --sand-300: 106 90 69;
+      --brand-50: 58 24 24;
+      --brand-100: 74 34 36;
+      --brand-200: 100 44 46;
+      --brand-700: 217 118 122;
+      --brand-800: 226 164 165;
+      --brand-900: 238 200 196;
+      --saffron-100: 74 46 5;
+      --saffron-900: 251 235 201;
     color-scheme: dark;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) {
-      --ink: 236 238 242;
-      --ink-muted: 152 161 173;
-      --ink-faint: 105 114 127;
-      --line: 39 45 54;
-      --line-strong: 59 67 79;
-      --surface: 15 18 22;
-      --surface-soft: 24 28 34;
-      --surface-mute: 31 36 43;
-      --surface-raise: 42 48 58;
-      --sand-50: 31 28 24;
-      --sand-100: 42 37 30;
-      --sand-200: 58 51 40;
-      --sand-300: 90 78 59;
-      --brand-50: 20 32 61;
-      --brand-100: 26 42 80;
-      --brand-200: 32 56 110;
-      --brand-700: 95 136 236;
-      --brand-800: 143 174 244;
-      --brand-900: 220 230 253;
+      --ink: 251 241 222;
+      --ink-muted: 217 199 166;
+      --ink-faint: 158 140 112;
+      --line: 58 42 26;
+      --line-strong: 90 74 46;
+      --surface: 30 20 8;
+      --surface-soft: 42 32 20;
+      --surface-mute: 51 40 26;
+      --surface-raise: 58 46 28;
+      --sand-50: 42 32 20;
+      --sand-100: 51 40 26;
+      --sand-200: 74 58 36;
+      --sand-300: 106 90 69;
+      --brand-50: 58 24 24;
+      --brand-100: 74 34 36;
+      --brand-200: 100 44 46;
+      --brand-700: 217 118 122;
+      --brand-800: 226 164 165;
+      --brand-900: 238 200 196;
       --saffron-100: 74 46 5;
-      --saffron-900: 254 243 215;
+      --saffron-900: 251 235 201;
       color-scheme: dark;
     }
   }

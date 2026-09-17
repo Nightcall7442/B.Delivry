@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-import { CheckoutScreen } from '@/components/go/checkout-screen';
+import { BazaarCheckout } from '@/components/bazar/checkout';
 import { getStore, listProducts } from '@/lib/catalog';
 
 export const metadata = { title: 'Оформление заказа — Bazar Delivery' };
@@ -29,6 +29,6 @@ export default async function CheckoutPage({
     )
   ).flat();
   return (
-    <CheckoutScreen store={store} extraStores={extraStores} products={products} locale={locale} />
+    <BazaarCheckout store={store} extraStores={extraStores} products={products} locale={locale} />
   );
 }

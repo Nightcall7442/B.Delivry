@@ -1,8 +1,8 @@
 /**
- * Home: map + sheet. Data is fetched here so the sheet renders with content
- * on first paint; the client component only adds the address and the map.
+ * Home: the bazaar scene. Data is fetched here so the counters render with
+ * content on first paint; the client component adds the basket and the clock.
  */
-import { HomeScreen } from '@/components/go/home-screen';
+import { BazaarHome } from '@/components/bazar/home';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 
 export const dynamic = 'force-dynamic';
@@ -14,5 +14,5 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     listCategories(locale),
     listProducts(locale, {}),
   ]);
-  return <HomeScreen stores={stores} categories={categories} products={products} locale={locale} />;
+  return <BazaarHome stores={stores} categories={categories} products={products} locale={locale} />;
 }

@@ -27,6 +27,8 @@ export interface BottomSheetProps {
   header?: ReactNode;
   footer?: ReactNode;
   children: ReactNode;
+  /** Sheet colour when a screen is not on the app's surface (the kraft order slip). */
+  ground?: string;
 }
 
 /** Room above the expanded sheet for the round buttons. */
@@ -38,6 +40,7 @@ export function BottomSheet({
   header,
   footer,
   children,
+  ground,
 }: BottomSheetProps) {
   const t = useT();
   const { height: screen } = useWindowDimensions();
@@ -84,7 +87,7 @@ export function BottomSheet({
   );
 
   return (
-    <Animated.View style={[s.sheet, { height }]}>
+    <Animated.View style={[s.sheet, { height }, ground ? { backgroundColor: ground } : null]}>
       <View {...pan.panHandlers} style={s.grip}>
         <View
           style={s.handle}

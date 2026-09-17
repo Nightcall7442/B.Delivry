@@ -15,7 +15,7 @@ function make(paths: string[], extra?: { circles?: Array<[number, number, number
   return function Icon({
     size = 22,
     color: stroke = color.ink,
-    strokeWidth = 2,
+    strokeWidth = 2.2,
     fill = 'none',
   }: IconProps) {
     return (

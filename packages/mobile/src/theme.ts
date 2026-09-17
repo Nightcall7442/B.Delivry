@@ -11,56 +11,56 @@ import { Appearance } from 'react-native';
 export const isDark = Appearance.getColorScheme?.() === 'dark';
 
 const LIGHT = {
-  ink: '#161A1F',
-  inkMuted: '#6F7783',
-  inkFaint: '#A3AAB5',
-  line: '#E7EAEE',
-  lineStrong: '#CBD1D9',
-  /** The page ground and sheets over the map. */
-  surface: '#FFFFFF',
-  /** What sits white on a grey tile: buttons, steppers, checkboxes. */
-  raise: '#FFFFFF',
+  ink: '#2B1B0E',
+  inkMuted: '#7A6248',
+  inkFaint: '#A8987C',
+  line: '#DCC8A2',
+  lineStrong: '#C9B08A',
+  /** The page ground and sheets over the map: cream kraft. */
+  surface: '#F3E7CF',
+  /** What sits light on a paper tile: buttons, steppers, checkboxes. */
+  raise: '#FFFDF7',
   /** Filled inputs and photo placeholders. */
-  field: '#EFF1F4',
-  /** The grey tile every marketplace card sits on. */
-  tile: '#F4F5F7',
+  field: '#EBDCBC',
+  /** The paper slip every card sits on. */
+  tile: '#FBF5E6',
   /** Matte bars over content (headers, the tab bar) and the fade under a footer. */
-  glass: 'rgba(255,255,255,0.9)',
-  glassSoft: 'rgba(255,255,255,0.7)',
-  fade: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.94)', '#FFFFFF'] as readonly [
+  glass: 'rgba(243,231,207,0.9)',
+  glassSoft: 'rgba(243,231,207,0.7)',
+  fade: ['rgba(243,231,207,0)', 'rgba(243,231,207,0.94)', '#F3E7CF'] as readonly [
     string,
     string,
     string,
   ],
   blurTint: 'light' as 'light' | 'dark',
-  brand50: '#EEF3FE',
-  brand100: '#DCE6FD',
-  saffron100: '#FEF3D7',
+  brand50: '#F5E0DA',
+  brand100: '#EEC8C4',
+  saffron100: '#FBEBC9',
   saffron900: '#4A2E05',
   sand50: '#FBF8F2',
   sand100: '#F4EDE1',
   sand200: '#E9DDCB',
   sand300: '#D9C7AC',
 };
-/** A blue-cool near-black; tiles one step up, raised things one more; tints flip. */
+/** Night at the bazaar: dark kraft, paper one step up, raised things one more; tints flip. */
 const DARK: typeof LIGHT = {
-  ink: '#ECEEF2',
-  inkMuted: '#98A1AD',
-  inkFaint: '#69727F',
-  line: '#272D36',
-  lineStrong: '#3B434F',
-  surface: '#0F1216',
-  raise: '#2A303A',
-  field: '#1F242B',
-  tile: '#181C22',
-  glass: 'rgba(15,18,22,0.9)',
-  glassSoft: 'rgba(15,18,22,0.7)',
-  fade: ['rgba(15,18,22,0)', 'rgba(15,18,22,0.94)', '#0F1216'],
+  ink: '#FBF1DE',
+  inkMuted: '#C9B89A',
+  inkFaint: '#8A7A60',
+  line: '#3E3020',
+  lineStrong: '#5A4830',
+  surface: '#1E1408',
+  raise: '#4A3B28',
+  field: '#2E2216',
+  tile: '#2A2014',
+  glass: 'rgba(30,20,8,0.9)',
+  glassSoft: 'rgba(30,20,8,0.7)',
+  fade: ['rgba(30,20,8,0)', 'rgba(30,20,8,0.94)', '#1E1408'],
   blurTint: 'dark',
-  brand50: '#14203D',
-  brand100: '#1A2A50',
+  brand50: '#3A1B1D',
+  brand100: '#4A2224',
   saffron100: '#4A2E05',
-  saffron900: '#FEF3D7',
+  saffron900: '#FBEBC9',
   sand50: '#1F1C18',
   sand100: '#2A251E',
   sand200: '#3A3328',
@@ -69,15 +69,15 @@ const DARK: typeof LIGHT = {
 
 export const color = {
   ...(isDark ? DARK : LIGHT),
-  // Registan cobalt — the same scale as the web preset.
-  brand300: '#8FAEF4',
-  brand400: '#5F88EC',
-  brand500: '#3B6BE3',
-  brand600: '#2C56C4',
-  brand950: '#0C1A3E',
-  saffron400: '#FBBF3B',
-  saffron500: '#F5A524',
-  saffron600: '#D98407',
+  // Pomegranate and saffron — the bazaar scenes' own colours (web keeps its scale).
+  brand300: '#D9767A',
+  brand400: '#B8474D',
+  brand500: '#9E2A2B',
+  brand600: '#7E1F21',
+  brand950: '#3A0F10',
+  saffron400: '#F2B85A',
+  saffron500: '#E39B2F',
+  saffron600: '#C8851F',
   /** Text on green and on photos — white in both themes. */
   white: '#FFFFFF',
   danger: '#E4394F',
@@ -88,6 +88,8 @@ export const radius = { control: 10, panel: 16, sheet: 24, pill: 999 } as const;
 export const font = {
   display: 'Manrope_800ExtraBold',
   displayBold: 'Manrope_700Bold',
+  /** Headings: the bazaar's serif. Both apps load it next to Manrope. */
+  heading: 'Alegreya_700Bold',
   // One family for everything (full Cyrillic and Uzbek Latin); the apps load all four faces.
   body: 'Manrope_500Medium',
   bodySemi: 'Manrope_600SemiBold',
@@ -116,7 +118,7 @@ export const shadow = {
   },
   /** Under primary buttons and the cart disc: the brand colour bleeds into the ground. */
   glow: {
-    shadowColor: '#2C56C4',
+    shadowColor: '#9E2A2B',
     shadowOpacity: 0.32,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },

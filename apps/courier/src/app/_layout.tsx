@@ -2,6 +2,7 @@
  * Root layout: fonts, the signed-in courier and their shift, a header-less
  * stack. The courier app has two screens and no navigation chrome.
  */
+import { Alegreya_700Bold } from '@expo-google-fonts/alegreya';
 import {
   Manrope_500Medium,
   Manrope_600SemiBold,
@@ -26,6 +27,7 @@ export default function RootLayout() {
     Manrope_600SemiBold,
     Manrope_700Bold,
     Manrope_800ExtraBold,
+    Alegreya_700Bold,
   });
 
   useEffect(() => {

@@ -2,6 +2,8 @@
  * Root layout: fonts, the three local stores, a header-less stack. Every
  * screen draws its own top buttons over the map.
  */
+import { Alegreya_500Medium_Italic, Alegreya_700Bold, Alegreya_700Bold_Italic } from '@expo-google-fonts/alegreya';
+import { Caveat_700Bold } from '@expo-google-fonts/caveat';
 import {
   Manrope_500Medium,
   Manrope_600SemiBold,
@@ -27,6 +29,11 @@ export default function RootLayout() {
     Manrope_600SemiBold,
     Manrope_700Bold,
     Manrope_800ExtraBold,
+    // The bazaar scenes: a serif for greetings and names, a hand for price signs.
+    Alegreya_700Bold,
+    Alegreya_700Bold_Italic,
+    Alegreya_500Medium_Italic,
+    Caveat_700Bold,
   });
 
   useEffect(() => {

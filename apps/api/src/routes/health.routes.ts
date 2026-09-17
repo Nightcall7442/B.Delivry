@@ -1,6 +1,8 @@
 /**
  * /health, /ready, /metrics.
  */
+import { timingSafeEqual } from 'node:crypto';
+
 import type { FastifyInstance } from 'fastify';
 import type { Container } from '../app/container.js';
 import { checkLiveness, checkReadiness } from '../infrastructure/health/index.js';
@@ -42,8 +44,22 @@ export function healthRoutes(container: Container) {
     // Dev only (the env schema refuses the console provider in production):
     // the "SMS" the console provider swallowed, so a tester can read their own
     // OTP from a phone instead of the server log. Refreshes itself.
+    // The page is a way into every account, so it exists only with DEV_SMS_KEY
+    // set (local .env included) and sits behind HTTP Basic auth — any user, the
+    // key as password: a browser prompt, nothing in the URL or the access log.
     if (container.config.notifications.sms.provider === 'console') {
-      app.get('/dev/sms', async (_request, reply) => {
+      app.get('/dev/sms', async (request, reply) => {
+        const key = process.env.DEV_SMS_KEY;
+        if (!key) return reply.code(404).send({ ok: false });
+        const header = request.headers.authorization ?? '';
+        const given = header.startsWith('Basic ')
+          ? (Buffer.from(header.slice(6), 'base64').toString('utf8').split(':')[1] ?? '')
+          : '';
+        const a = Buffer.from(given);
+        const b = Buffer.from(key);
+        if (a.length !== b.length || !timingSafeEqual(a, b)) {
+          return reply.code(401).header('www-authenticate', 'Basic realm="dev-sms"').send('');
+        }
         const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
         const rows = ConsoleSmsProvider.recent
           .map(
