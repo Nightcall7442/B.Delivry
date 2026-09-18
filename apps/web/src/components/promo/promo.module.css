@@ -843,3 +843,18 @@
     transition: none;
   }
 }
+
+.ctaSoon {
+  opacity: 0.6;
+  cursor: default;
+}
+.footLinks {
+  display: inline-flex;
+  gap: 14px;
+  margin-left: 14px;
+}
+.footLinks a {
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}

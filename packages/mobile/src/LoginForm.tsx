@@ -7,7 +7,7 @@ import { isApiError } from '@bazar/api-client';
 import type { MessageKey, T } from '@bazar/i18n';
 import type { CurrentUserDto } from '@bazar/types';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Linking, StyleSheet, TextInput, View } from 'react-native';
 
 import { useAuth } from './auth';
 import { useT } from './locale';
@@ -156,7 +156,11 @@ export function LoginForm({
         onPress={() => void (step === 'phone' ? send() : verify())}
         style={s.button}
       />
-      <Text role="caption" style={s.legal}>
+      <Text
+        role="caption"
+        style={s.legal}
+        onPress={() => void Linking.openURL('https://bazar-delivery.uz/ru/offer')}
+      >
         {t('login.terms')}
       </Text>
     </View>

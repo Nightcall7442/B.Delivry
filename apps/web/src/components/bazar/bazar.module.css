@@ -1303,3 +1303,22 @@
 .rcCta:disabled {
   cursor: default;
 }
+
+/* ---- legal documents on paper ---- */
+.legalSection + .legalSection {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--paper-edge);
+}
+.legalTitle {
+  margin: 0 0 8px;
+  font: 700 21px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+  color: var(--ink);
+}
+.legalText {
+  margin: 0 0 10px;
+  max-width: 68ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #4a3a28;
+}
