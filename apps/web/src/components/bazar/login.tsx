@@ -217,7 +217,16 @@ export function BazaarLogin({ locale }: { locale: string }) {
                   : t('login.enter')}
             </button>
           </div>
-          <p className={s.rcHint}>{t('login.terms')}</p>
+          <p className={s.rcHint}>
+            {t('login.terms')}{' '}
+            <Link href={`${home}/offer`} className={s.rcLink}>
+              Оферта
+            </Link>{' '}
+            ·{' '}
+            <Link href={`${home}/privacy`} className={s.rcLink}>
+              Политика
+            </Link>
+          </p>
         </form>
       </div>
     </main>

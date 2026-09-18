@@ -101,18 +101,15 @@ const COPY = {
     },
     stairs: { line: 'Следите за ним на карте. Взвесили больше — вернём разницу на баланс.' },
     door: {
-      eyebrow: 'Клиенты довольны',
-      title: 'Как будто сама сходила',
-      quote: '«Арбуз выбрали, как для себя. Дочка теперь ждёт курьера, а не мультики»',
-      who: 'Малика · Юнусабад · 47 заказов',
+      eyebrow: 'Три обещания',
+      title: 'Как будто сами сходили',
+      quote:
+        'Взвесили больше — разница на баланс. Опоздали больше чем на 20 минут — доставка за наш счёт. Свежесть не та — вернём деньги за позицию, без споров.',
+      who: 'Правила базара · с первого заказа',
     },
     table: {
       eyebrow: 'Дастархан',
       title: 'Что было на столе',
-      rating: '4,9',
-      ratingLabel: 'средняя оценка заказа',
-      repeat: '8 из 10',
-      repeatLabel: 'заказывают снова в течение недели',
       hint: 'всё это — ниже, по ценам прилавка ↓',
     },
     products: {
@@ -142,8 +139,10 @@ const COPY = {
       title: 'Пройтись по ряду',
       line: 'выбирайте у людей, а не в каталоге',
       cta: 'Открыть базар',
-      app: 'Приложение для iPhone и Android',
+      app: 'Приложение для iPhone и Android — скоро',
       foot: 'Bazar Delivery · Чорсу · Алайский · Фархадский · Ташкент',
+      offer: 'Публичная оферта',
+      privacy: 'Политика данных',
     },
   },
   uz: {
@@ -174,18 +173,15 @@ const COPY = {
     },
     stairs: { line: 'Uni xaritada kuzating. Koʻproq tortilsa — farqini balansga qaytaramiz.' },
     door: {
-      eyebrow: 'Mijozlar mamnun',
+      eyebrow: 'Uchta vaʼda',
       title: 'Xuddi oʻzim borgandek',
-      quote: '«Tarvuzni oʻzlariga olgandek tanlashdi. Qizim endi multfilm emas, kuryerni kutadi»',
-      who: 'Malika · Yunusobod · 47 buyurtma',
+      quote:
+        'Koʻproq tortilsa — farqi balansga. 20 daqiqadan koʻp kechiksak — yetkazish bizdan. Yangi boʻlmasa — mahsulot pulini qaytaramiz, bahssiz.',
+      who: 'Bozor qoidalari · birinchi buyurtmadan',
     },
     table: {
       eyebrow: 'Dasturxon',
       title: 'Dasturxonda nima bor edi',
-      rating: '4,9',
-      ratingLabel: 'buyurtmaning oʻrtacha bahosi',
-      repeat: '10 dan 8',
-      repeatLabel: 'bir hafta ichida yana buyurtma beradi',
       hint: 'hammasi — pastda, peshtaxta narxida ↓',
     },
     products: {
@@ -218,8 +214,10 @@ const COPY = {
       title: 'Rasta boʻylab yuring',
       line: 'katalogdan emas, odamlardan tanlang',
       cta: 'Bozorni ochish',
-      app: 'iPhone va Android uchun ilova',
+      app: 'iPhone va Android uchun ilova — tez orada',
       foot: 'Bazar Delivery · Chorsu · Oloy · Farhod · Toshkent',
+      offer: 'Ommaviy oferta',
+      privacy: 'Maʼlumotlar siyosati',
     },
   },
 } as const;
@@ -325,11 +323,17 @@ export function PromoLanding({ locale }: { locale: string }) {
             <a href={home} className={styles.cta}>
               {c.paper.cta}
             </a>
-            <a href={home} className={`${styles.cta} ${styles.ctaPaper}`}>
+            <span className={`${styles.cta} ${styles.ctaPaper} ${styles.ctaSoon}`}>
               {c.paper.app}
-            </a>
+            </span>
           </div>
-          <div className={styles.foot}>{c.paper.foot}</div>
+          <div className={styles.foot}>
+            {c.paper.foot}
+            <span className={styles.footLinks}>
+              <a href={`/${locale}/offer`}>{c.paper.offer}</a>
+              <a href={`/${locale}/privacy`}>{c.paper.privacy}</a>
+            </span>
+          </div>
         </div>
       </section>
     </main>

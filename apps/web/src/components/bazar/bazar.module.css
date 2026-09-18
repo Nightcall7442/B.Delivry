@@ -299,7 +299,9 @@
 }
 .signChosen {
   border-color: var(--saffron);
-  box-shadow: 0 0 0 2px var(--saffron), 0 8px 22px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    0 0 0 2px var(--saffron),
+    0 8px 22px rgba(0, 0, 0, 0.45);
 }
 .signTitle {
   font-family: var(--font-hand), cursive;
@@ -538,7 +540,10 @@
   border: 1px solid rgba(251, 241, 222, 0.28);
   background: rgba(30, 20, 8, 0.45);
   color: var(--cream);
-  font: 700 12px var(--font-display), 'Manrope', sans-serif;
+  font:
+    700 12px var(--font-display),
+    'Manrope',
+    sans-serif;
   cursor: pointer;
 }
 .chipOn {
@@ -554,14 +559,22 @@
 
 /* ---- the receipts: one paper slip per stall ---- */
 .photoDim::after {
-  background: linear-gradient(180deg, rgba(30, 20, 8, 0.55) 0%, rgba(30, 20, 8, 0.78) 40%, rgba(30, 20, 8, 0.92) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(30, 20, 8, 0.55) 0%,
+    rgba(30, 20, 8, 0.78) 40%,
+    rgba(30, 20, 8, 0.92) 100%
+  );
 }
 .narrow {
   max-width: 640px;
 }
 .notice {
   margin: 0 0 14px;
-  font: 700 20px/1.2 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 20px/1.2 var(--font-hand),
+    'Caveat',
+    cursive;
   color: var(--saffron-light);
 }
 .oneTrip {
@@ -579,7 +592,11 @@
 }
 .oneTrip b {
   display: block;
-  font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+  font:
+    700 19px/1.2 var(--font-serif),
+    'Alegreya',
+    Georgia,
+    serif;
 }
 .oneTrip small {
   display: block;
@@ -623,11 +640,16 @@
   z-index: -1;
   background: var(--paper);
   mask-image:
-    linear-gradient(#000, #000),
-    radial-gradient(circle at 50% 0, #000 6px, transparent 6.5px),
+    linear-gradient(#000, #000), radial-gradient(circle at 50% 0, #000 6px, transparent 6.5px),
     radial-gradient(circle at 50% 100%, #000 6px, transparent 6.5px);
-  mask-size: 100% 100%, 20px 12px, 20px 12px;
-  mask-position: 0 0, 0 0, 0 100%;
+  mask-size:
+    100% 100%,
+    20px 12px,
+    20px 12px;
+  mask-position:
+    0 0,
+    0 0,
+    0 100%;
   mask-repeat: no-repeat, repeat-x, repeat-x;
   mask-composite: subtract;
 }
@@ -663,7 +685,11 @@
 }
 .rcVendorName {
   display: block;
-  font: 700 22px/1.15 var(--font-serif), 'Alegreya', Georgia, serif;
+  font:
+    700 22px/1.15 var(--font-serif),
+    'Alegreya',
+    Georgia,
+    serif;
 }
 .rcVendorMeta {
   display: block;
@@ -693,7 +719,11 @@
 }
 .rcName {
   display: block;
-  font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+  font:
+    700 19px/1.2 var(--font-serif),
+    'Alegreya',
+    Georgia,
+    serif;
 }
 .rcUnit {
   display: block;
@@ -703,14 +733,20 @@
 }
 .rcSum {
   flex: none;
-  font: 700 26px/1 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 26px/1 var(--font-hand),
+    'Caveat',
+    cursive;
   color: var(--pomegranate);
   padding-top: 4px;
   font-variant-numeric: tabular-nums;
 }
 .rcHaggle {
   margin-top: 4px;
-  font: 700 17px/1.2 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 17px/1.2 var(--font-hand),
+    'Caveat',
+    cursive;
   color: var(--pomegranate);
 }
 .rcAsk {
@@ -734,7 +770,10 @@
   padding: 0;
   border: 0;
   background: none;
-  font: 700 17px/1.2 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 17px/1.2 var(--font-hand),
+    'Caveat',
+    cursive;
   color: var(--pomegranate);
   text-decoration: underline dotted;
   text-underline-offset: 3px;
@@ -764,7 +803,10 @@
 .stepper span {
   min-width: 64px;
   text-align: center;
-  font: 700 18px/1 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 18px/1 var(--font-hand),
+    'Caveat',
+    cursive;
 }
 .rcTotals {
   margin: 4px 0 0;
@@ -786,10 +828,17 @@
 .rcRowStrong {
   margin-top: 4px;
   color: var(--ink);
-  font: 700 22px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+  font:
+    700 22px/1.2 var(--font-serif),
+    'Alegreya',
+    Georgia,
+    serif;
 }
 .rcRowStrong dd {
-  font: 700 30px/1 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 30px/1 var(--font-hand),
+    'Caveat',
+    cursive;
   color: var(--pomegranate);
 }
 .rcHint {
@@ -803,7 +852,11 @@
 }
 .rcEmpty {
   margin: 22px 0 0;
-  font: 700 30px/1.1 var(--font-serif), 'Alegreya', Georgia, serif;
+  font:
+    700 30px/1.1 var(--font-serif),
+    'Alegreya',
+    Georgia,
+    serif;
 }
 .stamp {
   display: inline-block;
@@ -811,7 +864,10 @@
   padding: 6px 12px;
   border: 2px solid var(--pomegranate);
   border-radius: 8px;
-  font: 700 18px/1 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 18px/1 var(--font-hand),
+    'Caveat',
+    cursive;
   color: var(--pomegranate);
   transform: rotate(-3deg);
   opacity: 0.8;
@@ -832,7 +888,11 @@
   border-radius: 999px;
   background: var(--pomegranate);
   color: var(--cream);
-  font: 700 18px/1 var(--font-serif), 'Alegreya', Georgia, serif;
+  font:
+    700 18px/1 var(--font-serif),
+    'Alegreya',
+    Georgia,
+    serif;
   text-decoration: none;
   box-shadow: 0 10px 24px rgba(158, 42, 43, 0.35);
 }
@@ -853,7 +913,11 @@
 }
 .share b {
   display: block;
-  font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+  font:
+    700 19px/1.2 var(--font-serif),
+    'Alegreya',
+    Georgia,
+    serif;
 }
 .share small {
   display: block;
@@ -889,7 +953,10 @@
   border-bottom: 1.5px dashed var(--paper-edge);
   border-radius: 10px 10px 0 0;
   background: rgba(234, 216, 178, 0.35);
-  font: 700 17px/1.3 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 17px/1.3 var(--font-hand),
+    'Caveat',
+    cursive;
   color: var(--ink);
   resize: none;
 }
@@ -909,7 +976,11 @@
   margin-top: 20px;
   padding-top: 12px;
   border-top: 1px dashed var(--paper-edge);
-  font: 700 19px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+  font:
+    700 19px/1.2 var(--font-serif),
+    'Alegreya',
+    Georgia,
+    serif;
 }
 .rcToggle {
   display: flex;
@@ -917,7 +988,11 @@
   gap: 12px;
   margin-top: 18px;
   cursor: pointer;
-  font: 700 18px/1.2 var(--font-serif), 'Alegreya', Georgia, serif;
+  font:
+    700 18px/1.2 var(--font-serif),
+    'Alegreya',
+    Georgia,
+    serif;
 }
 .rcToggle input {
   width: 22px;
@@ -938,7 +1013,10 @@
   border: 1.5px solid var(--paper-edge);
   background: transparent;
   color: var(--ink);
-  font: 700 16px var(--font-hand), 'Caveat', cursive;
+  font:
+    700 16px var(--font-hand),
+    'Caveat',
+    cursive;
   cursor: pointer;
 }
 .chipPaperOn {
@@ -1124,7 +1202,11 @@
   background: rgba(30, 20, 8, 0.55);
   backdrop-filter: blur(10px);
   color: var(--cream);
-  font: italic 500 17px var(--font-serif), 'Alegreya', Georgia, serif;
+  font:
+    italic 500 17px var(--font-serif),
+    'Alegreya',
+    Georgia,
+    serif;
 }
 .search input::placeholder {
   color: var(--cream-muted);
@@ -1165,7 +1247,10 @@
   border-top: 2px dashed rgba(43, 27, 14, 0.35);
 }
 .gateText {
-  font: 700 20px/1 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 20px/1 var(--font-hand),
+    'Caveat',
+    cursive;
 }
 .hall {
   position: relative;
@@ -1194,7 +1279,10 @@
   justify-self: center;
   padding: 2px 0;
   background: var(--kraft);
-  font: 700 16px/1 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 16px/1 var(--font-hand),
+    'Caveat',
+    cursive;
   opacity: 0.45;
 }
 .counter {
@@ -1218,7 +1306,10 @@
   cursor: default;
 }
 .counterHint {
-  font: 700 17px/1.2 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 17px/1.2 var(--font-hand),
+    'Caveat',
+    cursive;
   color: #7a6749;
 }
 .faces {
@@ -1236,7 +1327,11 @@
   border-radius: 50%;
   border: 1.5px solid var(--saffron);
   background: var(--kraft) center / cover;
-  font: 700 13px var(--font-serif), 'Alegreya', Georgia, serif;
+  font:
+    700 13px var(--font-serif),
+    'Alegreya',
+    Georgia,
+    serif;
 }
 .face + .face {
   margin-left: -8px;
@@ -1259,7 +1354,10 @@
 .dome {
   margin-top: 12px;
   text-align: center;
-  font: 700 18px/1.2 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 18px/1.2 var(--font-hand),
+    'Caveat',
+    cursive;
   color: #7a6749;
 }
 
@@ -1274,7 +1372,10 @@
   border-radius: 12px 12px 0 0;
   border-bottom: 1.5px dashed var(--paper-edge);
   background: rgba(234, 216, 178, 0.35);
-  font: 700 26px/1 var(--font-hand), 'Caveat', cursive;
+  font:
+    700 26px/1 var(--font-hand),
+    'Caveat',
+    cursive;
   color: var(--ink);
 }
 .phone:focus-within {
@@ -1302,4 +1403,27 @@
 }
 .rcCta:disabled {
   cursor: default;
+}
+
+/* ---- legal documents on paper ---- */
+.legalSection + .legalSection {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--paper-edge);
+}
+.legalTitle {
+  margin: 0 0 8px;
+  font:
+    700 21px/1.2 var(--font-serif),
+    'Alegreya',
+    Georgia,
+    serif;
+  color: var(--ink);
+}
+.legalText {
+  margin: 0 0 10px;
+  max-width: 68ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #4a3a28;
 }
