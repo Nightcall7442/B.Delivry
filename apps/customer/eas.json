@@ -8,9 +8,24 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.bazar-delivery.uz/api/v1",
+        "EXPO_PUBLIC_WS_URL": "wss://api.bazar-delivery.uz",
+        "EXPO_PUBLIC_MAPS_PROVIDER": "osm"
+      },
+      "ios": {
+        "simulator": false
+      }
     },
-    "production": {}
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.bazar-delivery.uz/api/v1",
+        "EXPO_PUBLIC_WS_URL": "wss://api.bazar-delivery.uz",
+        "EXPO_PUBLIC_MAPS_PROVIDER": "osm"
+      }
+    }
   },
   "submit": {
     "production": {}
