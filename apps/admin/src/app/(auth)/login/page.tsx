@@ -46,77 +46,100 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-brand-950 p-6">
-      <form
-        className="card w-full max-w-sm p-6"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void run(async () => {
-            if (step === 'phone') {
-              await requestCode(normalize(phone));
-              setStep('code');
-            } else {
-              await verifyCode(normalize(phone), code.trim());
-            }
-          });
+    <main className="flex min-h-screen items-end justify-start p-8 sm:items-center sm:p-12">
+      <div
+        className="ground"
+        style={{
+          backgroundImage: `url(/scenes/${(new Date().getUTCHours() + 5) % 24 >= 17 ? 'evening' : 'morning'}.jpg)`,
         }}
-      >
-        <h1 className="font-display text-2xl font-extrabold">Диспетчерская</h1>
-        <p className="mt-1 text-sm text-ink-muted">
-          {step === 'phone'
-            ? 'Вход по номеру сотрудника или продавца.'
-            : `Код из SMS на ${normalize(phone)}`}
+      />
+      <div className="w-full max-w-md">
+        <div className="hand text-[20px]" style={{ color: 'var(--cream-muted)' }}>
+          Чорсу · Алайский · Фархадский
+        </div>
+        <div
+          className="font-display mt-1 text-[clamp(38px,6vw,64px)] font-bold leading-[1.05]"
+          style={{ color: 'var(--cream)' }}
+        >
+          За прилавком
+        </div>
+        <p className="hand mt-2 text-[22px]" style={{ color: 'var(--cream-muted)' }}>
+          Вход по номеру продавца или сотрудника — без паролей.
         </p>
-
-        {user && !isStaff ? (
-          <p className="mt-4 rounded-control bg-saffron-100 p-3 text-sm">
-            {user.phone} — не сотрудник.{' '}
-            <button type="button" className="underline" onClick={() => void signOut()}>
-              Выйти
-            </button>
-          </p>
-        ) : null}
-
-        {step === 'phone' ? (
-          <label className="mt-5 block text-sm">
-            Телефон
-            <input
-              className="field mt-1"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              placeholder="+998 71 000 00 00"
-              inputMode="tel"
-              autoFocus
-            />
-          </label>
-        ) : (
-          <label className="mt-5 block text-sm">
-            Код
-            <input
-              className="field mt-1 tracking-[0.3em]"
-              value={code}
-              onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-              inputMode="numeric"
-              autoFocus
-            />
-          </label>
-        )}
-
-        {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
-
-        <button type="submit" className="btn-primary mt-5 w-full" disabled={busy}>
-          {busy ? 'Секунду…' : step === 'phone' ? 'Получить код' : 'Войти'}
-        </button>
-        {step === 'code' ? (
-          <button
-            type="button"
-            className="mt-3 w-full text-sm text-ink-muted underline"
-            onClick={() => setStep('phone')}
+        <form
+          className="card mt-6 w-full p-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void run(async () => {
+              if (step === 'phone') {
+                await requestCode(normalize(phone));
+                setStep('code');
+              } else {
+                await verifyCode(normalize(phone), code.trim());
+              }
+            });
+          }}
+        >
+          <h1
+            className="text-[11px] font-bold uppercase tracking-[0.16em]"
+            style={{ color: 'var(--pomegranate)' }}
           >
-            Другой номер
+            {step === 'phone' ? 'Вход по номеру' : 'Код из SMS'}
+          </h1>
+          {step === 'code' ? (
+            <p className="mt-1 text-sm text-ink-muted">Отправили на {normalize(phone)}</p>
+          ) : null}
+
+          {user && !isStaff ? (
+            <p className="mt-4 rounded-control bg-saffron-100 p-3 text-sm">
+              {user.phone} — не сотрудник.{' '}
+              <button type="button" className="underline" onClick={() => void signOut()}>
+                Выйти
+              </button>
+            </p>
+          ) : null}
+
+          {step === 'phone' ? (
+            <label className="mt-5 block text-sm">
+              Телефон
+              <input
+                className="field mt-1"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="+998 71 000 00 00"
+                inputMode="tel"
+                autoFocus
+              />
+            </label>
+          ) : (
+            <label className="mt-5 block text-sm">
+              Код
+              <input
+                className="field mt-1 tracking-[0.3em]"
+                value={code}
+                onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                inputMode="numeric"
+                autoFocus
+              />
+            </label>
+          )}
+
+          {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
+
+          <button type="submit" className="btn-primary mt-5 w-full" disabled={busy}>
+            {busy ? 'Секунду…' : step === 'phone' ? 'Получить код' : 'Войти'}
           </button>
-        ) : null}
-      </form>
+          {step === 'code' ? (
+            <button
+              type="button"
+              className="mt-3 w-full text-sm text-ink-muted underline"
+              onClick={() => setStep('phone')}
+            >
+              Другой номер
+            </button>
+          ) : null}
+        </form>
+      </div>
     </main>
   );
 }
