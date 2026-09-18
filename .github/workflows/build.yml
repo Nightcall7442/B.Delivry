@@ -50,7 +50,6 @@ jobs:
         with:
           context: .
           file: apps/api/Dockerfile
-          target: production
           push: false
           tags: bazar-delivery/api:ci
           cache-from: type=gha
