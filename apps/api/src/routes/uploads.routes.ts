@@ -9,12 +9,15 @@ import { randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
+import { Readable } from 'node:stream';
+import type { ReadableStream as WebReadableStream } from 'node:stream/web';
 import type { FastifyInstance } from 'fastify';
 import { PERMISSION } from '@bazar/constants';
 import { requireContext } from '../common/tenant/tenant-context.js';
 import { z } from 'zod';
 import type { Container } from '../app/container.js';
 import { STORAGE_FOLDER, type StorageFolder } from '../config/storage.config.js';
+import { isPrivateFolder } from '../integrations/storage/index.js';
 import { requireAuth } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validation.middleware.js';
 import { createWorker, type Worker } from 'tesseract.js';
@@ -26,6 +29,9 @@ const EXTENSION: Record<string, string> = {
 };
 
 /** What an app may upload on its own: no product images or documents from a phone. */
+const isStorageFolder = (value: string): value is StorageFolder =>
+  (Object.values(STORAGE_FOLDER) as string[]).includes(value);
+
 const APP_FOLDERS: readonly StorageFolder[] = [
   STORAGE_FOLDER.WEIGHING,
   STORAGE_FOLDER.DELIVERY_PROOFS,
@@ -120,6 +126,27 @@ export function uploadsRouteGroup(container: Container) {
 /** Files written by the local provider, served straight from disk (dev only). */
 export function storageRouteGroup(container: Container) {
   return async (app: FastifyInstance): Promise<void> => {
+    // S3 buckets stay private (Railway's cannot be made public at all): public folders are
+    // read through here with a short-lived signed GET, so the stored URLs never expire.
+    if (container.config.storage.provider === 's3') {
+      app.get('/:folder/:key', async (request, reply) => {
+        const { folder, key } = request.params as { folder: string; key: string };
+        if (!isStorageFolder(folder) || isPrivateFolder(folder) || key.includes('/')) {
+          return reply.code(404).send();
+        }
+        const signed = await container.storage.getSignedUrl(folder, key, 60);
+        const upstream = await fetch(signed);
+        if (!upstream.ok || !upstream.body) return reply.code(404).send();
+        return reply
+          .header(
+            'content-type',
+            upstream.headers.get('content-type') ?? 'application/octet-stream',
+          )
+          .header('cache-control', 'public, max-age=31536000, immutable')
+          .send(Readable.fromWeb(upstream.body as WebReadableStream));
+      });
+      return;
+    }
     if (container.config.storage.provider !== 'local') return;
     const root = resolve(process.cwd(), '.storage');
 
