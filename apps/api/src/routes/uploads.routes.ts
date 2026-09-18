@@ -137,10 +137,17 @@ export function storageRouteGroup(container: Container) {
         const signed = await container.storage.getSignedUrl(folder, key, 60);
         const upstream = await fetch(signed);
         if (!upstream.ok || !upstream.body) return reply.code(404).send();
+        // Only the image types the upload route accepts are served as themselves; anything
+        // else that ever lands in the bucket goes out as a download, never as a page on this
+        // origin (no HTML/SVG on the API domain).
+        const upstreamType = upstream.headers.get('content-type') ?? '';
+        const type = upstreamType in EXTENSION ? upstreamType : 'application/octet-stream';
         return reply
+          .header('content-type', type)
+          .header('x-content-type-options', 'nosniff')
           .header(
-            'content-type',
-            upstream.headers.get('content-type') ?? 'application/octet-stream',
+            'content-disposition',
+            type === 'application/octet-stream' ? 'attachment' : 'inline',
           )
           .header('cache-control', 'public, max-age=31536000, immutable')
           .send(Readable.fromWeb(upstream.body as WebReadableStream));
