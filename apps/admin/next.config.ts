@@ -1,7 +1,13 @@
+import path from 'node:path';
+
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // One self-contained server for the Docker image; tracing from the monorepo root.
+  output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../../'),
+  eslint: { ignoreDuringBuilds: true },
   transpilePackages: [
     '@bazar/ui',
     '@bazar/i18n',
