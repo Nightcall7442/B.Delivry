@@ -7,9 +7,9 @@
  * Frames come in strips — `per` frames stacked in one WebP (`strip(k)`) — so a
  * 96-frame shot is a dozen requests, not a hundred; strips load nearest-first
  * around the reader. Until the film is in, a veil shows the poster and how
- * much has arrived; the shown frame eases towards the wanted one so a flick
- * of the wheel plays as motion rather than a jump. Children get the progress
- * to place copy.
+ * much has arrived; the shown frame eases towards the wanted one and
+ * dissolves between neighbouring frames, so a flick of the wheel plays as
+ * motion rather than a jump. Children get the progress to place copy.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
@@ -68,7 +68,7 @@ export function ScrollFilm({
     let cancelled = false;
 
     // Cover-fit one frame of its strip into the canvas, like `object-fit: cover`.
-    const draw = (index: number) => {
+    const drawFrame = (index: number, alpha = 1) => {
       const img = images[Math.floor(index / per)];
       if (!img) return;
       const fw = img.naturalWidth;
@@ -77,31 +77,48 @@ export function ScrollFilm({
       const scale = Math.max(width / fw, height / fh);
       const w = fw * scale;
       const h = fh * scale;
+      ctx.globalAlpha = alpha;
       ctx.drawImage(img, 0, (index % per) * fh, fw, fh, (width - w) / 2, (height - h) / 2, w, h);
-      shown = index;
+      ctx.globalAlpha = 1;
     };
     // The nearest loaded frame at or below the one we want, so scrubbing never blanks.
-    const show = (index: number) => {
-      for (let i = index; i >= 0; i -= 1) {
-        if (ready[Math.floor(i / per)]) {
-          if (i !== shown) draw(i);
-          return;
-        }
+    const nearestReady = (index: number) => {
+      for (let i = index; i >= 0; i -= 1) if (ready[Math.floor(i / per)]) return i;
+      return -1;
+    };
+    // The film is 12 fps; a fractional position dissolves between the two neighbouring
+    // frames, so the scrub reads as continuous motion instead of steps.
+    const show = (pos: number) => {
+      const a = Math.floor(pos);
+      const frac = pos - a;
+      const base = nearestReady(a);
+      if (base < 0 || Math.abs(pos - shown) < 0.01) return;
+      drawFrame(base);
+      if (base === a && frac > 0.02 && a + 1 < frames && ready[Math.floor((a + 1) / per)]) {
+        drawFrame(a + 1, frac);
       }
+      shown = pos;
     };
 
-    // Ease the shown frame towards the wanted one.
+    // Ease the shown frame towards the wanted one — time-based, so it feels the same at
+    // 60 and 120 Hz: about 140 ms to close most of the gap.
     let motion = 0;
-    const settle = () => {
+    let last = 0;
+    const settle = (now: number) => {
       motion = 0;
-      const gap = wanted - current;
-      if (Math.abs(gap) < 0.45) {
-        current = wanted;
+      const dt = last ? Math.min(64, now - last) : 16;
+      last = now;
+      // Dissolves are for motion: once close, land on a whole frame so the still is crisp.
+      const goal = Math.abs(wanted - current) < 0.6 ? Math.round(wanted) : wanted;
+      const gap = goal - current;
+      if (Math.abs(gap) < 0.005) {
+        current = goal;
+        last = 0;
       } else {
-        current += gap * 0.22;
+        current += gap * (1 - Math.exp(-dt / 140));
         motion = requestAnimationFrame(settle);
       }
-      show(Math.round(current));
+      show(current);
     };
     const nudge = () => {
       if (!motion) motion = requestAnimationFrame(settle);
@@ -155,7 +172,7 @@ export function ScrollFilm({
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       shown = -1;
-      show(Math.round(current));
+      show(current);
     };
     let raf = 0;
     const onScroll = () => {
@@ -166,7 +183,7 @@ export function ScrollFilm({
         const travel = rect.height - window.innerHeight;
         const p = Math.min(1, Math.max(0, travel > 0 ? -rect.top / travel : 0));
         const target = map.current ? map.current(p) : p * (frames - 1);
-        wanted = Math.min(frames - 1, Math.max(0, Math.round(target)));
+        wanted = Math.min(frames - 1, Math.max(0, target));
         nudge();
         setProgress((prev) => (Math.abs(prev - p) > 0.0015 || p === 0 || p === 1 ? p : prev));
       });
