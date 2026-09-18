@@ -9,10 +9,25 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "uz.bazardelivery.customer"
+      "bundleIdentifier": "uz.bazardelivery.customer",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Чтобы показать прилавки рядом и привезти заказ по адресу",
+        "NSCameraUsageDescription": "Снять фото для отзыва о заказе",
+        "NSPhotoLibraryUsageDescription": "Фото для отзыва о заказе",
+        "CFBundleDisplayName": "Bazar"
+      }
     },
     "android": {
-      "package": "uz.bazardelivery.customer"
+      "package": "uz.bazardelivery.customer",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#9E2A2B"
+      }
     },
     "plugins": [
       "expo-router",
@@ -26,6 +41,15 @@
           "photosPermission": "Фото для отзыва о заказе",
           "cameraPermission": "Снять фото для отзыва"
         }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 260,
+          "backgroundColor": "#9E2A2B",
+          "resizeMode": "contain"
+        }
       ]
     ],
     "experiments": {
@@ -35,6 +59,7 @@
       "router": {
         "origin": false
       }
-    }
+    },
+    "icon": "./assets/images/icon.png"
   }
 }
