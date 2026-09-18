@@ -28,7 +28,15 @@ export default function DocumentsRoute() {
   const openTotal = open.reduce((sum, o) => sum + o.totals.total.amount, 0);
 
   return (
-    <Shell back="history" expanded header={<Text role="display">{t('docs.title')}</Text>}>
+    <Shell
+      back="history"
+      expanded
+      header={
+        <Text role="display" style={{ color: '#FBF1DE' }}>
+          {t('docs.title')}
+        </Text>
+      }
+    >
       <Text role="muted" style={{ marginTop: 4 }}>
         {t('docs.intro')}
       </Text>

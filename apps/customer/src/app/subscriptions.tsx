@@ -36,7 +36,15 @@ export default function SubscriptionsRoute() {
       .catch(() => undefined);
 
   return (
-    <Shell back="history" expanded header={<Text role="display">{t('subs.title')}</Text>}>
+    <Shell
+      back="history"
+      expanded
+      header={
+        <Text role="display" style={{ color: '#FBF1DE' }}>
+          {t('subs.title')}
+        </Text>
+      }
+    >
       <Text role="muted" style={{ marginTop: 4 }}>
         {t('subs.intro')}
       </Text>

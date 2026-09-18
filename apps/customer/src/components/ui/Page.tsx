@@ -8,6 +8,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Image } from 'expo-image';
 import {
   Animated,
   Pressable,
@@ -22,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Bag, Button, Text, color, press, shadow, useLocale } from '@bazar/mobile';
 
 import { useCartCount } from '@/features/cart/store';
+import { SCENES, isEvening, sceneFont } from '@/components/bazar';
 
 /** Ground and surfaces of the redesign; the brand colours stay in @bazar/mobile's theme. */
 export const ui = {
@@ -60,8 +62,11 @@ export function Page({
   glass = false,
   onRefresh,
   scrollY,
+  scene = false,
 }: {
   title?: string;
+  /** The bazaar hall behind the page and the title in cream serif (the secondary screens). */
+  scene?: boolean;
   /** Where the arrow goes; omitted = no arrow (a tab root). */
   back?: Href | 'history';
   right?: ReactNode;
@@ -105,13 +110,28 @@ export function Page({
   };
 
   return (
-    <View style={s.root}>
-      <LinearGradient
-        colors={[ui.mint, ui.peach]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+    <View style={[s.root, scene && { backgroundColor: '#1E1408' }]}>
+      {scene ? (
+        <View style={StyleSheet.absoluteFill}>
+          <Image
+            source={SCENES[isEvening() ? 'evening' : 'morning']}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+          />
+          <LinearGradient
+            colors={['rgba(30,20,8,0.62)', 'rgba(30,20,8,0.8)', 'rgba(30,20,8,0.94)']}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
+      ) : (
+        <LinearGradient
+          colors={[ui.mint, ui.peach]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
       <View
         style={[
           s.header,
@@ -139,7 +159,14 @@ export function Page({
         {header ? (
           <View style={s.headerSlot}>{header}</View>
         ) : (
-          <Text role="section" numberOfLines={1} style={{ flex: 1, fontSize: 22 }}>
+          <Text
+            role="section"
+            numberOfLines={1}
+            style={[
+              { flex: 1, fontSize: 22 },
+              scene && { fontFamily: sceneFont.display, fontSize: 26, color: '#FBF1DE' },
+            ]}
+          >
             {title ?? ''}
           </Text>
         )}
@@ -431,7 +458,14 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 28,
   },
-  card: { backgroundColor: ui.card, borderRadius: ui.radius, ...ui.shadow },
+  // Cards are paper slips now: cream with a soft edge, the same as the receipts.
+  card: {
+    backgroundColor: '#FBF5E6',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E6DCC6',
+    ...ui.shadow,
+  },
   bone: { backgroundColor: color.field, borderRadius: 20 },
   empty: { alignItems: 'center', padding: 24, paddingVertical: 36, marginTop: 12 },
   error: {

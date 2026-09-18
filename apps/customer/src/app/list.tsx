@@ -100,7 +100,15 @@ export default function ListRoute() {
   };
 
   return (
-    <Shell back="history" expanded header={<Text role="display">{t('list.title')}</Text>}>
+    <Shell
+      back="history"
+      expanded
+      header={
+        <Text role="display" style={{ color: '#FBF1DE' }}>
+          {t('list.title')}
+        </Text>
+      }
+    >
       <Text role="muted" style={{ marginTop: 4 }}>
         {t('list.intro')}
       </Text>

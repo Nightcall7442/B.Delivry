@@ -8,7 +8,15 @@ import { Shell } from '@/components/ui/Shell';
 export default function RulesRoute() {
   const t = useT();
   return (
-    <Shell back="history" peek={0.6} header={<Text role="display">{t('rules.title')}</Text>}>
+    <Shell
+      back="history"
+      peek={0.6}
+      header={
+        <Text role="display" style={{ color: '#FBF1DE' }}>
+          {t('rules.title')}
+        </Text>
+      }
+    >
       <Text role="muted" style={{ marginTop: 4 }}>
         {t('rules.intro')}
       </Text>
