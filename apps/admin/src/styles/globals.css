@@ -180,12 +180,14 @@
     font-family: var(--font-hand), 'Caveat', cursive;
     font-weight: 700;
   }
+}
 
-  /* Muted text on the ground (outside any paper) reads in cream, not ink. */
-  .on-ground .text-ink-muted:not(.card .text-ink-muted) {
-    color: #d9c7a6;
-  }
-  .on-ground .text-ink:not(.card .text-ink) {
-    color: #fbf1de;
-  }
+/* Muted text on the ground (outside any paper) reads in cream, not ink.
+   Attribute selectors on purpose: a `.text-ink` class selector here would be
+   folded into the utility and clash with the `@apply text-ink` above. */
+.on-ground [class~='text-ink-muted']:not(.card [class~='text-ink-muted']) {
+  color: #d9c7a6;
+}
+.on-ground [class~='text-ink']:not(.card [class~='text-ink']) {
+  color: #fbf1de;
 }
