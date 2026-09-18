@@ -59,7 +59,7 @@ export default function PlusRoute() {
       back="history"
       expanded
       header={
-        <Text role="display">
+        <Text role="display" style={{ color: '#FBF1DE' }}>
           {t('plus.title')}
           <Text role="display" style={{ color: color.saffron500 }}>
             .

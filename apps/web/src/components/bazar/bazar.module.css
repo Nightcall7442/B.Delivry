@@ -1427,3 +1427,15 @@
   line-height: 1.55;
   color: #4a3a28;
 }
+
+/* ---- breakpoints for the frame (module rules beat Tailwind's display utilities) ---- */
+@media (min-width: 768px) {
+  .phoneOnly {
+    display: none !important;
+  }
+}
+@media (max-width: 767px) {
+  .desktopOnly {
+    display: none !important;
+  }
+}

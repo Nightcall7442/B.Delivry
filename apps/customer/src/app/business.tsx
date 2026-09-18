@@ -56,7 +56,15 @@ export default function BusinessRoute() {
   };
 
   return (
-    <Shell back="history" expanded header={<Text role="display">{t('business.title')}</Text>}>
+    <Shell
+      back="history"
+      expanded
+      header={
+        <Text role="display" style={{ color: '#FBF1DE' }}>
+          {t('business.title')}
+        </Text>
+      }
+    >
       <Text role="muted" style={{ marginTop: 4 }}>
         {t('business.intro')}
       </Text>

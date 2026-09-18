@@ -12,7 +12,7 @@ export default function SupportRoute() {
   const router = useRouter();
   const { user } = useAuth();
   return (
-    <Page back="history" title={t('support.title')} cart>
+    <Page back="history" title={t('support.title')} cart scene>
       <Card
         style={{ marginTop: 8, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}
       >

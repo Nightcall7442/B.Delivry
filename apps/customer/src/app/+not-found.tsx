@@ -9,7 +9,11 @@ export default function NotFound() {
   return (
     <Shell
       peek={0.34}
-      header={<Text role="display">{t('notFound.title')}</Text>}
+      header={
+        <Text role="display" style={{ color: '#FBF1DE' }}>
+          {t('notFound.title')}
+        </Text>
+      }
       footer={<Button label={t('common.home')} onPress={() => router.replace('/')} />}
     >
       <Text role="muted" style={{ marginTop: 8 }}>

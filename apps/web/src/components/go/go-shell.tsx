@@ -49,7 +49,7 @@ export function GoShell({ locale, map, back, peek = 0.46, children, ...sheet }: 
   }
 
   return (
-    <div className="relative h-dvh overflow-hidden bg-surface-mute">
+    <div className="relative h-dvh overflow-hidden bg-[#1e1408]">
       <MapView {...map} inset={peek} />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between p-3 pt-[max(0.75rem,env(safe-area-inset-top))] md:left-[440px]">
@@ -138,8 +138,8 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
         aria-label={t('common.close')}
         onClick={onClose}
       />
-      <nav className="relative flex h-full w-[82%] max-w-xs flex-col bg-surface p-5 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-pop">
-        <p className="text-2xl font-bold">
+      <nav className="paper-sheet relative flex h-full w-[82%] max-w-xs flex-col p-5 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-pop">
+        <p className="font-serif text-[28px] font-bold">
           {appName}
           <span className="text-brand-500">.</span>
         </p>

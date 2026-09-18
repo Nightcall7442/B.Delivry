@@ -63,8 +63,9 @@ export function Shell({ map, back, peek = 0.46, tint, children, ...sheet }: Shel
         header={<View style={{ flex: 1, minWidth: 0 }}>{sheet.header}</View>}
         footer={sheet.footer}
         cart
+        scene
       >
-        {children}
+        <View style={s.paper}>{children}</View>
       </Page>
     );
   }
@@ -211,7 +212,21 @@ const MENU: ReadonlyArray<{ href: Href; key: MessageKey }> = [
 ];
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: color.sand100 },
+  root: { flex: 1, backgroundColor: '#1E1408' },
+  // One sheet of paper for the screen's content, on the hall.
+  paper: {
+    backgroundColor: '#F4EFE4',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E6DCC6',
+    padding: 16,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 8,
+  },
   account: {
     marginTop: 'auto',
     paddingTop: 16,
@@ -240,7 +255,7 @@ const s = StyleSheet.create({
     bottom: 0,
     width: '82%',
     maxWidth: 320,
-    backgroundColor: color.surface,
+    backgroundColor: '#F4EFE4',
     paddingHorizontal: 20,
   },
 });

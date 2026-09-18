@@ -38,7 +38,15 @@ export default function InviteRoute() {
   };
 
   return (
-    <Shell back="history" expanded header={<Text role="display">{t('invite.title')}</Text>}>
+    <Shell
+      back="history"
+      expanded
+      header={
+        <Text role="display" style={{ color: '#FBF1DE' }}>
+          {t('invite.title')}
+        </Text>
+      }
+    >
       <Text role="muted" style={{ marginTop: 4 }}>
         {t('invite.intro', { bonus: t.money(REFERRAL_BONUS_MINOR) })}
       </Text>

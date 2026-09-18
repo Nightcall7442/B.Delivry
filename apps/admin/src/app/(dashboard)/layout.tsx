@@ -100,7 +100,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 p-4 text-[#fbf1de] sm:p-6 lg:p-8 [&_h1+p]:text-[#d9c7a6] [&_h1]:text-[clamp(30px,4vw,44px)] [&_h1]:font-bold [&_h1]:leading-none [&_h1]:text-[#fbf1de]">
+      <main className="on-ground min-w-0 flex-1 p-4 text-[#fbf1de] sm:p-6 lg:p-8 [&_h1+p]:text-[#d9c7a6] [&_h1]:text-[clamp(30px,4vw,44px)] [&_h1]:font-bold [&_h1]:leading-none [&_h1]:text-[#fbf1de]">
         {children}
       </main>
     </div>

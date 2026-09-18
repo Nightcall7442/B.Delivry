@@ -32,7 +32,15 @@ export default function NeighbourRoute() {
   };
 
   return (
-    <Shell back="history" expanded header={<Text role="display">{t('neighbour.title')}</Text>}>
+    <Shell
+      back="history"
+      expanded
+      header={
+        <Text role="display" style={{ color: '#FBF1DE' }}>
+          {t('neighbour.title')}
+        </Text>
+      }
+    >
       <Text role="muted" style={{ marginTop: 4 }}>
         {t('neighbour.intro', { km: NEIGHBOUR_COURIER.HOME_RADIUS_METERS / 1000 })}
       </Text>

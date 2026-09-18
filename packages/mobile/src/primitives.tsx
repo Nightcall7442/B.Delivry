@@ -327,6 +327,14 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: { color: color.white, fontSize: 11, fontFamily: font.bodySemi },
-  panel: { backgroundColor: color.tile, borderRadius: 20, padding: 16 },
+  // A slip of paper: cream, a dashed edge — the same slip the receipts use.
+  panel: {
+    backgroundColor: '#FBF5E6',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#C9B99A',
+    padding: 16,
+  },
   line: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 },
 });
