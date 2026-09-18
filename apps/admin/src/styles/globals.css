@@ -3,79 +3,181 @@
 @tailwind utilities;
 
 @layer base {
-  /* Design tokens as variables so a white-label tenant can restyle at runtime. */
+  /* The same bazaar as the app and the site: pomegranate, saffron, cream paper, kraft. */
   :root {
-    --brand-50: 238 243 254;
-    --brand-100: 220 230 253;
-    --brand-200: 185 204 250;
-    --brand-300: 143 174 244;
-    --brand-400: 95 136 236;
-    --brand-500: 59 107 227;
-    --brand-600: 44 86 196;
-    --brand-700: 36 69 160;
-    --brand-800: 28 54 125;
-    --brand-900: 21 42 96;
-    --brand-950: 12 26 62;
-    --saffron-100: 254 243 215;
-    --saffron-300: 251 216 126;
-    --saffron-400: 251 191 59;
-    --saffron-500: 245 165 36;
-    --saffron-600: 217 132 7;
+    --brand-50: 248 233 230;
+    --brand-100: 238 200 196;
+    --brand-200: 226 164 165;
+    --brand-300: 217 118 122;
+    --brand-400: 184 71 77;
+    --brand-500: 158 42 43;
+    --brand-600: 126 31 33;
+    --brand-700: 100 24 25;
+    --brand-800: 74 18 19;
+    --brand-900: 51 16 15;
+    --brand-950: 31 10 10;
+    --saffron-100: 251 235 201;
+    --saffron-300: 242 197 107;
+    --saffron-400: 236 178 74;
+    --saffron-500: 227 155 47;
+    --saffron-600: 196 128 32;
     --saffron-900: 74 46 5;
-    /* Neutrals as variables (the preset reads them); the admin stays light. */
-    --ink: 22 26 31;
-    --ink-muted: 111 119 131;
-    --ink-faint: 163 170 181;
-    --line: 231 234 238;
-    --line-strong: 203 209 217;
-    --surface: 255 255 255;
-    --surface-soft: 244 245 247;
-    --surface-mute: 239 241 244;
-    --surface-raise: 255 255 255;
-    --sand-50: 251 248 242;
+    --ink: 43 27 14;
+    --ink-muted: 106 90 69;
+    --ink-faint: 160 143 118;
+    --line: 228 213 184;
+    --line-strong: 201 185 154;
+    --surface: 244 239 228;
+    --surface-soft: 251 245 230;
+    --surface-mute: 235 220 188;
+    --surface-raise: 253 249 240;
+    --sand-50: 251 245 230;
     --sand-100: 244 237 225;
-    --sand-200: 233 221 203;
-    --sand-300: 217 199 172;
+    --sand-200: 234 216 178;
+    --sand-300: 201 185 154;
+    /* The scene's own colours, as the app and the site name them. */
+    --cream: #fbf1de;
+    --cream-muted: #d9c7a6;
+    --paper: #f4efe4;
+    --paper-edge: #c9b99a;
+    --kraft: #ead8b2;
+    --kraft-deep: #dcc59a;
+    --pomegranate: #9e2a2b;
+    --saffron: #e39b2f;
+    --night: #1e1408;
   }
 
   body {
     @apply bg-sand-50 font-sans text-ink antialiased;
   }
   ::selection {
-    @apply bg-brand-100 text-brand-900;
+    @apply bg-saffron-100 text-brand-900;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
 }
 
 @layer components {
-  /* The dispatcher works with a mouse and a phone in the other hand: big targets, quiet chrome. */
+  /* The counter's back office: paper on the bazaar, big targets, handwritten numbers. */
+
+  /* The bazaar hall behind everything, dimmed so paper reads on it. */
+  .ground {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: var(--night) center / cover no-repeat;
+  }
+  .ground::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(30, 20, 8, 0.72), rgba(30, 20, 8, 0.86));
+  }
+
   .btn {
-    @apply inline-flex h-10 items-center justify-center gap-2 rounded-control px-4 text-sm font-medium transition-colors
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-[15px] font-bold transition-colors
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron-400 focus-visible:ring-offset-2
            disabled:cursor-not-allowed disabled:opacity-50;
+    font-family: var(--font-display), Georgia, serif;
   }
   .btn-primary {
-    @apply btn bg-brand-500 text-white hover:bg-brand-400 active:bg-brand-600;
+    @apply btn bg-brand-500 text-[#fbf1de] hover:bg-brand-600 active:bg-brand-700;
+    box-shadow: 0 8px 20px rgba(158, 42, 43, 0.28);
   }
+  /* Inherits its colour: cream on the ground, ink on paper. */
   .btn-secondary {
-    @apply btn border border-line bg-white text-ink hover:border-brand-400 hover:text-brand-600;
+    @apply btn border bg-transparent hover:bg-[rgba(227,155,47,0.12)];
+    color: inherit;
+    border-color: currentColor;
   }
   .btn-danger {
-    @apply btn border border-danger/30 bg-white text-danger hover:bg-danger/5;
+    @apply btn border border-danger/30 bg-transparent text-danger hover:bg-danger/5;
   }
+
+  /* A line on the paper: cream field, dashed rule underneath, handwritten. */
   .field {
-    @apply h-10 w-full rounded-control border border-line bg-white px-3 text-sm text-ink
-           placeholder:text-ink-faint focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100;
+    @apply h-11 w-full rounded-t-lg border-0 border-b-2 border-dashed border-line-strong bg-[rgba(234,216,178,0.4)] px-3 text-[17px] text-ink
+           placeholder:text-ink-faint focus:border-brand-500 focus:bg-[rgba(234,216,178,0.6)] focus:outline-none;
+    font-family: var(--font-hand), 'Caveat', cursive;
+    font-weight: 700;
   }
+  select.field {
+    font-family: var(--font-sans), sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+  }
+  textarea.field {
+    @apply h-auto py-2;
+  }
+
+  /* A sheet of paper with a perforated top edge. */
   .card {
-    @apply rounded-panel border border-line bg-white;
+    @apply relative rounded-md border border-[#e6dcc6] bg-[#f4efe4] text-ink;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
   }
+  .card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -1px;
+    height: 8px;
+    background: radial-gradient(circle at 50% 0, var(--night) 4px, transparent 4.5px) 0 0 / 16px 8px
+      repeat-x;
+    opacity: 0.9;
+    pointer-events: none;
+  }
+
+  /* Status as a rubber stamp. */
   .badge {
-    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center rounded-md border-2 px-2 py-0.5 text-[15px] leading-tight;
+    font-family: var(--font-hand), 'Caveat', cursive;
+    font-weight: 700;
+    border-color: currentColor;
+    background: transparent !important;
+    transform: rotate(-2deg);
   }
+
+  /* The sidebar is kraft; the links are handwritten, the active one a pinned sign. */
   .nav-link {
-    @apply flex h-10 items-center rounded-control px-3 text-sm text-ink-muted hover:bg-sand-100 hover:text-ink;
+    @apply relative flex h-11 items-center rounded-md px-3 text-[20px] text-ink hover:bg-[rgba(0,0,0,0.05)];
+    font-family: var(--font-hand), 'Caveat', cursive;
+    font-weight: 700;
   }
   .nav-link[aria-current='page'] {
-    @apply bg-brand-50 font-medium text-brand-700;
+    @apply bg-[#fbf5e6] text-[#1f1a14] uppercase;
+    border: 1px solid var(--paper-edge);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+    transform: rotate(-1deg);
+  }
+  .nav-link[aria-current='page']::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    width: 9px;
+    height: 9px;
+    margin-left: -4px;
+    border-radius: 50%;
+    background: #b42a31;
+    border: 1px solid #8e1f26;
+  }
+
+  /* Tables live on paper: dashed rules, uppercase kraft headers. */
+  table thead th {
+    @apply text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted;
+  }
+  table tbody tr {
+    border-top: 1px dashed var(--paper-edge);
+  }
+  .divide-line > * + * {
+    border-top: 1px dashed var(--paper-edge) !important;
+  }
+  .hand {
+    font-family: var(--font-hand), 'Caveat', cursive;
+    font-weight: 700;
   }
 }

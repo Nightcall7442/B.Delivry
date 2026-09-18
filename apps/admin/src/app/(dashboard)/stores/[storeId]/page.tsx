@@ -46,7 +46,7 @@ export default function StorePage() {
       {store ? <Promotion store={store} onChange={load} say={say} /> : null}
       {store ? <Tags store={store} onChange={load} say={say} /> : null}
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         {(
           [
             ['products', 'Товары'],

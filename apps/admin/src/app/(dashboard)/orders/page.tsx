@@ -67,7 +67,10 @@ export default function OrdersPage() {
     <div>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="font-display text-2xl font-extrabold">Заказы</h1>
-        <div className="ml-auto flex gap-1 rounded-control bg-sand-100 p-1">
+        <div
+          className="ml-auto flex gap-1 rounded-full p-1"
+          style={{ background: 'rgba(30,20,8,0.45)', border: '1px solid rgba(251,241,222,0.28)' }}
+        >
           {(
             [
               ['active', 'Активные'],
@@ -78,7 +81,7 @@ export default function OrdersPage() {
             <button
               key={key}
               type="button"
-              className={`h-8 rounded-[8px] px-3 text-sm ${filter === key ? 'bg-white font-medium shadow-card' : 'text-ink-muted'}`}
+              className={`hand h-9 rounded-full px-4 text-[17px] ${filter === key ? 'bg-[#fbf1de] text-ink' : 'text-[#d9c7a6]'}`}
               onClick={() => setFilter(key)}
             >
               {label}
