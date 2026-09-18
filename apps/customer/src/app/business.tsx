@@ -1,4 +1,5 @@
 /** B2B: a café or canteen applies with its company; an operator grants invoice credit. */
+import { scene } from '@/components/bazar';
 import { Glyph } from '@/components/ui/Page';
 import {
   Button,
@@ -9,7 +10,6 @@ import {
   color,
   useAuth,
   useLocale,
-  isDark,
   Receipt,
   Wallet,
   Scooter,
@@ -69,24 +69,27 @@ export default function BusinessRoute() {
         {t('business.intro')}
       </Text>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+        {/* Three kraft tags, the same slip as the receipts — no pastel on paper. */}
         {(
           [
-            [Receipt, t('business.perkInvoice'), '#EAF0FB'],
-            [Wallet, t('business.perkCredit'), color.brand50],
-            [Scooter, t('business.perkDaily'), '#FDEBD9'],
+            [Receipt, t('business.perkInvoice')],
+            [Wallet, t('business.perkCredit')],
+            [Scooter, t('business.perkDaily')],
           ] as const
-        ).map(([icon, label, tint]) => (
+        ).map(([icon, label]) => (
           <View
             key={label}
             style={{
               flex: 1,
-              borderRadius: 16,
+              borderRadius: 6,
               padding: 10,
               gap: 8,
-              backgroundColor: isDark ? color.field : tint,
+              backgroundColor: scene.kraft,
+              borderWidth: 1,
+              borderColor: scene.paperEdge,
             }}
           >
-            <Glyph icon={icon} size={34} tint={color.raise} />
+            <Glyph icon={icon} size={34} tint="#FBF5E6" stroke={scene.pomegranate} />
             <Text role="caption" numberOfLines={2} style={{ color: color.ink, fontWeight: '600' }}>
               {label}
             </Text>

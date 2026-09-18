@@ -181,6 +181,7 @@ export function SceneHomeScreen() {
               <ProductCard
                 key={product.id}
                 style={s.card}
+                compact
                 photo={product.images[0]?.url ?? null}
                 tilt={[-1.2, 1, 0.6, -0.8][i % 4] ?? 0}
                 side={i % 2 ? 'right' : 'left'}
@@ -285,8 +286,16 @@ const s = StyleSheet.create({
   greeting: { paddingHorizontal: 20, gap: 6 },
   vendors: { paddingHorizontal: 20, gap: 10, paddingBottom: 8 },
   rows: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 12, gap: 8, alignItems: 'flex-end' },
-  grid: { gap: 20, paddingHorizontal: 20, paddingTop: 6 },
-  card: { width: '100%' },
+  // Two to a row, like signs on a counter; the last odd one keeps its half.
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    rowGap: 18,
+    paddingHorizontal: 20,
+    paddingTop: 6,
+  },
+  card: { width: '47%', flexGrow: 1, maxWidth: '50%' },
   bottom: {
     position: 'absolute',
     left: 20,

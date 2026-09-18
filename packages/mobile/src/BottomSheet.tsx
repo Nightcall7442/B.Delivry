@@ -18,7 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useT } from './locale';
-import { color, radius, shadow } from './theme';
+import { shadow } from './theme';
 
 export interface BottomSheetProps {
   /** Share of the screen the collapsed sheet takes. */

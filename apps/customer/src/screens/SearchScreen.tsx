@@ -1,29 +1,55 @@
 /**
- * Search across every stall: the search field in the header, category chips,
- * the same tiles as a store grouped by where the courier will pick them up.
+ * Asking around the rows: one frosted line to type into over the bazaar
+ * photograph, the row signs to narrow it down, and what was found as
+ * cardboard price signs grouped by the stall that sells it — the person
+ * first, their signs under them, the way you would walk it.
  */
-import { arrivedToday, tr } from '@bazar/storefront';
+import { arrivedToday, tr, unitLabel } from '@bazar/storefront';
+import type { MapStoreDto } from '@bazar/storefront';
 import type { MessageKey } from '@bazar/i18n';
+import type { ProductDto } from '@bazar/types';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ProductTile } from '@/components/shop/ProductTile';
-import { Bone, Page, ui } from '@/components/ui/Page';
-import { Chevron, Search, Chip, Text, color, noOutline, press, useLocale } from '@bazar/mobile';
-import type { ProductDto } from '@bazar/types';
-
+import {
+  CartDisc,
+  Display,
+  Eyebrow,
+  Glass,
+  Hand,
+  RowSign,
+  SCENES,
+  Scene,
+  SceneButton,
+  Sign,
+  isEvening,
+  scene,
+  sceneFont,
+  useSceneTop,
+} from '@/components/bazar';
+import { Bone, LoadError } from '@/components/ui/Page';
+import { useCart, useCartActions, useCartCount } from '@/features/cart/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 import { useData, useLoad } from '@/lib/use-data';
+import { ArrowLeft, Search, noOutline, useLocale } from '@bazar/mobile';
+
+const TILTS = [-1.5, 1, -1, 1.5, -1, 1];
 
 export function SearchScreen() {
   const router = useRouter();
   const { locale, t } = useLocale();
+  const insets = useSafeAreaInsets();
+  const top = useSceneTop();
+  const evening = isEvening();
+  const count = useCartCount();
   const { q = '', category } = useLocalSearchParams<{ q?: string; category?: string }>();
   const [draft, setDraft] = useState(q);
   const [sort, setSort] = useState<SortKey>('default');
 
-  const stores = useData(() => listStores(), []) ?? [];
+  const stores = useData(() => listStores(), []);
   const categories = useData(() => listCategories(), []) ?? [];
   const productLoad = useLoad(
     () =>
@@ -33,15 +59,17 @@ export function SearchScreen() {
       }),
     [q, category],
   );
-  const products = productLoad.data ?? [];
-
-  const groups = useMemo(() => {
-    const sorted = [...products].sort(SORTERS[sort]);
+  // Grouped by stall: the person first, their signs under them.
+  const stalls = useMemo(() => {
+    const sorted = [...(productLoad.data ?? [])].sort(SORTERS[sort]);
     const shown = sort === 'discount' ? sorted.filter((p) => p.oldPrice) : sorted;
-    return stores
-      .map((store) => ({ store, items: shown.filter((p) => p.storeId === store.id) }))
+    return (stores ?? [])
+      .map((store) => ({
+        store,
+        items: shown.filter((p) => p.storeId === store.id && p.available),
+      }))
       .filter((g) => g.items.length > 0);
-  }, [stores, products, sort]);
+  }, [stores, productLoad.data, sort]);
 
   const go = (next: { q?: string; category?: string | null }) => {
     const params: Record<string, string> = {};
@@ -53,15 +81,95 @@ export function SearchScreen() {
   };
 
   return (
-    <Page
-      back="/"
-      cart
-      header={
-        <View style={s.search}>
-          <Search size={20} color={color.inkFaint} />
+    <View style={{ flex: 1, backgroundColor: scene.night }}>
+      <Scene
+        source={evening ? SCENES.evening : SCENES.morning}
+        evening={evening}
+        style={StyleSheet.absoluteFill}
+      >
+        <View />
+      </Scene>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingTop: top + 64, paddingBottom: 40 + insets.bottom }}
+      >
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.rows}
+        >
+          <RowSign
+            title={t('common.all')}
+            tilt={-1}
+            active={!category}
+            onPress={() => go({ category: null })}
+          />
+          {categories.map((c, index) => (
+            <RowSign
+              key={c.id}
+              title={tr(c.name, locale)}
+              tilt={TILTS[index % TILTS.length] as number}
+              active={category === c.id}
+              onPress={() => go({ category: c.id })}
+            />
+          ))}
+        </ScrollView>
+
+        <View style={s.sorts}>
+          {(Object.keys(SORTERS) as SortKey[]).map((key) => (
+            <Pressable key={key} onPress={() => setSort(key)} hitSlop={6}>
+              <Text style={[s.sort, sort === key && s.sortOn]}>
+                {t(`sort.${key}` as MessageKey)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {productLoad.loading && !productLoad.data ? (
+          <View style={{ paddingHorizontal: 20, gap: 12 }}>
+            <Bone style={{ height: 30, width: 180 }} />
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Bone style={{ flex: 1, height: 120 }} />
+              <Bone style={{ flex: 1, height: 120 }} />
+            </View>
+          </View>
+        ) : productLoad.error && !productLoad.data ? (
+          <View style={{ paddingHorizontal: 20 }}>
+            <LoadError onRetry={() => void productLoad.reload()} />
+          </View>
+        ) : stalls.length === 0 ? (
+          <View style={{ paddingHorizontal: 20, paddingTop: 40, gap: 8 }}>
+            <Display size={30}>{q ? `«${q}»` : t('common.all')}</Display>
+            <Hand size={24} color={scene.creamMuted}>
+              {t('search.empty')}
+            </Hand>
+          </View>
+        ) : (
+          stalls.map(({ store, items }) => (
+            <StallGroup
+              key={store.id}
+              store={store}
+              items={items}
+              onOpen={() => router.push(`/store/${store.id}`)}
+              onProduct={(id) => router.push(`/product/${id}`)}
+            />
+          ))
+        )}
+      </ScrollView>
+
+      <View style={[s.top, { top }]}>
+        <SceneButton
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+        >
+          <ArrowLeft size={20} color={scene.ink} />
+        </SceneButton>
+        <Glass style={s.search}>
+          <Search size={20} color={scene.saffron} />
           <TextInput
             placeholder={t('home.search')}
-            placeholderTextColor={color.inkFaint}
+            placeholderTextColor={scene.creamDim}
             value={draft}
             onChangeText={setDraft}
             returnKeyType="search"
@@ -69,135 +177,147 @@ export function SearchScreen() {
             onSubmitEditing={() => go({ q: draft })}
             style={s.input}
           />
-        </View>
-      }
-    >
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={s.chips}
-        contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 4 }}
-      >
-        <Chip label={t('common.all')} active={!category} onPress={() => go({ category: null })} />
-        {categories.map((c) => (
-          <Chip
-            key={c.id}
-            label={tr(c.name, locale)}
-            active={category === c.id}
-            onPress={() => go({ category: c.id })}
-          />
-        ))}
-      </ScrollView>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={[s.chips, { marginTop: 8 }]}
-        contentContainerStyle={{ gap: 6, paddingHorizontal: 16 }}
-      >
-        {(Object.keys(SORTERS) as SortKey[]).map((key) => (
-          <Pressable
-            key={key}
-            onPress={() => setSort(key)}
-            style={({ pressed }) => [
-              s.sort,
-              press.base,
-              sort === key && s.sortOn,
-              pressed && press.down,
-            ]}
-          >
-            <Text
-              role="caption"
-              style={{ fontWeight: '600', color: sort === key ? ui.brandDeep : color.inkMuted }}
-            >
-              {t(`sort.${key}` as MessageKey)}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-      {productLoad.loading && !productLoad.data ? (
-        <View style={{ marginTop: 18, gap: 12 }}>
-          <Bone style={{ height: 24, width: '60%' }} />
-          {[0, 1].map((row) => (
-            <View key={row} style={{ flexDirection: 'row', gap: 12 }}>
-              <Bone style={{ flex: 1, height: 250 }} />
-              <Bone style={{ flex: 1, height: 250 }} />
-            </View>
-          ))}
-        </View>
-      ) : groups.length === 0 ? (
-        <Text role="muted" style={{ textAlign: 'center', paddingVertical: 40 }}>
-          {t('search.empty')}
-        </Text>
-      ) : (
-        groups.map(({ store, items }) => (
-          <View key={store.id} style={{ marginTop: 18 }}>
-            <Pressable
-              onPress={() =>
-                router.push({ pathname: '/store/[storeId]', params: { storeId: store.id } })
-              }
-              style={s.groupHead}
-            >
-              <Text role="section">{tr(store.name, locale)}</Text>
-              <Chevron size={20} color={color.inkFaint} />
-            </Pressable>
-            <View style={{ marginTop: 10, gap: 12 }}>
-              {pairs(items).map((pair) => (
-                <View key={pair[0]?.id} style={{ flexDirection: 'row', gap: 12 }}>
-                  {pair.map((product) => (
-                    <ProductTile key={product.id} product={product} />
-                  ))}
-                  {pair.length === 1 ? <View style={{ flex: 1 }} /> : null}
-                </View>
-              ))}
-            </View>
-          </View>
-        ))
-      )}
-    </Page>
+        </Glass>
+        <CartDisc count={count} evening={evening} onPress={() => router.push('/(tabs)/cart')} />
+      </View>
+    </View>
   );
 }
 
-type SortKey = 'default' | 'cheap' | 'pricey' | 'discount' | 'fresh';
+function StallGroup({
+  store,
+  items,
+  onOpen,
+  onProduct,
+}: {
+  store: MapStoreDto;
+  items: ProductDto[];
+  onOpen: () => void;
+  onProduct: (productId: string) => void;
+}) {
+  const { locale, t } = useLocale();
+  const { quantities } = useCart();
+  const { setQuantity } = useCartActions();
+  const units = unitLabel(locale);
+  const person = store.ownerPhotoUrl ?? store.coverUrl;
+  return (
+    <View style={s.group}>
+      <Pressable onPress={onOpen} style={s.person}>
+        {person ? (
+          <Image
+            source={{ uri: person }}
+            style={s.avatar}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+          />
+        ) : null}
+        <View style={{ flex: 1, gap: 1 }}>
+          <Display size={24} numberOfLines={1}>
+            {store.ownerName ?? tr(store.name, locale)}
+          </Display>
+          <Eyebrow>
+            {[store.standNumber ?? tr(store.name, locale), t.n('cart.items', items.length)]
+              .filter(Boolean)
+              .join(' · ')}
+          </Eyebrow>
+        </View>
+      </Pressable>
+      <View style={s.grid}>
+        {items.map((product, i) => {
+          const qty = quantities[product.id] ?? 0;
+          return (
+            <Sign
+              key={product.id}
+              style={s.sign}
+              tilt={[-1, 1, 0.5, -0.5][i % 4] ?? 0}
+              title={tr(product.name, locale)}
+              price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
+              note={arrivedToday(product) ? t('store.arrivedToday') : undefined}
+              count={qty}
+              countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
+              onPress={() => onProduct(product.id)}
+              onAdd={() =>
+                setQuantity(
+                  product.id,
+                  qty === 0
+                    ? product.minQuantity || product.quantityStep || 1
+                    : qty + (product.quantityStep || 1),
+                )
+              }
+            />
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+type SortKey = 'default' | 'cheap' | 'pricey' | 'discount';
 const SORTERS: Record<SortKey, (a: ProductDto, b: ProductDto) => number> = {
   default: (a, b) => Number(arrivedToday(b)) - Number(arrivedToday(a)),
   cheap: (a, b) => a.price.amount - b.price.amount,
   pricey: (a, b) => b.price.amount - a.price.amount,
   discount: (a, b) => discountOf(b) - discountOf(a),
-  fresh: (a, b) => Number(arrivedToday(b)) - Number(arrivedToday(a)),
 };
 const discountOf = (p: ProductDto) => (p.oldPrice ? 1 - p.price.amount / p.oldPrice.amount : 0);
 
-function pairs<T>(items: readonly T[]): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += 2) out.push(items.slice(i, i + 2));
-  return out;
-}
-
 const s = StyleSheet.create({
-  search: {
-    flex: 1,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: color.field,
-    paddingHorizontal: 16,
+  top: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    zIndex: 2,
   },
-  input: { flex: 1, fontSize: 16, color: color.ink, paddingVertical: 0, ...noOutline },
-  chips: { marginHorizontal: -16, marginTop: 4 },
-  sort: {
-    height: 30,
-    borderRadius: 15,
-    paddingHorizontal: 12,
-    justifyContent: 'center',
-    backgroundColor: color.field,
-  },
-  sortOn: { backgroundColor: ui.brandSoft },
-  groupHead: {
+  search: {
+    flex: 1,
+    height: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
+    gap: 10,
+    paddingHorizontal: 14,
   },
+  input: {
+    flex: 1,
+    fontFamily: sceneFont.uiText,
+    fontSize: 15,
+    color: scene.cream,
+    paddingVertical: 0,
+    ...(noOutline as object),
+  },
+  rows: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, gap: 8, alignItems: 'flex-end' },
+  sorts: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 14,
+    paddingHorizontal: 20,
+    paddingBottom: 6,
+  },
+  sort: {
+    fontFamily: sceneFont.uiText,
+    fontSize: 12,
+    color: scene.creamMuted,
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  sortOn: {
+    fontFamily: sceneFont.uiHeavy,
+    color: scene.saffronLight,
+    textDecorationLine: 'underline',
+  },
+  group: { paddingHorizontal: 20, paddingTop: 22 },
+  person: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: scene.saffron,
+    backgroundColor: '#3A2A1A',
+  },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 14 },
+  sign: { width: '47%', flexGrow: 1 },
 });

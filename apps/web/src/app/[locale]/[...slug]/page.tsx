@@ -1,10 +1,6 @@
-/**
- * Route [...slug]/page.tsx
- *
- */
-import { PagePlaceholder } from '@/components/layout/page-placeholder';
+/** Anything under a locale that no route claims: a real 404, on the scene. */
+import { notFound } from 'next/navigation';
 
-export default async function CatchAllPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
-  return <PagePlaceholder title="Скоро" locale={locale} />;
+export default function CatchAllPage() {
+  notFound();
 }

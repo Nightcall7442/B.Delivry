@@ -51,7 +51,7 @@ export const envSchema = z
     WEB_URL: z.string().url().default('http://localhost:3000'),
     ADMIN_URL: z.string().url().default('http://localhost:3001'),
     CORS_ORIGINS: list.default(
-      'http://localhost:3000,http://localhost:3001,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:5173',
+      'http://localhost:3000,http://localhost:3001,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:5173',
     ),
     DEFAULT_LOCALE: z.enum(SUPPORTED_LOCALES).default('uz'),
     SUPPORTED_LOCALES: csv(SUPPORTED_LOCALES).default('uz,ru,en'),
