@@ -81,7 +81,9 @@
   height: 2px;
   background: var(--saffron);
   transform-origin: left;
-  transition: transform 0.2s ease, opacity 0.6s ease 0.4s;
+  transition:
+    transform 0.2s ease,
+    opacity 0.6s ease 0.4s;
 }
 .barLink {
   font-size: 13px;
@@ -599,7 +601,9 @@
   padding-left: 18px;
   border-left: 2px solid rgba(251, 241, 222, 0.15);
   color: var(--cream-muted);
-  transition: color 0.25s ease, border-color 0.25s ease;
+  transition:
+    color 0.25s ease,
+    border-color 0.25s ease;
 }
 .phoneItemOn {
   border-color: var(--saffron);
