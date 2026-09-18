@@ -7,12 +7,9 @@
 import {
   Button,
   MapView,
-  Panel,
   Text,
   api,
   color,
-  font,
-  radius,
   shadow,
   useAuth,
   type MapMarker,
@@ -23,9 +20,30 @@ import { formatMoney } from '@bazar/utils/money';
 import type { DeliveryDto, DeliveryOfferDto, OrderDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import {
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text as RNText,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import {
+  CREAM,
+  INK,
+  INK_MUTED,
+  KRAFT,
+  PAPER,
+  PAPER_EDGE,
+  POMEGRANATE,
+  SAFFRON,
+  Paper,
+  sceneFont,
+} from '@/components/scene';
 import { WeighingSheet } from '@/components/WeighingSheet';
 import { useShift } from '@/features/shift';
 
@@ -98,21 +116,21 @@ export function ShiftScreen() {
       <View style={[s.top, { paddingTop: insets.top + 8 }]}>
         <View style={[s.shiftCard, shadow.card]}>
           <View style={{ flex: 1 }}>
-            <Text role="title">
+            <RNText style={s.name}>
               {courier ? `${courier.firstName}` : (user?.firstName ?? 'Курьер')}
-            </Text>
-            <Text role="caption">
+            </RNText>
+            <RNText style={s.meta}>
               {courier
                 ? `★ ${courier.rating.toFixed(1)} · ${courier.completedOrders} ${plural(courier.completedOrders, 'доставка', 'доставки', 'доставок')} · ${online ? 'на смене' : 'не на смене'}`
                 : 'Аккаунт не курьерский'}
-            </Text>
+            </RNText>
           </View>
           <Switch
             value={online}
             disabled={busy || !courier}
             onValueChange={(next) => void setOnline(next)}
-            trackColor={{ false: color.lineStrong, true: color.brand400 }}
-            thumbColor={color.white}
+            trackColor={{ false: PAPER_EDGE, true: POMEGRANATE }}
+            thumbColor={CREAM}
           />
         </View>
       </View>
@@ -135,14 +153,14 @@ export function ShiftScreen() {
               />
             ))
           ) : (
-            <Panel style={s.idle}>
-              <Text role="section">{online ? 'Ждём заказы' : 'Смена не начата'}</Text>
-              <Text role="muted">
+            <Paper style={s.idle}>
+              <RNText style={s.slipTitle}>{online ? 'Ждём заказы' : 'Смена не начата'}</RNText>
+              <RNText style={s.hand}>
                 {online
                   ? 'Заказы рядом с вами появятся здесь. Держите приложение открытым.'
                   : 'Включите переключатель наверху, чтобы получать заказы.'}
-              </Text>
-            </Panel>
+              </RNText>
+            </Paper>
           )}
 
           <Pressable
@@ -151,7 +169,7 @@ export function ShiftScreen() {
             }}
             style={s.signOut}
           >
-            <Text role="caption">{user?.phone} · Выйти</Text>
+            <RNText style={s.signOutText}>{user?.phone} · Выйти</RNText>
           </Pressable>
         </ScrollView>
       </View>
@@ -177,24 +195,24 @@ function OfferCard({
   }, [offer.expiresAt]);
 
   return (
-    <Panel style={[s.offer, shadow.pop]}>
+    <Paper style={s.offer}>
       <View style={s.offerHead}>
-        <Text role="display">{formatMoney(offer.payout.amount)}</Text>
+        <RNText style={s.money}>{formatMoney(offer.payout.amount)}</RNText>
         <View style={s.timer}>
-          <Text style={s.timerText}>{left} с</Text>
+          <RNText style={s.timerText}>{left} с</RNText>
         </View>
       </View>
-      <Text role="title">{offer.storeName}</Text>
-      <Text role="muted" numberOfLines={1}>
+      <RNText style={s.slipTitle}>{offer.storeName}</RNText>
+      <RNText style={s.muted} numberOfLines={1}>
         {offer.pickupAddress}
-      </Text>
-      <Text role="muted" numberOfLines={1}>
+      </RNText>
+      <RNText style={s.muted} numberOfLines={1}>
         → {offer.dropoffAddress}
-      </Text>
-      <Text role="caption">
+      </RNText>
+      <RNText style={s.hand}>
         {(offer.distanceMeters / 1000).toFixed(1)} км · {offer.itemCount} поз. ·{' '}
         {Math.max(1, Math.round(offer.weightGrams / 1000))} кг
-      </Text>
+      </RNText>
       <View style={s.offerActions}>
         <Button
           label="Пропустить"
@@ -210,7 +228,7 @@ function OfferCard({
           onPress={() => onAccept(offer)}
         />
       </View>
-    </Panel>
+    </Paper>
   );
 }
 
@@ -236,7 +254,7 @@ function ActiveCard({
   // At the stall the button first opens the scale sheet; "picked up" follows the save.
   if (weighing) {
     return (
-      <Panel style={s.active}>
+      <Paper style={s.active}>
         <WeighingSheet
           orderId={delivery.orderId}
           busy={busy}
@@ -246,21 +264,23 @@ function ActiveCard({
           }}
         />
         <Pressable onPress={() => setWeighing(false)} style={{ alignSelf: 'center', padding: 8 }}>
-          <Text role="caption">Назад</Text>
+          <RNText style={s.link}>Назад</RNText>
         </Pressable>
-      </Panel>
+      </Paper>
     );
   }
 
   return (
-    <Panel style={s.active}>
-      <Text role="caption">Заказ · {formatMoney(delivery.payout.amount)} за доставку</Text>
-      <Text role="display">{step.title}</Text>
-      <Text role="muted">{step.hint}</Text>
+    <Paper style={s.active}>
+      <RNText style={s.hand}>Заказ · {formatMoney(delivery.payout.amount)} за доставку</RNText>
+      <RNText style={s.stepTitle}>{step.title}</RNText>
+      <RNText style={s.muted}>{step.hint}</RNText>
 
       <View style={s.addressBlock}>
-        <Text role="caption">{toPickup ? 'Куда ехать' : 'Адрес клиента'}</Text>
-        <Text role="body">{toPickup ? delivery.pickupAddress : delivery.dropoffAddress}</Text>
+        <RNText style={s.label}>{toPickup ? 'Куда ехать' : 'Адрес клиента'}</RNText>
+        <RNText style={s.address}>
+          {toPickup ? delivery.pickupAddress : delivery.dropoffAddress}
+        </RNText>
         {siblings.length > 0 && toPickup ? (
           <Text role="muted" style={{ color: color.ink, marginTop: 4 }}>
             Одной поездкой · ещё {siblings.length}:{' '}
@@ -272,9 +292,7 @@ function ActiveCard({
       {toPickup ? siblings.map((row) => <PickupNotes key={row.id} orderId={row.orderId} />) : null}
 
       <Pressable onPress={() => setChat((v) => !v)} style={{ marginTop: 8 }} hitSlop={6}>
-        <Text role="caption" style={{ color: color.brand600, fontWeight: '500' }}>
-          {chat ? 'Скрыть чат' : 'Чат с клиентом'}
-        </Text>
+        <RNText style={s.link}>{chat ? 'Скрыть чат' : 'Чат с клиентом'}</RNText>
       </Pressable>
       {chat ? (
         <View style={{ marginTop: 8 }}>
@@ -305,7 +323,7 @@ function ActiveCard({
           style={{ marginTop: 12 }}
         />
       ) : null}
-    </Panel>
+    </Paper>
   );
 }
 
@@ -320,8 +338,8 @@ function PickupNotes({ orderId }: { orderId: string }) {
   }, [orderId]);
   if (!order) return null;
   return (
-    <View style={[s.addressBlock, { backgroundColor: color.saffron100 }]}>
-      <Text role="caption">Клиент просит</Text>
+    <View style={[s.addressBlock, { backgroundColor: '#FBEBC9' }]}>
+      <RNText style={s.label}>Клиент просит</RNText>
       {order.vendorComment ? <Text role="body">{order.vendorComment}</Text> : null}
       <Text role="muted" style={{ color: color.ink }}>
         {SUBSTITUTION_TEXT[order.substitutionPolicy].courier}
@@ -344,26 +362,34 @@ function PickupNotes({ orderId }: { orderId: string }) {
 const secondsLeft = (iso: string) => Math.max(0, Math.ceil((Date.parse(iso) - Date.now()) / 1000));
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: color.sand100 },
+  root: { flex: 1, backgroundColor: '#1E1408' },
   top: { position: 'absolute', left: 12, right: 12, top: 0 },
+  // Kraft pinned over the map: the courier's name in serif, the day's numbers by hand.
   shiftCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: color.white,
-    borderRadius: radius.panel,
+    backgroundColor: KRAFT,
+    borderRadius: 6,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    transform: [{ rotate: '-0.4deg' }],
   },
+  name: { fontFamily: sceneFont.display, fontSize: 24, lineHeight: 28, color: INK },
+  meta: { fontFamily: sceneFont.hand, fontSize: 17, color: INK_MUTED, marginTop: 1 },
+  // The sheet is a sheet of paper with a perforated edge.
   sheet: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    maxHeight: '55%',
-    backgroundColor: color.white,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
+    maxHeight: '58%',
+    backgroundColor: PAPER,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    borderTopWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: PAPER_EDGE,
     ...shadow.pop,
   },
   grip: {
@@ -371,44 +397,77 @@ const s = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: color.lineStrong,
+    backgroundColor: PAPER_EDGE,
     marginTop: 8,
   },
   sheetContent: { padding: 16, gap: 12 },
-  idle: { gap: 4 },
-  error: { color: color.danger, fontSize: 14 },
-  offer: { gap: 4, borderWidth: 2, borderColor: color.brand300 },
+  idle: { gap: 4, backgroundColor: '#FBF5E6' },
+  error: { color: POMEGRANATE, fontFamily: sceneFont.hand, fontSize: 17 },
+  slipTitle: { fontFamily: sceneFont.display, fontSize: 22, lineHeight: 26, color: INK },
+  stepTitle: {
+    fontFamily: sceneFont.display,
+    fontSize: 32,
+    lineHeight: 36,
+    color: INK,
+    marginTop: 2,
+  },
+  hand: { fontFamily: sceneFont.hand, fontSize: 18, lineHeight: 22, color: INK_MUTED },
+  muted: { fontFamily: sceneFont.ui, fontSize: 14, lineHeight: 20, color: INK_MUTED },
+  label: {
+    fontFamily: sceneFont.uiHeavy,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: INK_MUTED,
+  },
+  address: { fontFamily: sceneFont.ui, fontSize: 16, lineHeight: 22, color: INK, marginTop: 2 },
+  link: {
+    fontFamily: sceneFont.hand,
+    fontSize: 19,
+    color: POMEGRANATE,
+    textDecorationLine: 'underline',
+  },
+  offer: { gap: 4, backgroundColor: '#FBF5E6', borderColor: SAFFRON, borderWidth: 1.5 },
   offerHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  money: { fontFamily: sceneFont.hand, fontSize: 40, lineHeight: 44, color: POMEGRANATE },
+  // The countdown as a rubber stamp.
   timer: {
-    backgroundColor: color.saffron100,
-    borderRadius: radius.pill,
+    borderWidth: 2,
+    borderColor: POMEGRANATE,
+    borderRadius: 6,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 3,
+    transform: [{ rotate: '-4deg' }],
   },
   timerText: {
-    fontFamily: font.displayBold,
-    color: color.saffron600,
+    fontFamily: sceneFont.hand,
+    fontSize: 20,
+    color: POMEGRANATE,
     fontVariant: ['tabular-nums'],
   },
   offerActions: { flexDirection: 'row', gap: 8, marginTop: 8 },
-  active: { gap: 4 },
+  active: { gap: 4, backgroundColor: '#FBF5E6' },
   addressBlock: {
     marginTop: 8,
-    backgroundColor: color.sand50,
-    borderRadius: radius.control,
+    backgroundColor: KRAFT,
+    borderRadius: 6,
     padding: 12,
     gap: 2,
   },
   codeInput: {
     marginTop: 8,
     height: 56,
-    borderRadius: radius.control,
-    backgroundColor: color.sand50,
+    borderRadius: 6,
+    borderBottomWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: PAPER_EDGE,
+    backgroundColor: 'rgba(234,216,178,0.45)',
     paddingHorizontal: 16,
-    fontSize: 22,
+    fontSize: 26,
     letterSpacing: 6,
-    color: color.ink,
-    fontFamily: font.displayBold,
+    color: INK,
+    fontFamily: sceneFont.hand,
   },
   signOut: { alignSelf: 'center', paddingVertical: 8 },
+  signOutText: { fontFamily: sceneFont.hand, fontSize: 17, color: INK_MUTED },
 });
