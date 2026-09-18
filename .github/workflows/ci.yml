@@ -33,6 +33,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # The Prisma client is generated code: tsc in apps/api needs it before it can typecheck or build.
+      - name: Generate Prisma client
+        run: pnpm --filter @bazar/api exec prisma generate
+
       - name: Format check
         run: pnpm format:check
 
