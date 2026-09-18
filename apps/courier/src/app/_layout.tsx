@@ -3,6 +3,7 @@
  * stack. The courier app has two screens and no navigation chrome.
  */
 import { Alegreya_700Bold } from '@expo-google-fonts/alegreya';
+import { Caveat_700Bold } from '@expo-google-fonts/caveat';
 import {
   Manrope_500Medium,
   Manrope_600SemiBold,
@@ -10,7 +11,7 @@ import {
   Manrope_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/manrope';
-import { AuthProvider, color } from '@bazar/mobile';
+import { AuthProvider } from '@bazar/mobile';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -28,6 +29,7 @@ export default function RootLayout() {
     Manrope_700Bold,
     Manrope_800ExtraBold,
     Alegreya_700Bold,
+    Caveat_700Bold,
   });
 
   useEffect(() => {
@@ -40,11 +42,11 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <ShiftProvider>
-          <StatusBar style="dark" />
+          <StatusBar style="light" />
           <Stack
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: color.sand100 },
+              contentStyle: { backgroundColor: '#1E1408' },
               animation: 'fade',
             }}
           />
