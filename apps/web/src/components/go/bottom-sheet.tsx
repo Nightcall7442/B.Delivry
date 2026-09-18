@@ -97,7 +97,7 @@ export function BottomSheet({
 
   return (
     <section
-      className="go-sheet fixed inset-x-0 bottom-0 z-20 flex flex-col rounded-t-3xl bg-surface shadow-pop md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[420px] md:rounded-3xl"
+      className="go-sheet paper-sheet fixed inset-x-0 bottom-0 z-20 flex flex-col rounded-t-lg md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[420px] md:rounded-lg"
       style={
         viewport.desktop || !viewport.height
           ? undefined
@@ -118,7 +118,7 @@ export function BottomSheet({
       >
         <button
           type="button"
-          className="mx-auto block h-1.5 w-10 rounded-full bg-sand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 md:hidden"
+          className="mx-auto block h-1.5 w-10 rounded-full bg-[#c9b99a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 md:hidden"
           aria-label={expanded ? t('sheet.collapse') : t('sheet.expand')}
           aria-expanded={expanded}
           onClick={() => setExpanded((value) => !value)}
@@ -129,7 +129,7 @@ export function BottomSheet({
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">{children}</div>
 
       {footer ? (
-        <div className="shrink-0 border-t border-line bg-surface px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:rounded-b-3xl">
+        <div className="shrink-0 border-t border-dashed border-[#c9b99a] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:rounded-b-lg">
           {footer}
         </div>
       ) : null}

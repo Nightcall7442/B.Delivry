@@ -46,26 +46,26 @@
   :root[data-theme='dark'],
   [data-theme='dark'] {
     --ink: 251 241 222;
-      --ink-muted: 217 199 166;
-      --ink-faint: 158 140 112;
-      --line: 58 42 26;
-      --line-strong: 90 74 46;
-      --surface: 30 20 8;
-      --surface-soft: 42 32 20;
-      --surface-mute: 51 40 26;
-      --surface-raise: 58 46 28;
-      --sand-50: 42 32 20;
-      --sand-100: 51 40 26;
-      --sand-200: 74 58 36;
-      --sand-300: 106 90 69;
-      --brand-50: 58 24 24;
-      --brand-100: 74 34 36;
-      --brand-200: 100 44 46;
-      --brand-700: 217 118 122;
-      --brand-800: 226 164 165;
-      --brand-900: 238 200 196;
-      --saffron-100: 74 46 5;
-      --saffron-900: 251 235 201;
+    --ink-muted: 217 199 166;
+    --ink-faint: 158 140 112;
+    --line: 58 42 26;
+    --line-strong: 90 74 46;
+    --surface: 30 20 8;
+    --surface-soft: 42 32 20;
+    --surface-mute: 51 40 26;
+    --surface-raise: 58 46 28;
+    --sand-50: 42 32 20;
+    --sand-100: 51 40 26;
+    --sand-200: 74 58 36;
+    --sand-300: 106 90 69;
+    --brand-50: 58 24 24;
+    --brand-100: 74 34 36;
+    --brand-200: 100 44 46;
+    --brand-700: 217 118 122;
+    --brand-800: 226 164 165;
+    --brand-900: 238 200 196;
+    --saffron-100: 74 46 5;
+    --saffron-900: 251 235 201;
     color-scheme: dark;
   }
   @media (prefers-color-scheme: dark) {
@@ -145,8 +145,38 @@
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2;
   }
 
+  /* Headings on the old GO screens speak serif now, like everything else on the bazaar. */
+  .font-display {
+    font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+    font-weight: 700;
+  }
+
+  /* Paper for sheets and the menu, whatever the theme: cream, ink, the light tokens. */
+  .paper-sheet {
+    --ink-muted: 106 90 69;
+    --ink-faint: 160 143 118;
+    --line: 228 213 184;
+    --line-strong: 201 185 154;
+    --surface: 244 239 228;
+    --surface-soft: 251 245 230;
+    --surface-mute: 235 220 188;
+    --surface-raise: 253 249 240;
+    --sand-50: 251 245 230;
+    --sand-100: 244 237 225;
+    --sand-200: 234 216 178;
+    --sand-300: 201 185 154;
+    --brand-50: 248 233 230;
+    --brand-100: 238 200 196;
+    --brand-700: 100 24 25;
+    --saffron-100: 251 235 201;
+    background: #f4efe4;
+    color: #2b1b0e;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  /* A round cream disc, the same as the scene's back button. */
   .go-fab {
-    @apply flex h-11 w-11 items-center justify-center rounded-full bg-surface-mute text-ink transition-colors hover:bg-surface-soft;
+    @apply flex h-11 w-11 items-center justify-center rounded-full bg-[#fbf1de] text-[#2b1b0e] shadow-[0_6px_16px_rgba(0,0,0,0.3)] transition-colors hover:bg-white;
   }
 
   /* The grey tile every marketplace card sits on: no border, no shadow. */
@@ -189,26 +219,42 @@
   }
 
   /* A row in a sheet: icon, text, chevron — the address line, a store, a setting. */
+  /* A line on paper: rows part with a dashed rule, fields are cream with a dashed underline. */
   .go-row {
-    @apply flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors hover:bg-surface-soft active:bg-surface-mute;
+    @apply flex w-full items-center gap-3 px-1 py-3 text-left transition-colors hover:bg-[rgba(234,216,178,0.35)];
+    border-top: 1px dashed #c9b99a;
+  }
+  .go-row:first-child,
+  .go-row:first-of-type {
+    border-top: 0;
   }
 
   .go-field {
-    @apply flex h-14 w-full items-center rounded-2xl bg-surface-mute px-4 text-base outline-none placeholder:text-ink-faint focus:ring-2 focus:ring-brand-300;
+    @apply flex h-12 w-full items-center rounded-t-lg border-0 border-b-2 border-dashed border-[#c9b99a] bg-[rgba(234,216,178,0.4)] px-3 text-[17px] text-[#2b1b0e] outline-none placeholder:text-[#a08f76] focus:border-[#9e2a2b] focus:bg-[rgba(234,216,178,0.6)];
+    font-family: var(--font-hand), 'Caveat', cursive;
+    font-weight: 700;
+  }
+  textarea.go-field {
+    @apply h-auto py-2;
   }
 
+  /* Chips are cardboard: paper with a dashed edge, the chosen one pomegranate. */
   .go-chip {
-    @apply inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-surface-mute px-3.5 text-sm font-medium transition-colors hover:bg-surface-soft;
+    @apply inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9b99a] bg-transparent px-3.5 text-[16px] text-[#2b1b0e] transition-colors hover:bg-[rgba(227,155,47,0.12)];
+    font-family: var(--font-hand), 'Caveat', cursive;
+    font-weight: 700;
   }
-  .go-chip[aria-pressed='true'] {
-    @apply bg-brand-500 text-white hover:bg-brand-500;
+  .go-chip[aria-pressed='true'],
+  .go-chip[aria-current='true'] {
+    @apply border-[#9e2a2b] bg-[#9e2a2b] text-[#fbf1de] hover:bg-[#9e2a2b];
   }
 
   .btn-go {
-    @apply btn h-14 w-full rounded-2xl bg-brand-500 font-display text-base font-bold normal-case tracking-normal text-white hover:bg-brand-400 active:bg-brand-600;
+    @apply btn h-[52px] w-full rounded-full bg-[#9e2a2b] font-serif text-[18px] font-bold normal-case tracking-normal text-[#fbf1de] hover:bg-[#7e1f21] active:bg-[#641819];
+    box-shadow: 0 10px 24px rgba(158, 42, 43, 0.35);
   }
   .btn-go-secondary {
-    @apply btn h-14 w-full rounded-2xl bg-surface-mute font-display text-base font-bold normal-case tracking-normal text-ink hover:bg-surface-soft;
+    @apply btn h-[52px] w-full rounded-full border-[1.5px] border-[#c9b99a] bg-transparent font-serif text-[18px] font-bold normal-case tracking-normal text-[#2b1b0e] hover:bg-[rgba(227,155,47,0.12)];
   }
 
   /* MapLibre chrome, kept quiet: tiny attribution, no logo. */
@@ -270,7 +316,7 @@
     @apply relative flex flex-1 flex-col items-center gap-2;
   }
   .tile-step__tile {
-    @apply h-4 w-4 rotate-45 rounded-[4px] border-2 border-sand-300 bg-white transition-colors;
+    @apply h-4 w-4 rotate-45 rounded-[4px] border-2 border-[#c9b99a] bg-[#fbf5e6] transition-colors;
   }
   .tile-step[data-state='done'] .tile-step__tile {
     @apply border-brand-500 bg-brand-500;

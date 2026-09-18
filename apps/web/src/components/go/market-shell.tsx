@@ -1,8 +1,8 @@
 /**
- * The marketplace frame: a sticky white header (logo · address · search ·
- * bonuses · cart · menu), one content column, a bottom tab bar on phones.
- * Every screen without a map is one of these — the map stays for picking an
- * address and tracking a courier.
+ * The frame for every secondary screen: the bazaar hall behind, the scene's
+ * top row (back or wordmark, the address as a kraft tag, cart, menu), the
+ * page title in cream serif, the content on one sheet of paper, and on phones
+ * a glass tab bar. The map screens keep GoShell.
  */
 'use client';
 
@@ -14,21 +14,15 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { Menu } from '@/components/go/go-shell';
-import {
-  ArrowLeft,
-  Bag,
-  Burger,
-  Coin,
-  Grid,
-  HomeGlyph,
-  Receipt,
-  Search,
-} from '@/components/go/icons';
+import { ArrowLeft, Bag, Burger, Coin, Grid, HomeGlyph, Receipt } from '@/components/go/icons';
 import { useAddress } from '@/features/address';
 import { useAuth } from '@/features/auth';
 import { useAppName } from '@/features/branding';
 import { useCartCount } from '@/features/cart';
 import { api } from '@/lib/api';
+
+import { isEvening } from '@/components/bazar/index';
+import bz from '@/components/bazar/bazar.module.css';
 
 export function MarketShell({
   locale,
@@ -83,129 +77,129 @@ export function MarketShell({
     { href: `/${locale}/orders`, icon: <Receipt />, label: t('menu.orders') },
   ];
 
+  const evening = isEvening();
+
   return (
-    <div className="min-h-dvh bg-surface">
-      <header className="sticky top-0 z-20 border-b border-line bg-surface/95 backdrop-blur">
-        <div className="container-site flex h-16 items-center gap-3">
-          {back ? (
-            <button
-              type="button"
-              onClick={() => (back === 'history' ? router.back() : router.push(back))}
-              className="go-fab shrink-0"
-              aria-label={t('common.back')}
-            >
-              <ArrowLeft />
-            </button>
-          ) : null}
-          <Link
-            href={`/${locale}`}
-            className="hidden shrink-0 font-serif text-[26px] font-bold tracking-tight text-ink md:block"
-          >
-            {appName}
-            <span className="text-saffron-500">.</span>
-          </Link>
-          <Link
-            href={`/${locale}/address`}
-            className="flex min-w-0 shrink items-center gap-2 rounded-2xl bg-surface-mute px-3 py-2 text-sm md:max-w-[260px]"
-          >
-            <span className="text-brand-600">
-              <HomeGlyph />
-            </span>
-            <span className="min-w-0 truncate font-medium">
+    <div className={bz.scene}>
+      <div
+        className={`${bz.photo} ${bz.photoDim} ${evening ? bz.photoEvening : ''}`}
+        style={{ backgroundImage: `url(/scenes/${evening ? 'evening' : 'morning'}.jpg)` }}
+      />
+      <div className={`${bz.body} ${bz.narrow}`} style={{ paddingBottom: 120 }}>
+        <div className={bz.top}>
+          <div className="flex min-w-0 items-center gap-3">
+            {back ? (
+              <button
+                type="button"
+                onClick={() => (back === 'history' ? router.back() : router.push(back))}
+                className={bz.round}
+                aria-label={t('common.back')}
+              >
+                <ArrowLeft />
+              </button>
+            ) : (
+              <Link
+                href={`/${locale}`}
+                className="shrink-0 font-serif text-[26px] font-bold tracking-tight text-[#fbf1de]"
+              >
+                {appName}
+                <span className="text-saffron-500">.</span>
+              </Link>
+            )}
+            <Link href={`/${locale}/address`} className={`${bz.tag} min-w-0 truncate`}>
               {address ? addressLabel(address.text) : t('home.setAddress')}
-            </span>
-          </Link>
-          <form
-            className="hidden min-w-0 flex-1 md:block"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const q = new FormData(event.currentTarget).get('q');
-              router.push(`/${locale}/catalog${q ? `?q=${encodeURIComponent(String(q))}` : ''}`);
-            }}
-          >
-            <label className="flex h-11 items-center gap-3 rounded-2xl bg-surface-mute px-4 text-ink-faint">
-              <Search />
-              <input
-                ref={search}
-                name="q"
-                type="search"
-                className="min-w-0 flex-1 bg-transparent text-ink outline-none placeholder:text-ink-faint"
-                placeholder={t('home.search')}
-                autoComplete="off"
-              />
-              <kbd className="rounded-md bg-surface-raise px-1.5 text-[11px] font-semibold text-ink-faint">
-                /
-              </kbd>
-            </label>
-          </form>
-          <div className="ml-auto flex shrink-0 items-center gap-2">
+            </Link>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
             {user && balance !== null && balance > 0 ? (
               <Link
                 href={`/${locale}/plus`}
-                className="flex h-10 items-center gap-1.5 rounded-full bg-brand-50 px-3 text-sm font-bold text-brand-700"
+                className={`${bz.chip} ${bz.chipOn} hidden items-center gap-1.5 sm:inline-flex`}
               >
                 <Coin size={16} />
                 {t.qty(Math.floor(balance / 100))}
               </Link>
             ) : null}
-            <Link href={`/${locale}/cart`} className="go-fab relative" aria-label={t('cart.title')}>
-              <Bag />
-              {count > 0 ? (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1 text-[11px] font-bold text-white">
-                  {count}
-                </span>
-              ) : null}
+            <Link href={`/${locale}/cart`} className={bz.round} aria-label={t('cart.title')}>
+              <b className="relative">
+                <Bag />
+                {count > 0 ? <span className={bz.badge}>{count}</span> : null}
+              </b>
             </Link>
             <button
               type="button"
               onClick={() => setMenu(true)}
-              className="go-fab hidden md:flex"
+              className={`${bz.round} ${bz.desktopOnly}`}
               aria-label={t('common.menu')}
             >
               <Burger />
             </button>
           </div>
         </div>
-      </header>
 
-      <main className="container-site pb-28 pt-4 md:pb-16">
-        {header ? <div className="mb-4">{header}</div> : null}
-        {children}
-        {footer ? (
-          <div className="fixed inset-x-0 bottom-16 z-10 bg-gradient-to-t from-surface via-surface/95 to-surface/0 px-4 pb-3 pt-6 md:static md:mt-6 md:bg-none md:p-0">
-            <div className="mx-auto max-w-md md:mx-0">{footer}</div>
+        <form
+          className={`${bz.search} ${bz.desktopOnly}`}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const q = new FormData(event.currentTarget).get('q');
+            router.push(`/${locale}/catalog${q ? `?q=${encodeURIComponent(String(q))}` : ''}`);
+          }}
+        >
+          <input
+            ref={search}
+            name="q"
+            type="search"
+            placeholder={t('home.search')}
+            autoComplete="off"
+          />
+        </form>
+
+        {/* The page's title row comes in as `header`: it sits on the scene, in cream serif. */}
+        {header ? (
+          <div
+            className={`${bz.greeting} [&_h1]:font-serif [&_h1]:text-[clamp(30px,4.6vw,44px)] [&_h1]:font-bold [&_h1]:leading-none [&_h1]:text-[#fbf1de] [&_p]:text-[#d9c7a6]`}
+            style={{ minHeight: 0, padding: '14px 0 22px' }}
+          >
+            {header}
           </div>
         ) : null}
-      </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 flex h-16 items-stretch border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-        {tabs.map((tab) => {
-          const active =
-            tab.href === `/${locale}` ? pathname === tab.href : pathname.startsWith(tab.href);
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] ${active ? 'text-brand-600' : 'text-ink-muted'}`}
-            >
-              {tab.icon}
-              {tab.badge ? (
-                <span className="absolute right-[calc(50%-20px)] top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">
-                  {tab.badge}
-                </span>
-              ) : null}
-              {tab.label}
-            </Link>
-          );
-        })}
-        <button
-          type="button"
-          onClick={() => setMenu(true)}
-          className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-ink-muted"
+        <main className={bz.receipt}>
+          {children}
+          {footer ? <div className="mt-5">{footer}</div> : null}
+        </main>
+      </div>
+
+      {/* Phones: the glass tab bar of the scene. */}
+      <nav className={`${bz.bar} ${bz.phoneOnly}`}>
+        <div
+          className={`${bz.barInner} ${bz.glass} !h-16 !gap-0 !px-1`}
+          style={{ justifyContent: 'space-around' }}
         >
-          <Burger />
-          {t('common.menu')}
-        </button>
+          {tabs.map((tab) => {
+            const active =
+              tab.href === `/${locale}` ? pathname === tab.href : pathname.startsWith(tab.href);
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] ${active ? 'text-saffron-400' : 'text-[#d9c7a6]'}`}
+              >
+                {tab.icon}
+                {tab.badge ? <span className={bz.badge}>{tab.badge}</span> : null}
+                {tab.label}
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setMenu(true)}
+            className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-[#d9c7a6]"
+          >
+            <Burger />
+            {t('common.menu')}
+          </button>
+        </div>
       </nav>
 
       {menu ? <Menu locale={locale} onClose={() => setMenu(false)} /> : null}
