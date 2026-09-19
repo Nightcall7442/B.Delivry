@@ -49,6 +49,7 @@ export const courierActionSchema = z.object({
     'in_delivery',
     'arrived',
     'delivered',
+    'failed',
   ]),
   comment: z.string().trim().max(500).optional(),
 });

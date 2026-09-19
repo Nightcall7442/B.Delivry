@@ -12,17 +12,18 @@ import {
 import {
   addressLabel,
   combineQuotes,
+  defaultSubstitution,
   deliverySlots,
   describeOrderError,
   ensureServerAddress,
-  orderReasonText,
-  paymentMethodText,
-  substitutionText,
-  tr,
-  plusActive,
-  TOP_UP_KG,
   forgottenProducts,
   haggleFor,
+  orderReasonText,
+  paymentMethodText,
+  plusActive,
+  substitutionText,
+  TOP_UP_KG,
+  tr,
 } from '@bazar/storefront';
 import type { HaggleDto, OrderQuoteDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
@@ -179,6 +180,10 @@ export function CheckoutScreen({
       .catch(() => undefined);
   }, [user]);
   const [policy, setPolicy] = useState<SubstitutionPolicy>('CALL');
+  // A shop swaps a missing item for the same thing; at a stall the seller calls first.
+  useEffect(() => {
+    if (store) setPolicy(defaultSubstitution(store));
+  }, [store]);
   const [apartment, setApartment] = useState(address?.apartment ?? '');
   const [entrance, setEntrance] = useState(address?.entrance ?? '');
   const [quote, setQuote] = useState<OrderQuoteDto | null>(null);
@@ -669,6 +674,11 @@ export function CheckoutScreen({
           />
           {totals && totals.serviceFee.amount > 0 ? (
             <Line label={t('checkout.serviceFee')} value={t.money(totals.serviceFee.amount)} />
+          ) : null}
+          {quote?.heavy ? (
+            <Text role="caption" style={{ color: color.brand600 }}>
+              {t('shop.heavy', { sum: t.money(quote.heavySurcharge.amount) })}
+            </Text>
           ) : null}
           <Line label={t('cart.total')} value={t.money(total)} strong />
         </View>

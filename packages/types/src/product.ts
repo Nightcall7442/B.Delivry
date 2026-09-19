@@ -62,6 +62,8 @@ export type UpdateProductDto = Partial<Omit<CreateProductDto, 'storeId'>> & {
 };
 
 export interface ProductListQuery {
+  /** Exactly these products (the basket), any store. */
+  ids?: Id[];
   storeId?: Id;
   categoryId?: Id;
   search?: string;

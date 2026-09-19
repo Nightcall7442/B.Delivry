@@ -11,18 +11,19 @@ import {
   encodeShare,
   estimateDelivery,
   haggleFor,
-  sameBazaar,
+  oneTrip as oneTripStores,
   tr,
   type CartLine,
   type MapStoreDto,
   unitLabel,
 } from '@bazar/storefront';
 import { CASHBACK } from '@bazar/constants';
+import type { ProductDto } from '@bazar/types';
 import { isApiError, room } from '@bazar/api-client';
 import { WS_EVENT, type HaggleDto } from '@bazar/types';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRootNavigationState, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -43,7 +44,7 @@ import {
   useCartQuantities,
   useCartReady,
 } from '@/features/cart/store';
-import { listProducts, listStores } from '@/lib/catalog';
+import { listProductsByIds, listStores } from '@/lib/catalog';
 import { useData } from '@/lib/use-data';
 import {
   ArrowLeft,
@@ -93,7 +94,23 @@ export function CartScreen() {
   const quantities = useCartQuantities();
   const { setQuantity, clear } = useCartActions();
   const { address } = useAddress();
-  const products = useData(() => listProducts(), []) ?? [];
+  // Only what the basket holds, by id — a shop shelf is bigger than one page. Products
+  // already priced stay put while new ids load, so the sheet never blinks empty.
+  const known = useRef(new Map<string, ProductDto>());
+  const missing = Object.keys(quantities)
+    .filter((id) => !known.current.has(id))
+    .sort()
+    .join(',');
+  const fetched = useData(() => listProductsByIds(missing ? missing.split(',') : []), [missing]);
+  for (const p of fetched ?? []) known.current.set(p.id, p);
+  const products = useMemo(
+    () =>
+      Object.keys(quantities)
+        .map((id) => known.current.get(id))
+        .filter((p): p is ProductDto => p !== undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [quantities, fetched],
+  );
   // Семейная корзина: a `?share=` link merges the sender's cart into this one, once.
   const { share } = useLocalSearchParams<{ share?: string }>();
   const navReady = useRootNavigationState()?.key !== undefined;
@@ -117,19 +134,8 @@ export function CartScreen() {
 
   const groups = useMemo(() => groupByStore(products, quantities), [products, quantities]);
   const storeById = useMemo(() => new Map(stores.map((s) => [s.id, s])), [stores]);
-  // Cross-bazaar: the first cluster of stalls within one bazaar → one courier trip on offer.
-  const oneTrip = useMemo(() => {
-    for (const lead of groups) {
-      const leadPoint = storeById.get(lead.storeId)?.point;
-      if (!leadPoint) continue;
-      const mates = groups.filter((g) => {
-        const point = g === lead ? null : storeById.get(g.storeId)?.point;
-        return point ? sameBazaar([leadPoint, point]) : false;
-      });
-      if (mates.length > 0) return [lead.storeId, ...mates.map((g) => g.storeId)];
-    }
-    return null;
-  }, [groups, storeById]);
+  // Cross-bazaar: stalls of one bazaar → one courier trip on offer; shops always ride alone.
+  const oneTrip = useMemo(() => oneTripStores(groups, storeById), [groups, storeById]);
   const estimates = groups.map((group) => {
     const store = storeById.get(group.storeId);
     return store && address

@@ -25,4 +25,5 @@ export * from './suggestions.js';
 export * from './text.js';
 export * from './photos.js';
 export * from './seasons.js';
+export * from './shops.js';
 export * from './weather.js';

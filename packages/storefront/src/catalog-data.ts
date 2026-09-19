@@ -9,6 +9,7 @@ import { PRODUCT_UNIT, STORE_TYPE, type StoreType } from '@bazar/constants';
 import type { CategoryDto, LatLngDto, ProductDto, StoreDto } from '@bazar/types';
 
 import { PHOTOS } from './photos.js';
+import { HOURS, SHOP_LIMITS } from './shops.js';
 
 /** A store the map can show. Points without coordinates are not deliverable, so the storefront never sees them. */
 export type MapStoreDto = StoreDto & { point: LatLngDto };
@@ -82,8 +83,14 @@ function store(
     owner?: { name: string; since: number; motto: [ru: string, uz: string]; photo?: string };
     /** This morning's photo of the counter (photo key). */
     counter?: string;
+    /** Branches of one chain share it. */
+    chain?: string;
+    /** A shop's logo (photo key); stalls have faces instead. */
+    logo?: string;
   },
 ): MapStoreDto {
+  const shop =
+    !options.owner && type !== STORE_TYPE.BAZAAR_STALL && type !== STORE_TYPE.ENTREPRENEUR;
   return {
     id,
     tenantId: TENANT,
@@ -94,8 +101,8 @@ function store(
     name: { ru, uz, en: ru },
     description: options.description ? { ru: options.description, uz: options.description } : null,
     slug: id,
-    logoUrl: null,
-    coverUrl: PHOTOS[id] ?? null,
+    logoUrl: options.logo ? (PHOTOS[options.logo] ?? null) : null,
+    coverUrl: PHOTOS[id] ?? PHOTOS[options.chain ?? ''] ?? null,
     counterPhotoUrl: options.counter ? (PHOTOS[options.counter] ?? null) : null,
     counterPhotoAt: options.counter ? counterTime() : null,
     promotedUntil: null,
@@ -109,10 +116,21 @@ function store(
     ownerSince: options.owner?.since ?? null,
     ownerPhotoUrl: options.owner?.photo ? (PHOTOS[options.owner.photo] ?? null) : null,
     ownerMotto: options.owner ? { ru: options.owner.motto[0], uz: options.owner.motto[1] } : null,
+    chainSlug: options.chain ?? null,
+    minOrder: shop ? SHOP_LIMITS.minOrder : null,
+    freeDeliveryThreshold: shop ? SHOP_LIMITS.freeDeliveryThreshold : null,
     rating: options.rating,
     reviewCount: options.reviews,
     preparationMinutes: options.prep,
-    schedule: [],
+    // Rows open at dawn and close at six, shops trade till eleven — the same hours the seed writes.
+    schedule: Array.from({ length: 7 }, (_, weekday) => ({
+      id: `${id}-${weekday}`,
+      createdAt: '',
+      updatedAt: '',
+      weekday,
+      ...(shop ? HOURS.shop : HOURS.stall),
+      closed: false,
+    })),
     isOpen: options.open ?? true,
   };
 }
@@ -184,7 +202,43 @@ const STORES: MapStoreDto[] = [
     reviews: 1204,
     prep: 15,
     description: 'Полный ассортимент супермаркета.',
+    chain: 'makro',
   }),
+  // A chain: two branches behind one shopfront, the nearer one takes the order.
+  store('korzinka-yunusabad', 'Korzinka Юнусабад', 'Korzinka Yunusobod', STORE_TYPE.SUPERMARKET, {
+    address: 'Юнусабад, 4-квартал, ул. Бабура',
+    point: [41.357, 69.291],
+    rating: 4.5,
+    reviews: 2310,
+    prep: 20,
+    description: 'Продукты на каждый день: молочное, бакалея, вода, бытовая химия.',
+    chain: 'korzinka',
+  }),
+  store('korzinka-chilanzar', 'Korzinka Чиланзар', 'Korzinka Chilonzor', STORE_TYPE.SUPERMARKET, {
+    address: 'Чиланзар, квартал 2, ул. Мукими',
+    point: [41.283, 69.208],
+    rating: 4.5,
+    reviews: 1875,
+    prep: 20,
+    description: 'Продукты на каждый день: молочное, бакалея, вода, бытовая химия.',
+    chain: 'korzinka',
+  }),
+  // The corner shop: no chain, no counter person — a shelf that is open late.
+  store(
+    'lavka-yunusabad-4',
+    'Продукты у дома, Юнусабад-4',
+    'Uy oldidagi doʻkon, Yunusobod-4',
+    STORE_TYPE.SHOP,
+    {
+      address: 'Юнусабад, 4-квартал, дом 15',
+      point: [41.3565, 69.2885],
+      rating: 4.3,
+      reviews: 164,
+      prep: 10,
+      description: 'Хлеб, молоко, яйца и всё, что кончилось дома в одиннадцать вечера.',
+      counter: 'lavka-inside',
+    },
+  ),
   store('non-uyi', 'Нон уйи', 'Non uyi', STORE_TYPE.SHOP, {
     address: 'Чиланзар, квартал 12',
     point: [41.275, 69.203],
@@ -240,6 +294,10 @@ type ProductSeed = [
     stock?: number | null;
     rating?: number;
     say?: [ru: string, uz: string];
+    /** Photo key when it is not the product id (shop shelves share photographs). */
+    photo?: string;
+    /** Grams per unit: past 15 kg an order rides in a car. */
+    weight?: number;
   },
 ];
 
@@ -519,6 +577,206 @@ const PRODUCT_SEEDS: ProductSeed[] = [
   ],
 
   [
+    'p-milk-kz1',
+    'korzinka-yunusabad',
+    'dairy',
+    'Молоко 3.2%, 1 л',
+    'Sut 3.2%, 1 l',
+    12500,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.6, stock: 40, photo: 'p-milk', weight: 1050 },
+  ],
+  [
+    'p-eggs-kz1',
+    'korzinka-yunusabad',
+    'dairy',
+    'Яйца С1, 10 шт',
+    'Tuxum C1, 10 dona',
+    19000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.5, stock: 60, photo: 'p-eggs', weight: 650 },
+  ],
+  [
+    'p-rice-kz1',
+    'korzinka-yunusabad',
+    'grocery',
+    'Рис лазер, 1 кг',
+    'Lazer guruch, 1 kg',
+    36000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.4, stock: 25, photo: 'p-rice', weight: 1000 },
+  ],
+  [
+    'p-flour-kz1',
+    'korzinka-yunusabad',
+    'grocery',
+    'Мука в/с, мешок 25 кг',
+    'Un oliy nav, 25 kg qop',
+    185000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.7, stock: 8, photo: 'p-rice', weight: 25000 },
+  ],
+  [
+    'p-oil-kz1',
+    'korzinka-yunusabad',
+    'grocery',
+    'Масло подсолнечное, 1 л',
+    'Kungaboqar yogʻi, 1 l',
+    24000,
+    PRODUCT_UNIT.PCS,
+    { oldSoum: 27000, rating: 4.3, stock: 30, photo: 'p-oil', weight: 950 },
+  ],
+  [
+    'p-water-kz1',
+    'korzinka-yunusabad',
+    'grocery',
+    'Вода питьевая, 19 л',
+    'Ichimlik suvi, 19 l',
+    32000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.6, stock: 12, photo: 'p-oil', weight: 19500 },
+  ],
+  [
+    'p-bread-kz1',
+    'korzinka-yunusabad',
+    'bakery',
+    'Хлеб пшеничный, буханка',
+    'Bugʻdoy noni',
+    6000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.2, stock: 20, photo: 'p-patir', weight: 500 },
+  ],
+  [
+    'p-soap-kz1',
+    'korzinka-yunusabad',
+    'household',
+    'Средство для посуды, 500 мл',
+    'Idish yuvish vositasi, 500 ml',
+    14500,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.4, stock: 35, photo: 'p-soap', weight: 550 },
+  ],
+  [
+    'p-milk-kz2',
+    'korzinka-chilanzar',
+    'dairy',
+    'Молоко 3.2%, 1 л',
+    'Sut 3.2%, 1 l',
+    12500,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.6, stock: 40, photo: 'p-milk', weight: 1050 },
+  ],
+  [
+    'p-eggs-kz2',
+    'korzinka-chilanzar',
+    'dairy',
+    'Яйца С1, 10 шт',
+    'Tuxum C1, 10 dona',
+    19000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.5, stock: 60, photo: 'p-eggs', weight: 650 },
+  ],
+  [
+    'p-rice-kz2',
+    'korzinka-chilanzar',
+    'grocery',
+    'Рис лазер, 1 кг',
+    'Lazer guruch, 1 kg',
+    36000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.4, stock: 25, photo: 'p-rice', weight: 1000 },
+  ],
+  [
+    'p-flour-kz2',
+    'korzinka-chilanzar',
+    'grocery',
+    'Мука в/с, мешок 25 кг',
+    'Un oliy nav, 25 kg qop',
+    185000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.7, stock: 8, photo: 'p-rice', weight: 25000 },
+  ],
+  [
+    'p-oil-kz2',
+    'korzinka-chilanzar',
+    'grocery',
+    'Масло подсолнечное, 1 л',
+    'Kungaboqar yogʻi, 1 l',
+    24000,
+    PRODUCT_UNIT.PCS,
+    { oldSoum: 27000, rating: 4.3, stock: 30, photo: 'p-oil', weight: 950 },
+  ],
+  [
+    'p-water-kz2',
+    'korzinka-chilanzar',
+    'grocery',
+    'Вода питьевая, 19 л',
+    'Ichimlik suvi, 19 l',
+    32000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.6, stock: 12, photo: 'p-oil', weight: 19500 },
+  ],
+  [
+    'p-bread-kz2',
+    'korzinka-chilanzar',
+    'bakery',
+    'Хлеб пшеничный, буханка',
+    'Bugʻdoy noni',
+    6000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.2, stock: 20, photo: 'p-patir', weight: 500 },
+  ],
+  [
+    'p-soap-kz2',
+    'korzinka-chilanzar',
+    'household',
+    'Средство для посуды, 500 мл',
+    'Idish yuvish vositasi, 500 ml',
+    14500,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.4, stock: 35, photo: 'p-soap', weight: 550 },
+  ],
+  [
+    'p-milk-lv',
+    'lavka-yunusabad-4',
+    'dairy',
+    'Молоко 3.2%, 1 л',
+    'Sut 3.2%, 1 l',
+    13000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.4, stock: 12, photo: 'p-milk', weight: 1050 },
+  ],
+  [
+    'p-eggs-lv',
+    'lavka-yunusabad-4',
+    'dairy',
+    'Яйца С1, 10 шт',
+    'Tuxum C1, 10 dona',
+    20000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.3, stock: 15, photo: 'p-eggs', weight: 650 },
+  ],
+  [
+    'p-bread-lv',
+    'lavka-yunusabad-4',
+    'bakery',
+    'Лепёшка домашняя',
+    'Uy noni',
+    5000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.6, stock: 10, photo: 'p-obi-non', weight: 400 },
+  ],
+  [
+    'p-oil-lv',
+    'lavka-yunusabad-4',
+    'grocery',
+    'Масло подсолнечное, 1 л',
+    'Kungaboqar yogʻi, 1 l',
+    25000,
+    PRODUCT_UNIT.PCS,
+    { rating: 4.2, stock: 8, photo: 'p-oil', weight: 950 },
+  ],
+  [
     'p-zira',
     'ziravor',
     'spices',
@@ -572,8 +830,8 @@ const PRODUCTS: ProductDto[] = PRODUCT_SEEDS.map(
     oldPrice: extra.oldSoum ? { amount: extra.oldSoum * 100, currency: 'UZS' } : null,
     minQuantity: unit === PRODUCT_UNIT.KG ? 0.5 : 1,
     quantityStep: unit === PRODUCT_UNIT.KG ? 0.5 : 1,
-    weightGrams: null,
-    images: PHOTOS[id] ? [{ url: PHOTOS[id] }] : [],
+    weightGrams: extra.weight ?? null,
+    images: PHOTOS[extra.photo ?? id] ? [{ url: PHOTOS[extra.photo ?? id]! }] : [],
     available: extra.available ?? true,
     stock: extra.stock ?? null,
     rating: extra.rating ?? 4.5,

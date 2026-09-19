@@ -23,6 +23,7 @@ export interface PurchasableProduct {
 }
 
 export interface CatalogSearchFilters {
+  ids?: string[] | undefined;
   storeId?: string | undefined;
   categoryId?: string | undefined;
   search?: string | undefined;

@@ -1,6 +1,7 @@
 /**
  * DeliveryFeeCalculator interface (distance, zone, weight, time-of-day).
  */
+import { HEAVY_ORDER_GRAMS, HEAVY_SURCHARGE_MINOR } from '@bazar/constants';
 import {
   add,
   clampToZero,
@@ -56,6 +57,14 @@ export class TariffFeeCalculator implements DeliveryFeeCalculator {
       deliveryFee = zero(subtotal.currency);
     }
 
+    // A sack of flour rides in a car: the surcharge is never waived, and the courier is paid for it.
+    const heavy = (input.weightGrams ?? 0) > HEAVY_ORDER_GRAMS;
+    const heavySurcharge = heavy
+      ? money(HEAVY_SURCHARGE_MINOR, subtotal.currency)
+      : zero(subtotal.currency);
+    deliveryFee = add(deliveryFee, heavySurcharge);
+    const courierFeeTotal = add(courierFee, heavySurcharge);
+
     const discount = input.discount ?? zero(subtotal.currency);
     const gross = add(add(subtotal, deliveryFee), tariff.serviceFee);
     // A discount larger than the order must not produce a negative charge.
@@ -67,7 +76,7 @@ export class TariffFeeCalculator implements DeliveryFeeCalculator {
       deliverable: !belowMinimum,
       distanceMeters: input.distanceMeters,
       deliveryFee,
-      courierFee,
+      courierFee: courierFeeTotal,
       serviceFee: tariff.serviceFee,
       discount,
       subtotal,
@@ -77,6 +86,8 @@ export class TariffFeeCalculator implements DeliveryFeeCalculator {
       freeDeliveryThreshold: tariff.freeDeliveryThreshold,
       commission: percentage(subtotal, tariff.commissionPercent),
       reason: belowMinimum ? 'Order is below the minimum for this zone' : null,
+      heavy,
+      heavySurcharge,
     };
   }
 }

@@ -24,11 +24,15 @@ export interface StoreListFilters {
 export interface OpenStore {
   id: string;
   vendorId: string;
+  type: string;
   name: Record<string, string>;
   cityId: string;
   lat: number;
   lng: number;
   preparationMinutes: number;
+  /** The store's own limits (minor units) or null for the zone tariff's. */
+  minOrder: number | null;
+  freeDeliveryThreshold: number | null;
   currency: string;
 }
 

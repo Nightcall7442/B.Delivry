@@ -22,7 +22,8 @@ export const createProductSchema = z
     minQuantity: quantitySchema.default(1),
     quantityStep: quantitySchema.default(1),
     weightGrams: z.coerce.number().int().positive().max(500_000).optional(),
-    images: z.array(imageSchema).max(LIMITS.PRODUCT_MAX_IMAGES).optional(),
+    // A product without a photograph is not on the counter: the app shows nothing without one.
+    images: z.array(imageSchema).min(1).max(LIMITS.PRODUCT_MAX_IMAGES),
     stock: z.coerce.number().min(0).optional(),
   })
   .refine((v) => v.oldPrice === undefined || v.oldPrice.amount > v.price.amount, {
@@ -40,6 +41,13 @@ export const updateProductSchema = createProductSchema
   });
 
 export const productListQuerySchema = z.object({
+  /** The basket's products by id (`ids=a&ids=b`); a lone value arrives as a string. */
+  ids: z
+    .preprocess(
+      (v) => (typeof v === 'string' ? [v] : v),
+      z.array(idSchema).max(LIMITS.CART_MAX_ITEMS),
+    )
+    .optional(),
   storeId: idSchema.optional(),
   categoryId: idSchema.optional(),
   minPrice: z.coerce.number().int().nonnegative().optional(),

@@ -14,9 +14,14 @@ export class CategoriesRepository extends BaseRepository {
     return this.prisma.category.findUnique({ where: { slug } });
   }
 
-  async listAll(includeInactive = false): Promise<Category[]> {
+  async listAll(includeInactive = false, storeId?: string): Promise<Category[]> {
     return this.prisma.category.findMany({
-      where: includeInactive ? {} : { active: true },
+      where: {
+        ...(includeInactive ? {} : { active: true }),
+        ...(storeId !== undefined
+          ? { products: { some: { storeId, deletedAt: null, available: true } } }
+          : {}),
+      },
       orderBy: [{ depth: 'asc' }, { sortOrder: 'asc' }, { slug: 'asc' }],
     });
   }

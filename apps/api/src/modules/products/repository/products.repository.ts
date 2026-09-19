@@ -177,4 +177,27 @@ export class ProductsRepository extends BaseRepository {
     });
     return row?.storeId ?? null;
   }
+
+  async categorySlug(categoryId: string): Promise<string | null> {
+    const row = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+      select: { slug: true },
+    });
+    return row?.slug ?? null;
+  }
+
+  /** slug → id (CSV rows name categories by slug). */
+  async categoryIdsBySlug(): Promise<Map<string, string>> {
+    const rows = await this.prisma.category.findMany({ select: { id: true, slug: true } });
+    return new Map(rows.map((row) => [row.slug, row.id]));
+  }
+
+  /** The live product with this Russian name in the store, if any (CSV re-uploads update it). */
+  async findByNameRu(storeId: string, nameRu: string): Promise<string | null> {
+    const row = await this.prisma.product.findFirst({
+      where: this.scopedAlive({ storeId, name: { path: ['ru'], equals: nameRu } }),
+      select: { id: true },
+    });
+    return row?.id ?? null;
+  }
 }

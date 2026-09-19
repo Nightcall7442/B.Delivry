@@ -41,6 +41,11 @@ export interface StoreDto extends TenantEntity {
   ownerPhotoUrl: string | null;
   /** One line in their own words. */
   ownerMotto: Translated | null;
+  /** Branches of one chain share it; null for a stall or a single shop. */
+  chainSlug: string | null;
+  /** Per-store order limits, minor units; null = the zone's tariff applies. */
+  minOrder: number | null;
+  freeDeliveryThreshold: number | null;
   rating: number;
   reviewCount: number;
   /** Minutes the store needs to gather an order before a courier should arrive. */
@@ -86,6 +91,11 @@ export type UpdateStoreDto = Partial<Omit<CreateStoreDto, 'vendorId'>> & {
   ownerSince?: number | null;
   ownerPhotoUrl?: string | null;
   ownerMotto?: Translated | null;
+  /** Seven rows replace the week; the API validates opens < closes. */
+  schedule?: Pick<StoreScheduleDto, 'weekday' | 'opensAt' | 'closesAt' | 'closed'>[];
+  chainSlug?: string | null;
+  minOrder?: number | null;
+  freeDeliveryThreshold?: number | null;
 };
 
 export interface StoreListQuery {

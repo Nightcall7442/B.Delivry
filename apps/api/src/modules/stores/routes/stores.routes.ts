@@ -14,6 +14,8 @@ import {
   storeIdParamsSchema,
   storesListQuerySchema,
   updateStoreSchema,
+  importCsvSchema,
+  reportQuerySchema,
 } from '../schemas/index.js';
 
 const arrivalsSchema = z.object({
@@ -37,6 +39,25 @@ export function storesRoutes(controller: StoresController) {
     );
 
     const canWrite = [requireAuth, requirePermission(PERMISSION.STORE_WRITE)];
+
+    // A shop's shelf from a spreadsheet, and the month's act for its accountant.
+    app.post(
+      '/:id/products/import',
+      {
+        preHandler: [requireAuth, validate({ params: storeIdParamsSchema, body: importCsvSchema })],
+      },
+      controller.importProducts,
+    );
+    app.get(
+      '/:id/report',
+      {
+        preHandler: [
+          requireAuth,
+          validate({ params: storeIdParamsSchema, query: reportQuerySchema }),
+        ],
+      },
+      controller.report,
+    );
 
     app.post(
       '/',

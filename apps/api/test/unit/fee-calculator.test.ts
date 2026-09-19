@@ -71,6 +71,28 @@ describe('delivery fee', () => {
     expect(quote.total.amount).toBe(250_000_00 + tariff.serviceFee.amount);
   });
 
+  it('adds the car surcharge past 15 kg and never waives it', () => {
+    const light = calculator.quote({
+      tariff,
+      distanceMeters: 800,
+      subtotal: uzs(250_000_00),
+      weightGrams: 14_000,
+    });
+    const heavy = calculator.quote({
+      tariff,
+      distanceMeters: 800,
+      subtotal: uzs(250_000_00),
+      weightGrams: 25_000,
+    });
+
+    expect(light.heavy).toBe(false);
+    expect(light.deliveryFee.amount).toBe(0);
+    expect(heavy.heavy).toBe(true);
+    // free delivery by threshold, but the sack still rides in a car
+    expect(heavy.deliveryFee.amount).toBe(heavy.heavySurcharge.amount);
+    expect(heavy.courierFee.amount).toBe(tariff.minFee.amount + heavy.heavySurcharge.amount);
+  });
+
   it('refuses an order below the zone minimum', () => {
     const quote = calculator.quote({ tariff, distanceMeters: 2_000, subtotal: uzs(5_000_00) });
 

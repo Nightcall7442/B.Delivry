@@ -32,13 +32,13 @@ export class CategoriesService extends BaseService {
   }
 
   /** The whole tree, built once from a flat list rather than N queries. */
-  async tree(): Promise<CategoryNode[]> {
+  async tree(storeId?: string): Promise<CategoryNode[]> {
     return cached(
       this.cache,
-      'category-tree',
+      `category-tree:${storeId ?? ''}`,
       CACHE_TTL_SECONDS,
-      async () => buildTree(await this.repository.listAll()),
-      [CACHE_TAG],
+      async () => buildTree(await this.repository.listAll(false, storeId)),
+      storeId === undefined ? [CACHE_TAG] : [CACHE_TAG, `store:${storeId}`],
     );
   }
 

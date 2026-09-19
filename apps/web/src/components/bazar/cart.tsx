@@ -15,7 +15,7 @@ import {
   estimateDelivery,
   haggleFor,
   photo,
-  sameBazaar,
+  oneTrip as oneTripStores,
   tr,
   unitLabel,
   type MapStoreDto,
@@ -23,7 +23,7 @@ import {
 import { WS_EVENT, type HaggleDto, type ProductDto } from '@bazar/types';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ArrowLeft } from '@/components/go/icons';
 import { useAddress } from '@/features/address';
@@ -111,21 +111,29 @@ export function BazaarCart({
     }
   };
 
-  const groups = useMemo(() => groupByStore(products, quantities), [products, quantities]);
+  // The page priced what it knew; whatever the basket holds beyond that (a shop shelf is
+  // bigger than one page) is fetched by id, sold-out lines included.
+  const known = useRef(new Map(products.map((p) => [p.id, p])));
+  const [extra, setExtra] = useState<ProductDto[]>([]);
+  const missing = Object.keys(quantities)
+    .filter((id) => !known.current.has(id))
+    .sort()
+    .join(',');
+  useEffect(() => {
+    if (!missing) return;
+    api()
+      .catalog.products({ ids: missing.split(','), availableOnly: false, pageSize: 100 })
+      .then((page) => {
+        for (const p of page.items) known.current.set(p.id, p);
+        setExtra((current) => [...current, ...page.items]);
+      })
+      .catch(() => undefined);
+  }, [missing]);
+  const priced = useMemo(() => [...products, ...extra], [products, extra]);
+  const groups = useMemo(() => groupByStore(priced, quantities), [priced, quantities]);
   const storeById = useMemo(() => new Map(stores.map((store) => [store.id, store])), [stores]);
-  // Cross-bazaar: the first cluster of stalls within one bazaar → one courier trip on offer.
-  const oneTrip = useMemo(() => {
-    for (const lead of groups) {
-      const leadPoint = storeById.get(lead.storeId)?.point;
-      if (!leadPoint) continue;
-      const mates = groups.filter((g) => {
-        const point = g === lead ? null : storeById.get(g.storeId)?.point;
-        return point ? sameBazaar([leadPoint, point]) : false;
-      });
-      if (mates.length > 0) return [lead.storeId, ...mates.map((g) => g.storeId)];
-    }
-    return null;
-  }, [groups, storeById]);
+  // Cross-bazaar: stalls of one bazaar → one courier trip on offer; shops always ride alone.
+  const oneTrip = useMemo(() => oneTripStores(groups, storeById), [groups, storeById]);
 
   const evening = isEvening();
   const first = groups[0] ? storeById.get(groups[0].storeId) : null;

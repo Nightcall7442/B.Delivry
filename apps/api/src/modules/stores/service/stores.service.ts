@@ -141,13 +141,75 @@ export class StoresService extends BaseService {
     return {
       id: store.id,
       vendorId: store.vendorId,
+      type: store.type,
       name: store.name as Record<string, string>,
       cityId: store.cityId,
       lat: Number(store.lat),
       lng: Number(store.lng),
       preparationMinutes: store.preparationMinutes,
+      minOrder: store.minOrder,
+      freeDeliveryThreshold: store.freeDeliveryThreshold,
       currency: 'UZS',
     };
+  }
+
+  /** Delivered orders of one store in a window, as CSV — the vendor's own store or the desk's any. */
+  async report(storeId: string, from?: string, to?: string): Promise<string> {
+    const store = await this.get(storeId);
+    this.authorize(
+      PERMISSION.STORE_WRITE,
+      this.currentUser().vendorId !== undefined
+        ? { vendorId: store.vendorId, tenantId: store.tenantId }
+        : undefined,
+    );
+    const now = new Date();
+    const start = from ? new Date(from) : new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = to ? new Date(`${to}T23:59:59.999Z`) : now;
+    const orders = await this.prisma.order.findMany({
+      where: { storeId, status: 'DELIVERED', deliveredAt: { gte: start, lte: end } },
+      orderBy: { deliveredAt: 'asc' },
+      select: {
+        number: true,
+        deliveredAt: true,
+        subtotal: true,
+        deliveryFee: true,
+        total: true,
+        paymentMethod: true,
+        items: { select: { quantity: true } },
+      },
+    });
+    const cell = (value: string | number | null | undefined) =>
+      `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const lines = [
+      ['order', 'delivered_at', 'items', 'goods_sum', 'delivery_sum', 'total_sum', 'payment'].join(
+        ';',
+      ),
+      ...orders.map((order) =>
+        [
+          order.number,
+          order.deliveredAt?.toISOString() ?? '',
+          order.items.reduce((sum, item) => sum + Number(item.quantity), 0),
+          (order.subtotal / 100).toFixed(2),
+          (order.deliveryFee / 100).toFixed(2),
+          (order.total / 100).toFixed(2),
+          order.paymentMethod,
+        ]
+          .map(cell)
+          .join(';'),
+      ),
+      [
+        'TOTAL',
+        '',
+        orders.length,
+        (orders.reduce((sum, o) => sum + o.subtotal, 0) / 100).toFixed(2),
+        (orders.reduce((sum, o) => sum + o.deliveryFee, 0) / 100).toFixed(2),
+        (orders.reduce((sum, o) => sum + o.total, 0) / 100).toFixed(2),
+        '',
+      ]
+        .map(cell)
+        .join(';'),
+    ];
+    return `\uFEFF${lines.join('\n')}\n`;
   }
 
   async list(input: StoreListFilters): Promise<PaginatedResult<StoreWithSchedule>> {
@@ -268,6 +330,11 @@ export class StoresService extends BaseService {
           }
         : {}),
       ...(input.tags !== undefined ? { tags: input.tags as string[] } : {}),
+      ...(input.chainSlug !== undefined ? { chainSlug: input.chainSlug as string | null } : {}),
+      ...(input.minOrder !== undefined ? { minOrder: input.minOrder as number | null } : {}),
+      ...(input.freeDeliveryThreshold !== undefined
+        ? { freeDeliveryThreshold: input.freeDeliveryThreshold as number | null }
+        : {}),
       ...(input.ownerName !== undefined ? { ownerName: input.ownerName as string | null } : {}),
       ...(input.ownerSince !== undefined ? { ownerSince: input.ownerSince as number | null } : {}),
       ...(input.ownerPhotoUrl !== undefined

@@ -13,8 +13,10 @@ import type { FastifyInstance } from 'fastify';
  * and bidi-override tricks used to make two different names look identical.
  *
  * Cc = control characters, Cf = format characters (zero-width, bidi, BOM).
+ * Tab and line breaks stay: a CSV upload or a multi-line comment is text, and
+ * the logger JSON-encodes strings anyway.
  */
-const CONTROL_CHARS = /\p{Cc}/gu;
+const CONTROL_CHARS = /(?![\t\n\r])\p{Cc}/gu;
 const INVISIBLE = /\p{Cf}/gu;
 
 const MAX_DEPTH = 8;

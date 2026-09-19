@@ -7,6 +7,9 @@ import {
   listProducts,
   listStores,
 } from './catalog-data.js';
+import type { CartStoreGroup } from './cart.js';
+import { groupByStore } from './cart-group.js';
+import { branchesOf, closesToday, isShopfront, oneTrip, shopfronts } from './shops.js';
 import { plural } from './text.js';
 
 describe('listProducts', () => {
@@ -60,9 +63,44 @@ describe('listCategories', () => {
 describe('listStores', () => {
   it('filters by type and finds one by id', async () => {
     const supermarkets = await listStores({ type: 'SUPERMARKET' });
-    expect(supermarkets.map((s) => s.id)).toEqual(['makro-yunusabad']);
+    expect(supermarkets.map((s) => s.id)).toEqual([
+      'makro-yunusabad',
+      'korzinka-yunusabad',
+      'korzinka-chilanzar',
+    ]);
     expect(await getStore('makro-yunusabad')).not.toBeNull();
     expect(await getStore('nope')).toBeNull();
+  });
+});
+
+describe('shopfronts', () => {
+  it('shows a chain once, by the branch nearest the address', async () => {
+    const stores = await listStores({});
+    expect(stores.filter(isShopfront).map((s) => s.id)).toEqual([
+      'makro-yunusabad',
+      'korzinka-yunusabad',
+      'korzinka-chilanzar',
+      'lavka-yunusabad-4',
+    ]);
+    // no address yet: first branch of each chain
+    expect(shopfronts(stores, null).map((s) => s.id)).toEqual([
+      'makro-yunusabad',
+      'korzinka-yunusabad',
+      'lavka-yunusabad-4',
+    ]);
+    // from Chilanzar the other Korzinka wins, the rest stay put
+    const chilanzar = { lat: 41.28, lng: 69.2 };
+    expect(shopfronts(stores, chilanzar).map((s) => s.id)).toEqual([
+      'makro-yunusabad',
+      'korzinka-chilanzar',
+      'lavka-yunusabad-4',
+    ]);
+    const korzinka = stores.find((s) => s.id === 'korzinka-yunusabad')!;
+    expect(branchesOf(korzinka, stores, chilanzar).map((s) => s.id)).toEqual([
+      'korzinka-chilanzar',
+      'korzinka-yunusabad',
+    ]);
+    expect(branchesOf(stores[0]!, stores, chilanzar)).toEqual([stores[0]]);
   });
 });
 
@@ -89,5 +127,36 @@ describe('plural', () => {
       'товар',
       'товаров',
     ]);
+  });
+});
+
+describe('shops in the basket', () => {
+  it('never puts a shop on a shared trip and reads the closing hour by Tashkent weekday', async () => {
+    const stores = await listStores({});
+    const byId = new Map(stores.map((s) => [s.id, s]));
+    const products = await listProducts({});
+    const pick = (storeId: string) => products.find((p) => p.storeId === storeId)!.id;
+    // Farhad's meat counter and the Chilanzar Korzinka are 250 m apart — still two trips.
+    const stallAndShop = groupByStore(products, {
+      [pick('farhad-meat')]: 1,
+      [pick('korzinka-chilanzar')]: 1,
+    });
+    expect(oneTrip(stallAndShop, byId)).toBeNull();
+    // Two counters of one bazaar do share a courier.
+    const meat = byId.get('farhad-meat')!;
+    const twin = { ...meat, id: 'farhad-twin' };
+    const twoStalls: CartStoreGroup[] = [
+      ...groupByStore(products, { [pick('farhad-meat')]: 1 }),
+      { storeId: twin.id, lines: [], unavailable: [], subtotal: { amount: 0, currency: 'UZS' } },
+    ];
+    expect(oneTrip(twoStalls, new Map([...byId, [twin.id, twin]]))).toEqual([
+      'farhad-meat',
+      'farhad-twin',
+    ]);
+
+    const shop = byId.get('korzinka-yunusabad')!;
+    expect(closesToday(shop, new Date('2026-09-19T10:00:00Z'))).toBe('23:00');
+    expect(closesToday(meat, new Date('2026-09-19T10:00:00Z'))).toBe('18:00');
+    expect(closesToday({ schedule: [] })).toBeNull();
   });
 });

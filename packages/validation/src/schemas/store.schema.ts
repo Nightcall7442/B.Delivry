@@ -51,6 +51,14 @@ export const updateStoreSchema = createStoreSchema
     ownerSince: z.coerce.number().int().min(1950).max(2100).nullable().optional(),
     ownerPhotoUrl: z.string().url().max(500).nullable().optional(),
     ownerMotto: translatedSchema.nullable().optional(),
+    chainSlug: z
+      .string()
+      .trim()
+      .regex(/^[a-z0-9-]{2,40}$/)
+      .nullable()
+      .optional(),
+    minOrder: z.coerce.number().int().min(0).max(100_000_000_00).nullable().optional(),
+    freeDeliveryThreshold: z.coerce.number().int().min(0).max(100_000_000_00).nullable().optional(),
   });
 
 export const storeListQuerySchema = z.object({

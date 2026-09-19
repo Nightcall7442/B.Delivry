@@ -83,6 +83,7 @@ export class CatalogRepository extends BaseRepository {
       ...this.tenantScope(),
       deletedAt: null,
       ...(filters.availableOnly !== false ? { available: true } : {}),
+      ...(filters.ids !== undefined ? { id: { in: filters.ids } } : {}),
       ...(filters.storeId !== undefined ? { storeId: filters.storeId } : {}),
       ...(filters.categoryId !== undefined ? { categoryId: filters.categoryId } : {}),
       ...(filters.minPrice !== undefined || filters.maxPrice !== undefined
