@@ -7,6 +7,7 @@
 
 import { isApiError } from '@bazar/api-client';
 import { createT, type MessageKey, type T } from '@bazar/i18n';
+import type { OtpChannel } from '@bazar/types';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -47,13 +48,15 @@ export function BazaarLogin({ locale }: { locale: string }) {
   // `next` must stay on this site: a relative path, never `//evil` or a full URL.
   const raw = useSearchParams().get('next');
   const next = raw && raw.startsWith('/') && !['/', '\\'].includes(raw.charAt(1)) ? raw : null;
-  const { user, ready, requestCode, verifyCode } = useAuth();
+  const { user, ready, requestCode, verifyCode, startTelegramLogin, telegramLogin } = useAuth();
   const evening = isEvening();
   const home = `/${locale}`;
 
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
-  const [step, setStep] = useState<'phone' | 'code'>('phone');
+  const [step, setStep] = useState<'phone' | 'code' | 'telegram'>('phone');
+  const [channel, setChannel] = useState<OtpChannel>('sms');
+  const [ticket, setTicket] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryIn, setRetryIn] = useState(0);
@@ -71,15 +74,62 @@ export function BazaarLogin({ locale }: { locale: string }) {
     return () => clearTimeout(timer);
   }, [retryIn]);
 
-  const sendCode = async () => {
+  // While the person is in the bot, ask every two seconds whether it signed them in.
+  useEffect(() => {
+    if (ticket === null) return;
+    let stopped = false;
+    const poll = async () => {
+      if (stopped) return;
+      try {
+        const signed = await telegramLogin(ticket);
+        if (signed && !stopped) {
+          stopped = true;
+          router.replace(next ?? home);
+        }
+      } catch {
+        if (!stopped) {
+          stopped = true;
+          setTicket(null);
+          setStep('phone');
+          setError(t('login.telegramExpired'));
+        }
+      }
+    };
+    const timer = setInterval(() => void poll(), 2000);
+    const onFocus = () => void poll();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [ticket, telegramLogin, router, next, home, t]);
+
+  const sendCode = async (force?: OtpChannel) => {
     setBusy(true);
     setError(null);
     try {
-      const result = await requestCode(normalize(phone));
+      const result = await requestCode(normalize(phone), force);
       setCodeLength(result.codeLength);
       setRetryIn(result.retryAfter);
+      setChannel(result.channel);
       setStep('code');
       setTimeout(() => codeInput.current?.focus(), 50);
+    } catch (e) {
+      setError(describe(t, e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const viaTelegram = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const started = await startTelegramLogin();
+      setTicket(started.code);
+      setStep('telegram');
+      window.open(started.url, '_blank', 'noopener');
     } catch (e) {
       setError(describe(t, e));
     } finally {
@@ -135,12 +185,18 @@ export function BazaarLogin({ locale }: { locale: string }) {
           className={s.receipt}
           onSubmit={(event) => {
             event.preventDefault();
-            void (step === 'phone' ? sendCode() : confirm());
+            void (step === 'phone' ? sendCode() : step === 'code' ? confirm() : undefined);
           }}
         >
           <div className={s.rcHead}>
             <span className={s.rcTitle}>
-              {step === 'phone' ? t('login.title') : t('login.code')}
+              {step === 'phone'
+                ? t('login.title')
+                : step === 'telegram'
+                  ? t('login.viaTelegram')
+                  : channel === 'telegram'
+                    ? t('login.codeTelegram')
+                    : t('login.code')}
             </span>
           </div>
           {step === 'phone' ? (
@@ -156,10 +212,28 @@ export function BazaarLogin({ locale }: { locale: string }) {
                 placeholder="90 123 45 67"
               />
             </label>
+          ) : step === 'telegram' ? (
+            <>
+              <p className={s.rcHint}>{t('login.telegramWait')}</p>
+              <div className={s.rcActions} style={{ marginTop: 10 }}>
+                <button
+                  type="button"
+                  className={s.rcLink}
+                  onClick={() => {
+                    setTicket(null);
+                    setStep('phone');
+                  }}
+                >
+                  {t('login.sendSms')}
+                </button>
+              </div>
+            </>
           ) : (
             <>
               <p className={s.rcHint}>
-                {t('login.sent', { count: codeLength, phone: normalize(phone) })}
+                {channel === 'telegram'
+                  ? t('login.sentTelegram', { count: codeLength })
+                  : t('login.sent', { count: codeLength, phone: normalize(phone) })}
               </p>
               <input
                 ref={codeInput}
@@ -189,9 +263,13 @@ export function BazaarLogin({ locale }: { locale: string }) {
                   type="button"
                   className={s.rcLink}
                   disabled={retryIn > 0 || busy}
-                  onClick={sendCode}
+                  onClick={() => void sendCode(channel === 'telegram' ? 'sms' : undefined)}
                 >
-                  {retryIn > 0 ? t('login.retryIn', { seconds: retryIn }) : t('login.resend')}
+                  {retryIn > 0
+                    ? t('login.retryIn', { seconds: retryIn })
+                    : channel === 'telegram'
+                      ? t('login.sendSms')
+                      : t('login.resend')}
                 </button>
               </div>
             </>
@@ -201,22 +279,45 @@ export function BazaarLogin({ locale }: { locale: string }) {
               {error}
             </p>
           ) : null}
-          <div className={s.rcActions}>
-            <button
-              type="submit"
-              className={s.rcCta}
-              disabled={step === 'phone' ? !canSend : !canEnter}
-              style={{ opacity: (step === 'phone' ? canSend : canEnter) ? 1 : 0.55, width: '100%' }}
-            >
-              {step === 'phone'
-                ? busy
-                  ? t('login.sending')
-                  : t('login.getCode')
-                : busy
-                  ? t('login.checking')
-                  : t('login.enter')}
-            </button>
-          </div>
+          {step !== 'telegram' ? (
+            <div className={s.rcActions}>
+              <button
+                type="submit"
+                className={s.rcCta}
+                disabled={step === 'phone' ? !canSend : !canEnter}
+                style={{
+                  opacity: (step === 'phone' ? canSend : canEnter) ? 1 : 0.55,
+                  width: '100%',
+                }}
+              >
+                {step === 'phone'
+                  ? busy
+                    ? t('login.sending')
+                    : t('login.getCode')
+                  : busy
+                    ? t('login.checking')
+                    : t('login.enter')}
+              </button>
+            </div>
+          ) : null}
+          {step === 'phone' ? (
+            <div className={s.rcActions} style={{ marginTop: 8 }}>
+              <button
+                type="button"
+                className={s.rcCta}
+                disabled={busy}
+                onClick={() => void viaTelegram()}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  color: 'var(--pomegranate)',
+                  border: '1.5px solid var(--pomegranate)',
+                }}
+              >
+                {t('login.viaTelegram')}
+              </button>
+            </div>
+          ) : null}
           <p className={s.rcHint}>
             {t('login.terms')}{' '}
             <Link href={`${home}/offer`} className={s.rcLink}>

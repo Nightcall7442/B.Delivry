@@ -2,7 +2,7 @@ import { getBundle, tr } from '@bazar/storefront';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-import { BundleScreen } from '@/components/go/bundle-screen';
+import { BazaarBundle } from '@/components/bazar/bundle';
 import { listProducts, listStores } from '@/lib/catalog';
 
 export const dynamic = 'force-dynamic';
@@ -22,5 +22,5 @@ export default async function BundlePage({ params }: { params: Params }) {
 
   // The whole catalogue: a set crosses stalls, and 25 products is one page.
   const [products, stores] = await Promise.all([listProducts(locale), listStores(locale)]);
-  return <BundleScreen bundle={bundle} products={products} stores={stores} locale={locale} />;
+  return <BazaarBundle bundle={bundle} products={products} stores={stores} locale={locale} />;
 }

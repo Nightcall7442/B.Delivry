@@ -1,10 +1,8 @@
-/**
- * Route support/page.tsx
- *
- */
-import { PagePlaceholder } from '@/components/layout/page-placeholder';
+import { BazaarSupport } from '@/components/bazar/support';
+
+export const metadata = { title: 'Поддержка — Bazar Delivery' };
 
 export default async function SupportPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  return <PagePlaceholder title="Поддержка" locale={locale} />;
+  return <BazaarSupport locale={locale} />;
 }

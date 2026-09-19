@@ -7,10 +7,10 @@
  * navigation, the basket is a disc that turns into «Оформить» once it has
  * something in it, the profile is the initial in the corner.
  */
-import { arrivedToday, tr, unitLabel } from '@bazar/storefront';
+import { arrivedToday, chorsuTemperature, degrees, tr, unitLabel } from '@bazar/storefront';
 import type { CategoryDto, ProductDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -55,6 +55,11 @@ export function SceneHomeScreen() {
   const productLoad = useLoad(() => listProducts(), []);
   const evening = isEvening();
   const units = unitLabel(locale);
+  // The tag's temperature is the real one at Chorsu or nothing — never a number from the code.
+  const [temperature, setTemperature] = useState<number | null>(null);
+  useEffect(() => {
+    void chorsuTemperature().then(setTemperature);
+  }, []);
 
   const stores = storeLoad.data ?? [];
   const categories = categoryLoad.data ?? [];
@@ -181,6 +186,7 @@ export function SceneHomeScreen() {
               <ProductCard
                 key={product.id}
                 style={s.card}
+                compact
                 photo={product.images[0]?.url ?? null}
                 tilt={[-1.2, 1, 0.6, -0.8][i % 4] ?? 0}
                 side={i % 2 ? 'right' : 'left'}
@@ -213,7 +219,13 @@ export function SceneHomeScreen() {
       </ScrollView>
 
       <View style={[s.top, { top }]}>
-        <KraftTag>{evening ? 'Чорсу · вечер · до 21:00' : 'Чорсу · утро · +18°'}</KraftTag>
+        <KraftTag>
+          {temperature !== null
+            ? `Чорсу · ${evening ? 'вечер' : 'утро'} · ${degrees(temperature)}`
+            : evening
+              ? 'Чорсу · вечер · до 21:00'
+              : 'Чорсу · утро'}
+        </KraftTag>
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <SceneButton onPress={() => router.push('/(tabs)/orders')}>
             <Bell size={20} color={scene.pomegranate} />
@@ -285,8 +297,16 @@ const s = StyleSheet.create({
   greeting: { paddingHorizontal: 20, gap: 6 },
   vendors: { paddingHorizontal: 20, gap: 10, paddingBottom: 8 },
   rows: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 12, gap: 8, alignItems: 'flex-end' },
-  grid: { gap: 20, paddingHorizontal: 20, paddingTop: 6 },
-  card: { width: '100%' },
+  // Two to a row, like signs on a counter; the last odd one keeps its half.
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    rowGap: 18,
+    paddingHorizontal: 20,
+    paddingTop: 6,
+  },
+  card: { width: '47%', flexGrow: 1, maxWidth: '50%' },
   bottom: {
     position: 'absolute',
     left: 20,

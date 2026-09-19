@@ -1433,6 +1433,39 @@
   .phoneOnly {
     display: none !important;
   }
+  /* A wide screen: the basket bar is a pill in the corner, not a band across the counters. */
+  .bar {
+    justify-content: flex-end;
+    padding-right: clamp(20px, 4vw, 40px);
+    background: none;
+  }
+  .barInner {
+    width: auto;
+    max-width: 440px;
+  }
+  .checkout,
+  .glass {
+    min-width: 260px;
+  }
+  /* Narrow pages: the top row keeps the page's full width, the sheet stays a centred slip. */
+  .narrow {
+    max-width: 1120px;
+  }
+  .narrow > :not(.top) {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  /* A stall's photo is bright at the top on wide screens: the name needs the extra scrim. */
+  .photoStall::after {
+    background: linear-gradient(
+      rgba(20, 12, 4, 0.7) 0%,
+      rgba(20, 12, 4, 0.45) 28%,
+      rgba(20, 12, 4, 0.1) 48%,
+      rgba(24, 14, 4, 0.55) 62%,
+      rgba(24, 14, 4, 0.95) 100%
+    );
+  }
 }
 @media (max-width: 767px) {
   .desktopOnly {

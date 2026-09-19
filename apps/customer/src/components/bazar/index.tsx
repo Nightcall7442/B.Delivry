@@ -255,7 +255,7 @@ export function SceneHead({
   );
 }
 
-/** Kraft luggage tag with the punched hole: "Чорсу · утро · +18°". */
+/** Kraft luggage tag with the punched hole: "Чорсу · утро · +18°" (the degrees are live). */
 export function KraftTag({ children, tilt = -2 }: { children: ReactNode; tilt?: number }) {
   return (
     <View style={[s.tag, { transform: [{ rotate: `${tilt}deg` }] }]}>
@@ -278,6 +278,7 @@ export function Sign({
   count = 0,
   countLabel,
   accent = false,
+  compact = false,
   tilt = 0,
   onPress,
   onAdd,
@@ -292,6 +293,8 @@ export function Sign({
   countLabel?: string;
   /** Saffron card for "ещё N →". */
   accent?: boolean;
+  /** Half-width sign: smaller marker, three lines for «Грецкий орех, ядро». */
+  compact?: boolean;
   tilt?: number;
   onPress?: () => void;
   onAdd?: () => void;
@@ -311,7 +314,7 @@ export function Sign({
       ]}
     >
       <View style={s.pin} />
-      <Text style={s.signTitle} numberOfLines={2}>
+      <Text style={[s.signTitle, compact && s.signTitleCompact]} numberOfLines={compact ? 3 : 2}>
         {title}
       </Text>
       {price ? <Text style={[s.signPrice, accent && { color: scene.ink }]}>{price}</Text> : null}
@@ -348,6 +351,7 @@ export function ProductCard({
   photo,
   tilt = 0,
   side = 'left',
+  compact = false,
   onPress,
   style,
   ...sign
@@ -356,6 +360,8 @@ export function ProductCard({
   tilt?: number;
   /** Which corner of the photograph the sign hangs from. */
   side?: 'left' | 'right';
+  /** Two to a row: square photo, the sign across the whole card, no vendor line. */
+  compact?: boolean;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
   title: string;
@@ -370,7 +376,11 @@ export function ProductCard({
     <View style={[s.card, style]}>
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [s.cardPhoto, pressed && { opacity: 0.9 }]}
+        style={({ pressed }) => [
+          s.cardPhoto,
+          compact && s.cardPhotoCompact,
+          pressed && { opacity: 0.9 },
+        ]}
       >
         {photo ? (
           <Image
@@ -391,22 +401,30 @@ export function ProductCard({
       </Pressable>
       <Sign
         {...sign}
+        {...(compact ? { say: undefined } : {})}
+        compact={compact}
         tilt={tilt}
         {...(onPress ? { onPress } : {})}
-        style={[s.cardSign, side === 'right' && { marginLeft: 56, marginRight: 14 }]}
+        style={[
+          s.cardSign,
+          side === 'right' && { marginLeft: 56, marginRight: 14 },
+          compact && s.cardSignCompact,
+        ]}
       />
     </View>
   );
 }
 
-/** Row-name sign: just the uppercase word, for "Зелень · Фрукты · Нон". */
+/** Row-name sign: just the uppercase word, for "Зелень · Фрукты · Нон". `active` = the saffron one. */
 export function RowSign({
   title,
   tilt = 0,
+  active = false,
   onPress,
 }: {
   title: string;
   tilt?: number;
+  active?: boolean;
   onPress?: () => void;
 }) {
   return (
@@ -414,6 +432,7 @@ export function RowSign({
       onPress={onPress}
       style={({ pressed }) => [
         s.rowSign,
+        active && s.signAccent,
         { transform: [{ rotate: `${tilt}deg` }] },
         press.base,
         pressed && press.down,
@@ -660,6 +679,8 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
     paddingRight: 16,
   },
+  // «Мирзачульская» has to fit a half-width sign in one piece.
+  signTitleCompact: { fontSize: 16.5, lineHeight: 18, paddingRight: 10, letterSpacing: -0.2 },
   signPrice: { fontFamily: sceneFont.hand, fontSize: 17, lineHeight: 18, color: scene.pomegranate },
   signSay: {
     fontFamily: sceneFont.hand,
@@ -702,6 +723,8 @@ const s = StyleSheet.create({
     elevation: 5,
   },
   cardSign: { marginTop: -30, marginLeft: 14, marginRight: 56 },
+  cardPhotoCompact: { aspectRatio: 1 },
+  cardSignCompact: { marginTop: -26, marginLeft: 6, marginRight: 6, paddingHorizontal: 10 },
   rowSign: {
     backgroundColor: scene.paper,
     borderWidth: 1,

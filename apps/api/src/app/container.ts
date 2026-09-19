@@ -298,6 +298,7 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     repository: repositories.notifications,
     telegram,
     config: config.notifications.telegram,
+    cache,
     logger,
   });
 
@@ -315,6 +316,8 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     tokens,
     sessions,
     notifications,
+    telegramBot,
+    telegramUsers: repositories.notifications,
   });
 
   const audit = new AuditService(deps, repositories.audit);

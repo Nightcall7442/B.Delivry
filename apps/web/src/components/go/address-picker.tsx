@@ -10,6 +10,7 @@ import { createT } from '@bazar/i18n';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import bz from '@/components/bazar/bazar.module.css';
 import { GoShell } from '@/components/go/go-shell';
 import { HomeGlyph, Target } from '@/components/go/icons';
 import { DEFAULT_POINT, useAddress } from '@/features/address';
@@ -95,22 +96,25 @@ export function AddressPicker({ locale }: { locale: string }) {
       peek={0.34}
       map={{ center: point, zoom: 16, pin: true, onMoveEnd }}
       header={
-        <h1 className="font-display text-[22px] font-extrabold leading-7">{t('address.title')}</h1>
+        <div className={bz.rcHead}>
+          <span className={bz.rcTitle}>{t('address.title')}</span>
+        </div>
       }
       footer={
-        <button type="button" className="btn-go" onClick={save}>
-          {t('common.done')}
+        <button type="button" className={bz.rcCta} style={{ width: '100%' }} onClick={save}>
+          {t('common.done')} →
         </button>
       }
     >
-      <div className="mt-3 flex gap-2">
+      {/* The address is written by hand on the slip; the target button finds the phone's own spot. */}
+      <div className="flex items-end gap-2">
         <input
           value={text}
           onChange={(event) => {
             setText(event.target.value);
             setTyped(true);
           }}
-          className="go-field"
+          className={bz.field}
           placeholder={t('address.street')}
           autoComplete="street-address"
         />
@@ -118,26 +122,25 @@ export function AddressPicker({ locale }: { locale: string }) {
           type="button"
           onClick={locate}
           disabled={locating}
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-surface-mute text-xl disabled:opacity-50"
+          className={`${bz.payIcon} mb-1 disabled:opacity-50`}
           aria-label={t('address.myLocation')}
         >
           <Target />
         </button>
       </div>
       {saved.length > 0 ? (
-        <ul className="-mx-3 mt-2">
+        <ul className={`${bz.rcLines} mt-2`}>
           {saved.map((row) => (
             <li key={row.serverId}>
-              <button type="button" className="go-row" onClick={() => pick(row)}>
-                <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-saffron-100 text-saffron-600"
-                  aria-hidden
-                >
+              <button type="button" className={bz.payRow} onClick={() => pick(row)}>
+                <span className={bz.payIcon} aria-hidden>
                   <HomeGlyph />
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm">{row.text}</span>
-                  <span className="block text-xs text-ink-muted">
+                <span style={{ minWidth: 0, flex: 1 }}>
+                  <span className={`${bz.rcName} truncate`} style={{ display: 'block' }}>
+                    {row.text}
+                  </span>
+                  <span className={bz.rcUnit}>
                     {[
                       row.apartment ? t('address.apt', { value: row.apartment }) : '',
                       row.entrance ? t('address.entrance', { value: row.entrance }) : '',
@@ -146,12 +149,15 @@ export function AddressPicker({ locale }: { locale: string }) {
                       .join(' · ') || t('address.saved')}
                   </span>
                 </span>
+                <span className={bz.checkoutArrow} style={{ color: 'var(--pomegranate)' }}>
+                  →
+                </span>
               </button>
             </li>
           ))}
         </ul>
       ) : null}
-      <p className="mt-3 text-sm text-ink-muted">{t('address.hint')}</p>
+      <p className={bz.rcHint}>{t('address.hint')}</p>
     </GoShell>
   );
 }

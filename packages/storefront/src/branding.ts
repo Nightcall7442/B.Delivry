@@ -2,7 +2,7 @@
  * White-label colours: a tenant names one primary and one accent hex; the
  * apps need the whole scale (50…950) the design tokens are written against.
  * Lighter steps mix towards white, darker ones towards a deep version of the
- * hue, at ratios that reproduce the default cobalt scale from #3B6BE3.
+ * hue, at ratios that reproduce the default pomegranate scale from #9E2A2B.
  * ponytail: a linear mix in sRGB — fine for a wordmark and buttons; move to
  * OKLCH when somebody complains about a muddy 300.
  */

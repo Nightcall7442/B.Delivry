@@ -4,7 +4,7 @@
  */
 'use client';
 
-import type { CurrentUserDto } from '@bazar/types';
+import type { CurrentUserDto, OtpChannel } from '@bazar/types';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
@@ -14,8 +14,14 @@ interface AuthApi {
   user: CurrentUserDto | null;
   /** False until the stored session has been checked. */
   ready: boolean;
-  requestCode: (phone: string) => Promise<{ retryAfter: number; codeLength: number }>;
+  requestCode: (
+    phone: string,
+    channel?: OtpChannel,
+  ) => Promise<{ retryAfter: number; codeLength: number; channel: OtpChannel }>;
   verifyCode: (phone: string, code: string) => Promise<CurrentUserDto>;
+  startTelegramLogin: () => Promise<{ code: string; url: string; expiresIn: number }>;
+  /** One poll: the user once the bot signed them in, null while waiting; throws when expired. */
+  telegramLogin: (code: string) => Promise<CurrentUserDto | null>;
   signOut: () => Promise<void>;
   /** Re-reads the profile: after a Plus purchase, a language switch, a Telegram link. */
   refresh: () => Promise<void>;
@@ -41,9 +47,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => onSignedOut(() => setUser(null)), []);
 
-  const requestCode = useCallback(async (phone: string) => {
-    const result = await api().auth.requestOtp({ phone });
-    return { retryAfter: result.retryAfter, codeLength: result.codeLength };
+  const startTelegramLogin = useCallback(() => api().auth.telegramStart(), []);
+
+  const telegramLogin = useCallback(async (code: string) => {
+    const result = await api().auth.telegramStatus(code);
+    if (result.status === 'expired') throw new Error('expired');
+    if (result.status === 'pending') return null;
+    setUser(result.user);
+    return result.user;
+  }, []);
+
+  const requestCode = useCallback(async (phone: string, channel?: OtpChannel) => {
+    const result = await api().auth.requestOtp({ phone, ...(channel ? { channel } : {}) });
+    return {
+      retryAfter: result.retryAfter,
+      codeLength: result.codeLength,
+      channel: result.channel,
+    };
   }, []);
 
   const verifyCode = useCallback(async (phone: string, code: string) => {
@@ -65,8 +85,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, ready, requestCode, verifyCode, signOut, refresh }),
-    [user, ready, requestCode, verifyCode, signOut, refresh],
+    () => ({
+      user,
+      ready,
+      requestCode,
+      verifyCode,
+      startTelegramLogin,
+      telegramLogin,
+      signOut,
+      refresh,
+    }),
+    [user, ready, requestCode, verifyCode, startTelegramLogin, telegramLogin, signOut, refresh],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -290,20 +290,21 @@ export function PressCard({
 }
 
 /** "Could not load · Retry" — the one error surface every list shares. */
+/** A paper slip pinned where the content should be: the line in the vendor's hand, one way to try again. */
 export function LoadError({ onRetry }: { onRetry: () => void }) {
   const { t } = useLocale();
   return (
-    <Card style={s.error}>
-      <Text role="muted" style={{ flex: 1 }}>
-        {t('common.loadError')}
-      </Text>
-      <Button
-        label={t('common.retry')}
-        variant="secondary"
-        style={{ height: 40, paddingHorizontal: 14 }}
+    <View style={s.error}>
+      <View style={s.errorPin} />
+      <Text style={s.errorText}>{t('common.loadError')}</Text>
+      <Pressable
         onPress={onRetry}
-      />
-    </Card>
+        style={({ pressed }) => [s.errorRetry, pressed && { opacity: 0.85 }]}
+        accessibilityRole="button"
+      >
+        <Text style={s.errorRetryText}>{t('common.retry')} →</Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -470,11 +471,48 @@ const s = StyleSheet.create({
   empty: { alignItems: 'center', padding: 24, paddingVertical: 36, marginTop: 12 },
   error: {
     marginTop: 12,
-    padding: 14,
+    paddingTop: 14,
+    paddingBottom: 12,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    backgroundColor: '#F4EFE4',
+    borderWidth: 1,
+    borderColor: '#C9B99A',
+    transform: [{ rotate: '-0.6deg' }],
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
+  errorPin: {
+    position: 'absolute',
+    top: -5,
+    left: '50%',
+    marginLeft: -4,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#B42A31',
+  },
+  errorText: {
+    flex: 1,
+    fontFamily: sceneFont.hand,
+    fontSize: 20,
+    lineHeight: 22,
+    color: '#2B1B0E',
+  },
+  errorRetry: {
+    height: 36,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: '#9E2A2B',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorRetryText: { fontFamily: sceneFont.display, fontSize: 15, color: '#FBF1DE' },
   sectionHead: {
     marginTop: 24,
     marginBottom: 12,

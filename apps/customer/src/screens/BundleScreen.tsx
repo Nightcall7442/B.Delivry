@@ -1,8 +1,10 @@
 /**
- * One recipe set: the dish, what goes in it and from which stalls, one button
- * that puts everything on the cart.
+ * One recipe set as a walk along the counters: the dish fills the screen,
+ * under it the products it takes — each a photo card with its cardboard sign
+ * and the stall it comes from — and one pomegranate bar that puts the whole
+ * dastarkhan in the basket. Prices are live, never the set's own number.
  */
-import { Button, Photo, Text, color, font, useLocale } from '@bazar/mobile';
+import { ArrowLeft, Text as UiText, useLocale } from '@bazar/mobile';
 import {
   getBundle,
   photo,
@@ -13,27 +15,44 @@ import {
 } from '@bazar/storefront';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Shell } from '@/components/ui/Shell';
-import { DEFAULT_POINT, useAddress } from '@/features/address/store';
-import { useCartActions, useCartQuantities } from '@/features/cart/store';
+import {
+  BasketGlyph,
+  CartDisc,
+  Display,
+  Eyebrow,
+  Hand,
+  KraftTag,
+  ProductCard,
+  Scene,
+  SceneButton,
+  scene,
+  sceneFont,
+  useSceneTop,
+} from '@/components/bazar';
+import { Bone } from '@/components/ui/Page';
+import { useCartActions, useCartCount, useCartQuantities } from '@/features/cart/store';
 import { listProducts, listStores } from '@/lib/catalog';
 import { useData } from '@/lib/use-data';
 
 export function BundleScreen({ slug }: { slug: string }) {
   const router = useRouter();
   const { locale, t } = useLocale();
+  const insets = useSafeAreaInsets();
+  const top = useSceneTop();
+  const count = useCartCount();
   const bundle = getBundle(slug);
-  const { address } = useAddress();
   const quantities = useCartQuantities();
   const { setQuantity } = useCartActions();
   const [added, setAdded] = useState(false);
+  const units = unitLabel(locale);
 
-  const products = useData(() => listProducts(), []) ?? [];
+  const products = useData(() => listProducts(), []);
   const stores = useData(() => listStores(), []) ?? [];
   const resolved = useMemo(
-    () => (bundle ? resolveBundle(bundle, products) : null),
+    () => (bundle && products ? resolveBundle(bundle, products) : null),
     [bundle, products],
   );
   const storeById = useMemo(() => new Map(stores.map((store) => [store.id, store])), [stores]);
@@ -41,130 +60,178 @@ export function BundleScreen({ slug }: { slug: string }) {
     .map((id) => storeById.get(id))
     .filter((store): store is MapStoreDto => store !== undefined);
 
-  if (!bundle || !resolved) {
-    return (
-      <Shell back="/" expanded map={{ center: DEFAULT_POINT, zoom: 12, interactive: false }}>
-        <Text role="muted">{t('bundle.notFound')}</Text>
-      </Shell>
-    );
-  }
-
   const addAll = () => {
+    if (!resolved) return;
     for (const line of resolved.lines) {
       setQuantity(line.product.id, (quantities[line.product.id] ?? 0) + line.quantity);
     }
     setAdded(true);
-    setTimeout(() => router.push('/cart'), 400);
+    setTimeout(() => router.push('/(tabs)/cart'), 400);
   };
 
   return (
-    <Shell
-      back="/"
-      expanded
-      peek={0.82}
-      map={{
-        center: address?.point ?? stalls[0]?.point ?? DEFAULT_POINT,
-        zoom: 12,
-        markers: stalls.map((store) => ({
-          id: store.id,
-          point: store.point,
-          kind: 'store' as const,
-          label: tr(store.name, locale),
-        })),
-        interactive: false,
-      }}
-      header={
-        <View style={s.hero}>
-          <Image
-            source={{ uri: photo(bundle.photo, 960) }}
-            style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-          />
-          <View style={s.shade} />
-          <View style={s.heroText}>
-            <Text role="display" style={{ color: color.white }}>
-              {tr(bundle.title, locale)}
-            </Text>
-            <Text role="muted" style={{ color: 'rgba(255,255,255,0.85)' }}>
-              {tr(bundle.description, locale)}
-            </Text>
-          </View>
-        </View>
-      }
-      footer={
-        <Button
-          label={added ? t('bundle.added') : t('bundle.addAll')}
-          trailing={t.money(resolved.total)}
-          style={{ justifyContent: 'space-between' }}
-          disabled={resolved.lines.length === 0 || added || products.length === 0}
-          onPress={addAll}
-        />
-      }
-    >
-      <Text role="muted" style={{ marginTop: 12 }}>
-        {t.n('bundle.people', bundle.serves)} · {t.n('bundle.products', resolved.lines.length)} ·{' '}
-        {stalls.map((store) => tr(store.name, locale)).join(', ')}
-      </Text>
+    <View style={{ flex: 1, backgroundColor: scene.night }}>
+      <Scene source={bundle ? photo(bundle.photo, 960) : null} style={StyleSheet.absoluteFill}>
+        <View />
+      </Scene>
 
-      <View style={{ marginTop: 8 }}>
-        {resolved.lines.map((line) => (
-          <View key={line.product.id} style={s.line}>
-            <Photo
-              uri={line.product.images[0] ? photo(line.product.images[0].url, 250) : null}
-              style={s.thumb}
-            />
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text role="body" numberOfLines={1}>
-                {tr(line.product.name, locale)}
-              </Text>
-              <Text role="caption">
-                {line.quantity} {unitLabel(locale)[line.product.unit]} ·{' '}
-                {tr(storeById.get(line.product.storeId)?.name, locale)}
-              </Text>
-            </View>
-            <Text style={s.price}>{t.money(line.total)}</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: top + 56, paddingBottom: 120 + insets.bottom }}
+      >
+        {!bundle ? (
+          <View style={{ paddingHorizontal: 20, paddingTop: 40 }}>
+            <Hand size={24} color={scene.creamMuted}>
+              {t('bundle.notFound')}
+            </Hand>
           </View>
-        ))}
+        ) : (
+          <>
+            <View style={s.greeting}>
+              <Display size={40}>{tr(bundle.title, locale)}</Display>
+              <Hand size={22} color={scene.creamMuted} numberOfLines={3}>
+                {tr(bundle.description, locale)}
+              </Hand>
+            </View>
+            {/* Let the dish breathe before the counters. */}
+            <View style={{ height: 120 }} />
+
+            {!resolved ? (
+              <View style={{ paddingHorizontal: 20, gap: 12 }}>
+                <Bone style={{ height: 24, width: 200 }} />
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <Bone style={{ flex: 1, height: 220 }} />
+                  <Bone style={{ flex: 1, height: 220 }} />
+                </View>
+              </View>
+            ) : (
+              <>
+                <View style={s.head}>
+                  <Eyebrow>
+                    {t.n('bundle.products', resolved.lines.length)}
+                    {stalls.length > 0
+                      ? ` · ${stalls.map((store) => store.ownerName ?? tr(store.name, locale)).join(', ')}`
+                      : ''}
+                  </Eyebrow>
+                </View>
+                <View style={s.grid}>
+                  {resolved.lines.map((line, i) => {
+                    const stall = storeById.get(line.product.storeId);
+                    const qty = quantities[line.product.id] ?? 0;
+                    return (
+                      <ProductCard
+                        key={line.product.id}
+                        style={s.card}
+                        compact
+                        photo={line.product.images[0]?.url ?? null}
+                        tilt={[-1.2, 1, 0.6, -0.8][i % 4] ?? 0}
+                        title={tr(line.product.name, locale)}
+                        price={`${t.qty(line.quantity)} ${units[line.product.unit]} · ${t.money(line.total)}`}
+                        note={stall ? (stall.ownerName ?? tr(stall.name, locale)) : undefined}
+                        count={qty}
+                        countLabel={t('scene.inCart', {
+                          count: `${t.qty(qty)} ${units[line.product.unit]}`,
+                        })}
+                        onPress={() => router.push(`/product/${line.product.id}`)}
+                        onAdd={() => setQuantity(line.product.id, qty + line.quantity)}
+                      />
+                    );
+                  })}
+                </View>
+                {resolved.missing.length > 0 ? (
+                  <Hand size={20} color={scene.creamMuted} style={s.note}>
+                    {t.n('bundle.missing', resolved.missing.length)}
+                  </Hand>
+                ) : null}
+                {stalls.length > 1 ? (
+                  <UiText role="caption" style={s.multi}>
+                    {t('bundle.multiStall', { count: stalls.length })}
+                  </UiText>
+                ) : null}
+              </>
+            )}
+          </>
+        )}
+      </ScrollView>
+
+      <View style={[s.top, { top }]}>
+        <SceneButton
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+        >
+          <ArrowLeft size={20} color={scene.ink} />
+        </SceneButton>
+        {bundle ? <KraftTag>{t.n('bundle.people', bundle.serves)}</KraftTag> : null}
       </View>
 
-      {resolved.missing.length > 0 ? (
-        <Text role="caption" style={{ marginTop: 8 }}>
-          {t.n('bundle.missing', resolved.missing.length)}
-        </Text>
+      {resolved && resolved.lines.length > 0 ? (
+        <View style={[s.bottom, { bottom: 24 + insets.bottom }]}>
+          <Pressable
+            onPress={addAll}
+            disabled={added}
+            style={({ pressed }) => [s.cta, (pressed || added) && { opacity: 0.92 }]}
+          >
+            <BasketGlyph color={scene.cream} size={22} />
+            <View style={{ flex: 1 }}>
+              <Text style={s.ctaTitle}>{added ? t('bundle.added') : t('bundle.addAll')}</Text>
+              <Text style={s.ctaSub} numberOfLines={1}>
+                {t.n('bundle.products', resolved.lines.length)} · {t.money(resolved.total)}
+              </Text>
+            </View>
+            <Text style={s.ctaArrow}>→</Text>
+          </Pressable>
+          <CartDisc count={count} onPress={() => router.push('/(tabs)/cart')} />
+        </View>
       ) : null}
-
-      {stalls.length > 1 ? (
-        <Text role="muted" style={{ marginTop: 12 }}>
-          {t('bundle.multiStall', { count: stalls.length })}
-        </Text>
-      ) : null}
-    </Shell>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  hero: {
-    marginHorizontal: -16,
-    marginTop: -8,
-    height: 176,
-    backgroundColor: color.brand950,
-    overflow: 'hidden',
+  top: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 2,
   },
-  shade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(4,43,41,0.45)' },
-  heroText: { flex: 1, justifyContent: 'flex-end', padding: 16, gap: 4 },
-  line: {
+  greeting: { paddingHorizontal: 20, gap: 8 },
+  head: { paddingHorizontal: 20, paddingBottom: 12 },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    rowGap: 18,
+    paddingHorizontal: 20,
+  },
+  card: { width: '47%', flexGrow: 1, maxWidth: '50%' },
+  note: { paddingHorizontal: 20, paddingTop: 16 },
+  multi: { paddingHorizontal: 20, paddingTop: 10, color: scene.creamDim },
+  bottom: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.line,
   },
-  thumb: { width: 44, height: 44, borderRadius: 12 },
-  price: {
-    fontFamily: font.displayBold,
-    fontSize: 14,
-    color: color.ink,
-    fontVariant: ['tabular-nums'],
+  cta: {
+    flex: 1,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: scene.pomegranate,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 18,
+    shadowColor: scene.pomegranate,
+    shadowOpacity: 0.6,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
   },
+  ctaTitle: { fontFamily: sceneFont.display, fontSize: 18, color: scene.cream },
+  ctaSub: { fontFamily: sceneFont.uiText, fontSize: 11, color: '#D9C7A6' },
+  ctaArrow: { fontFamily: sceneFont.display, fontSize: 20, color: scene.cream },
 });

@@ -121,6 +121,10 @@ export const Tag = make(
 );
 /** The bonus coin: a ring with an open "c" — reads as currency at 12 px. */
 export const Coin = make(['M14.4 9.7a3.2 3.2 0 1 0 0 4.6'], { circles: [[12, 12, 9]] });
+export const Camera = make(
+  ['M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z'],
+  { circles: [[12, 13, 3.5]] },
+);
 export const Gift = make([
   'M20 12v9H4v-9',
   'M2 7h20v5H2z',

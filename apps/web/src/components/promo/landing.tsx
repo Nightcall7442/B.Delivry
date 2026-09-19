@@ -83,7 +83,7 @@ const COPY = {
       line: '«Базар начинается с купола»',
     },
     row: {
-      sign: ['Арбуз хорезмский', '25 000', 'шт', 'Дилноза-опа · павильон Б, место 7'],
+      sign: ['Арбуз хорезмский', '25 000', 'шт', 'Дилшод-ака · павильон Б, место 7'],
       tag: 'взвесим при вас',
       pills: ['Взвесим при вас', 'Свежесть под гарантией', 'Можно поторговаться'],
       about: 'Продавцы, которых вы знаете по имени. Их прилавок — у вас в телефоне, с утра.',
@@ -116,8 +116,8 @@ const COPY = {
       title: 'Что было на столе',
       line: 'те же прилавки, те же люди — на вашей кухне',
       items: [
-        ['p-melon', 'Дыня мирзачульская', '45 000', 'шт', 'Дилноза-опа', '«Выбираю по хвостику»'],
-        ['p-pomegranate', 'Гранат', '32 000', 'кг', 'Дилноза-опа', '«Тяжёлый — значит сочный»'],
+        ['p-melon', 'Дыня мирзачульская', '45 000', 'шт', 'Дилшод-ака', '«Выбираю по хвостику»'],
+        ['p-pomegranate', 'Гранат', '32 000', 'кг', 'Дилшод-ака', '«Тяжёлый — значит сочный»'],
         ['p-greens', 'Зелень, пучок', '4 000', 'шт', 'Фарход-ака', '«Режу на рассвете»'],
         ['p-obi-non', 'Оби нон, тандырный', '6 000', 'шт', 'Мунира-опа', '«Из тандыра с рассвета»'],
       ],
@@ -155,7 +155,7 @@ const COPY = {
       line: '«Bozor gumbazdan boshlanadi»',
     },
     row: {
-      sign: ['Xorazm tarvuzi', '25 000', 'dona', 'Dilnoza opa · B pavilyon, 7-joy'],
+      sign: ['Xorazm tarvuzi', '25 000', 'dona', 'Dilshod aka · B pavilyon, 7-joy'],
       tag: 'koʻz oldingizda tortamiz',
       pills: ['Koʻz oldingizda tortamiz', 'Yangiligi kafolatlangan', 'Savdolashish mumkin'],
       about: 'Ismini bilgan sotuvchilaringiz. Ularning peshtaxtasi — telefoningizda, ertalabdan.',
@@ -188,8 +188,8 @@ const COPY = {
       title: 'Dasturxonda nima bor edi',
       line: 'oʻsha peshtaxtalar, oʻsha odamlar — sizning oshxonangizda',
       items: [
-        ['p-melon', 'Mirzachoʻl qovuni', '45 000', 'dona', 'Dilnoza opa', '«Dumidan tanlayman»'],
-        ['p-pomegranate', 'Anor', '32 000', 'kg', 'Dilnoza opa', '«Ogʻiri — sersuv»'],
+        ['p-melon', 'Mirzachoʻl qovuni', '45 000', 'dona', 'Dilshod aka', '«Dumidan tanlayman»'],
+        ['p-pomegranate', 'Anor', '32 000', 'kg', 'Dilshod aka', '«Ogʻiri — sersuv»'],
         ['p-greens', 'Koʻkat, bogʻ', '4 000', 'dona', 'Farhod aka', '«Tongda oʻraman»'],
         ['p-obi-non', 'Obi non, tandir', '6 000', 'dona', 'Munira opa', '«Tongdan tandirdan»'],
       ],
@@ -438,9 +438,7 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
           >
             <div className={styles.receipt}>
               <div className={styles.quote}>{c.door.quote}</div>
-              <div className={styles.who}>
-                <span className={styles.stars}>★★★★★</span> {c.door.who}
-              </div>
+              <div className={styles.who}>{c.door.who}</div>
             </div>
           </div>
           <div
@@ -455,9 +453,7 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
         <div className={`${styles.copy} ${styles.copyRight}`} style={reveal(p, at('bag', 0.7), 1)}>
           <div className={styles.receipt}>
             <div className={styles.quote}>{c.door.quote}</div>
-            <div className={styles.who}>
-              <span className={styles.stars}>★★★★★</span> {c.door.who}
-            </div>
+            <div className={styles.who}>{c.door.who}</div>
           </div>
           <div className={styles.line} style={{ marginTop: 8 }}>
             {c.table.hint}

@@ -96,6 +96,24 @@ export class NotificationsRepository extends BaseRepository {
     });
   }
 
+  /** The chat a phone number talks to us from, if the person linked the bot. */
+  async telegramChatByPhone(tenantId: string, phone: string): Promise<string | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { tenantId, phone, deletedAt: null, telegramChatId: { not: null } },
+      select: { telegramChatId: true },
+    });
+    return user?.telegramChatId ?? null;
+  }
+
+  /** Binds a chat to a user after a Telegram login; a chat belongs to one person. */
+  async bindTelegramChat(userId: string, chatId: string): Promise<void> {
+    await this.prisma.user.updateMany({
+      where: { telegramChatId: chatId, NOT: { id: userId } },
+      data: { telegramChatId: null },
+    });
+    await this.prisma.user.update({ where: { id: userId }, data: { telegramChatId: chatId } });
+  }
+
   findByTelegramChat(chatId: string): Promise<TelegramUserRow | null> {
     return this.prisma.user.findUnique({
       where: { telegramChatId: chatId },

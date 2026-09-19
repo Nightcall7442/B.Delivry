@@ -4,6 +4,8 @@ import type {
   RequestOtpDto,
   RequestOtpResultDto,
   SessionDto,
+  TelegramLoginStartDto,
+  TelegramLoginStatusDto,
   VerifyOtpDto,
 } from '@bazar/types';
 
@@ -21,6 +23,23 @@ export const authApi = (http: Http, tokens: TokenStore) => ({
       auth: 'none',
     });
     await tokens.set({ accessToken: result.accessToken, refreshToken: result.refreshToken });
+    return result;
+  },
+
+  /** Opens a Telegram login: the app shows `url`, then polls `telegramStatus(code)`. */
+  telegramStart: () =>
+    http.request<TelegramLoginStartDto>('POST', '/auth/telegram/start', { auth: 'none' }),
+
+  /** One poll; on `done` the token pair is stored, so the next call is signed in. */
+  async telegramStatus(code: string): Promise<TelegramLoginStatusDto> {
+    const result = await http.request<TelegramLoginStatusDto>(
+      'GET',
+      `/auth/telegram/status?code=${encodeURIComponent(code)}`,
+      { auth: 'none' },
+    );
+    if (result.status === 'done') {
+      await tokens.set({ accessToken: result.accessToken, refreshToken: result.refreshToken });
+    }
     return result;
   },
 

@@ -1,7 +1,12 @@
 /**
  * Auth HTTP controller — thin: validate → call service → map response.
  */
-import type { LoginInput, RequestOtpInput, VerifyOtpInput } from '@bazar/validation';
+import type {
+  LoginInput,
+  RequestOtpInput,
+  TelegramLoginCodeInput,
+  VerifyOtpInput,
+} from '@bazar/validation';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { BaseController } from '../../../common/base/base.controller.js';
 import { UnauthorizedError } from '../../../common/errors/domain.errors.js';
@@ -36,8 +41,18 @@ export class AuthController extends BaseController {
       this.tenantId(request),
       input.phone,
       input.locale ?? request.locale,
+      input.channel,
     );
     return this.ok(reply, result);
+  };
+
+  telegramStart = async (request: FastifyRequest, reply: FastifyReply) => {
+    return this.ok(reply, await this.service.startTelegramLogin(this.tenantId(request)));
+  };
+
+  telegramStatus = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { code } = request.query as TelegramLoginCodeInput;
+    return this.ok(reply, await this.service.telegramLoginStatus(code));
   };
 
   verifyOtp = async (request: FastifyRequest, reply: FastifyReply) => {

@@ -9,7 +9,17 @@ import { phoneSchema } from './phone.schema.js';
 export const requestOtpSchema = z.object({
   phone: phoneSchema,
   locale: localeSchema.optional(),
+  channel: z.enum(['sms', 'telegram']).optional(),
 });
+
+/** The code the bot deep link carries: base64url, as issued. */
+export const telegramLoginCodeSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9_-]{8,64}$/, 'Invalid code'),
+});
+export type TelegramLoginCodeInput = z.infer<typeof telegramLoginCodeSchema>;
 
 export const verifyOtpSchema = z.object({
   phone: phoneSchema,

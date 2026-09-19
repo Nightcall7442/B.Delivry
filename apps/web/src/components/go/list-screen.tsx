@@ -5,6 +5,7 @@
  */
 'use client';
 
+import { Camera, Mic } from '@/components/go/icons';
 import { createT } from '@bazar/i18n';
 import { canDictate, dictate, parseShoppingList, tr, unitLabel } from '@bazar/storefront';
 import type { ProductDto } from '@bazar/types';
@@ -119,11 +120,13 @@ export function ListScreen({ products, locale }: { products: ProductDto[]; local
             aria-pressed={listening}
             onClick={toggleDictation}
           >
-            {listening ? `■ ${t('list.stop')}` : `🎤 ${t('list.dictate')}`}
+            <Mic size={16} />
+            {listening ? t('list.stop') : t('list.dictate')}
           </button>
         ) : null}
         <label className="go-chip cursor-pointer">
-          {reading ? t('list.recognizing') : `📷 ${t('list.photo')}`}
+          <Camera size={16} />
+          {reading ? t('list.recognizing') : t('list.photo')}
           <input
             type="file"
             accept="image/*"

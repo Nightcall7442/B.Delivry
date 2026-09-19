@@ -3,7 +3,18 @@
  * basket. Parsing runs on every keystroke, so the customer watches the list
  * turn into stall products and fixes the odd word before adding it all.
  */
-import { Button, Chip, Field, Panel, Text, api, color, useLocale } from '@bazar/mobile';
+import {
+  Button,
+  Chip,
+  Field,
+  Panel,
+  Text,
+  api,
+  color,
+  useLocale,
+  Camera,
+  Mic,
+} from '@bazar/mobile';
 import { canDictate, dictate, parseShoppingList, tr, unitLabel } from '@bazar/storefront';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
@@ -123,13 +134,15 @@ export default function ListRoute() {
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
         {canDictate() ? (
           <Chip
-            label={listening ? `■ ${t('list.stop')}` : `🎤 ${t('list.dictate')}`}
+            leading={<Mic size={16} color={listening ? color.white : color.ink} />}
+            label={listening ? t('list.stop') : t('list.dictate')}
             active={listening}
             onPress={toggleDictation}
           />
         ) : null}
         <Chip
-          label={reading ? t('list.recognizing') : `📷 ${t('list.photo')}`}
+          leading={<Camera size={16} color={color.ink} />}
+          label={reading ? t('list.recognizing') : t('list.photo')}
           onPress={() => void pickPhoto()}
         />
       </View>

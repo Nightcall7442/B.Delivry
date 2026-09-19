@@ -421,10 +421,6 @@
   font-weight: 700;
   color: #6a5a45;
 }
-.stars {
-  color: var(--saffron);
-  letter-spacing: 2px;
-}
 
 /* ---- after the film ---- */
 .inner {

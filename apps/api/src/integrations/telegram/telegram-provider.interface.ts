@@ -9,6 +9,10 @@ export interface TelegramMessage {
   disableNotification?: boolean;
   /** One row of inline URL buttons under the message. */
   buttons?: { text: string; url: string }[];
+  /** A one-time reply keyboard; `requestContact` asks Telegram for the person's own number. */
+  keyboard?: { text: string; requestContact?: boolean }[];
+  /** Takes a reply keyboard away again once it did its job. */
+  removeKeyboard?: boolean;
 }
 
 export interface TelegramResult {

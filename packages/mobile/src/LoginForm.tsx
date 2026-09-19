@@ -6,8 +6,9 @@
 import { isApiError } from '@bazar/api-client';
 import type { MessageKey, T } from '@bazar/i18n';
 import type { CurrentUserDto } from '@bazar/types';
+import type { OtpChannel } from '@bazar/types';
 import { useEffect, useRef, useState } from 'react';
-import { Linking, StyleSheet, TextInput, View } from 'react-native';
+import { AppState, Linking, StyleSheet, TextInput, View } from 'react-native';
 
 import { useAuth } from './auth';
 import { useT } from './locale';
@@ -46,14 +47,16 @@ export function LoginForm({
   onSignedIn: (user: CurrentUserDto) => void;
 }) {
   const t = useT();
-  const { requestCode, verifyCode } = useAuth();
+  const { requestCode, verifyCode, startTelegramLogin, telegramLogin } = useAuth();
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
-  const [step, setStep] = useState<'phone' | 'code'>('phone');
+  const [step, setStep] = useState<'phone' | 'code' | 'telegram'>('phone');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryIn, setRetryIn] = useState(0);
   const [codeLength, setCodeLength] = useState(6);
+  const [channel, setChannel] = useState<OtpChannel>('sms');
+  const [ticket, setTicket] = useState<string | null>(null);
   const codeInput = useRef<TextInput>(null);
 
   useEffect(() => {
@@ -62,15 +65,62 @@ export function LoginForm({
     return () => clearTimeout(timer);
   }, [retryIn]);
 
-  const send = async () => {
+  // While the person is in the bot, ask every two seconds whether it is done —
+  // and once more the moment they come back to the app.
+  useEffect(() => {
+    if (ticket === null) return;
+    let stopped = false;
+    const poll = async () => {
+      if (stopped) return;
+      try {
+        const user = await telegramLogin(ticket);
+        if (user && !stopped) {
+          stopped = true;
+          onSignedIn(user);
+        }
+      } catch {
+        if (!stopped) {
+          stopped = true;
+          setTicket(null);
+          setStep('phone');
+          setError(t('login.telegramExpired'));
+        }
+      }
+    };
+    const timer = setInterval(() => void poll(), 2000);
+    const sub = AppState.addEventListener('change', (state) => state === 'active' && void poll());
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+      sub.remove();
+    };
+  }, [ticket, telegramLogin, onSignedIn, t]);
+
+  const send = async (force?: OtpChannel) => {
     setBusy(true);
     setError(null);
     try {
-      const result = await requestCode(normalize(phone));
+      const result = await requestCode(normalize(phone), force);
       setRetryIn(result.retryAfter);
       setCodeLength(result.codeLength);
+      setChannel(result.channel);
       setStep('code');
       setTimeout(() => codeInput.current?.focus(), 50);
+    } catch (cause) {
+      setError(describe(t, cause));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const viaTelegram = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const started = await startTelegramLogin();
+      setTicket(started.code);
+      setStep('telegram');
+      await Linking.openURL(started.url);
     } catch (cause) {
       setError(describe(t, cause));
     } finally {
@@ -93,9 +143,23 @@ export function LoginForm({
 
   return (
     <View style={s.root}>
-      <Text role="display">{step === 'phone' ? (title ?? t('login.title')) : t('login.code')}</Text>
+      <Text role="display">
+        {step === 'phone'
+          ? (title ?? t('login.title'))
+          : step === 'telegram'
+            ? t('login.viaTelegram')
+            : channel === 'telegram'
+              ? t('login.codeTelegram')
+              : t('login.code')}
+      </Text>
       <Text role="muted">
-        {step === 'phone' ? t('login.hint') : t('login.sent', { count: codeLength, phone: full })}
+        {step === 'phone'
+          ? t('login.hint')
+          : step === 'telegram'
+            ? t('login.telegramWait')
+            : channel === 'telegram'
+              ? t('login.sentTelegram', { count: codeLength })
+              : t('login.sent', { count: codeLength, phone: full })}
       </Text>
 
       {step === 'phone' ? (
@@ -112,6 +176,17 @@ export function LoginForm({
           returnKeyType="done"
           style={s.field}
         />
+      ) : step === 'telegram' ? (
+        <Text
+          role="muted"
+          style={s.link}
+          onPress={() => {
+            setTicket(null);
+            setStep('phone');
+          }}
+        >
+          {t('login.sendSms')}
+        </Text>
       ) : (
         <>
           <Field
@@ -140,9 +215,17 @@ export function LoginForm({
             <Text
               role="muted"
               style={retryIn > 0 ? s.dim : s.link}
-              onPress={retryIn > 0 || busy ? undefined : () => void send()}
+              onPress={
+                retryIn > 0 || busy
+                  ? undefined
+                  : () => void send(channel === 'telegram' ? 'sms' : undefined)
+              }
             >
-              {retryIn > 0 ? t('login.retryIn', { seconds: retryIn }) : t('login.resend')}
+              {retryIn > 0
+                ? t('login.retryIn', { seconds: retryIn })
+                : channel === 'telegram'
+                  ? t('login.sendSms')
+                  : t('login.resend')}
             </Text>
           </View>
         </>
@@ -150,12 +233,22 @@ export function LoginForm({
 
       {error ? <Text style={s.error}>{error}</Text> : null}
 
-      <Button
-        label={busy ? t('login.wait') : step === 'phone' ? t('login.getCode') : t('login.enter')}
-        disabled={busy || (step === 'phone' ? full.length < 13 : code.length < codeLength)}
-        onPress={() => void (step === 'phone' ? send() : verify())}
-        style={s.button}
-      />
+      {step !== 'telegram' ? (
+        <Button
+          label={busy ? t('login.wait') : step === 'phone' ? t('login.getCode') : t('login.enter')}
+          disabled={busy || (step === 'phone' ? full.length < 13 : code.length < codeLength)}
+          onPress={() => void (step === 'phone' ? send() : verify())}
+          style={s.button}
+        />
+      ) : null}
+      {step === 'phone' ? (
+        <Button
+          variant="secondary"
+          label={t('login.viaTelegram')}
+          disabled={busy}
+          onPress={() => void viaTelegram()}
+        />
+      ) : null}
       <Text
         role="caption"
         style={s.legal}

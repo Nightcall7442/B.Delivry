@@ -7,11 +7,12 @@ import type { LatLngDto } from '@bazar/types';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { Home, Row, Target, Button, Field, Text, api, color, useAuth, useT } from '@bazar/mobile';
-import { addressLabel, fromAddressDto, type DeliveryAddress } from '@bazar/storefront';
+import { scene, sceneFont } from '@/components/bazar';
 import { Shell } from '@/components/ui/Shell';
+import { Home, Target, Button, api, noOutline, useAuth, useT } from '@bazar/mobile';
+import { addressLabel, fromAddressDto, type DeliveryAddress } from '@bazar/storefront';
 
 import { DEFAULT_POINT, useAddress } from '@/features/address/store';
 
@@ -101,64 +102,126 @@ export function AddressScreen() {
       back="history"
       peek={0.34}
       map={{ center: point, zoom: 16, pin: true, onMoveEnd }}
-      header={<Text role="display">{t('address.title')}</Text>}
-      footer={<Button label={t('common.done')} onPress={save} />}
+      header={<Text style={s.head}>{t('address.title').toUpperCase()}</Text>}
+      footer={<Button label={`${t('common.done')} →`} onPress={save} />}
     >
+      {/* The address is written by hand on the slip; the target finds the phone's own spot. */}
       <View style={s.line}>
-        <Field
-          style={{ flex: 1 }}
+        <TextInput
+          style={s.field}
           value={text}
           onChangeText={(value) => {
             setText(value);
             setTyped(true);
           }}
           placeholder={t('address.street')}
+          placeholderTextColor="#A08F76"
           autoComplete="street-address"
         />
         <Pressable
           onPress={locate}
           disabled={locating}
           style={[s.locate, locating && { opacity: 0.5 }]}
+          accessibilityLabel={t('address.myLocation')}
         >
-          <Target size={22} color={color.brand600} />
+          <Target size={20} color={scene.pomegranate} />
         </Pressable>
       </View>
-      {saved.length > 0 ? (
-        <View style={{ marginTop: 8 }}>
-          {saved.map((row) => (
-            <Row
-              key={row.serverId}
-              icon={<Home size={20} color={color.saffron600} />}
-              tone="saffron"
-              title={addressLabel(row.text)}
-              subtitle={
-                [
-                  row.apartment ? t('address.apt', { value: row.apartment }) : '',
-                  row.entrance ? t('address.entrance', { value: row.entrance }) : '',
-                ]
-                  .filter(Boolean)
-                  .join(' · ') || t('address.saved')
-              }
-              onPress={() => pick(row)}
-            />
-          ))}
-        </View>
-      ) : null}
-      <Text role="muted" style={{ marginTop: 12 }}>
-        {t('address.hint')}
-      </Text>
+      {saved.map((row) => (
+        <Pressable
+          key={row.serverId}
+          onPress={() => pick(row)}
+          style={({ pressed }) => [s.row, pressed && { opacity: 0.7 }]}
+        >
+          <View style={s.rowIcon}>
+            <Home size={18} color={scene.pomegranate} />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={s.rowName} numberOfLines={1}>
+              {addressLabel(row.text)}
+            </Text>
+            <Text style={s.rowMeta} numberOfLines={1}>
+              {[
+                row.apartment ? t('address.apt', { value: row.apartment }) : '',
+                row.entrance ? t('address.entrance', { value: row.entrance }) : '',
+              ]
+                .filter(Boolean)
+                .join(' · ') || t('address.saved')}
+            </Text>
+          </View>
+          <Text style={s.arrow}>→</Text>
+        </Pressable>
+      ))}
+      <Text style={s.hint}>{t('address.hint')}</Text>
     </Shell>
   );
 }
 
+// The sheet is a receipt: a small-caps head over a dashed rule, handwriting on kraft, dashed lines.
 const s = StyleSheet.create({
-  line: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  head: {
+    fontFamily: sceneFont.uiHeavy,
+    fontSize: 11,
+    letterSpacing: 1.8,
+    color: scene.pomegranate,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: scene.paperEdge,
+  },
+  line: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 10 },
+  field: {
+    flex: 1,
+    minHeight: 46,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    borderBottomWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: scene.paperEdge,
+    backgroundColor: 'rgba(234,216,178,0.35)',
+    fontFamily: sceneFont.hand,
+    fontSize: 19,
+    color: scene.ink,
+    ...(noOutline as object),
+  },
   locate: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: color.sand100,
+    width: 40,
+    height: 40,
+    marginBottom: 3,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: scene.paperEdge,
+    backgroundColor: scene.kraft,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: scene.paperEdge,
+  },
+  rowIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: scene.kraft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowName: { fontFamily: sceneFont.display, fontSize: 19, lineHeight: 23, color: scene.ink },
+  rowMeta: { fontFamily: sceneFont.uiText, fontSize: 12, color: '#7A6248' },
+  arrow: { fontFamily: sceneFont.display, fontSize: 20, color: scene.pomegranate },
+  hint: {
+    marginTop: 10,
+    fontFamily: sceneFont.uiText,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#7A6248',
   },
 });

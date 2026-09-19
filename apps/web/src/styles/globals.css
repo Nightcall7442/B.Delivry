@@ -169,6 +169,15 @@
     --brand-100: 238 200 196;
     --brand-700: 100 24 25;
     --saffron-100: 251 235 201;
+    /* The scene's own names, so bazar.module.css classes read the same inside a sheet (--ink stays the triplet). */
+    --cream: #fbf1de;
+    --cream-muted: #d9c7a6;
+    --paper: #f4efe4;
+    --paper-edge: #c9b99a;
+    --kraft: #ead8b2;
+    --pomegranate: #9e2a2b;
+    --saffron: #e39b2f;
+    --saffron-light: #f2c56b;
     background: #f4efe4;
     color: #2b1b0e;
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
@@ -182,40 +191,6 @@
   /* The grey tile every marketplace card sits on: no border, no shadow. */
   .tile {
     @apply rounded-3xl bg-surface-soft;
-  }
-
-  /* «Базар сегодня»: the tape slides by half its width (content is doubled) for a seamless loop. */
-  @keyframes marquee {
-    to {
-      transform: translateX(-50%);
-    }
-  }
-  .marquee {
-    animation: marquee 40s linear infinite;
-  }
-  .marquee:hover {
-    animation-play-state: paused;
-  }
-  /* A story's progress bar fills over its five seconds. */
-  @keyframes story-fill {
-    from {
-      width: 0%;
-    }
-    to {
-      width: 100%;
-    }
-  }
-  .story-fill {
-    animation: story-fill 5s linear forwards;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .marquee {
-      animation: none;
-    }
-    .story-fill {
-      animation: none;
-      width: 100%;
-    }
   }
 
   /* A row in a sheet: icon, text, chevron — the address line, a store, a setting. */

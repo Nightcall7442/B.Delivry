@@ -197,7 +197,14 @@ export const ru = {
   // ---------------------------------------------------------------- login
   'login.title': 'Вход по номеру',
   'login.code': 'Код из SMS',
-  'login.hint': 'Пришлём код в SMS. Без паролей.',
+  'login.codeTelegram': 'Код из Telegram',
+  'login.sentTelegram': 'Отправили {count} цифр в Telegram-бот — SMS не нужна',
+  'login.sendSms': 'Отправить код по SMS',
+  'login.viaTelegram': 'Войти через Telegram',
+  'login.telegramWait': 'Откройте бота и нажмите «Поделиться номером» — войдём сами, без кода.',
+  'login.telegramExpired':
+    'Вход через Telegram не завершился — попробуйте ещё раз или войдите по SMS.',
+  'login.hint': 'Код придёт в Telegram или SMS. Без паролей.',
   'login.sent': 'Отправили {count} цифр на {phone}',
   'login.getCode': 'Получить код',
   'login.sending': 'Отправляем…',
