@@ -24,6 +24,9 @@ export function createRedis(
     maxRetriesPerRequest: purpose === 'queue' ? null : 3,
     enableReadyCheck: purpose !== 'queue',
     lazyConnect: true,
+    // Railway's private network resolves `*.railway.internal` to IPv6 only; ioredis
+    // defaults to IPv4 lookups and would never find it. 0 = whatever DNS answers.
+    family: 0,
     // Commands issued while down queue up rather than throwing, which keeps a
     // brief Redis blip from turning into a wave of 500s.
     enableOfflineQueue: true,
