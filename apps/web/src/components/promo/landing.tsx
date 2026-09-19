@@ -135,14 +135,23 @@ const COPY = {
         ['Карта рядов', 'Вход, проход, прилавки по обе стороны — идите, как по базару.'],
       ],
     },
-    paper: {
+    gate: {
+      eyebrow: 'Ряды открываются в 6:30',
       title: 'Пройтись по ряду',
       line: 'выбирайте у людей, а не в каталоге',
       cta: 'Открыть базар',
-      app: 'Приложение для iPhone и Android — скоро',
-      foot: 'Bazar Delivery · Чорсу · Алайский · Фархадский · Ташкент',
+      app: 'iPhone и Android — скоро',
+      rows: [
+        ['Чорсу', 'зелень, специи, сухофрукты', '6:30–18:00'],
+        ['Алайский', 'фрукты, дыни, гранаты', '6:30–18:00'],
+        ['Фархадский', 'мясо — разделают при вас', '6:30–18:00'],
+        ['Магазины', 'у дома: молоко, вода, мука — с полки, а не с прилавка', 'до 23:00'],
+      ],
+      foot: 'Bazar Delivery · Ташкент',
       offer: 'Публичная оферта',
       privacy: 'Политика данных',
+      support: 'Поддержка',
+      telegram: 'Бот в Telegram',
     },
   },
   uz: {
@@ -210,14 +219,23 @@ const COPY = {
         ['Rastalar xaritasi', 'Kirish, yoʻlak, ikki tomonda peshtaxtalar — bozordagidek yuring.'],
       ],
     },
-    paper: {
+    gate: {
+      eyebrow: 'Rastalar 6:30 da ochiladi',
       title: 'Rasta boʻylab yuring',
       line: 'katalogdan emas, odamlardan tanlang',
       cta: 'Bozorni ochish',
-      app: 'iPhone va Android uchun ilova — tez orada',
-      foot: 'Bazar Delivery · Chorsu · Oloy · Farhod · Toshkent',
+      app: 'iPhone va Android — tez orada',
+      rows: [
+        ['Chorsu', 'koʻkat, ziravor, quruq mevalar', '6:30–18:00'],
+        ['Oloy', 'meva, qovun, anor', '6:30–18:00'],
+        ['Farhod', 'goʻsht — koʻz oldingizda boʻlaklanadi', '6:30–18:00'],
+        ['Doʻkonlar', 'uy yonida: sut, suv, un — peshtaxtadan emas, tokchadan', '23:00 gacha'],
+      ],
+      foot: 'Bazar Delivery · Toshkent',
       offer: 'Ommaviy oferta',
       privacy: 'Maʼlumotlar siyosati',
+      support: 'Yordam',
+      telegram: 'Telegram bot',
     },
   },
 } as const;
@@ -314,27 +332,47 @@ export function PromoLanding({ locale }: { locale: string }) {
       {/* The app on a phone: screens change as you scroll past */}
       <PhoneSection c={c} />
 
-      {/* The kraft sheet: the way in */}
-      <section id="rows" className={styles.paper}>
-        <div className={styles.inner}>
-          <h2 className={styles.paperTitle}>{c.paper.title}</h2>
-          <div className={styles.paperLine}>{c.paper.line}</div>
-          <div className={styles.ctaRow}>
-            <a href={home} className={styles.cta}>
-              {c.paper.cta}
-            </a>
-            <span className={`${styles.cta} ${styles.ctaPaper} ${styles.ctaSoon}`}>
-              {c.paper.app}
-            </span>
+      {/* The gate at dusk: the way in, the rows with their hours, the small print */}
+      <section id="rows" className={styles.gate}>
+        <div className={styles.gatePhoto} style={{ backgroundImage: 'url(/scenes/evening.jpg)' }} />
+        <div className={`${styles.inner} ${styles.gateInner}`}>
+          <div className={styles.gateSheet}>
+            <div className={styles.eyebrowInk}>{c.gate.eyebrow}</div>
+            <h2 className={styles.paperTitle}>{c.gate.title}</h2>
+            <div className={styles.paperLine}>{c.gate.line}</div>
+            <div className={styles.ctaRow}>
+              <a href={home} className={styles.cta}>
+                {c.gate.cta} →
+              </a>
+              <span className={styles.soonTag}>{c.gate.app}</span>
+            </div>
           </div>
-          <div className={styles.foot}>
-            {c.paper.foot}
-            <span className={styles.footLinks}>
-              <a href={`/${locale}/offer`}>{c.paper.offer}</a>
-              <a href={`/${locale}/privacy`}>{c.paper.privacy}</a>
-            </span>
+          <div className={styles.rows}>
+            {c.gate.rows.map(([sign, body, hours]) => (
+              <a key={sign} href={home} className={styles.row}>
+                <span className={styles.rowSign}>{sign}</span>
+                <span className={styles.rowBody}>{body}</span>
+                <span className={styles.rowCount}>{hours}</span>
+              </a>
+            ))}
           </div>
         </div>
+        <footer className={styles.footer}>
+          <div className={`${styles.inner} ${styles.footerInner}`}>
+            <span className={styles.footWordmark}>
+              Bazar<span>.</span>
+            </span>
+            <span>{c.gate.foot}</span>
+            <nav className={styles.footNav}>
+              <a href={`/${locale}/offer`}>{c.gate.offer}</a>
+              <a href={`/${locale}/privacy`}>{c.gate.privacy}</a>
+              <a href={`/${locale}/support`}>{c.gate.support}</a>
+              <a href="https://t.me/bazardelivery_uzbot" rel="noopener">
+                {c.gate.telegram}
+              </a>
+            </nav>
+          </div>
+        </footer>
       </section>
     </main>
   );
