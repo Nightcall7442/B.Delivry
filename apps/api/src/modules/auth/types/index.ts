@@ -9,7 +9,13 @@ export interface OtpChallenge {
   retryAfter: number;
   expiresIn: number;
   codeLength: number;
+  channel: 'sms' | 'telegram';
 }
+
+/** A Telegram login in flight: created by the app, completed by the bot, read once by the app. */
+export type TelegramLoginTicket =
+  | { tenantId: string; status: 'pending' }
+  | { tenantId: string; status: 'done'; result: AuthResult };
 
 export interface AuthResult {
   accessToken: string;

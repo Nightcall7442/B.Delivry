@@ -7,6 +7,7 @@ export {
   loginSchema,
   refreshSchema,
   changePasswordSchema,
+  telegramLoginCodeSchema,
 } from '@bazar/validation';
 
 import { idSchema } from '@bazar/validation';

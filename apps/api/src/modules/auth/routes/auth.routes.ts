@@ -9,7 +9,13 @@ import { requireAuth } from '../../../middleware/auth.middleware.js';
 import { keyedRateLimit, strictRateLimit } from '../../../middleware/rate-limit.middleware.js';
 import { validate } from '../../../middleware/validation.middleware.js';
 import type { AuthController } from '../controller/auth.controller.js';
-import { loginSchema, refreshSchema, requestOtpSchema, verifyOtpSchema } from '../schemas/index.js';
+import {
+  loginSchema,
+  refreshSchema,
+  requestOtpSchema,
+  telegramLoginCodeSchema,
+  verifyOtpSchema,
+} from '../schemas/index.js';
 
 export interface AuthRouteDeps {
   controller: AuthController;
@@ -49,6 +55,19 @@ export function authRoutes({ controller, limiter, security }: AuthRouteDeps) {
         ],
       },
       controller.verifyOtp,
+    );
+
+    // Sign in through the bot: the app opens the link, the person shares their number,
+    // the app polls the ticket. Starting one is cheap but still a front-door action.
+    app.post(
+      '/telegram/start',
+      { preHandler: [strictRateLimit(limiter, security, 'telegram-start-ip')] },
+      controller.telegramStart,
+    );
+    app.get(
+      '/telegram/status',
+      { preHandler: [validate({ query: telegramLoginCodeSchema })] },
+      controller.telegramStatus,
     );
 
     app.post(

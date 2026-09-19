@@ -21,10 +21,18 @@ import { ERROR_CODE } from '../../../common/errors/error-codes.js';
 import { RateLimitedError, UnauthorizedError } from '../../../common/errors/domain.errors.js';
 import type { AuthConfig } from '../../../config/index.js';
 import type { SessionStore } from '../../../infrastructure/redis/session.store.js';
+import type { TelegramBotService } from '../../notifications/service/telegram-bot.service.js';
+import type { NotificationsRepository } from '../../notifications/repository/notifications.repository.js';
 import type { NotificationSender } from '../../notifications/types/index.js';
 import { hashOtp, safeEqual, verifyPassword } from '../guards/index.js';
 import type { AuthRepository } from '../repository/auth.repository.js';
-import type { AuthResult, DeviceInfo, OtpChallenge, UserWithRoles } from '../types/index.js';
+import type {
+  AuthResult,
+  DeviceInfo,
+  OtpChallenge,
+  TelegramLoginTicket,
+  UserWithRoles,
+} from '../types/index.js';
 
 const encoder = new TextEncoder();
 
@@ -203,6 +211,9 @@ export interface AuthServiceDeps extends ServiceDeps {
   tokens: TokenService;
   sessions: SessionStore;
   notifications: NotificationSender;
+  telegramBot: TelegramBotService;
+  /** For binding a Telegram chat to the account that just signed in through it. */
+  telegramUsers: Pick<NotificationsRepository, 'bindTelegramChat'>;
 }
 
 export class AuthService extends BaseService {
@@ -211,6 +222,8 @@ export class AuthService extends BaseService {
   private readonly tokens: TokenService;
   private readonly sessions: SessionStore;
   private readonly notifications: NotificationSender;
+  private readonly telegramBot: TelegramBotService;
+  private readonly telegramUsers: AuthServiceDeps['telegramUsers'];
 
   constructor(deps: AuthServiceDeps) {
     super(deps);
@@ -219,13 +232,22 @@ export class AuthService extends BaseService {
     this.tokens = deps.tokens;
     this.sessions = deps.sessions;
     this.notifications = deps.notifications;
+    this.telegramBot = deps.telegramBot;
+    this.telegramUsers = deps.telegramUsers;
+    // The bot brings a verified phone; this side turns it into a session.
+    this.telegramBot.setLoginHandler((input) => this.completeTelegramLogin(input));
   }
 
   /**
    * Sends a login code. Answers identically whether or not the phone is known:
    * this endpoint must not become a way to enumerate customers.
    */
-  async requestOtp(tenantId: string, phone: string, locale: Locale): Promise<OtpChallenge> {
+  async requestOtp(
+    tenantId: string,
+    phone: string,
+    locale: Locale,
+    channel: 'sms' | 'telegram' | undefined = undefined,
+  ): Promise<OtpChallenge> {
     const lastSentAt = await this.repository.lastOtpAt(tenantId, phone);
     if (lastSentAt !== null) {
       const elapsed = (Date.now() - lastSentAt.getTime()) / 1000;
@@ -253,21 +275,76 @@ export class AuthService extends BaseService {
       expiresAt,
     });
 
-    await this.notifications.sendDirect({
-      tenantId,
-      phone,
-      locale,
-      template: TEMPLATE.AUTH_OTP,
-      params: { code, minutes: Math.round(this.config.otpTtlSeconds / 60) },
-    });
+    const minutes = Math.round(this.config.otpTtlSeconds / 60);
+    // A linked bot gets the code for free; SMS only when there is no chat or the person asked for it.
+    const viaTelegram =
+      channel !== 'sms' &&
+      (await this.telegramBot.sendLoginCode(tenantId, phone, locale, code, minutes));
+    if (!viaTelegram) {
+      await this.notifications.sendDirect({
+        tenantId,
+        phone,
+        locale,
+        template: TEMPLATE.AUTH_OTP,
+        params: { code, minutes },
+      });
+    }
 
-    this.logger.info({ phone: phone.slice(0, 7) }, 'otp sent');
+    this.logger.info({ phone: phone.slice(0, 7), viaTelegram }, 'otp sent');
 
     return {
       retryAfter: LIMITS.OTP_RESEND_COOLDOWN_SECONDS,
       expiresIn: this.config.otpTtlSeconds,
       codeLength: this.config.otpLength,
+      channel: viaTelegram ? 'telegram' : 'sms',
     };
+  }
+
+  /** «Войти через Telegram»: a ticket the bot completes once the person shares their number. */
+  startTelegramLogin(tenantId: string) {
+    return this.telegramBot.startLogin(tenantId);
+  }
+
+  /** The app polls this; a finished ticket is returned once, then forgotten. */
+  async telegramLoginStatus(
+    code: string,
+  ): Promise<{ status: 'pending' } | { status: 'expired' } | ({ status: 'done' } & AuthResult)> {
+    const ticket = await this.telegramBot.readLogin<TelegramLoginTicket>(code);
+    if (ticket === null) return { status: 'expired' };
+    if (ticket.status === 'pending') return { status: 'pending' };
+    return { status: 'done', ...ticket.result };
+  }
+
+  /** Called by the bot with a phone Telegram itself vouched for: no code to check. */
+  private async completeTelegramLogin(input: {
+    code: string;
+    phone: string;
+    chatId: string;
+    firstName: string | null;
+    locale: Locale;
+  }): Promise<'done' | 'expired'> {
+    const ticket = await this.telegramBot.readLogin<TelegramLoginTicket>(input.code);
+    if (ticket === null || ticket.status !== 'pending') return 'expired';
+
+    const user =
+      (await this.repository.findByPhone(ticket.tenantId, input.phone)) ??
+      (await this.repository.createUser({
+        tenantId: ticket.tenantId,
+        phone: input.phone,
+        locale: input.locale,
+        roles: [ROLE.CUSTOMER],
+      }));
+    this.assertUsable(user);
+    await this.telegramUsers.bindTelegramChat(user.id, input.chatId);
+    await this.repository.markLoggedIn(user.id);
+    const result = await this.tokens.issue(user, { deviceName: 'Telegram' });
+    await this.telegramBot.completeLogin(input.code, {
+      tenantId: ticket.tenantId,
+      status: 'done',
+      result: { ...result, isNewUser: false },
+    } satisfies TelegramLoginTicket);
+    this.logger.info({ phone: input.phone.slice(0, 7) }, 'telegram login');
+    return 'done';
   }
 
   /** Verifies the code and signs the caller in, creating the account if new. */

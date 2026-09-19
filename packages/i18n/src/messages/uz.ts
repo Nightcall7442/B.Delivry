@@ -178,7 +178,15 @@ export const uz: Catalogue = {
 
   'login.title': 'Raqam bilan kirish',
   'login.code': 'SMS’dagi kod',
-  'login.hint': 'Kodni SMS’da yuboramiz. Parolsiz.',
+  'login.codeTelegram': 'Telegram’dagi kod',
+  'login.sentTelegram': 'Telegram-botga {count} xonali kod yubordik — SMS kerak emas',
+  'login.sendSms': 'Kodni SMS orqali yuborish',
+  'login.viaTelegram': 'Telegram orqali kirish',
+  'login.telegramWait':
+    'Botni oching va «Raqamni yuborish» tugmasini bosing — kodsiz oʻzimiz kiritamiz.',
+  'login.telegramExpired':
+    'Telegram orqali kirish tugamadi — qaytadan urinib koʻring yoki SMS bilan kiring.',
+  'login.hint': 'Kod Telegram yoki SMS orqali keladi. Parolsiz.',
   'login.sent': '{phone} raqamiga {count} xonali kod yubordik',
   'login.getCode': 'Kod olish',
   'login.sending': 'Yuborilmoqda…',

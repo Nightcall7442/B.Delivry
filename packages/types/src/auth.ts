@@ -4,9 +4,14 @@
 import type { Locale } from '@bazar/constants';
 import type { CurrentUserDto } from './user.js';
 
+/** Where a login code goes: the bot when the phone has one linked, SMS otherwise. */
+export type OtpChannel = 'sms' | 'telegram';
+
 export interface RequestOtpDto {
   phone: string;
   locale?: Locale;
+  /** `sms` forces an SMS even when the bot is linked («не пришло? отправить SMS»). */
+  channel?: OtpChannel;
 }
 
 /** OTP is not echoed back; this is what the client needs to drive the next screen. */
@@ -16,7 +21,19 @@ export interface RequestOtpResultDto {
   expiresIn: number;
   /** Digits to render in the code input. */
   codeLength: number;
+  /** Where the code actually went. */
+  channel: OtpChannel;
 }
+
+/** Sign in through the bot: open the link, share the contact, the app picks the tokens up. */
+export interface TelegramLoginStartDto {
+  code: string;
+  url: string;
+  expiresIn: number;
+}
+
+export type TelegramLoginStatusDto =
+  { status: 'pending' } | { status: 'expired' } | ({ status: 'done' } & AuthResultDto);
 
 export interface VerifyOtpDto {
   phone: string;

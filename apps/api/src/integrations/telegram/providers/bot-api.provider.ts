@@ -38,7 +38,22 @@ export class TelegramBotProvider implements TelegramProvider {
           disable_notification: message.disableNotification ?? false,
           ...(message.buttons !== undefined && message.buttons.length > 0
             ? { reply_markup: { inline_keyboard: [message.buttons] } }
-            : {}),
+            : message.keyboard !== undefined
+              ? {
+                  reply_markup: {
+                    keyboard: [
+                      message.keyboard.map((key) => ({
+                        text: key.text,
+                        request_contact: key.requestContact ?? false,
+                      })),
+                    ],
+                    one_time_keyboard: true,
+                    resize_keyboard: true,
+                  },
+                }
+              : message.removeKeyboard
+                ? { reply_markup: { remove_keyboard: true } }
+                : {}),
         }),
       });
 

@@ -4,6 +4,7 @@
  * somebody else's orders), so that gets the closest look.
  */
 import { describe, expect, it } from 'vitest';
+import { MemoryCache } from '../../src/infrastructure/redis/cache.js';
 import type { TelegramMessage } from '../../src/integrations/telegram/index.js';
 import type { NotificationsRepository } from '../../src/modules/notifications/repository/notifications.repository.js';
 import { TelegramBotService } from '../../src/modules/notifications/service/telegram-bot.service.js';
@@ -41,6 +42,9 @@ function bot() {
     async recentOrders(_userId: string, take: number) {
       return orders.slice(0, take);
     },
+    async telegramChatByPhone(_tenantId: string, phone: string) {
+      return phone === '+998901112233' ? (users[0]!.chatId ?? null) : null;
+    },
   } as unknown as NotificationsRepository;
   const service = new TelegramBotService({
     repository,
@@ -55,10 +59,13 @@ function bot() {
       },
     },
     config: { webUrl: 'https://bazar.uz', botUsername: 'bazar_bot', webhookSecret: 's' },
+    cache: new MemoryCache(),
     logger: { info() {}, warn() {} } as never,
   });
   const say = (text: string, chat = 777) =>
-    service.handleUpdate({ message: { text, chat: { id: chat }, from: { language_code: 'en' } } });
+    service.handleUpdate({
+      message: { text, chat: { id: chat }, from: { id: chat, language_code: 'en' } },
+    });
   return { service, users, sent, say };
 }
 
@@ -99,6 +106,73 @@ describe('telegram bot', () => {
 
     await say('hello');
     expect(sent.at(-1)!.text).toContain('/orders');
+  });
+
+  it('signs in through a shared contact, but only the sender’s own, and only once', async () => {
+    const { service, sent, say } = bot();
+    const logins: string[] = [];
+    service.setLoginHandler(async ({ phone, chatId }) => {
+      logins.push(`${phone}@${chatId}`);
+      return 'done';
+    });
+    const { code, url } = await service.startLogin('t1');
+    expect(url).toBe(`https://t.me/bazar_bot?start=login_${code}`);
+    expect(await service.readLogin(code)).toEqual({ tenantId: 't1', status: 'pending' });
+
+    await say('/start login_stale');
+    expect(sent.at(-1)!.text).toContain('expired');
+
+    await say(`/start login_${code}`);
+    expect(sent.at(-1)!.keyboard).toEqual([{ text: 'Share my number', requestContact: true }]);
+
+    // Somebody else's contact card: refused, no login.
+    await service.handleUpdate({
+      message: {
+        chat: { id: 777 },
+        from: { id: 777, language_code: 'en' },
+        contact: { phone_number: '998901112233', user_id: 999 },
+      },
+    });
+    expect(logins).toEqual([]);
+    expect(sent.at(-1)!.text).toContain('your own number');
+
+    await service.handleUpdate({
+      message: {
+        chat: { id: 777 },
+        from: { id: 777, first_name: 'Bobur', language_code: 'en' },
+        contact: { phone_number: '998901112233', user_id: 777 },
+      },
+    });
+    expect(logins).toEqual(['+998901112233@777']);
+    expect(sent.at(-1)!.text).toContain('Done, Bobur');
+    expect(sent.at(-1)!.removeKeyboard).toBe(true);
+
+    // The chat's pending code is gone: a second contact does not sign in again.
+    await service.handleUpdate({
+      message: {
+        chat: { id: 777 },
+        from: { id: 777, language_code: 'en' },
+        contact: { phone_number: '998901112233', user_id: 777 },
+      },
+    });
+    expect(logins).toHaveLength(1);
+  });
+
+  it('hands a finished ticket over exactly once', async () => {
+    const { service } = bot();
+    const { code } = await service.startLogin('t1');
+    await service.completeLogin(code, { tenantId: 't1', status: 'done', result: { ok: 1 } });
+    expect(await service.readLogin<{ status: string }>(code)).toMatchObject({ status: 'done' });
+    expect(await service.readLogin(code)).toBeNull();
+  });
+
+  it('sends the login code to a linked chat and reports when there is none', async () => {
+    const { service, users, sent } = bot();
+    expect(await service.sendLoginCode('t1', '+998901112233', 'ru', '123456', 5)).toBe(false);
+    users[0]!.chatId = '777';
+    expect(await service.sendLoginCode('t1', '+998901112233', 'ru', '123456', 5)).toBe(true);
+    expect(sent.at(-1)!.text).toContain('<b>123456</b>');
+    expect(await service.sendLoginCode('t1', '+998900000000', 'ru', '123456', 5)).toBe(false);
   });
 
   it('refuses to answer an unlinked chat with anything but the how-to', async () => {
