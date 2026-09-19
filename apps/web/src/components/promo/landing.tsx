@@ -8,6 +8,7 @@
  * products), the app on a phone, and a kraft sheet with the way in. Copy is
  * inline: it is marketing text, not product strings.
  */
+import { SUPPORT } from '@bazar/constants';
 import { PHOTOS, photo } from '@bazar/storefront';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -367,7 +368,7 @@ export function PromoLanding({ locale }: { locale: string }) {
               <a href={`/${locale}/offer`}>{c.gate.offer}</a>
               <a href={`/${locale}/privacy`}>{c.gate.privacy}</a>
               <a href={`/${locale}/support`}>{c.gate.support}</a>
-              <a href="https://t.me/bazardelivery_uzbot" rel="noopener">
+              <a href={SUPPORT.telegram} rel="noopener">
                 {c.gate.telegram}
               </a>
             </nav>

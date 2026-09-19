@@ -1,11 +1,10 @@
 /** Support: call, the Telegram bot, the rules — as cards, with the hours on top. */
+import { SUPPORT } from '@bazar/constants';
 import { useRouter } from 'expo-router';
 import { Linking, View } from 'react-native';
 
 import { Card, Page, Glyph } from '@/components/ui/Page';
 import { Chat, Leaf, Phone, Row, Text, api, useAuth, useT } from '@bazar/mobile';
-
-const PHONE = '+998 71 200 00 00';
 
 export default function SupportRoute() {
   const t = useT();
@@ -22,13 +21,15 @@ export default function SupportRoute() {
         </Text>
       </Card>
       <Card style={{ marginTop: 12, paddingVertical: 4, paddingHorizontal: 12 }}>
-        <Row
-          icon={<Phone size={20} />}
-          tone="brand"
-          title={t('support.callTitle')}
-          subtitle={PHONE}
-          onPress={() => Linking.openURL('tel:+998712000000')}
-        />
+        {SUPPORT.phone ? (
+          <Row
+            icon={<Phone size={20} />}
+            tone="brand"
+            title={t('support.callTitle')}
+            subtitle={SUPPORT.phone}
+            onPress={() => Linking.openURL(`tel:${SUPPORT.phone?.replace(/\s/g, '')}`)}
+          />
+        ) : null}
         {user ? (
           <Row
             icon={<Chat size={20} />}
@@ -42,7 +43,15 @@ export default function SupportRoute() {
                 .catch(() => undefined)
             }
           />
-        ) : null}
+        ) : (
+          <Row
+            icon={<Chat size={20} />}
+            tone="brand"
+            title={t('support.telegramTitle')}
+            subtitle={t('support.telegramGuest')}
+            onPress={() => Linking.openURL(SUPPORT.telegram)}
+          />
+        )}
         <Row
           icon={<Leaf size={20} />}
           tone="saffron"
