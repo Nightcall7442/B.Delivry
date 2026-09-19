@@ -659,26 +659,6 @@
 }
 
 /* ---- closing paper section ---- */
-.paper {
-  position: relative;
-  background: var(--kraft);
-  color: var(--ink);
-  padding: clamp(96px, 14vh, 160px) clamp(20px, 6vw, 96px) clamp(64px, 12vh, 140px);
-}
-.paper::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  border-top: 4px dashed rgba(43, 27, 14, 0.25);
-}
-.paperInner {
-  max-width: 980px;
-  margin: 0 auto;
-  display: grid;
-  gap: 28px;
-}
 .paperTitle {
   font-family: var(--font-serif), Georgia, serif;
   font-weight: 700;
@@ -770,18 +750,6 @@
   text-decoration: none;
   box-shadow: 0 12px 30px rgba(158, 42, 43, 0.4);
 }
-.ctaPaper {
-  background: var(--paper);
-  color: var(--ink);
-  border: 1px solid var(--paper-edge);
-  box-shadow: none;
-}
-.foot {
-  margin-top: 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #6a5a45;
-}
 
 @media (max-width: 900px) {
   .chapters {
@@ -848,13 +816,159 @@
   opacity: 0.6;
   cursor: default;
 }
-.footLinks {
-  display: inline-flex;
-  gap: 14px;
-  margin-left: 14px;
+
+/* ---- the gate at dusk: the last screen ---- */
+.gate {
+  position: relative;
+  overflow: hidden;
+  color: var(--cream);
 }
-.footLinks a {
+.gatePhoto {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+.gatePhoto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(30, 20, 8, 0.96) 0%,
+    rgba(30, 20, 8, 0.35) 28%,
+    rgba(30, 20, 8, 0.5) 70%,
+    rgba(30, 20, 8, 0.96) 100%
+  );
+}
+.gateInner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: end;
+  padding: clamp(96px, 16vh, 180px) clamp(20px, 6vw, 96px) clamp(56px, 8vh, 96px);
+}
+.gateSheet {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  padding: clamp(24px, 3vw, 40px);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 6px;
+  transform: rotate(-0.6deg);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+}
+.gateSheet::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  border-top: 3px dashed rgba(43, 27, 14, 0.3);
+}
+.eyebrowInk {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pomegranate);
+}
+.soonTag {
+  position: relative;
+  display: inline-flex;
+  padding: 9px 14px 6px;
+  background: var(--kraft);
+  color: var(--ink);
+  font-family: var(--font-hand), cursive;
+  font-size: 19px;
+  line-height: 1;
+  transform: rotate(2deg);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+}
+.soonTag::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: #b42a31;
+  border: 1px solid #8e1f26;
+}
+.gate .rows {
+  grid-template-columns: 1fr 1fr;
+  padding-top: 14px;
+}
+.gate .row {
+  display: grid;
+  gap: 6px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+}
+.gate .rowBody,
+.gate .rowCount {
+  margin-top: 0;
+}
+.gate .rowBody {
+  margin-top: 8px;
+}
+.gate .rowSign {
+  white-space: nowrap;
+}
+.footer {
+  position: relative;
+  border-top: 1px solid rgba(251, 241, 222, 0.14);
+  background: rgba(20, 12, 4, 0.55);
+  backdrop-filter: blur(6px);
+}
+.footerInner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 22px;
+  padding: 18px clamp(20px, 6vw, 96px) calc(18px + env(safe-area-inset-bottom));
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cream-muted);
+}
+.footWordmark {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--cream);
+}
+.footWordmark span {
+  color: var(--saffron);
+}
+.footNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-left: auto;
+}
+.footNav a {
   color: inherit;
   text-decoration: underline dotted;
   text-underline-offset: 3px;
+}
+.footNav a:hover {
+  color: var(--cream);
+}
+@media (max-width: 900px) {
+  .gateInner {
+    grid-template-columns: 1fr;
+    align-items: start;
+    padding-top: clamp(72px, 12vh, 120px);
+  }
+}
+@media (max-width: 640px) {
+  .gate .rows {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .footNav {
+    margin-left: 0;
+  }
 }
