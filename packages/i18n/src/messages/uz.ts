@@ -210,7 +210,10 @@ export const uz: Catalogue = {
 
   'support.title': 'Yordam',
   'support.call': 'Qoʻngʻiroq {phone}',
-  'support.hours': 'Du–Ju 09:00–21:00, Sha–Ya 09:00–19:00. Chat keyingi versiyada.',
+  'support.hours': 'Du–Ju 09:00–21:00, Sha–Ya 09:00–19:00.',
+  'support.telegramGuest': 'Botga yozing — odam javob beradi',
+  'error.title': 'Nimadir xato ketdi',
+  'error.hint': 'Sahifani yangilang — savat va buyurtmalar joyida.',
   'notFound.title': 'Bunday sahifa yoʻq',
   'notFound.hint': 'Havola eskirgan yoki xato terilgan.',
   'menu.rules': 'Kafolatlar',

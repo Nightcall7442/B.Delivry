@@ -16,3 +16,4 @@ export * from './regex.js';
 export * from './roles.js';
 export * from './store-types.js';
 export * from './guarantees.js';
+export * from './support.js';

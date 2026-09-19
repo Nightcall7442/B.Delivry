@@ -1,17 +1,11 @@
-/**
- * Route-level error boundary.
- *
- */
+/** Route-level error boundary, on the scene like every other page. */
 'use client';
 
+import { useParams } from 'next/navigation';
+
+import { BazaarError } from '@/components/bazar/support';
+
 export default function Error({ reset }: { error: Error; reset: () => void }) {
-  return (
-    <main className="container-site flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
-      <h1 className="text-2xl font-medium">Что-то пошло не так</h1>
-      <p className="text-ink-muted">Попробуйте обновить страницу.</p>
-      <button type="button" onClick={reset} className="btn-primary mt-2">
-        Обновить
-      </button>
-    </main>
-  );
+  const params = useParams<{ locale?: string }>();
+  return <BazaarError locale={params?.locale === 'uz' ? 'uz' : 'ru'} onRetry={reset} />;
 }

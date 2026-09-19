@@ -5,6 +5,7 @@
  */
 'use client';
 
+import { SUPPORT } from '@bazar/constants';
 import { createT } from '@bazar/i18n';
 import Link from 'next/link';
 
@@ -14,8 +15,6 @@ import { api } from '@/lib/api';
 
 import { isEvening } from './index';
 import s from './bazar.module.css';
-
-const PHONE = '+998 71 200 00 00';
 
 export function BazaarSupport({ locale }: { locale: string }) {
   const t = createT(locale);
@@ -68,11 +67,13 @@ export function BazaarSupport({ locale }: { locale: string }) {
 
         <section className={s.receipt}>
           <ul className={s.rcLines}>
-            <li>
-              <a href="tel:+998712000000" className={s.payRow}>
-                {line(<Phone />, t('support.callTitle'), PHONE)}
-              </a>
-            </li>
+            {SUPPORT.phone ? (
+              <li>
+                <a href={`tel:${SUPPORT.phone.replace(/\s/g, '')}`} className={s.payRow}>
+                  {line(<Phone />, t('support.callTitle'), SUPPORT.phone)}
+                </a>
+              </li>
+            ) : null}
             {user ? (
               <li>
                 <button
@@ -92,7 +93,13 @@ export function BazaarSupport({ locale }: { locale: string }) {
                   )}
                 </button>
               </li>
-            ) : null}
+            ) : (
+              <li>
+                <a href={SUPPORT.telegram} className={s.payRow} rel="noopener">
+                  {line(<Chat />, t('support.telegramTitle'), t('support.telegramGuest'))}
+                </a>
+              </li>
+            )}
             <li>
               <Link href={`${home}/rules`} className={s.payRow}>
                 {line(<Leaf />, t('support.rulesTitle'), t('support.rulesHint'))}
@@ -100,6 +107,45 @@ export function BazaarSupport({ locale }: { locale: string }) {
             </li>
           </ul>
         </section>
+      </div>
+    </main>
+  );
+}
+
+/** The error boundary on the scene: one honest line and a way to try again. */
+export function BazaarError({ locale, onRetry }: { locale: string; onRetry: () => void }) {
+  const t = createT(locale);
+  return (
+    <main className={s.scene}>
+      <div
+        className={`${s.photo} ${s.photoDim}`}
+        style={{ backgroundImage: 'url(/scenes/morning.jpg)' }}
+      />
+      <div className={`${s.body} ${s.narrow}`}>
+        <div className={s.greeting} style={{ minHeight: 0, padding: '48px 0 26px' }}>
+          <h1 className={s.display} style={{ fontSize: 'clamp(30px, 4.6vw, 48px)' }}>
+            {t('error.title')}
+          </h1>
+          <p
+            className={s.hand}
+            style={{
+              fontSize: 22,
+              margin: '8px 0 0',
+              color: 'var(--cream-muted)',
+              maxWidth: '44ch',
+            }}
+          >
+            {t('error.hint')}
+          </p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className={s.rcCta}
+            style={{ marginTop: 20, display: 'inline-flex' }}
+          >
+            {t('common.retry')} →
+          </button>
+        </div>
       </div>
     </main>
   );
