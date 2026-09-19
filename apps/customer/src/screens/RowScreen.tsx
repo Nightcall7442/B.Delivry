@@ -4,7 +4,7 @@
  * with the person behind it, their line, and the cardboard signs of what is
  * on the counter — three of them, the rest on the stall itself.
  */
-import { tr, unitLabel } from '@bazar/storefront';
+import { isShopfront, tr, unitLabel } from '@bazar/storefront';
 import type { MapStoreDto } from '@bazar/storefront';
 import type { ProductDto } from '@bazar/types';
 import { Image } from 'expo-image';
@@ -37,7 +37,7 @@ import {
 import { Bone, LoadError } from '@/components/ui/Page';
 import { useCart, useCartActions, useCartCount } from '@/features/cart/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
-import { useLoad } from '@/lib/use-data';
+import { EMPTY, useLoad } from '@/lib/use-data';
 import { ArrowLeft, Chevron, Search, useLocale } from '@bazar/mobile';
 
 const SIGNS_ON_PAGE = 3;
@@ -59,14 +59,15 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
   // A stall is a store with at least one product of this category on the counter.
   const stalls = useMemo<Stall[]>(() => {
     const byStore = new Map<string, ProductDto[]>();
-    for (const product of productLoad.data ?? []) {
+    for (const product of productLoad.data ?? EMPTY) {
       if (!product.available) continue;
       const bucket = byStore.get(product.storeId) ?? [];
       bucket.push(product);
       byStore.set(product.storeId, bucket);
     }
-    return (storeLoad.data ?? [])
-      .filter((store) => byStore.has(store.id))
+    // Shops are not part of the row: their goods live behind their own boards.
+    return (storeLoad.data ?? EMPTY)
+      .filter((store) => byStore.has(store.id) && !isShopfront(store))
       .map((store) => ({ store, products: byStore.get(store.id) ?? [] }));
   }, [productLoad.data, storeLoad.data]);
 

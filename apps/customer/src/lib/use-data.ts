@@ -56,3 +56,11 @@ export function useLoad<T>(load: () => Promise<T>, deps: DependencyList): Load<T
 export function useData<T>(load: () => Promise<T>, deps: DependencyList): T | null {
   return useLoad(load, deps).data;
 }
+
+/** One frozen empty list for every `data ?? EMPTY`, so memos keyed on it stay put. */
+export const EMPTY: readonly never[] = Object.freeze([]);
+
+/** A list loader that is never null: rows or the shared empty list. */
+export function useList<T>(load: () => Promise<T[]>, deps: DependencyList): readonly T[] {
+  return useLoad(load, deps).data ?? EMPTY;
+}

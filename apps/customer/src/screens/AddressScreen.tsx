@@ -67,9 +67,9 @@ export function AddressScreen() {
     async (center: LatLngDto) => {
       setPoint(center);
       if (typed) return;
-      setText((await describe(center)) ?? fmt(center));
+      setText((await describe(center)) ?? t('address.pin', { coords: coords(center) }));
     },
-    [typed],
+    [typed, t],
   );
 
   const locate = async () => {

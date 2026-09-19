@@ -15,14 +15,14 @@ import { Button, Text, color, press, useAuth, useLocale, Receipt } from '@bazar/
 
 import { useOrderList } from '@/features/orders/store';
 import { listStores } from '@/lib/catalog';
-import { useData } from '@/lib/use-data';
+import { useList } from '@/lib/use-data';
 
 export function OrdersScreen() {
   const router = useRouter();
   const { locale, t } = useLocale();
   const { user, ready: authReady } = useAuth();
   const { orders, ready, reload } = useOrderList();
-  const stores = useData(() => listStores(), []) ?? [];
+  const stores = useList(() => listStores(), []);
   const storeOf = (id: string) => stores.find((store) => store.id === id) ?? null;
   const sorted = [...orders].sort(
     (a, b) => Number(isTerminalOrderStatus(a.status)) - Number(isTerminalOrderStatus(b.status)),

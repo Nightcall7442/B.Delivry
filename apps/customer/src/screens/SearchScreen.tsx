@@ -33,7 +33,7 @@ import {
 import { Bone, LoadError } from '@/components/ui/Page';
 import { useCart, useCartActions, useCartCount } from '@/features/cart/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
-import { useData, useLoad } from '@/lib/use-data';
+import { useData, useList, useLoad } from '@/lib/use-data';
 import { ArrowLeft, Search, noOutline, useLocale } from '@bazar/mobile';
 
 const TILTS = [-1.5, 1, -1, 1.5, -1, 1];
@@ -50,7 +50,7 @@ export function SearchScreen() {
   const [sort, setSort] = useState<SortKey>('default');
 
   const stores = useData(() => listStores(), []);
-  const categories = useData(() => listCategories(), []) ?? [];
+  const categories = useList(() => listCategories(), []);
   const productLoad = useLoad(
     () =>
       listProducts({

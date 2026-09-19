@@ -194,7 +194,7 @@ export function BazaarCheckout({
     return () => {
       alive = false;
     };
-  }, [user, address, items, store.id, followers.length, groupStores]);
+  }, [user, address, items, store.id, followers.length, groupStores, locale]);
 
   const totals = quote?.totals;
   const deliverable = quote?.deliverable ?? false;

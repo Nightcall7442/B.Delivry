@@ -10,6 +10,7 @@ import {
 import type { CartStoreGroup } from './cart.js';
 import { groupByStore } from './cart-group.js';
 import { branchesOf, closesToday, isShopfront, oneTrip, shopfronts } from './shops.js';
+import { basketGrams, estimateDelivery } from './pricing.js';
 import { plural } from './text.js';
 
 describe('listProducts', () => {
@@ -158,5 +159,27 @@ describe('shops in the basket', () => {
     expect(closesToday(shop, new Date('2026-09-19T10:00:00Z'))).toBe('23:00');
     expect(closesToday(meat, new Date('2026-09-19T10:00:00Z'))).toBe('18:00');
     expect(closesToday({ schedule: [] })).toBeNull();
+  });
+});
+
+describe('estimateDelivery', () => {
+  const chorsu = { lat: 41.3266, lng: 69.2347 };
+  const home = { lat: 41.356, lng: 69.287 };
+  it('follows the store threshold and never waives the car surcharge', () => {
+    const paid = estimateDelivery(chorsu, home, 10, { subtotal: 60_000_00 }).fee.amount;
+    expect(paid).toBeGreaterThan(0);
+    // the shop's own threshold, not the zone's 200 000
+    expect(
+      estimateDelivery(chorsu, home, 10, {
+        subtotal: 120_000_00,
+        freeDeliveryThreshold: 100_000_00,
+      }).fee.amount,
+    ).toBe(0);
+    expect(
+      estimateDelivery(chorsu, home, 10, {
+        subtotal: 250_000_00,
+        weightGrams: basketGrams([{ product: { weightGrams: 25_000 }, quantity: 1 }]),
+      }).fee.amount,
+    ).toBe(15_000_00);
   });
 });

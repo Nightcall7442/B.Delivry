@@ -6,15 +6,17 @@
  * stalls are two slips; stalls on one bazaar can share a courier.
  */
 import {
+  type CartLine,
   cashbackFor,
   decodeShare,
   encodeShare,
+  basketGrams,
   estimateDelivery,
   haggleFor,
+  isShopfront,
+  type MapStoreDto,
   oneTrip as oneTripStores,
   tr,
-  type CartLine,
-  type MapStoreDto,
   unitLabel,
 } from '@bazar/storefront';
 import { CASHBACK } from '@bazar/constants';
@@ -45,7 +47,7 @@ import {
   useCartReady,
 } from '@/features/cart/store';
 import { listProductsByIds, listStores } from '@/lib/catalog';
-import { useData } from '@/lib/use-data';
+import { useData, useList } from '@/lib/use-data';
 import {
   ArrowLeft,
   Clock,
@@ -59,6 +61,9 @@ import {
 } from '@bazar/mobile';
 
 const WEB_URL = process.env['EXPO_PUBLIC_WEB_URL'] ?? 'http://localhost:3000';
+
+/** A store the list has not delivered yet reads as a stall. */
+const NOBODY = { type: 'BAZAAR_STALL', ownerName: null } as const;
 
 export function CartScreen() {
   const router = useRouter();
@@ -130,7 +135,7 @@ export function CartScreen() {
     const url = `${WEB_URL}/${locale}/cart?share=${encodeURIComponent(encodeShare(quantities))}`;
     void Share.share({ message: url }).catch(() => undefined);
   };
-  const stores = useData(() => listStores(), []) ?? [];
+  const stores = useList(() => listStores(), []);
 
   const groups = useMemo(() => groupByStore(products, quantities), [products, quantities]);
   const storeById = useMemo(() => new Map(stores.map((s) => [s.id, s])), [stores]);
@@ -139,12 +144,11 @@ export function CartScreen() {
   const estimates = groups.map((group) => {
     const store = storeById.get(group.storeId);
     return store && address
-      ? estimateDelivery(
-          store.point,
-          address.point,
-          store.preparationMinutes,
-          group.subtotal.amount,
-        )
+      ? estimateDelivery(store.point, address.point, store.preparationMinutes, {
+          subtotal: group.subtotal.amount,
+          freeDeliveryThreshold: store.freeDeliveryThreshold,
+          weightGrams: basketGrams(group.lines),
+        })
       : null;
   });
   const grandTotal = groups.reduce(
@@ -170,9 +174,9 @@ export function CartScreen() {
       ? ''
       : single
         ? groups.length === 1
-          ? t('receipt.stall')
-          : t('receipt.stalls', { count: groups.length })
-        : t('receipt.separate', { count: groups.length });
+          ? t(isShopfront(storeById.get(single[0]!) ?? NOBODY) ? 'receipt.shop' : 'receipt.stall')
+          : t.n('receipt.together', groups.length)
+        : t.n('receipt.separate', groups.length);
 
   return (
     <View style={{ flex: 1, backgroundColor: scene.night }}>

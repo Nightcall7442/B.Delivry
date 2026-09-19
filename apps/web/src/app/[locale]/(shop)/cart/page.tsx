@@ -6,8 +6,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function CartPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  // ponytail: the basket holds product ids only, so the page loads the whole
-  // catalogue to price it. Fine at 24 products; a by-ids endpoint replaces this.
+  // The first page of the catalogue primes the basket; anything it holds beyond
+  // that (a shop shelf is bigger than one page) the sheet fetches by id itself.
   const [products, stores] = await Promise.all([listProducts(locale), listStores(locale)]);
   return <BazaarCart products={products} stores={stores} locale={locale} />;
 }

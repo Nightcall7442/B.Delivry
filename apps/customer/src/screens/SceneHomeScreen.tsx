@@ -14,6 +14,7 @@ import {
   degrees,
   isShopfront,
   shopfronts,
+  stallGoods,
   tr,
   unitLabel,
 } from '@bazar/storefront';
@@ -47,7 +48,7 @@ import { LoadError } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
 import { useCart, useCartActions } from '@/features/cart/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
-import { useLoad } from '@/lib/use-data';
+import { EMPTY, useLoad } from '@/lib/use-data';
 import { Bell, Mic, useAuth, useLocale } from '@bazar/mobile';
 
 const TILTS = [-1.5, 1, -1, 1.5, -1, 1];
@@ -73,8 +74,8 @@ export function SceneHomeScreen() {
     void chorsuTemperature().then(setTemperature);
   }, []);
 
-  const stores = storeLoad.data ?? [];
-  const categories = categoryLoad.data ?? [];
+  const stores = storeLoad.data ?? EMPTY;
+  const categories = categoryLoad.data ?? EMPTY;
   // People first: the stalls, open ones leading. Shops are buildings and get their own rail.
   const vendors = useMemo(
     () =>
@@ -92,12 +93,10 @@ export function SceneHomeScreen() {
   const counter = useMemo(() => {
     // Stall goods only — shop shelves live behind their boards. Open stalls lead; after
     // closing time the counters still show what they had, never the supermarket's water.
-    const stalls = stores.filter((s) => !isShopfront(s));
-    const all = new Set(stalls.map((s) => s.id));
-    const open = new Set(stalls.filter((s) => s.isOpen).map((s) => s.id));
+    const open = new Set(stores.filter((s) => s.isOpen && !isShopfront(s)).map((s) => s.id));
     const fresh = (p: ProductDto) => Number(arrivedToday(p));
-    return (productLoad.data ?? [])
-      .filter((p) => p.available && all.has(p.storeId) && (open.size === 0 || open.has(p.storeId)))
+    return stallGoods(productLoad.data ?? EMPTY, stores)
+      .filter((p) => p.available && (open.size === 0 || open.has(p.storeId)))
       .sort((a, b) => fresh(b) - fresh(a) || a.storeId.localeCompare(b.storeId));
   }, [productLoad.data, stores]);
   const inCart = counter.filter((p) => quantities[p.id]);

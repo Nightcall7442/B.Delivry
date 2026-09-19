@@ -12,13 +12,15 @@ import { createT, type T } from '@bazar/i18n';
 import {
   decodeShare,
   encodeShare,
+  basketGrams,
   estimateDelivery,
   haggleFor,
-  photo,
+  isShopfront,
+  type MapStoreDto,
   oneTrip as oneTripStores,
+  photo,
   tr,
   unitLabel,
-  type MapStoreDto,
 } from '@bazar/storefront';
 import { WS_EVENT, type HaggleDto, type ProductDto } from '@bazar/types';
 import Link from 'next/link';
@@ -41,6 +43,9 @@ import { isEvening } from './index';
 import s from './bazar.module.css';
 
 const WEIGHED = new Set(['KG', 'G']);
+
+/** A store the list has not delivered yet reads as a stall. */
+const NOBODY = { type: 'BAZAAR_STALL', ownerName: null } as const;
 
 export function BazaarCart({
   products,
@@ -176,10 +181,14 @@ export function BazaarCart({
               style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}
             >
               {oneTrip
-                ? t('receipt.stalls', { count: oneTrip.length })
+                ? t.n('receipt.together', oneTrip.length)
                 : groups.length === 1
-                  ? t('receipt.stall')
-                  : t('receipt.separate', { count: groups.length })}
+                  ? t(
+                      isShopfront(storeById.get(groups[0]!.storeId) ?? NOBODY)
+                        ? 'receipt.shop'
+                        : 'receipt.stall',
+                    )
+                  : t.n('receipt.separate', groups.length)}
             </p>
           ) : null}
         </div>
@@ -217,12 +226,11 @@ export function BazaarCart({
               const ids = [...group.lines, ...group.unavailable].map((l) => l.product.id);
               const estimate =
                 store && address
-                  ? estimateDelivery(
-                      store.point,
-                      address.point,
-                      store.preparationMinutes,
-                      group.subtotal.amount,
-                    )
+                  ? estimateDelivery(store.point, address.point, store.preparationMinutes, {
+                      subtotal: group.subtotal.amount,
+                      freeDeliveryThreshold: store.freeDeliveryThreshold,
+                      weightGrams: basketGrams(group.lines),
+                    })
                   : null;
               const total = group.subtotal.amount + (estimate?.fee.amount ?? 0);
               const weighed = group.lines.some((l) => WEIGHED.has(l.product.unit));

@@ -59,7 +59,7 @@ import { useAddress } from '@/features/address/store';
 import { groupByStore, useCartActions, useCartQuantities } from '@/features/cart/store';
 import { useOrderList } from '@/features/orders/store';
 import { getStore, listProducts } from '@/lib/catalog';
-import { useData } from '@/lib/use-data';
+import { useData, useList } from '@/lib/use-data';
 
 const SUBSTITUTION_OPTIONS = [
   SUBSTITUTION_POLICY.CALL,
@@ -111,22 +111,20 @@ export function CheckoutScreen({
 
   const store = useData(() => getStore(storeId), [storeId]);
   const extraKey = extraStoreIds.join(',');
-  const extraStores =
-    useData(
-      () =>
-        Promise.all(extraStoreIds.map((id) => getStore(id))).then((rows) =>
-          rows.filter((r) => r !== null),
-        ),
-      [extraKey],
-    ) ?? [];
-  const products =
-    useData(
-      () =>
-        Promise.all([storeId, ...extraStoreIds].map((id) => listProducts({ storeId: id }))).then(
-          (lists) => lists.flat(),
-        ),
-      [storeId, extraKey],
-    ) ?? [];
+  const extraStores = useList(
+    () =>
+      Promise.all(extraStoreIds.map((id) => getStore(id))).then((rows) =>
+        rows.filter((r) => r !== null),
+      ),
+    [extraKey],
+  );
+  const products = useList(
+    () =>
+      Promise.all([storeId, ...extraStoreIds].map((id) => listProducts({ storeId: id }))).then(
+        (lists) => lists.flat(),
+      ),
+    [storeId, extraKey],
+  );
   const allGroups = useMemo(() => groupByStore(products, quantities), [products, quantities]);
   const group = useMemo(
     () => allGroups.find((g) => g.storeId === storeId) ?? null,
@@ -219,7 +217,7 @@ export function CheckoutScreen({
     return () => {
       alive = false;
     };
-  }, [user, store, address, items, followers.length, groupStores]);
+  }, [user, store, address, items, followers.length, groupStores, locale]);
 
   const orderLines = [...(group?.lines ?? []), ...followers.flatMap((f) => f.group.lines)];
   const weightKg = orderLines

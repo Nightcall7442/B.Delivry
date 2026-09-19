@@ -20,11 +20,28 @@ export const HOURS = {
 /** Order limits a shop gets when it has none of its own (minor units). */
 export const SHOP_LIMITS = { minOrder: 50_000_00, freeDeliveryThreshold: 100_000_00 } as const;
 
-/** No person behind the counter and not a bazaar row → a shelf, drawn as a shopfront. */
+const ALWAYS_SHOP: ReadonlySet<string> = new Set([
+  STORE_TYPE.SUPERMARKET,
+  STORE_TYPE.DARK_STORE,
+  STORE_TYPE.WAREHOUSE,
+]);
+const NEVER_SHOP: ReadonlySet<string> = new Set([STORE_TYPE.BAZAAR_STALL, STORE_TYPE.ENTREPRENEUR]);
+
+/**
+ * A shelf rather than a person: supermarkets always, bazaar rows never, and a
+ * plain SHOP / LOCAL_POINT only while nobody is named behind its counter.
+ */
 export const isShopfront = (store: Pick<StoreDto, 'type' | 'ownerName'>): boolean =>
-  store.ownerName === null &&
-  store.type !== STORE_TYPE.BAZAAR_STALL &&
-  store.type !== STORE_TYPE.ENTREPRENEUR;
+  ALWAYS_SHOP.has(store.type) || (!NEVER_SHOP.has(store.type) && store.ownerName === null);
+
+/** Goods of the bazaar rows only — shop shelves stay behind their boards. */
+export function stallGoods<T extends { storeId: string }>(
+  products: readonly T[],
+  stores: readonly Pick<StoreDto, 'id' | 'type' | 'ownerName'>[],
+): T[] {
+  const stalls = new Set(stores.filter((store) => !isShopfront(store)).map((store) => store.id));
+  return products.filter((product) => stalls.has(product.storeId));
+}
 
 /** The stores of a bazaar row: everything that is not a shopfront. */
 export const isStall = (store: Pick<StoreDto, 'type' | 'ownerName'>): boolean =>
