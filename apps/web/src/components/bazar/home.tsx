@@ -9,12 +9,23 @@
 'use client';
 
 import { createT } from '@bazar/i18n';
-import { arrivedToday, chorsuTemperature, degrees, photo, tr } from '@bazar/storefront';
-import type { CategoryDto, ProductDto, StoreDto } from '@bazar/types';
+import {
+  arrivedToday,
+  chorsuTemperature,
+  closesToday,
+  degrees,
+  isShopfront,
+  photo,
+  shopfronts,
+  tr,
+  type MapStoreDto,
+} from '@bazar/storefront';
+import type { CategoryDto, ProductDto } from '@bazar/types';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Bell } from '@/components/go/icons';
+import { useAddress } from '@/features/address';
 import { useAuth } from '@/features/auth';
 
 import { BasketBar, ProductCard, isEvening } from './index';
@@ -32,13 +43,14 @@ export function BazaarHome({
   products,
   locale,
 }: {
-  stores: readonly StoreDto[];
+  stores: readonly MapStoreDto[];
   categories: readonly CategoryDto[];
   products: readonly ProductDto[];
   locale: string;
 }) {
   const t = createT(locale);
   const { user } = useAuth();
+  const { address } = useAddress();
   const evening = isEvening();
   // The tag's temperature is the real one at Chorsu or nothing — never a number from the code.
   const [temperature, setTemperature] = useState<number | null>(null);
@@ -47,21 +59,29 @@ export function BazaarHome({
   }, []);
   const home = `/${locale}`;
 
-  // People first: a stall with a named owner is a person, a supermarket is a building; open ones lead.
+  // People first: the stalls, open ones leading. Shops are buildings and get their own rail.
   const vendors = useMemo(
     () =>
-      [...stores].sort(
-        (a, b) =>
-          Number(b.isOpen) - Number(a.isOpen) || Number(!!b.ownerName) - Number(!!a.ownerName),
-      ),
+      stores
+        .filter((store) => !isShopfront(store))
+        .sort(
+          (a, b) =>
+            Number(b.isOpen) - Number(a.isOpen) || Number(!!b.ownerName) - Number(!!a.ownerName),
+        ),
     [stores],
   );
+  // One board per chain — the branch nearest the address takes the order.
+  const shops = useMemo(() => shopfronts(stores, address?.point ?? null), [stores, address]);
   // What is on the counters: this morning's arrivals first, stalls interleaved.
   const counter = useMemo(() => {
-    const open = new Set(stores.filter((store) => store.isOpen).map((store) => store.id));
+    // Stall goods only — shop shelves live behind their boards. Open stalls lead; after
+    // closing time the counters still show what they had, never the supermarket's water.
+    const stalls = stores.filter((store) => !isShopfront(store));
+    const all = new Set(stalls.map((store) => store.id));
+    const open = new Set(stalls.filter((store) => store.isOpen).map((store) => store.id));
     const fresh = (p: ProductDto) => Number(arrivedToday(p));
     return products
-      .filter((p) => p.available && (open.size === 0 || open.has(p.storeId)))
+      .filter((p) => p.available && all.has(p.storeId) && (open.size === 0 || open.has(p.storeId)))
       .sort((a, b) => fresh(b) - fresh(a) || a.storeId.localeCompare(b.storeId));
   }, [products, stores]);
 
@@ -139,6 +159,32 @@ export function BazaarHome({
             );
           })}
         </div>
+
+        {shops.length > 0 ? (
+          <>
+            <div className={s.head}>
+              <h2 className={s.headTitle}>{t('shop.nearby')}</h2>
+            </div>
+            <div className={s.rail}>
+              {shops.map((store) => {
+                const closes = closesToday(store);
+                return (
+                  <Link key={store.id} href={`${home}/stores/${store.id}`} className={s.shopSign}>
+                    {store.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={store.logoUrl} alt="" className={s.shopLogo} />
+                    ) : null}
+                    <span className={s.shopSignName}>{tr(store.name, locale)}</span>
+                    <span className={s.boardRule} />
+                    <span className={s.shopSignLine}>
+                      {closes ? t('shop.until', { time: closes }) : t('shop.closedToday')}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </>
+        ) : null}
 
         <div className={s.head}>
           <h2 className={s.headTitle}>{t('scene.walkRow')}</h2>

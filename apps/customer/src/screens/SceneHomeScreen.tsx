@@ -7,7 +7,16 @@
  * navigation, the basket is a disc that turns into «Оформить» once it has
  * something in it, the profile is the initial in the corner.
  */
-import { arrivedToday, chorsuTemperature, degrees, tr, unitLabel } from '@bazar/storefront';
+import {
+  arrivedToday,
+  chorsuTemperature,
+  closesToday,
+  degrees,
+  isShopfront,
+  shopfronts,
+  tr,
+  unitLabel,
+} from '@bazar/storefront';
 import type { CategoryDto, ProductDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -28,12 +37,14 @@ import {
   SceneButton,
   ProductCard,
   SceneHead,
+  ShopSign,
   VendorCard,
   scene,
   sceneFont,
   useSceneTop,
 } from '@/components/bazar';
 import { LoadError } from '@/components/ui/Page';
+import { useAddress } from '@/features/address/store';
 import { useCart, useCartActions } from '@/features/cart/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 import { useLoad } from '@/lib/use-data';
@@ -45,6 +56,7 @@ export function SceneHomeScreen() {
   const router = useRouter();
   const { locale, t } = useLocale();
   const { user } = useAuth();
+  const { address } = useAddress();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const top = useSceneTop();
@@ -63,21 +75,29 @@ export function SceneHomeScreen() {
 
   const stores = storeLoad.data ?? [];
   const categories = categoryLoad.data ?? [];
-  // People first: a stall with a named owner is a person, a supermarket is a building; open ones lead.
+  // People first: the stalls, open ones leading. Shops are buildings and get their own rail.
   const vendors = useMemo(
     () =>
-      [...stores].sort(
-        (a, b) =>
-          Number(b.isOpen) - Number(a.isOpen) || Number(!!b.ownerName) - Number(!!a.ownerName),
-      ),
+      stores
+        .filter((store) => !isShopfront(store))
+        .sort(
+          (a, b) =>
+            Number(b.isOpen) - Number(a.isOpen) || Number(!!b.ownerName) - Number(!!a.ownerName),
+        ),
     [stores],
   );
+  // One board per chain — the branch nearest the address takes the order.
+  const shops = useMemo(() => shopfronts(stores, address?.point ?? null), [stores, address]);
   // What is on the counters: this morning's arrivals first, then the rest, stalls interleaved.
   const counter = useMemo(() => {
-    const open = new Set(stores.filter((s) => s.isOpen).map((s) => s.id));
+    // Stall goods only — shop shelves live behind their boards. Open stalls lead; after
+    // closing time the counters still show what they had, never the supermarket's water.
+    const stalls = stores.filter((s) => !isShopfront(s));
+    const all = new Set(stalls.map((s) => s.id));
+    const open = new Set(stalls.filter((s) => s.isOpen).map((s) => s.id));
     const fresh = (p: ProductDto) => Number(arrivedToday(p));
     return (productLoad.data ?? [])
-      .filter((p) => p.available && (open.size === 0 || open.has(p.storeId)))
+      .filter((p) => p.available && all.has(p.storeId) && (open.size === 0 || open.has(p.storeId)))
       .sort((a, b) => fresh(b) - fresh(a) || a.storeId.localeCompare(b.storeId));
   }, [productLoad.data, stores]);
   const inCart = counter.filter((p) => quantities[p.id]);
@@ -150,6 +170,30 @@ export function SceneHomeScreen() {
             />
           ))}
         </ScrollView>
+
+        {shops.length > 0 ? (
+          <>
+            <SceneHead title={t('shop.nearby')} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.vendors}
+            >
+              {shops.map((store) => {
+                const closes = closesToday(store);
+                return (
+                  <ShopSign
+                    key={store.id}
+                    name={tr(store.name, locale)}
+                    logo={store.logoUrl}
+                    line={closes ? t('shop.until', { time: closes }) : t('shop.closedToday')}
+                    onPress={() => router.push(`/store/${store.id}`)}
+                  />
+                );
+              })}
+            </ScrollView>
+          </>
+        ) : null}
 
         <SceneHead
           title={t('scene.walkRow')}

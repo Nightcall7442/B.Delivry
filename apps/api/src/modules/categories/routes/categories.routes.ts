@@ -11,13 +11,14 @@ import {
   categoryIdParamsSchema,
   childrenQuerySchema,
   createCategorySchema,
+  treeQuerySchema,
   updateCategorySchema,
 } from '../schemas/index.js';
 
 export function categoriesRoutes(controller: CategoriesController) {
   return async (app: FastifyInstance): Promise<void> => {
     // The tree drives the storefront navigation, so reads are public.
-    app.get('/', controller.tree);
+    app.get('/', { preHandler: validate({ query: treeQuerySchema }) }, controller.tree);
     app.get(
       '/children',
       { preHandler: validate({ query: childrenQuerySchema }) },

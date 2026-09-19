@@ -45,6 +45,8 @@ interface ShiftApi {
   decline: (offer: DeliveryOfferDto) => Promise<void>;
   /** The one button on the active card: whatever the next step is. */
   advance: (handoverCode?: string) => Promise<void>;
+  /** At the pickup and nothing to collect: the order fails with the reason, money goes back. */
+  fail: (reason: string) => Promise<void>;
   reload: () => Promise<void>;
 }
 
@@ -223,6 +225,23 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
     [run, active, siblings, position],
   );
 
+  const fail = useCallback(
+    (reason: string) =>
+      run(async () => {
+        if (!active) return;
+        await api().delivery.fail(active.id, { reason });
+        for (const sibling of siblings) {
+          await api()
+            .delivery.fail(sibling.id, { reason })
+            .catch(() => undefined);
+        }
+        setSiblings([]);
+        setActive(null);
+        setCourier(await api().couriers.me());
+      }),
+    [run, active, siblings],
+  );
+
   const value = useMemo<ShiftApi>(
     () => ({
       courier,
@@ -237,6 +256,7 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
       accept,
       decline,
       advance,
+      fail,
       reload,
     }),
     [
@@ -252,6 +272,7 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
       accept,
       decline,
       advance,
+      fail,
       reload,
     ],
   );

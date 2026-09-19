@@ -12,8 +12,8 @@ export class CategoriesController extends BaseController {
     super();
   }
 
-  tree = async (_request: FastifyRequest, reply: FastifyReply) =>
-    this.ok(reply, await this.service.tree());
+  tree = async (request: FastifyRequest, reply: FastifyReply) =>
+    this.ok(reply, await this.service.tree(query<{ storeId?: string }>(request).storeId));
 
   children = async (request: FastifyRequest, reply: FastifyReply) => {
     const { parentId, root } = query<{ parentId?: string; root?: boolean }>(request);

@@ -14,6 +14,16 @@ export const storesApi = (http: Http) => ({
   mine: () =>
     http.paginated<StoreDto>('/stores', { pageSize: 50, mine: true }).then((p) => p.items),
   /** Vendor/staff: "these arrived today", optionally told to the season's customers. */
+  /** Shop cabinet: the whole shelf from one spreadsheet (see products.service importCsv). */
+  importProducts: (id: string, csv: string) =>
+    http.request<{ created: number; updated: number; skipped: string[] }>(
+      'POST',
+      `/stores/${id}/products/import`,
+      { body: { csv } },
+    ),
+  /** Shop cabinet: delivered orders of the period as a CSV the accountant opens in Excel. */
+  report: (id: string, query: { from?: string; to?: string } = {}) =>
+    http.request<{ filename: string; csv: string }>('GET', `/stores/${id}/report`, { query }),
   markArrivals: (
     id: string,
     body: { productIds: string[]; announce: boolean; photoUrl?: string },

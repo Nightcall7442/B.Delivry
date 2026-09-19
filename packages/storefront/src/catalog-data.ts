@@ -9,7 +9,7 @@ import { PRODUCT_UNIT, STORE_TYPE, type StoreType } from '@bazar/constants';
 import type { CategoryDto, LatLngDto, ProductDto, StoreDto } from '@bazar/types';
 
 import { PHOTOS } from './photos.js';
-import { SHOP_LIMITS } from './shops.js';
+import { HOURS, SHOP_LIMITS } from './shops.js';
 
 /** A store the map can show. Points without coordinates are not deliverable, so the storefront never sees them. */
 export type MapStoreDto = StoreDto & { point: LatLngDto };
@@ -122,7 +122,15 @@ function store(
     rating: options.rating,
     reviewCount: options.reviews,
     preparationMinutes: options.prep,
-    schedule: [],
+    // Rows open at dawn and close at six, shops trade till eleven — the same hours the seed writes.
+    schedule: Array.from({ length: 7 }, (_, weekday) => ({
+      id: `${id}-${weekday}`,
+      createdAt: '',
+      updatedAt: '',
+      weekday,
+      ...(shop ? HOURS.shop : HOURS.stall),
+      closed: false,
+    })),
     isOpen: options.open ?? true,
   };
 }
@@ -228,6 +236,7 @@ const STORES: MapStoreDto[] = [
       reviews: 164,
       prep: 10,
       description: 'Хлеб, молоко, яйца и всё, что кончилось дома в одиннадцать вечера.',
+      counter: 'lavka-inside',
     },
   ),
   store('non-uyi', 'Нон уйи', 'Non uyi', STORE_TYPE.SHOP, {

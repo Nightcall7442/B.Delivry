@@ -4,10 +4,12 @@
  * Makro) are many branches behind one shopfront: the customer sees the chain
  * once and the order goes to the branch nearest their address.
  */
-import { STORE_TYPE } from '@bazar/constants';
+import { SAME_BAZAAR_METERS, STORE_TYPE, SUBSTITUTION_POLICY } from '@bazar/constants';
+import type { SubstitutionPolicy } from '@bazar/constants';
+import { haversineMeters } from '@bazar/maps';
 import type { LatLngDto, StoreDto } from '@bazar/types';
 
-import { haversineMeters } from '@bazar/maps';
+import type { CartStoreGroup } from './cart.js';
 
 /** The store's hours by kind: rows open at dawn and close at six; shops trade till late. */
 export const HOURS = {
@@ -56,6 +58,47 @@ export function shopfronts<T extends StoreDto & { point: LatLngDto }>(
     }
   }
   return out;
+}
+
+/** Today's closing time in Tashkent as «HH:MM», or null when the store does not open today. */
+export function closesToday(store: Pick<StoreDto, 'schedule'>, now = new Date()): string | null {
+  // Tashkent is UTC+5 all year.
+  const weekday = new Date(now.getTime() + 5 * 3_600_000).getUTCDay();
+  const day = store.schedule.find((row) => row.weekday === weekday);
+  if (day === undefined || day.closed) return null;
+  const h = Math.floor(day.closesAt / 60);
+  const m = day.closesAt % 60;
+  return `${h}:${String(m).padStart(2, '0')}`;
+}
+
+/** A shop swaps a missing item for the same thing; at a stall the seller calls first. */
+export const defaultSubstitution = (
+  store: Pick<StoreDto, 'type' | 'ownerName'>,
+): SubstitutionPolicy =>
+  isShopfront(store) ? SUBSTITUTION_POLICY.REPLACE : SUBSTITUTION_POLICY.CALL;
+
+/**
+ * Cross-bazaar: the first cluster of stalls within one bazaar → one courier trip on
+ * offer. Shops never share a trip — their goods come off a shelf, not a row.
+ */
+export function oneTrip(
+  groups: readonly CartStoreGroup[],
+  storeById: ReadonlyMap<string, StoreDto & { point: LatLngDto }>,
+): string[] | null {
+  const stalls = groups.filter((g) => {
+    const store = storeById.get(g.storeId);
+    return store !== undefined && !isShopfront(store);
+  });
+  for (const lead of stalls) {
+    const leadPoint = storeById.get(lead.storeId)!.point;
+    const mates = stalls.filter(
+      (g) =>
+        g !== lead &&
+        haversineMeters(leadPoint, storeById.get(g.storeId)!.point) <= SAME_BAZAAR_METERS,
+    );
+    if (mates.length > 0) return [lead.storeId, ...mates.map((g) => g.storeId)];
+  }
+  return null;
 }
 
 /** All branches of the store's chain, nearest first; a single shop is its own list. */

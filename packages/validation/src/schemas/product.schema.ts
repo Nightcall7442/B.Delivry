@@ -41,6 +41,13 @@ export const updateProductSchema = createProductSchema
   });
 
 export const productListQuerySchema = z.object({
+  /** The basket's products by id (`ids=a&ids=b`); a lone value arrives as a string. */
+  ids: z
+    .preprocess(
+      (v) => (typeof v === 'string' ? [v] : v),
+      z.array(idSchema).max(LIMITS.CART_MAX_ITEMS),
+    )
+    .optional(),
   storeId: idSchema.optional(),
   categoryId: idSchema.optional(),
   minPrice: z.coerce.number().int().nonnegative().optional(),

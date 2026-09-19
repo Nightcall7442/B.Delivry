@@ -65,10 +65,8 @@ export class StoresController extends BaseController {
     const { id } = params<{ id: string }>(request);
     const { from, to } = request.query as { from?: string; to?: string };
     const csv = await this.service.report(id, from, to);
-    return reply
-      .header('content-type', 'text/csv; charset=utf-8')
-      .header('content-disposition', `attachment; filename="report-${id.slice(0, 8)}.csv"`)
-      .send(csv);
+    // JSON like every other endpoint; the cabinet turns it into a download itself.
+    return this.ok(reply, { filename: `report-${from ?? 'month'}-${id.slice(0, 8)}.csv`, csv });
   };
 
   markArrivals = async (request: FastifyRequest, reply: FastifyReply) => {

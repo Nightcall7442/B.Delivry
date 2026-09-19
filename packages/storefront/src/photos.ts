@@ -27,6 +27,11 @@ export const PHOTOS: Record<string, string> = {
   'makro-yunusabad': `${HOST}/makro-yunusabad.jpg`,
   'non-uyi': `${HOST}/non-uyi.jpg`,
   ziravor: `${HOST}/ziravor.jpg`,
+  // Shops: the aisle, the glass front, the corner shop at night and its counter.
+  korzinka: `${HOST}/korzinka.jpg`,
+  'korzinka-chilanzar': `${HOST}/korzinka-chilanzar.jpg`,
+  'lavka-yunusabad-4': `${HOST}/lavka-yunusabad-4.jpg`,
+  'lavka-inside': `${HOST}/lavka-inside.jpg`,
   // Bundles.
   'bundle-plov': `${HOST}/bundle-plov.jpg`,
   'bundle-shurpa': `${HOST}/bundle-shurpa.jpg`,

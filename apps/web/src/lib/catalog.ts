@@ -36,3 +36,18 @@ export async function listProducts(
   const page = await serverApi(locale).catalog.products({ ...query, pageSize: 100 });
   return page.items;
 }
+
+/** One page of a shop's shelf — the shop screen scrolls through these. */
+export async function listProductPage(
+  locale: string,
+  query: { storeId: string; categoryId?: string; search?: string; page?: number },
+) {
+  return serverApi(locale).catalog.products({ ...query, pageSize: SHELF_PAGE });
+}
+
+/** The shelves of one shop: only the categories with goods on sale there. */
+export async function listShelves(locale: string, storeId: string): Promise<CategoryDto[]> {
+  return serverApi(locale).catalog.categories({ storeId });
+}
+
+export const SHELF_PAGE = 24;

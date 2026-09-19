@@ -35,6 +35,13 @@ export async function listProducts(
   return page.items;
 }
 
+/** The basket's own products, sold out ones included, so every line can be priced. */
+export async function listProductsByIds(ids: readonly string[]): Promise<ProductDto[]> {
+  if (ids.length === 0) return [];
+  const page = await api().catalog.products({ ids: [...ids], availableOnly: false, pageSize: 100 });
+  return page.items;
+}
+
 export async function getProduct(id: string): Promise<ProductDto | null> {
   try {
     return await api().catalog.product(id);

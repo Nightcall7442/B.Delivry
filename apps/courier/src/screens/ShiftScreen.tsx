@@ -96,6 +96,7 @@ export function ShiftScreen() {
     accept,
     decline,
     advance,
+    fail,
   } = useShift();
 
   const markers: MapMarker[] = [
@@ -141,7 +142,13 @@ export function ShiftScreen() {
           {error ? <Text style={s.error}>{error}</Text> : null}
 
           {active ? (
-            <ActiveCard delivery={active} siblings={siblings} busy={busy} onAdvance={advance} />
+            <ActiveCard
+              delivery={active}
+              siblings={siblings}
+              busy={busy}
+              onAdvance={advance}
+              onFail={fail}
+            />
           ) : offers.length > 0 ? (
             offers.map((offer) => (
               <OfferCard
@@ -237,11 +244,13 @@ function ActiveCard({
   siblings,
   busy,
   onAdvance,
+  onFail,
 }: {
   delivery: DeliveryDto;
   siblings: DeliveryDto[];
   busy: boolean;
   onAdvance: (handoverCode?: string) => void;
+  onFail: (reason: string) => void;
 }) {
   const step = STEP[delivery.status];
   const atDoor = delivery.status === 'AT_DROPOFF';
@@ -249,6 +258,7 @@ function ActiveCard({
   const [code, setCode] = useState('');
   const [weighing, setWeighing] = useState(false);
   const [chat, setChat] = useState(false);
+  const [failing, setFailing] = useState(false);
   const toPickup = delivery.status === 'ASSIGNED' || delivery.status === 'AT_PICKUP';
 
   // At the stall the button first opens the scale sheet; "picked up" follows the save.
@@ -309,6 +319,31 @@ function ActiveCard({
           keyboardType="number-pad"
           style={s.codeInput}
         />
+      ) : null}
+
+      {/* Nothing to collect: the order fails here with the reason, the customer is refunded. */}
+      {toPickup ? (
+        <Pressable onPress={() => setFailing((v) => !v)} style={{ marginTop: 8 }} hitSlop={6}>
+          <RNText style={s.link}>{failing ? 'Всё-таки собрать' : 'Не собрать'}</RNText>
+        </Pressable>
+      ) : null}
+      {failing && toPickup ? (
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+          <Button
+            label="Нет товара"
+            variant="secondary"
+            disabled={busy}
+            onPress={() => onFail('Нет товара')}
+            style={{ flex: 1 }}
+          />
+          <Button
+            label="Магазин закрыт"
+            variant="secondary"
+            disabled={busy}
+            onPress={() => onFail('Магазин закрыт')}
+            style={{ flex: 1 }}
+          />
+        </View>
       ) : null}
 
       {step.button ? (

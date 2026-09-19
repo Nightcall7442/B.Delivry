@@ -91,6 +91,8 @@ export type UpdateStoreDto = Partial<Omit<CreateStoreDto, 'vendorId'>> & {
   ownerSince?: number | null;
   ownerPhotoUrl?: string | null;
   ownerMotto?: Translated | null;
+  /** Seven rows replace the week; the API validates opens < closes. */
+  schedule?: Pick<StoreScheduleDto, 'weekday' | 'opensAt' | 'closesAt' | 'closed'>[];
   chainSlug?: string | null;
   minOrder?: number | null;
   freeDeliveryThreshold?: number | null;

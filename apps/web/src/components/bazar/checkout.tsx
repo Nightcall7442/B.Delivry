@@ -12,23 +12,24 @@ import {
   type SubstitutionPolicy,
 } from '@bazar/constants';
 import {
-  TOP_UP_KG,
   addressLabel,
   combineQuotes,
+  defaultSubstitution,
   deliverySlots,
   describeOrderError,
   ensureServerAddress,
   forgottenProducts,
   freeDeliveryProgress,
   haggleFor,
+  type MapStoreDto,
   orderReasonText,
   paymentMethodText,
   photo,
   plusActive,
   substitutionText,
+  TOP_UP_KG,
   tr,
   unitLabel,
-  type MapStoreDto,
 } from '@bazar/storefront';
 import type { HaggleDto, OrderQuoteDto, ProductDto } from '@bazar/types';
 import { createT } from '@bazar/i18n';
@@ -154,7 +155,8 @@ export function BazaarCheckout({
       .then((wallet) => setBalance(wallet.amount))
       .catch(() => undefined);
   }, [user]);
-  const [policy, setPolicy] = useState<SubstitutionPolicy>('CALL');
+  // A shop swaps a missing item for the same thing; at a stall the seller calls first.
+  const [policy, setPolicy] = useState<SubstitutionPolicy>(defaultSubstitution(store));
   const [apartment, setApartment] = useState(address?.apartment ?? '');
   const [entrance, setEntrance] = useState(address?.entrance ?? '');
   const [quote, setQuote] = useState<OrderQuoteDto | null>(null);
@@ -549,6 +551,11 @@ export function BazaarCheckout({
                 <dt>{t('checkout.serviceFee')}</dt>
                 <dd>{t.money(totals.serviceFee.amount)}</dd>
               </div>
+            ) : null}
+            {quote?.heavy ? (
+              <p className={s.rcHint}>
+                {t('shop.heavy', { sum: t.money(quote.heavySurcharge.amount) })}
+              </p>
             ) : null}
             {totals && totals.discount.amount > 0 ? (
               <div className={`${s.rcRow} ${s.rcWarn}`}>

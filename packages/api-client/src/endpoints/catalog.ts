@@ -5,7 +5,7 @@ import type { Http } from '../client.js';
 import type { PageQuery } from './page.js';
 
 export const catalogApi = (http: Http) => ({
-  categories: (query: { parentId?: string } = {}) =>
+  categories: (query: { parentId?: string; storeId?: string } = {}) =>
     http.request<CategoryDto[]>('GET', '/categories', { query }),
   products: (query: ProductListQuery & PageQuery = {}) =>
     http.paginated<ProductDto>('/catalog', { ...query }),

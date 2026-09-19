@@ -7,7 +7,9 @@ import {
   listProducts,
   listStores,
 } from './catalog-data.js';
-import { branchesOf, isShopfront, shopfronts } from './shops.js';
+import type { CartStoreGroup } from './cart.js';
+import { groupByStore } from './cart-group.js';
+import { branchesOf, closesToday, isShopfront, oneTrip, shopfronts } from './shops.js';
 import { plural } from './text.js';
 
 describe('listProducts', () => {
@@ -125,5 +127,36 @@ describe('plural', () => {
       'товар',
       'товаров',
     ]);
+  });
+});
+
+describe('shops in the basket', () => {
+  it('never puts a shop on a shared trip and reads the closing hour by Tashkent weekday', async () => {
+    const stores = await listStores({});
+    const byId = new Map(stores.map((s) => [s.id, s]));
+    const products = await listProducts({});
+    const pick = (storeId: string) => products.find((p) => p.storeId === storeId)!.id;
+    // Farhad's meat counter and the Chilanzar Korzinka are 250 m apart — still two trips.
+    const stallAndShop = groupByStore(products, {
+      [pick('farhad-meat')]: 1,
+      [pick('korzinka-chilanzar')]: 1,
+    });
+    expect(oneTrip(stallAndShop, byId)).toBeNull();
+    // Two counters of one bazaar do share a courier.
+    const meat = byId.get('farhad-meat')!;
+    const twin = { ...meat, id: 'farhad-twin' };
+    const twoStalls: CartStoreGroup[] = [
+      ...groupByStore(products, { [pick('farhad-meat')]: 1 }),
+      { storeId: twin.id, lines: [], unavailable: [], subtotal: { amount: 0, currency: 'UZS' } },
+    ];
+    expect(oneTrip(twoStalls, new Map([...byId, [twin.id, twin]]))).toEqual([
+      'farhad-meat',
+      'farhad-twin',
+    ]);
+
+    const shop = byId.get('korzinka-yunusabad')!;
+    expect(closesToday(shop, new Date('2026-09-19T10:00:00Z'))).toBe('23:00');
+    expect(closesToday(meat, new Date('2026-09-19T10:00:00Z'))).toBe('18:00');
+    expect(closesToday({ schedule: [] })).toBeNull();
   });
 });

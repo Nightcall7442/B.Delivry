@@ -444,6 +444,47 @@ export function RowSign({
   );
 }
 
+/** A shop on the home rail: the painted board over the door — name, hours, a saffron rule. */
+export function ShopSign({
+  name,
+  line,
+  logo,
+  onPress,
+  width = 150,
+}: {
+  name: string;
+  line: string | null;
+  logo?: string | null;
+  onPress?: () => void;
+  width?: number;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [s.shopSign, { width }, press.base, pressed && press.down]}
+    >
+      {logo ? (
+        <Image
+          source={{ uri: logo }}
+          style={s.shopLogo}
+          contentFit="contain"
+          transition={FADE}
+          cachePolicy="memory-disk"
+        />
+      ) : null}
+      <Text style={s.shopSignName} numberOfLines={2}>
+        {name}
+      </Text>
+      <View style={s.shopRule} />
+      {line ? (
+        <Text style={s.shopSignLine} numberOfLines={1}>
+          {line}
+        </Text>
+      ) : null}
+    </Pressable>
+  );
+}
+
 /** A person: tall photo card, name, and their line in handwriting. */
 export function VendorCard({
   photo,
@@ -725,6 +766,32 @@ const s = StyleSheet.create({
   cardSign: { marginTop: -30, marginLeft: 14, marginRight: 56 },
   cardPhotoCompact: { aspectRatio: 1 },
   cardSignCompact: { marginTop: -26, marginLeft: 6, marginRight: 6, paddingHorizontal: 10 },
+  shopSign: {
+    minHeight: 96,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    justifyContent: 'flex-end',
+    gap: 4,
+    backgroundColor: scene.ink,
+    borderWidth: 1,
+    borderColor: 'rgba(227,155,47,0.35)',
+    shadowColor: '#000',
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+  },
+  shopLogo: { width: 36, height: 36, marginBottom: 4 },
+  shopSignName: {
+    fontFamily: sceneFont.display,
+    fontSize: 19,
+    lineHeight: 21,
+    letterSpacing: 0.3,
+    color: scene.saffronLight,
+  },
+  shopRule: { height: 2, width: 28, backgroundColor: scene.saffron, borderRadius: 1 },
+  shopSignLine: { fontFamily: sceneFont.uiText, fontSize: 11, color: scene.creamDim },
   rowSign: {
     backgroundColor: scene.paper,
     borderWidth: 1,
