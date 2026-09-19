@@ -152,10 +152,10 @@ const STORES: MapStoreDto[] = [
       prep: 25,
       description: 'Сезонные фрукты и ягоды, отбор под заказ.',
       owner: {
-        name: 'Дилноза-опа',
+        name: 'Дилшод-ака',
         since: 2016,
         motto: [
-          'Дыню выбираю по хвостику — ещё ни разу не ошиблась.',
+          'Дыню выбираю по хвостику — ещё ни разу не ошибся.',
           'Qovunni dumidan tanlayman — hali adashganim yoʻq.',
         ],
         photo: 'owner-fruit',
@@ -355,7 +355,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     {
       stock: 8,
       rating: 5,
-      say: ['Выбираю по хвостику — ещё ни разу не ошиблась', 'Dumidan tanlayman — hali adashmadim'],
+      say: ['Выбираю по хвостику — ещё ни разу не ошибся', 'Dumidan tanlayman — hali adashmadim'],
     },
   ],
   [
