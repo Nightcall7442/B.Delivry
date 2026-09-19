@@ -482,7 +482,7 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     products: new ProductsController(products),
     promotions: new PromotionsController(promotions),
     reviews: new ReviewsController(reviews),
-    stores: new StoresController(stores),
+    stores: new StoresController(stores, products),
     subscriptions: new SubscriptionsController(subscriptions),
     support: new SupportController(support),
     tracking: new TrackingController(tracking),

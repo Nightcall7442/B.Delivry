@@ -17,6 +17,7 @@ import {
   SAME_BAZAAR_METERS,
   SUBSTITUTION_POLICY,
   VEHICLE_AVG_SPEED_KMH,
+  STORE_TYPE,
   WEIGHTED_UNITS,
 } from '@bazar/constants';
 import { add, money, multiply, sumMoney, zero, type Money } from '@bazar/payments';
@@ -316,6 +317,10 @@ export class OrdersService extends BaseService {
   private async assertSameBazaar(storeIds: string[]): Promise<void> {
     if (new Set(storeIds).size < 2) throw new ConflictError('A group needs two different stalls');
     const stores = await Promise.all(storeIds.map((id) => this.stores.getOpenStore(id)));
+    // One courier walks one bazaar; a supermarket is a separate trip however close it is.
+    if (stores.some((store) => !STALL_TYPES.includes(store.type))) {
+      throw new ConflictError('Only bazaar stalls can share one delivery');
+    }
     const [first, ...rest] = stores as [OpenStore, ...OpenStore[]];
     for (const store of rest) {
       if (haversineMeters(first, store) > SAME_BAZAAR_METERS) {
@@ -371,6 +376,14 @@ export class OrdersService extends BaseService {
       to,
       subtotal,
       cityId,
+      weightGrams: items.reduce(
+        (sum, item) => sum + (item.weightGrams ?? 0) * Number(item.quantity),
+        0,
+      ),
+      ...(store.minOrder !== null ? { minOrder: money(store.minOrder, currency) } : {}),
+      ...(store.freeDeliveryThreshold !== null
+        ? { freeDeliveryThreshold: money(store.freeDeliveryThreshold, currency) }
+        : {}),
       ...(coupon !== null ? { discount: coupon.discount } : {}),
       ...(plus || coupon?.freeDelivery === true || input.groupFollower === true
         ? { freeDelivery: true }
@@ -398,6 +411,8 @@ export class OrdersService extends BaseService {
       },
       minOrder: quote.minOrder,
       freeDeliveryThreshold: quote.freeDeliveryThreshold,
+      heavy: quote.heavy,
+      heavySurcharge: quote.heavySurcharge,
     };
   }
 
@@ -834,6 +849,9 @@ export class OrdersService extends BaseService {
 
 /** Local aliases so the service reads like the contract it implements. */
 type OrderQuote = OrderQuoteDto;
+
+/** Stores a customer walks between with one courier: the rows of a bazaar. */
+const STALL_TYPES: readonly string[] = [STORE_TYPE.BAZAAR_STALL, STORE_TYPE.ENTREPRENEUR];
 type QuoteOrderInput = Omit<QuoteOrderDto, 'items'> & {
   items?: CreateOrderInput['items'];
   groupFollower?: boolean | undefined;
@@ -859,5 +877,7 @@ function unquotable(reason: string, none: Money): OrderQuote {
     totals: { subtotal: none, deliveryFee: none, serviceFee: none, discount: none, total: none },
     minOrder: none,
     freeDeliveryThreshold: null,
+    heavy: false,
+    heavySurcharge: none,
   };
 }

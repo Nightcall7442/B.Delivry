@@ -146,6 +146,9 @@ export interface OrderQuoteDto {
   minOrder: MoneyDto;
   /** Add this much more and delivery is free; null when the zone has no such rule. */
   freeDeliveryThreshold: MoneyDto | null;
+  /** Over the car threshold: a car courier is required and the surcharge is in the fee. */
+  heavy: boolean;
+  heavySurcharge: MoneyDto;
 }
 
 export interface CancelOrderDto {

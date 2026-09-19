@@ -22,6 +22,10 @@ export interface QuoteRequest {
   discount?: Money;
   freeDelivery?: boolean;
   thresholdSubtotal?: Money | undefined;
+  weightGrams?: number | undefined;
+  /** A shop's own limits win over the zone tariff's. */
+  minOrder?: Money | undefined;
+  freeDeliveryThreshold?: Money | null | undefined;
 }
 
 export interface PricingServiceDeps extends ServiceDeps {
@@ -57,7 +61,17 @@ export class PricingService extends BaseService {
       throw new UndeliverableAddressError(resolution.reason ?? 'Address is not deliverable');
     }
 
-    const tariff = await this.tariffFor(resolution.zone?.tariffId, resolution.cityId ?? undefined);
+    const zoneTariff = await this.tariffFor(
+      resolution.zone?.tariffId,
+      resolution.cityId ?? undefined,
+    );
+    const tariff = {
+      ...zoneTariff,
+      ...(request.minOrder !== undefined ? { minOrder: request.minOrder } : {}),
+      ...(request.freeDeliveryThreshold !== undefined
+        ? { freeDeliveryThreshold: request.freeDeliveryThreshold }
+        : {}),
+    };
     const surgeRules = await this.repository.listSurgeRules(tariff.id);
     const distanceMeters = await this.distanceBetween(request.from, request.to);
 
@@ -72,6 +86,7 @@ export class PricingService extends BaseService {
       ...(request.thresholdSubtotal !== undefined
         ? { thresholdSubtotal: request.thresholdSubtotal }
         : {}),
+      ...(request.weightGrams !== undefined ? { weightGrams: request.weightGrams } : {}),
     });
   }
 

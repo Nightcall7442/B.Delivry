@@ -13,6 +13,12 @@ export const VEHICLE_TYPE = {
 export type VehicleType = (typeof VEHICLE_TYPE)[keyof typeof VEHICLE_TYPE];
 
 /** Grams a courier can carry per vehicle: filters candidates by order weight. */
+/** From this weight (a sack of flour, two bottles of water) the order needs a car and pays for it. */
+export const HEAVY_ORDER_GRAMS = 15_000;
+export const HEAVY_VEHICLES: readonly VehicleType[] = ['CAR', 'VAN'];
+/** Added to the delivery fee of a heavy order, minor units (15 000 сум). */
+export const HEAVY_SURCHARGE_MINOR = 15_000_00;
+
 export const VEHICLE_CAPACITY_GRAMS: Record<VehicleType, number> = {
   FOOT: 8_000,
   BICYCLE: 15_000,

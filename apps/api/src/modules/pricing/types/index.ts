@@ -38,6 +38,8 @@ export interface QuoteInput {
   freeDelivery?: boolean;
   /** Subtotal the free-delivery threshold is measured against; the order's own by default. */
   thresholdSubtotal?: Money | undefined;
+  /** Goods weight; over HEAVY_ORDER_GRAMS the car surcharge applies. */
+  weightGrams?: number | undefined;
 }
 
 export interface Quote {
@@ -57,4 +59,6 @@ export interface Quote {
   /** Platform cut of the goods, held back from the vendor payout. */
   commission: Money;
   reason: string | null;
+  heavy: boolean;
+  heavySurcharge: Money;
 }

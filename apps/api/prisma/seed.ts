@@ -9,7 +9,7 @@
  * changes nothing.
  */
 import { Prisma, PrismaClient } from '@prisma/client';
-import { listProducts, listStores } from '@bazar/storefront';
+import { listProducts, listStores, HOURS, isShopfront } from '@bazar/storefront';
 
 const prisma = new PrismaClient();
 
@@ -292,11 +292,19 @@ async function seedStorefront(tenantId: string): Promise<{ stores: number; produ
         counterPhotoUrl: store.counterPhotoUrl,
         counterPhotoAt: store.counterPhotoAt ? new Date(store.counterPhotoAt) : null,
         ownerMotto: store.ownerMotto ?? Prisma.JsonNull,
+        chainSlug: store.chainSlug,
+        minOrder: store.minOrder,
+        freeDeliveryThreshold: store.freeDeliveryThreshold,
+        logoUrl: store.logoUrl,
         rating: store.rating,
         reviewCount: store.reviewCount,
         preparationMinutes: store.preparationMinutes,
       },
       update: {
+        chainSlug: store.chainSlug,
+        minOrder: store.minOrder,
+        freeDeliveryThreshold: store.freeDeliveryThreshold,
+        logoUrl: store.logoUrl,
         name: store.name,
         description: store.description ?? Prisma.JsonNull,
         coverUrl: store.coverUrl,
@@ -315,14 +323,15 @@ async function seedStorefront(tenantId: string): Promise<{ stores: number; produ
     });
     storeIds.set(store.id, row.id);
 
-    // Every day 06:00–23:00; the tandyr bakery only mornings, so one store is
-    // visibly closed for most of the day and the "closed" state gets exercised.
-    const closesAt = store.slug === 'non-uyi' ? 12 * 60 : 23 * 60;
+    // Rows open at dawn and close at six, shops trade till eleven; the tandyr bakery only
+    // mornings, so one store is visibly closed for most of the day.
+    const hours = isShopfront(store) ? HOURS.shop : HOURS.stall;
+    const closesAt = store.slug === 'non-uyi' ? 12 * 60 : hours.closesAt;
     for (let weekday = 0; weekday < 7; weekday += 1) {
       await prisma.storeSchedule.upsert({
         where: { storeId_weekday: { storeId: row.id, weekday } },
-        create: { storeId: row.id, weekday, opensAt: 6 * 60, closesAt },
-        update: { opensAt: 6 * 60, closesAt },
+        create: { storeId: row.id, weekday, opensAt: hours.opensAt, closesAt },
+        update: { opensAt: hours.opensAt, closesAt },
       });
     }
   }
@@ -343,6 +352,7 @@ async function seedStorefront(tenantId: string): Promise<{ stores: number; produ
       quantityStep: product.quantityStep,
       available: product.available,
       stock: product.stock,
+      weightGrams: product.weightGrams,
       rating: product.rating,
       reviewCount: product.reviewCount,
     };

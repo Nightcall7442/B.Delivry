@@ -132,6 +132,8 @@ export function combineQuotes(quotes: readonly OrderQuoteDto[]): OrderQuoteDto |
     },
     minOrder: leader.minOrder,
     freeDeliveryThreshold: leader.freeDeliveryThreshold,
+    heavy: quotes.some((q) => q.heavy),
+    heavySurcharge: sum((q) => q.heavySurcharge),
   };
 }
 

@@ -1,6 +1,9 @@
 /**
  * Store types: BAZAAR_STALL | SHOP | SUPERMARKET | LOCAL_POINT | ENTREPRENEUR (extensible: RESTAURANT, DARK_STORE, WAREHOUSE).
  */
+/** Not sold through the app at all (categories by slug). */
+export const RESTRICTED_CATEGORY_SLUGS: readonly string[] = ['alcohol', 'tobacco'];
+
 export const STORE_TYPE = {
   BAZAAR_STALL: 'BAZAAR_STALL',
   SHOP: 'SHOP',

@@ -654,6 +654,12 @@ model Store {
   promotedUntil DateTime?
   // Badges the customer sees: eco, halal, homemade… (STORE_TAG in constants).
   tags          String[] @default([])
+  // A chain (Korzinka, Makro…): branches share the slug, the customer sees one shopfront
+  // and the order goes to the branch nearest their address.
+  chainSlug String?
+  // Per-store overrides of the tariff's minimum order and free-delivery threshold (minor units).
+  minOrder              Int?
+  freeDeliveryThreshold Int?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -668,6 +674,7 @@ model Store {
   @@index([tenantId, status])
   @@index([cityId, status])
   @@index([vendorId])
+  @@index([tenantId, chainSlug])
   @@map("stores")
 }
 

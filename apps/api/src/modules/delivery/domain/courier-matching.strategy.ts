@@ -2,7 +2,13 @@
  * CourierMatchingStrategy interface (nearest / rating-weighted / broadcast). Implementations later.
  */
 import { haversineMeters } from '@bazar/maps';
-import { DELIVERY_TIMEOUTS, VEHICLE_AVG_SPEED_KMH, VEHICLE_CAPACITY_GRAMS } from '@bazar/constants';
+import {
+  DELIVERY_TIMEOUTS,
+  HEAVY_ORDER_GRAMS,
+  HEAVY_VEHICLES,
+  VEHICLE_AVG_SPEED_KMH,
+  VEHICLE_CAPACITY_GRAMS,
+} from '@bazar/constants';
 import type { CourierCandidate, ScoredCandidate, SearchContext } from '../types/index.js';
 
 export interface CourierMatchingStrategy {
@@ -25,6 +31,10 @@ function eligible(candidate: CourierCandidate, context: SearchContext, now: Date
   if (context.excludeCourierIds.includes(candidate.courierId)) return false;
   if (candidate.activeOrderCount >= candidate.maxConcurrentOrders) return false;
   if (VEHICLE_CAPACITY_GRAMS[candidate.vehicleType] < context.weightGrams) return false;
+  // Past the car threshold only a car or a van is offered the order, whatever the raw capacity says.
+  if (context.weightGrams > HEAVY_ORDER_GRAMS && !HEAVY_VEHICLES.includes(candidate.vehicleType)) {
+    return false;
+  }
   // A neighbour delivers to their own mahalla, not across town.
   if (
     candidate.home !== null &&

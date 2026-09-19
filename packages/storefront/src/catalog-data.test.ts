@@ -7,6 +7,7 @@ import {
   listProducts,
   listStores,
 } from './catalog-data.js';
+import { branchesOf, isShopfront, shopfronts } from './shops.js';
 import { plural } from './text.js';
 
 describe('listProducts', () => {
@@ -60,9 +61,44 @@ describe('listCategories', () => {
 describe('listStores', () => {
   it('filters by type and finds one by id', async () => {
     const supermarkets = await listStores({ type: 'SUPERMARKET' });
-    expect(supermarkets.map((s) => s.id)).toEqual(['makro-yunusabad']);
+    expect(supermarkets.map((s) => s.id)).toEqual([
+      'makro-yunusabad',
+      'korzinka-yunusabad',
+      'korzinka-chilanzar',
+    ]);
     expect(await getStore('makro-yunusabad')).not.toBeNull();
     expect(await getStore('nope')).toBeNull();
+  });
+});
+
+describe('shopfronts', () => {
+  it('shows a chain once, by the branch nearest the address', async () => {
+    const stores = await listStores({});
+    expect(stores.filter(isShopfront).map((s) => s.id)).toEqual([
+      'makro-yunusabad',
+      'korzinka-yunusabad',
+      'korzinka-chilanzar',
+      'lavka-yunusabad-4',
+    ]);
+    // no address yet: first branch of each chain
+    expect(shopfronts(stores, null).map((s) => s.id)).toEqual([
+      'makro-yunusabad',
+      'korzinka-yunusabad',
+      'lavka-yunusabad-4',
+    ]);
+    // from Chilanzar the other Korzinka wins, the rest stay put
+    const chilanzar = { lat: 41.28, lng: 69.2 };
+    expect(shopfronts(stores, chilanzar).map((s) => s.id)).toEqual([
+      'makro-yunusabad',
+      'korzinka-chilanzar',
+      'lavka-yunusabad-4',
+    ]);
+    const korzinka = stores.find((s) => s.id === 'korzinka-yunusabad')!;
+    expect(branchesOf(korzinka, stores, chilanzar).map((s) => s.id)).toEqual([
+      'korzinka-chilanzar',
+      'korzinka-yunusabad',
+    ]);
+    expect(branchesOf(stores[0]!, stores, chilanzar)).toEqual([stores[0]]);
   });
 });
 

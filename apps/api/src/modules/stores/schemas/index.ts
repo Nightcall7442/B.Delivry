@@ -24,3 +24,13 @@ export const setScheduleSchema = z.object({
 export const storeIdParamsSchema = z.object({ id: idSchema });
 
 export type StoresListQuery = z.infer<typeof storesListQuerySchema>;
+
+/** The spreadsheet as text: the cabinet reads the file and posts it (≤ 2 MB). */
+export const importCsvSchema = z.object({ csv: z.string().min(1).max(2_000_000) });
+
+/** Report window, ISO dates; defaults to the current month. */
+export const reportQuerySchema = z.object({
+  from: z.string().date().optional(),
+  to: z.string().date().optional(),
+});
+export type ReportQuery = z.infer<typeof reportQuerySchema>;

@@ -5,11 +5,15 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { BaseController } from '../../../common/base/base.controller.js';
 import { toStoreDto } from '../../../common/dto/index.js';
 import { body, params, query } from '../../../middleware/validation.middleware.js';
+import type { ProductsService } from '../../products/service/products.service.js';
 import type { StoresService } from '../service/stores.service.js';
 import type { StoresListQuery } from '../schemas/index.js';
 
 export class StoresController extends BaseController {
-  constructor(private readonly service: StoresService) {
+  constructor(
+    private readonly service: StoresService,
+    private readonly products: ProductsService,
+  ) {
     super();
   }
 
@@ -48,6 +52,23 @@ export class StoresController extends BaseController {
     const { id } = params<{ id: string }>(request);
     await this.service.remove(id);
     this.noContent(reply);
+  };
+
+  importProducts = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = params<{ id: string }>(request);
+    const { csv } = body<{ csv: string }>(request);
+    return this.ok(reply, await this.products.importCsv(id, csv));
+  };
+
+  /** CSV: one delivered order per line, totals at the end — what a shop's accountant asks for. */
+  report = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = params<{ id: string }>(request);
+    const { from, to } = request.query as { from?: string; to?: string };
+    const csv = await this.service.report(id, from, to);
+    return reply
+      .header('content-type', 'text/csv; charset=utf-8')
+      .header('content-disposition', `attachment; filename="report-${id.slice(0, 8)}.csv"`)
+      .send(csv);
   };
 
   markArrivals = async (request: FastifyRequest, reply: FastifyReply) => {

@@ -85,6 +85,8 @@ export const COURIER_ACTION_STATUS = {
   in_delivery: ORDER_STATUS.IN_DELIVERY,
   arrived: ORDER_STATUS.COURIER_ARRIVED,
   delivered: ORDER_STATUS.DELIVERED,
+  // The goods are not there (sold out, shop closed): the order ends and, if paid, is refunded.
+  failed: ORDER_STATUS.FAILED,
 } as const;
 
 export type CourierAction = keyof typeof COURIER_ACTION_STATUS;
