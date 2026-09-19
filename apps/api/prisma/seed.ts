@@ -235,22 +235,22 @@ async function seedStorefront(tenantId: string): Promise<{ stores: number; produ
     create: {
       tenantId,
       phone: vendorPhone,
-      firstName: 'Demo',
-      lastName: 'Vendor',
+      firstName: 'Фарход',
+      lastName: 'Каримов',
       locale: 'ru',
       status: 'ACTIVE',
       phoneVerifiedAt: new Date(),
       roles: { create: { role: 'VENDOR' } },
     },
-    update: {},
+    update: { firstName: 'Фарход', lastName: 'Каримов' },
   });
   const vendor = await prisma.vendor.upsert({
     where: { userId: user.id },
     create: {
       tenantId,
       userId: user.id,
-      legalName: 'Bazar Demo Vendor',
-      displayName: 'Bazar Demo',
+      legalName: 'ИП Каримов Ф. Р.',
+      displayName: 'Прилавки Чорсу',
       phone: vendorPhone,
       status: 'ACTIVE',
       verifiedAt: new Date(),
@@ -410,14 +410,14 @@ async function seedAdmin(tenantId: string): Promise<void> {
     create: {
       tenantId,
       phone,
-      firstName: 'Dispatcher',
-      lastName: 'Demo',
+      firstName: 'Нодира',
+      lastName: 'Юсупова',
       locale: 'ru',
       status: 'ACTIVE',
       phoneVerifiedAt: new Date(),
       roles: { create: { role: 'ADMIN' } },
     },
-    update: {},
+    update: { firstName: 'Нодира', lastName: 'Юсупова' },
   });
 }
 
@@ -427,8 +427,18 @@ async function seedCouriers(tenantId: string): Promise<number> {
     where: { level_code: { level: 'CITY', code: 'UZ-TK-C' } },
   });
   const couriers = [
-    { phone: '+998710000002', firstName: 'Bekzod', vehicleType: 'SCOOTER' as const },
-    { phone: '+998710000003', firstName: 'Sardor', vehicleType: 'BICYCLE' as const },
+    {
+      phone: '+998710000002',
+      firstName: 'Bekzod',
+      lastName: 'Karimov',
+      vehicleType: 'SCOOTER' as const,
+    },
+    {
+      phone: '+998710000003',
+      firstName: 'Sardor',
+      lastName: 'Rashidov',
+      vehicleType: 'BICYCLE' as const,
+    },
   ];
   for (const courier of couriers) {
     const user = await prisma.user.upsert({
@@ -437,13 +447,13 @@ async function seedCouriers(tenantId: string): Promise<number> {
         tenantId,
         phone: courier.phone,
         firstName: courier.firstName,
-        lastName: 'Demo',
+        lastName: courier.lastName,
         locale: 'ru',
         status: 'ACTIVE',
         phoneVerifiedAt: new Date(),
         roles: { create: { role: 'COURIER' } },
       },
-      update: {},
+      update: { firstName: courier.firstName, lastName: courier.lastName },
     });
     await prisma.courier.upsert({
       where: { userId: user.id },

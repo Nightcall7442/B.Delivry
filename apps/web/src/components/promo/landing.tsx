@@ -438,9 +438,7 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
           >
             <div className={styles.receipt}>
               <div className={styles.quote}>{c.door.quote}</div>
-              <div className={styles.who}>
-                <span className={styles.stars}>★★★★★</span> {c.door.who}
-              </div>
+              <div className={styles.who}>{c.door.who}</div>
             </div>
           </div>
           <div
@@ -455,9 +453,7 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
         <div className={`${styles.copy} ${styles.copyRight}`} style={reveal(p, at('bag', 0.7), 1)}>
           <div className={styles.receipt}>
             <div className={styles.quote}>{c.door.quote}</div>
-            <div className={styles.who}>
-              <span className={styles.stars}>★★★★★</span> {c.door.who}
-            </div>
+            <div className={styles.who}>{c.door.who}</div>
           </div>
           <div className={styles.line} style={{ marginTop: 8 }}>
             {c.table.hint}

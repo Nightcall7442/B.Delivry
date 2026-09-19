@@ -255,7 +255,7 @@ export function SceneHead({
   );
 }
 
-/** Kraft luggage tag with the punched hole: "Чорсу · утро · +18°". */
+/** Kraft luggage tag with the punched hole: "Чорсу · утро · +18°" (the degrees are live). */
 export function KraftTag({ children, tilt = -2 }: { children: ReactNode; tilt?: number }) {
   return (
     <View style={[s.tag, { transform: [{ rotate: `${tilt}deg` }] }]}>

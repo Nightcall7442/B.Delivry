@@ -122,10 +122,12 @@ export function Button({
 }
 
 export function Chip({
+  leading,
   label,
   active,
   onPress,
 }: {
+  leading?: ReactNode;
   label: string;
   active?: boolean;
   onPress?: () => void;
@@ -135,6 +137,7 @@ export function Chip({
       onPress={onPress}
       style={({ pressed }) => [s.chip, press.base, active && s.chipActive, pressed && press.down]}
     >
+      {leading}
       <RNText style={[s.chipLabel, active && { color: color.white }]}>{label}</RNText>
     </Pressable>
   );

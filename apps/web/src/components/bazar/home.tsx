@@ -9,10 +9,10 @@
 'use client';
 
 import { createT } from '@bazar/i18n';
-import { arrivedToday, photo, tr } from '@bazar/storefront';
+import { arrivedToday, chorsuTemperature, degrees, photo, tr } from '@bazar/storefront';
 import type { CategoryDto, ProductDto, StoreDto } from '@bazar/types';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Bell } from '@/components/go/icons';
 import { useAuth } from '@/features/auth';
@@ -40,6 +40,11 @@ export function BazaarHome({
   const t = createT(locale);
   const { user } = useAuth();
   const evening = isEvening();
+  // The tag's temperature is the real one at Chorsu or nothing — never a number from the code.
+  const [temperature, setTemperature] = useState<number | null>(null);
+  useEffect(() => {
+    void chorsuTemperature().then(setTemperature);
+  }, []);
   const home = `/${locale}`;
 
   // People first: a stall with a named owner is a person, a supermarket is a building; open ones lead.
@@ -76,7 +81,12 @@ export function BazaarHome({
       <div className={s.body}>
         <div className={s.top}>
           <span className={s.tag}>
-            {evening ? 'Чорсу · вечер · до 21:00' : 'Чорсу · утро · +18°'}
+            {/* One tag, one line: the live temperature or, at night, the closing hour. */}
+            {temperature !== null
+              ? `Чорсу · ${evening ? 'вечер' : 'утро'} · ${degrees(temperature)}`
+              : evening
+                ? 'Чорсу · вечер · до 21:00'
+                : 'Чорсу · утро'}
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
             <Link href={`${home}/orders`} className={s.round} aria-label={t('menu.orders')}>

@@ -27,8 +27,8 @@ export default function BrandPage() {
           appName: row.branding?.appName ?? 'bazar',
           city: row.branding?.city ?? '',
           logoUrl: row.branding?.logoUrl ?? '',
-          primary: row.branding?.primary ?? '#3B6BE3',
-          accent: row.branding?.accent ?? '#F5A524',
+          primary: row.branding?.primary ?? '#9E2A2B',
+          accent: row.branding?.accent ?? '#E39B2F',
         });
       })
       .catch(() => undefined);
@@ -49,7 +49,7 @@ export default function BrandPage() {
       setTenant(updated);
       setNote('Сохранено — сайт покупателя перекрасится при следующей загрузке');
     } catch {
-      setNote('Не сохранилось: цвета — hex вида #3B6BE3, ссылка на логотип — полный URL');
+      setNote('Не сохранилось: цвета — hex вида #9E2A2B, ссылка на логотип — полный URL');
     }
   };
   const Field = ({
@@ -84,8 +84,8 @@ export default function BrandPage() {
         <Field label="Имя приложения (вордмарк)" k="appName" placeholder="bazar" />
         <Field label="Город" k="city" placeholder="Самарканд" />
         <Field label="Логотип (URL)" k="logoUrl" placeholder="https://…/logo.png" />
-        <Field label="Основной цвет" k="primary" placeholder="#3B6BE3" />
-        <Field label="Акцент" k="accent" placeholder="#F5A524" />
+        <Field label="Основной цвет" k="primary" placeholder="#9E2A2B" />
+        <Field label="Акцент" k="accent" placeholder="#E39B2F" />
         <div className="flex items-center gap-3 md:col-span-2">
           <span
             className="h-8 w-8 rounded-full border border-line"
