@@ -35,7 +35,7 @@ import {
 import { Bone } from '@/components/ui/Page';
 import { useCartActions, useCartCount, useCartQuantities } from '@/features/cart/store';
 import { listProducts, listStores } from '@/lib/catalog';
-import { useData } from '@/lib/use-data';
+import { useData, useList } from '@/lib/use-data';
 
 export function BundleScreen({ slug }: { slug: string }) {
   const router = useRouter();
@@ -50,7 +50,7 @@ export function BundleScreen({ slug }: { slug: string }) {
   const units = unitLabel(locale);
 
   const products = useData(() => listProducts(), []);
-  const stores = useData(() => listStores(), []) ?? [];
+  const stores = useList(() => listStores(), []);
   const resolved = useMemo(
     () => (bundle && products ? resolveBundle(bundle, products) : null),
     [bundle, products],

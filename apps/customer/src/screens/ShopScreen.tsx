@@ -40,7 +40,7 @@ import { LoadError } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
 import { useCart, useCartActions } from '@/features/cart/store';
 import { listStores } from '@/lib/catalog';
-import { useData } from '@/lib/use-data';
+import { useData, useList } from '@/lib/use-data';
 import { ArrowLeft, Clock, Mic, Search, api, useAuth, useLocale } from '@bazar/mobile';
 
 const PAGE = 24;
@@ -75,7 +75,7 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
   }, [typed]);
 
   const shelves = useData(() => api().catalog.categories({ storeId: store.id }), [store.id]);
-  const stores = useData(() => listStores(), []) ?? [];
+  const stores = useList(() => listStores(), []);
   const branch = useMemo(() => {
     const all = branchesOf(store, stores, address?.point ?? null);
     return all.length > 1 ? all[0]! : null;

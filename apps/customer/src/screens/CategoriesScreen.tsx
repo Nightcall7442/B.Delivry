@@ -5,16 +5,17 @@
  * there and how much is on the counter today. Tap a counter to walk that row.
  */
 import type { CategoryDto, StoreDto } from '@bazar/types';
-import { tr } from '@bazar/storefront';
+import { closesToday, shopfronts, stallGoods, tr } from '@bazar/storefront';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text as RNText, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text as RNText, View } from 'react-native';
 
-import { sceneFont } from '@/components/bazar';
+import { ShopSign, sceneFont } from '@/components/bazar';
 import { Bone, Page } from '@/components/ui/Page';
+import { useAddress } from '@/features/address/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
-import { useData } from '@/lib/use-data';
+import { EMPTY, useData } from '@/lib/use-data';
 import { color, isDark, press, useLocale } from '@bazar/mobile';
 
 const KRAFT = isDark ? '#2A2014' : '#EAD8B2';
@@ -25,14 +26,21 @@ const SIGN_EDGE = isDark ? '#5A4A2E' : '#C9B99A';
 export function CategoriesScreen() {
   const router = useRouter();
   const { locale, t } = useLocale();
+  const { address } = useAddress();
   const categories = useData(() => listCategories(), []);
   const stores = useData(() => listStores(), []);
   const products = useData(() => listProducts(), []);
+  // The shops stand outside the gate: one board per chain, nearest branch first.
+  const shops = useMemo(
+    () => shopfronts(stores ?? EMPTY, address?.point ?? null),
+    [stores, address],
+  );
 
   // Per row: what is on the counters today and who is standing behind them.
+  // Shop shelves are not rows of the bazaar; they wait behind their boards below.
   const rows = useMemo(() => {
     const byCategory = new Map<string, { count: number; storeIds: Set<string> }>();
-    for (const product of products ?? []) {
+    for (const product of stallGoods(products ?? EMPTY, stores ?? EMPTY)) {
       if (!product.categoryId || !product.available) continue;
       const row = byCategory.get(product.categoryId) ?? { count: 0, storeIds: new Set<string>() };
       row.count += 1;
@@ -80,6 +88,30 @@ export function CategoriesScreen() {
           <RNText style={s.dome}>{t('map.dome')}</RNText>
         </View>
       )}
+      {shops.length > 0 ? (
+        <>
+          <RNText style={s.shopsHead}>{t('shop.nearby')}</RNText>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.shops}
+            style={{ marginHorizontal: -16 }}
+          >
+            {shops.map((store) => {
+              const closes = closesToday(store);
+              return (
+                <ShopSign
+                  key={store.id}
+                  name={tr(store.name, locale)}
+                  logo={store.logoUrl}
+                  line={closes ? t('shop.until', { time: closes }) : t('shop.closedToday')}
+                  onPress={() => router.push(`/store/${store.id}`)}
+                />
+              );
+            })}
+          </ScrollView>
+        </>
+      ) : null}
     </Page>
   );
 
@@ -269,4 +301,12 @@ const s = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
   },
+  shopsHead: {
+    fontFamily: sceneFont.display,
+    fontSize: 22,
+    color: color.ink,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  shops: { paddingHorizontal: 16, paddingBottom: 16, gap: 10 },
 });

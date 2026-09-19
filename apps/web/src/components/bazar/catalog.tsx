@@ -8,13 +8,21 @@
 'use client';
 
 import { createT } from '@bazar/i18n';
-import { photo, tr, type MapStoreDto } from '@bazar/storefront';
+import {
+  closesToday,
+  photo,
+  shopfronts,
+  stallGoods,
+  tr,
+  type MapStoreDto,
+} from '@bazar/storefront';
 import type { CategoryDto, ProductDto } from '@bazar/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 import { ArrowLeft } from '@/components/go/icons';
+import { useAddress } from '@/features/address';
 
 import { BasketBar, ProductCard, isEvening } from './index';
 import s from './bazar.module.css';
@@ -51,10 +59,19 @@ export function BazaarCatalog({
   const walking = Boolean(category || query);
   const current = categories.find((c) => c.id === category) ?? null;
 
+  const { address } = useAddress();
+  // Walking a row shows the stalls; a typed search looks through the shops too.
+  const goods = useMemo(
+    () => (query ? products : stallGoods(products, stores)),
+    [products, stores, query],
+  );
+  // The shops stand outside the gate: one board per chain, nearest branch first.
+  const shops = useMemo(() => shopfronts(stores, address?.point ?? null), [stores, address]);
+
   // Per row: what is on the counters today and who is standing behind them.
   const rows = useMemo(() => {
     const byCategory = new Map<string, { count: number; storeIds: Set<string> }>();
-    for (const product of products) {
+    for (const product of stallGoods(products, stores)) {
       if (!product.categoryId || !product.available) continue;
       const row = byCategory.get(product.categoryId) ?? { count: 0, storeIds: new Set<string>() };
       row.count += 1;
@@ -77,7 +94,7 @@ export function BazaarCatalog({
   const groups = stores
     .map((store) => ({
       store,
-      items: products.filter((p) => p.storeId === store.id && p.available),
+      items: goods.filter((p) => p.storeId === store.id && p.available),
     }))
     .filter((g) => g.items.length > 0);
 
@@ -194,8 +211,33 @@ export function BazaarCatalog({
             <div className={s.dome}>{t('map.dome')}</div>
           </div>
         )}
+        {!walking && shops.length > 0 ? (
+          <>
+            <div className={s.head}>
+              <h2 className={s.headTitle}>{t('shop.nearby')}</h2>
+            </div>
+            <div className={s.rail}>
+              {shops.map((store) => {
+                const closes = closesToday(store);
+                return (
+                  <Link key={store.id} href={`${home}/stores/${store.id}`} className={s.shopSign}>
+                    {store.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={store.logoUrl} alt="" className={s.shopLogo} />
+                    ) : null}
+                    <span className={s.shopSignName}>{tr(store.name, locale)}</span>
+                    <span className={s.boardRule} />
+                    <span className={s.shopSignLine}>
+                      {closes ? t('shop.until', { time: closes }) : t('shop.closedToday')}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </>
+        ) : null}
       </div>
-      {walking ? <BasketBar products={products} locale={locale} t={t} evening={evening} /> : null}
+      {walking ? <BasketBar products={goods} locale={locale} t={t} evening={evening} /> : null}
     </main>
   );
 

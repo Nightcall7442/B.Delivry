@@ -5,7 +5,12 @@
  * truth; this is the number shown before an order exists. Replace with
  * `api.delivery.quote()` once the client lands — same return shape.
  */
-import { CASHBACK, VEHICLE_AVG_SPEED_KMH } from '@bazar/constants';
+import {
+  CASHBACK,
+  HEAVY_ORDER_GRAMS,
+  HEAVY_SURCHARGE_MINOR,
+  VEHICLE_AVG_SPEED_KMH,
+} from '@bazar/constants';
 import { haversineMeters } from '@bazar/maps';
 import type { LatLngDto, MoneyDto } from '@bazar/types';
 
@@ -34,17 +39,34 @@ export function freeDeliveryProgress(
   return { ratio: Math.min(1, subtotal / threshold.amount), remaining, reached: remaining === 0 };
 }
 
+/** What the cart knows about one store's basket before the API has priced it. */
+export interface BasketEstimateInput {
+  subtotal?: number;
+  /** The store's own threshold (minor units); null/undefined → the default zone's. */
+  freeDeliveryThreshold?: number | null;
+  /** Past HEAVY_ORDER_GRAMS the trip needs a car — the same surcharge the API adds. */
+  weightGrams?: number;
+}
+
+/** Grams a basket weighs: the product's weight per unit times the quantity (0 when unknown). */
+export const basketGrams = (
+  lines: ReadonlyArray<{ product: { weightGrams: number | null }; quantity: number }>,
+): number => lines.reduce((sum, line) => sum + (line.product.weightGrams ?? 0) * line.quantity, 0);
+
 export function estimateDelivery(
   from: LatLngDto,
   to: LatLngDto,
   preparationMinutes: number,
-  subtotal = 0,
+  basket: BasketEstimateInput = {},
 ): DeliveryEstimate {
   const distanceMeters = haversineMeters(from, to);
   const km = distanceMeters / 1000;
   const raw = BASE_FEE + Math.max(0, km - FREE_KM) * PER_KM;
-  const fee =
-    subtotal >= FREE_DELIVERY_THRESHOLD.amount ? 0 : Math.round(raw / ROUND_TO) * ROUND_TO;
+  const threshold = basket.freeDeliveryThreshold ?? FREE_DELIVERY_THRESHOLD.amount;
+  const ride = (basket.subtotal ?? 0) >= threshold ? 0 : Math.round(raw / ROUND_TO) * ROUND_TO;
+  // A sack of flour rides in a car: never waived, whatever the basket size.
+  const heavy = (basket.weightGrams ?? 0) > HEAVY_ORDER_GRAMS ? HEAVY_SURCHARGE_MINOR : 0;
+  const fee = ride + heavy;
   // Straight line is shorter than streets: 1.3 is the usual city detour factor.
   const rideMinutes = ((km * 1.3) / VEHICLE_AVG_SPEED_KMH.SCOOTER) * 60;
   return {

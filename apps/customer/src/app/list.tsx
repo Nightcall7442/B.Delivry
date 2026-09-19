@@ -22,14 +22,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Shell } from '@/components/ui/Shell';
+import { useList } from '@/lib/use-data';
 import { useCartActions, useCartQuantities } from '@/features/cart/store';
 import { listProducts } from '@/lib/catalog';
-import { useData } from '@/lib/use-data';
 
 export default function ListRoute() {
   const router = useRouter();
   const { locale, t } = useLocale();
-  const products = useData(() => listProducts(), []) ?? [];
+  const products = useList(() => listProducts(), []);
   const quantities = useCartQuantities();
   const { setQuantity } = useCartActions();
   const units = unitLabel(locale);

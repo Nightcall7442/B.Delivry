@@ -60,9 +60,9 @@ export function AddressPicker({ locale }: { locale: string }) {
       if (typed) return;
       const api = await loadYmaps();
       const name = api ? await describePoint(api, [center.lng, center.lat]) : null;
-      setText(name ?? fmt(center));
+      setText(name ?? t('address.pin', { coords: coords(center) }));
     },
-    [typed],
+    [typed, t],
   );
 
   const locate = () => {

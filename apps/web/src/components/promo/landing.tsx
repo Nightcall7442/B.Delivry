@@ -514,6 +514,8 @@ function PhoneSection({ c }: { c: Copy }) {
         >
           <div className={styles.phoneScreen}>
             {screens.map((s, i) => (
+              // Five local JPEGs swapped by scroll progress: next/image would add nothing here.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={s}
                 src={`/promo/app/${s}.jpg`}

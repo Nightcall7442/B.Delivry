@@ -180,10 +180,11 @@ function LibreMap({
     map.current = instance;
     if (process.env.NODE_ENV !== 'production')
       (window as unknown as { __map?: LibreGl }).__map = instance;
+    const pinsOfThisMap = pins.current;
     return () => {
       instance.remove();
       map.current = null;
-      pins.current.clear();
+      pinsOfThisMap.clear();
     };
     // Created once; centre/zoom changes go through easeTo below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -252,10 +253,11 @@ function YandexMap({
       }),
     );
     map.current = instance;
+    const pinsOfThisMap = pins.current;
     return () => {
       instance.destroy();
       map.current = null;
-      pins.current.clear();
+      pinsOfThisMap.clear();
     };
     // The map is created once; centre/zoom changes go through setLocation below.
     // eslint-disable-next-line react-hooks/exhaustive-deps

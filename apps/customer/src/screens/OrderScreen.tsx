@@ -237,7 +237,7 @@ function OrderSheet({
         ? [{ id: 'courier', point: courier, kind: 'courier' as const }]
         : []),
     ],
-    [order, courier, status],
+    [order, courier, status, locale],
   );
   const center =
     courier && !terminal

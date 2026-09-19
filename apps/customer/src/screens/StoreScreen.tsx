@@ -29,7 +29,7 @@ import { Bone, LoadError } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
 import { useCart, useCartActions } from '@/features/cart/store';
 import { getStore, listCategories, listProducts } from '@/lib/catalog';
-import { useData, useLoad } from '@/lib/use-data';
+import { EMPTY, useList, useLoad } from '@/lib/use-data';
 import { ArrowLeft, Clock, Heart, Scooter, Star, useLocale } from '@bazar/mobile';
 
 export function StoreScreen({ storeId }: { storeId: string }) {
@@ -47,8 +47,8 @@ export function StoreScreen({ storeId }: { storeId: string }) {
   const storeLoad = useLoad(() => getStore(storeId), [storeId]);
   const productLoad = useLoad(() => listProducts({ storeId }), [storeId]);
   const store = storeLoad.data;
-  const products = productLoad.data ?? [];
-  const categories = useData(() => listCategories(), []) ?? [];
+  const products = productLoad.data ?? EMPTY;
+  const categories = useList(() => listCategories(), []);
   const units = unitLabel(locale);
 
   const present = useMemo(() => {

@@ -8,7 +8,7 @@ import {
   type StoreTag,
   type StoreType,
 } from '@bazar/constants';
-import { arrivedToday, tagLabel, tr } from '@bazar/storefront';
+import { arrivedToday, isShopfront, tagLabel, tr } from '@bazar/storefront';
 import type { HaggleDto, ProductDto, SalesReportDto, StoreDto } from '@bazar/types';
 import { formatMoney } from '@bazar/utils/money';
 import { useParams } from 'next/navigation';
@@ -49,7 +49,7 @@ export default function StorePage() {
       <p className="mt-1 text-sm text-ink-muted">{store?.address}</p>
 
       {store ? <CounterPhoto store={store} onChange={load} say={say} /> : null}
-      {store ? <Owner store={store} onChange={load} say={say} /> : null}
+      {store && !isShopfront(store) ? <Owner store={store} onChange={load} say={say} /> : null}
       {store ? <Promotion store={store} onChange={load} say={say} /> : null}
       {store ? <Tags store={store} onChange={load} say={say} /> : null}
       {store ? <Shop store={store} onChange={load} say={say} /> : null}
@@ -118,6 +118,21 @@ function Shop({
   };
   const soum = (value: string) =>
     value.trim() === '' ? null : Math.round(Number(value.replace(',', '.')) * 100);
+  // The board over the door: the chain's logo where a stall would have a face.
+  const uploadLogo = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const uploaded = await api().uploads.image('store-images', file, file.type || 'image/jpeg');
+      await api().stores.update(store.id, { logoUrl: uploaded.url });
+      say('Логотип обновлён — он на вывеске у покупателя');
+      onChange();
+    } catch {
+      say('Логотип не загрузился');
+    } finally {
+      setBusy(false);
+    }
+  };
   const save = async () => {
     setBusy(true);
     try {
@@ -143,10 +158,28 @@ function Shop({
   };
   return (
     <div className="card mt-3 p-4">
-      <div className="font-medium">Магазин</div>
-      <div className="text-xs text-ink-muted">
-        Тип точки, сеть (филиалы одной сети — одна витрина, заказ уходит в ближайший), свои
-        минимальный заказ и порог бесплатной доставки, часы работы на каждый день.
+      <div className="flex items-center gap-4">
+        {store.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={store.logoUrl} alt="" className="h-12 w-12 rounded-lg object-contain" />
+        ) : null}
+        <div className="flex-1">
+          <div className="font-medium">Магазин</div>
+          <div className="text-xs text-ink-muted">
+            Тип точки, сеть (филиалы одной сети — одна витрина, заказ уходит в ближайший), свои
+            минимальный заказ и порог бесплатной доставки, часы работы на каждый день. Логотип стоит
+            на вывеске вместо лица продавца.
+          </div>
+        </div>
+        <label className={`btn-secondary cursor-pointer ${busy ? 'opacity-50' : ''}`}>
+          Логотип
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => void uploadLogo(e.target.files?.[0])}
+          />
+        </label>
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <select
