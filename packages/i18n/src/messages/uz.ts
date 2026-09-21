@@ -166,6 +166,16 @@ export const uz: Catalogue = {
   'address.saved': 'saqlangan manzil',
   'address.hint':
     'Nuqtani podyezd oldiga qoʻyish uchun xaritani suring. Xonadon va qavatni rasmiylashtirishda kiritasiz.',
+  'address.from': 'Qayerdan olib kelamiz',
+  'address.trip': '{km} km · ~{min} daq',
+  'address.nearest': 'eng yaqini',
+  'address.far': 'rastalardan uzoqroq',
+  'address.fromHint':
+    'Xaritadagi nuqtadan hisoblaymiz, rastalar 6:30–18:00 ishlaydi. {threshold} dan boshlab yetkazish bepul.',
+  'address.legend': 'Xaritadagi belgilar',
+  'address.legendHome': 'sizning podyezdingiz',
+  'address.legendStore': 'rasta',
+  'address.legendCourier': 'kuryer yoʻlda',
 
   'bundle.notFound': 'Bunday toʻplam yoʻq.',
   'bundle.added': 'Qoʻshildi',
