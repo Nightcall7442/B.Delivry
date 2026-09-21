@@ -1,11 +1,11 @@
 /**
  * The map behind every screen: a WebView running Yandex Maps 3.0 when
  * EXPO_PUBLIC_YANDEX_MAPS_API_KEY is set, MapLibre over free OpenFreeMap tiles
- * otherwise. The kraft-paper canvas with the same tile markers is the last
- * resort — the web platform (no WebView) and a page that fails to boot.
+ * otherwise; on the web the same page in an iframe. The kraft-paper canvas
+ * with the same tile markers is the last resort — a page that fails to boot.
  */
 import type { LatLngDto } from '@bazar/types';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PanResponder, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 import { WebView } from 'react-native-webview';
@@ -50,17 +50,16 @@ export function MapView({
 }: MapViewProps) {
   const { height } = useWindowDimensions();
   const [webFailed, setWebFailed] = useState(false);
-  const useWeb = Platform.OS !== 'web' && !webFailed;
   const common = { center, zoom, markers, onMoveEnd, interactive };
 
   return (
     <View
       style={[StyleSheet.absoluteFill, { bottom: Math.max(0, Math.round(height * inset) - 24) }]}
     >
-      {useWeb ? (
-        <YandexWebMap {...common} onFail={() => setWebFailed(true)} />
-      ) : (
+      {webFailed ? (
         <FallbackMap {...common} />
+      ) : (
+        <WebMap {...common} onFail={() => setWebFailed(true)} />
       )}
       {pin ? (
         <View style={[s.centrePin, anchor('home', true)]}>
@@ -75,7 +74,9 @@ type RendererProps = Required<Pick<MapViewProps, 'center' | 'zoom' | 'markers' |
   onMoveEnd: MapViewProps['onMoveEnd'] | undefined;
 };
 
-function YandexWebMap({
+type PageMessage = { type: string; lat?: number; lng?: number };
+
+function WebMap({
   center,
   zoom,
   markers,
@@ -84,6 +85,7 @@ function YandexWebMap({
   onFail,
 }: RendererProps & { onFail: () => void }) {
   const ref = useRef<WebView>(null);
+  const frame = useRef<HTMLIFrameElement | null>(null);
   const ready = useRef(false);
   const html = useMemo(() => mapHtml(API_KEY), []);
 
@@ -104,6 +106,10 @@ function YandexWebMap({
   );
 
   const push = useCallback(() => {
+    if (Platform.OS === 'web') {
+      frame.current?.contentWindow?.postMessage(JSON.stringify({ type: 'update', state }), '*');
+      return;
+    }
     ref.current?.injectJavaScript(
       `window.__map && window.__map.update(${JSON.stringify(state)}); true;`,
     );
@@ -113,6 +119,45 @@ function YandexWebMap({
     if (ready.current) push();
   }, [push]);
 
+  // What the page says back; kept in a ref so the web listener below never goes stale.
+  const onPage = useRef((_data: string) => {});
+  onPage.current = (data: string) => {
+    try {
+      const msg = JSON.parse(data) as PageMessage;
+      if (msg.type === 'ready') {
+        ready.current = true;
+        push();
+      } else if (msg.type === 'moveEnd' && msg.lat !== undefined && msg.lng !== undefined) {
+        onMoveEnd?.({ lat: msg.lat, lng: msg.lng });
+      } else if (msg.type === 'error') {
+        onFail();
+      }
+    } catch {
+      // Not ours.
+    }
+  };
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const listen = (event: MessageEvent) => {
+      if (event.source === frame.current?.contentWindow && typeof event.data === 'string')
+        onPage.current(event.data);
+    };
+    window.addEventListener('message', listen);
+    return () => window.removeEventListener('message', listen);
+  }, []);
+
+  if (Platform.OS === 'web') {
+    // react-native-web has no WebView: the same page in a sandboxed iframe.
+    return createElement('iframe', {
+      ref: frame,
+      srcDoc: html,
+      sandbox: 'allow-scripts',
+      title: 'map',
+      style: { position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 },
+    });
+  }
+
   return (
     <WebView
       ref={ref}
@@ -121,25 +166,7 @@ function YandexWebMap({
       originWhitelist={['*']}
       javaScriptEnabled
       scrollEnabled={false}
-      onMessage={(event) => {
-        try {
-          const msg = JSON.parse(event.nativeEvent.data) as {
-            type: string;
-            lat?: number;
-            lng?: number;
-          };
-          if (msg.type === 'ready') {
-            ready.current = true;
-            push();
-          } else if (msg.type === 'moveEnd' && msg.lat !== undefined && msg.lng !== undefined) {
-            onMoveEnd?.({ lat: msg.lat, lng: msg.lng });
-          } else if (msg.type === 'error') {
-            onFail();
-          }
-        } catch {
-          // Not ours.
-        }
-      }}
+      onMessage={(event) => onPage.current(event.nativeEvent.data)}
       onError={onFail}
     />
   );
