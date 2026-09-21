@@ -36,10 +36,10 @@ ${apiKey ? '' : `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/
   .maplibregl-ctrl-logo { display: none !important; }
   .maplibregl-marker .map-pin { transform: none; }
   .map-pin { pointer-events: none; display: flex; flex-direction: column-reverse; align-items: center; gap: 8px; transform: translate(-50%, -100%); font-family: -apple-system, Roboto, sans-serif; }
-  .map-pin__glyph { width: 36px; height: 36px; margin: 6px 0 8px; border-radius: 10px; background: #14A899; color: #fff; display: flex; align-items: center; justify-content: center; transform: rotate(45deg); box-shadow: 0 12px 32px rgba(27,31,34,.12); }
+  .map-pin__glyph { width: 36px; height: 36px; margin: 6px 0 8px; border-radius: 10px; background: #9E2A2B; color: #fff; display: flex; align-items: center; justify-content: center; transform: rotate(45deg); box-shadow: 0 12px 32px rgba(27,31,34,.12); }
   .map-pin__glyph svg { width: 20px; height: 20px; transform: rotate(-45deg); }
-  .map-pin--home .map-pin__glyph { background: #F5A524; color: #1B1F22; }
-  .map-pin--courier .map-pin__glyph { width: 44px; height: 44px; margin: 0; border-radius: 22px; transform: none; background: #fff; color: #0C8A7E; box-shadow: 0 0 0 4px rgba(20,168,153,.3), 0 12px 32px rgba(27,31,34,.12); }
+  .map-pin--home .map-pin__glyph { background: #E39B2F; color: #2B1B0E; }
+  .map-pin--courier .map-pin__glyph { width: 44px; height: 44px; margin: 0; border-radius: 22px; transform: none; background: #fff; color: #7E1F21; box-shadow: 0 0 0 4px rgba(158,42,43,.3), 0 12px 32px rgba(27,31,34,.12); }
   .map-pin--courier .map-pin__glyph svg { width: 24px; height: 24px; transform: none; }
   .map-pin__label { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: rgba(255,255,255,.95); border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 700; color: #1B1F22; box-shadow: 0 2px 12px rgba(27,31,34,.06); }
 </style></head>

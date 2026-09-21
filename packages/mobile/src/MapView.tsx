@@ -309,7 +309,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,
-    borderColor: 'rgba(20,168,153,0.3)',
+    borderColor: 'rgba(158,42,43,0.3)',
     ...shadow.pop,
   },
   labelSlot: { position: 'absolute', width: LABEL_W, alignItems: 'center' },

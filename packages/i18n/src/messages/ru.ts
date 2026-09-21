@@ -177,6 +177,16 @@ export const ru = {
   'address.saved': 'сохранённый адрес',
   'address.hint':
     'Передвиньте карту, чтобы поставить точку у подъезда. Квартиру и этаж укажете при оформлении.',
+  'address.from': 'Откуда повезём',
+  'address.trip': '{km} км · ~{min} мин',
+  'address.nearest': 'ближе всего',
+  'address.far': 'далековато от рядов',
+  'address.fromHint':
+    'Считаем от точки на карте, ряды работают 6:30–18:00. Заказ от {threshold} — доставка бесплатно.',
+  'address.legend': 'Знаки на карте',
+  'address.legendHome': 'ваш подъезд',
+  'address.legendStore': 'прилавок',
+  'address.legendCourier': 'курьер в пути',
 
   // ---------------------------------------------------------------- bundle
   'bundle.notFound': 'Такого набора нет.',

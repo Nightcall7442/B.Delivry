@@ -4,6 +4,7 @@
  * order timeline. Pure TypeScript: no DOM, no React Native.
  */
 export * from './address.js';
+export * from './bazaars.js';
 export * from './branding.js';
 export * from './bundles.js';
 export * from './cart.js';
