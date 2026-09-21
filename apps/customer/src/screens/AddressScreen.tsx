@@ -11,12 +11,33 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { scene, sceneFont } from '@/components/bazar';
 import { Shell } from '@/components/ui/Shell';
-import { Home, Target, Button, api, noOutline, useAuth, useT } from '@bazar/mobile';
-import { addressLabel, fromAddressDto, type DeliveryAddress } from '@bazar/storefront';
+import {
+  Basket,
+  Home,
+  Photo,
+  Scooter,
+  Target,
+  Button,
+  api,
+  color,
+  noOutline,
+  useAuth,
+  useLocale,
+} from '@bazar/mobile';
+import {
+  FREE_DELIVERY_THRESHOLD,
+  PHOTOS,
+  addressLabel,
+  fromAddressDto,
+  tripsTo,
+  type DeliveryAddress,
+} from '@bazar/storefront';
 
 import { DEFAULT_POINT, useAddress } from '@/features/address/store';
 
 const coords = (p: LatLngDto) => `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`;
+/** Past this the pin is out among the fields, and the board says so. */
+const FAR_METERS = 20_000;
 
 async function describe(point: LatLngDto): Promise<string | null> {
   try {
@@ -31,7 +52,7 @@ async function describe(point: LatLngDto): Promise<string | null> {
 
 export function AddressScreen() {
   const router = useRouter();
-  const t = useT();
+  const { t, locale } = useLocale();
   const fmt = (p: LatLngDto) => t('address.pin', { coords: coords(p) });
   const { next } = useLocalSearchParams<{ next?: string }>();
   const { address, setAddress } = useAddress();
@@ -97,6 +118,11 @@ export function AddressScreen() {
     router.replace((next as Href | undefined) ?? '/');
   };
 
+  // The tariff board: every bazaar's ride to this pin, nearest first — it
+  // re-prices as the map moves, so the sheet is never a blank slip.
+  const trips = tripsTo(point);
+  const far = (trips[0]?.trip.distanceMeters ?? 0) > FAR_METERS;
+
   return (
     <Shell
       back="history"
@@ -153,6 +179,59 @@ export function AddressScreen() {
         </Pressable>
       ))}
       <Text style={s.hint}>{t('address.hint')}</Text>
+
+      <Text style={s.section}>{t('address.from')}</Text>
+      {trips.map(({ bazaar, trip }, i) => (
+        <View key={bazaar.key} style={s.row}>
+          <Photo uri={PHOTOS[bazaar.photo]} style={s.thumb} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={s.rowName} numberOfLines={1}>
+                {locale === 'uz' ? bazaar.name.uz : bazaar.name.ru}
+              </Text>
+              {i === 0 && !far ? <Text style={s.nearest}>{t('address.nearest')}</Text> : null}
+            </View>
+            <Text style={s.rowMeta} numberOfLines={1}>
+              {t('address.trip', {
+                km: t.qty(Math.round(trip.distanceMeters / 100) / 10),
+                min: trip.etaMinutes,
+              })}
+            </Text>
+          </View>
+          <Text style={s.fee}>{t.money(trip.fee.amount)}</Text>
+        </View>
+      ))}
+      {far ? <Text style={s.far}>{t('address.far')}</Text> : null}
+      <Text style={s.hint}>
+        {t('address.fromHint', { threshold: t.money(FREE_DELIVERY_THRESHOLD.amount) })}
+      </Text>
+
+      {/* The three majolica tiles the map draws, explained once. */}
+      <Text style={s.section}>{t('address.legend')}</Text>
+      <View style={s.legend}>
+        <View style={s.legendItem}>
+          <View style={[s.tile, { backgroundColor: color.saffron500 }]}>
+            <View style={s.tileGlyph}>
+              <Home size={18} color={color.ink} strokeWidth={2.2} />
+            </View>
+          </View>
+          <Text style={s.rowMeta}>{t('address.legendHome')}</Text>
+        </View>
+        <View style={s.legendItem}>
+          <View style={[s.tile, { backgroundColor: color.brand500 }]}>
+            <View style={s.tileGlyph}>
+              <Basket size={18} color={color.white} strokeWidth={2.2} />
+            </View>
+          </View>
+          <Text style={s.rowMeta}>{t('address.legendStore')}</Text>
+        </View>
+        <View style={s.legendItem}>
+          <View style={s.courier}>
+            <Scooter size={22} color={color.brand600} strokeWidth={2.2} />
+          </View>
+          <Text style={s.rowMeta}>{t('address.legendCourier')}</Text>
+        </View>
+      </View>
     </Shell>
   );
 }
@@ -223,5 +302,85 @@ const s = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     color: '#7A6248',
+  },
+  section: {
+    marginTop: 18,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: scene.paperEdge,
+    fontFamily: sceneFont.display,
+    fontSize: 19,
+    color: scene.ink,
+  },
+  thumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    backgroundColor: scene.kraft,
+  },
+  nearest: {
+    color: scene.pomegranate,
+    borderWidth: 1.5,
+    borderColor: scene.pomegranate,
+    borderRadius: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    fontFamily: sceneFont.hand,
+    fontSize: 14,
+    lineHeight: 16,
+    transform: [{ rotate: '-3deg' }],
+    opacity: 0.85,
+  },
+  fee: {
+    fontFamily: sceneFont.hand,
+    fontSize: 24,
+    lineHeight: 26,
+    color: scene.pomegranate,
+    fontVariant: ['tabular-nums'],
+  },
+  far: {
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    color: scene.pomegranate,
+    borderWidth: 2,
+    borderColor: scene.pomegranate,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    fontFamily: sceneFont.hand,
+    fontSize: 18,
+    lineHeight: 20,
+    transform: [{ rotate: '-3deg' }],
+    opacity: 0.8,
+  },
+  legend: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 14,
+    marginBottom: 4,
+  },
+  legendItem: { alignItems: 'center', gap: 10 },
+  tile: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '45deg' }],
+    marginVertical: 5,
+  },
+  tileGlyph: { transform: [{ rotate: '-45deg' }] },
+  courier: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 4,
+    borderColor: 'rgba(158,42,43,0.3)',
   },
 });
