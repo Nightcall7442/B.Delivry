@@ -64,6 +64,9 @@ ${
     else if (window.parent !== window) window.parent.postMessage(text, '*');
   };
   var pending = null, map = null, pins = {}, api = null;
+  // Every way the page can die names itself, so the app can log the reason.
+  var fail = function (reason) { send({ type: 'error', reason: reason }); };
+  window.onerror = function (message) { fail('js: ' + message); };
 
   function el(m) {
     var d = document.createElement('div');
@@ -92,14 +95,16 @@ ${
   });
 
   function bootLibre() {
-    if (!window.maplibregl) { send({ type: 'error' }); return; }
+    if (!window.maplibregl) { fail('maplibre script did not load (cdnjs)'); return; }
+    var probe = document.createElement('canvas');
+    if (!probe.getContext('webgl2')) { fail('no WebGL2'); return; }
     var init = pending || { center: { lat: 41.3111, lng: 69.2797 }, zoom: 13, markers: [], interactive: true };
     var m = new maplibregl.Map({
       container: 'map', style: '${FREE_STYLE}', center: [init.center.lng, init.center.lat], zoom: init.zoom,
       interactive: init.interactive, attributionControl: { compact: true }, maxZoom: 18
     });
     m.on('moveend', function () { var c = m.getCenter(); send({ type: 'moveEnd', lat: c.lat, lng: c.lng }); });
-    m.on('error', function (e) { if (String(e && e.error && e.error.message || '').indexOf('styles/') >= 0) send({ type: 'error' }); });
+    m.on('error', function (e) { var text = String(e && e.error && e.error.message || ''); if (text.indexOf('styles/') >= 0) fail('style: ' + text); });
     // Same API surface as the Yandex branch, so apply() does not care which engine runs.
     api = {
       YMapMarker: function (props, el) {
@@ -119,7 +124,7 @@ ${
 
   function boot() {
     if (${apiKey ? 'false' : 'true'}) return bootLibre();
-    if (!window.ymaps3) { send({ type: 'error' }); return; }
+    if (!window.ymaps3) { fail('yandex script did not load'); return; }
     ymaps3.ready.then(function () {
       api = ymaps3;
       var init = pending || { center: { lat: 41.3111, lng: 69.2797 }, zoom: 13, markers: [], interactive: true };
@@ -132,7 +137,7 @@ ${
       map.addChild(new api.YMapListener({ onActionEnd: function (e) { send({ type: 'moveEnd', lat: e.location.center[1], lng: e.location.center[0] }); } }));
       send({ type: 'ready' });
       if (pending) { var p = pending; pending = null; apply(p); }
-    }, function () { send({ type: 'error' }); });
+    }, function () { fail('yandex not ready'); });
   }
   boot();
 })();

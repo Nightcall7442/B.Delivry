@@ -74,7 +74,7 @@ type RendererProps = Required<Pick<MapViewProps, 'center' | 'zoom' | 'markers' |
   onMoveEnd: MapViewProps['onMoveEnd'] | undefined;
 };
 
-type PageMessage = { type: string; lat?: number; lng?: number };
+type PageMessage = { type: string; lat?: number; lng?: number; reason?: string };
 
 function WebMap({
   center,
@@ -130,6 +130,7 @@ function WebMap({
       } else if (msg.type === 'moveEnd' && msg.lat !== undefined && msg.lng !== undefined) {
         onMoveEnd?.({ lat: msg.lat, lng: msg.lng });
       } else if (msg.type === 'error') {
+        console.warn(`[map] page failed: ${msg.reason ?? 'unknown'}`);
         onFail();
       }
     } catch {
@@ -167,7 +168,10 @@ function WebMap({
       javaScriptEnabled
       scrollEnabled={false}
       onMessage={(event) => onPage.current(event.nativeEvent.data)}
-      onError={onFail}
+      onError={(event) => {
+        console.warn(`[map] webview error: ${event.nativeEvent.description}`);
+        onFail();
+      }}
     />
   );
 }
