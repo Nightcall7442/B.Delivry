@@ -46,3 +46,6 @@ infrastructure/**/data/
 # local dev files (uploads, OCR language data)
 apps/api/.storage/
 apps/api/.tessdata/
+
+# MapLibre worker copied from node_modules at dev/build time (apps/web/scripts/maplibre-worker.mjs)
+apps/web/public/maplibre/
