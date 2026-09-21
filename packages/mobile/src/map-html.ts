@@ -2,7 +2,8 @@
  * The page inside the map WebView: Yandex Maps JS API 3.0 with a key, MapLibre
  * over OpenFreeMap's free vector tiles without one — plus the tile markers,
  * driven from React Native through `window.__map.update(...)` and answering
- * with `ReactNativeWebView.postMessage`.
+ * with `ReactNativeWebView.postMessage`. On the web the same page sits in an
+ * iframe and the two talk through `postMessage` instead.
  *
  * ponytail: a WebView keeps the exact same map as the web app and runs in Expo
  * Go. Swap for native MapKit (react-native-yamap, dev build) when the WebView
@@ -57,7 +58,11 @@ ${
     home: '<svg viewBox="0 0 24 24" ' + S + '><path d="M3 11 12 3l9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>',
     courier: '<svg viewBox="0 0 24 24" ' + S + '><circle cx="6" cy="17" r="2.5"/><circle cx="18" cy="17" r="2.5"/><path d="M8.5 17H14l2-8h3"/><path d="M14 9h-4l-2 4"/><path d="M15.5 5H19"/></svg>'
   };
-  var send = function (msg) { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(msg)); };
+  var send = function (msg) {
+    var text = JSON.stringify(msg);
+    if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(text);
+    else if (window.parent !== window) window.parent.postMessage(text, '*');
+  };
   var pending = null, map = null, pins = {}, api = null;
 
   function el(m) {
@@ -82,6 +87,9 @@ ${
   }
 
   window.__map = { update: apply };
+  if (window.parent !== window) window.addEventListener('message', function (e) {
+    try { var m = JSON.parse(e.data); if (m && m.type === 'update') apply(m.state); } catch (err) { /* not ours */ }
+  });
 
   function bootLibre() {
     if (!window.maplibregl) { send({ type: 'error' }); return; }
