@@ -12,7 +12,12 @@
 'use client';
 
 import type { LatLngDto } from '@bazar/types';
-import { Map as LibreGl, Marker as LibreMarker, type ErrorEvent as LibreError } from 'maplibre-gl';
+import {
+  Map as LibreGl,
+  Marker as LibreMarker,
+  setWorkerUrl,
+  type ErrorEvent as LibreError,
+} from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
@@ -48,6 +53,10 @@ export interface MapViewProps {
 
 /** Light, quiet basemap: the tiles and the sheet are the colour, not the streets. */
 export const FREE_STYLE = 'https://tiles.openfreemap.org/styles/positron';
+
+// The worker MapLibre would look for next to its bundle is copied to /maplibre
+// by scripts/maplibre-worker.mjs (webpack leaves import.meta.url as file://).
+setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 
 const toLngLat = (p: LatLngDto): LngLat => [p.lng, p.lat];
 
