@@ -855,6 +855,20 @@
   line-height: 1.4;
   color: #7a6749;
 }
+/* «или по номеру» — a dashed rule with the words sitting in it. */
+.rcOr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 4px;
+  text-transform: lowercase;
+}
+.rcOr::before,
+.rcOr::after {
+  content: '';
+  flex: 1;
+  border-top: 1px dashed var(--paper-edge);
+}
 .rcWarn {
   color: var(--pomegranate);
 }

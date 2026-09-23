@@ -163,6 +163,22 @@ export function LoginForm({
       </Text>
 
       {step === 'phone' ? (
+        <>
+          <Button
+            label={t('login.viaTelegram')}
+            disabled={busy}
+            onPress={() => void viaTelegram()}
+          />
+          <Text role="caption" style={s.why}>
+            {t('login.telegramWhy')}
+          </Text>
+          <Text role="caption" style={s.or}>
+            {t('login.orPhone')}
+          </Text>
+        </>
+      ) : null}
+
+      {step === 'phone' ? (
         <Field
           leading={<Text style={s.prefix}>+998</Text>}
           value={phone}
@@ -235,18 +251,11 @@ export function LoginForm({
 
       {step !== 'telegram' ? (
         <Button
+          {...(step === 'phone' ? { variant: 'secondary' as const } : {})}
           label={busy ? t('login.wait') : step === 'phone' ? t('login.getCode') : t('login.enter')}
           disabled={busy || (step === 'phone' ? full.length < 13 : code.length < codeLength)}
           onPress={() => void (step === 'phone' ? send() : verify())}
           style={s.button}
-        />
-      ) : null}
-      {step === 'phone' ? (
-        <Button
-          variant="secondary"
-          label={t('login.viaTelegram')}
-          disabled={busy}
-          onPress={() => void viaTelegram()}
         />
       ) : null}
       <Text
@@ -269,5 +278,15 @@ const s = StyleSheet.create({
   dim: { color: color.inkFaint },
   error: { color: color.danger, fontSize: 14 },
   button: { marginTop: 8 },
+  // Why the bot is first, and the dashed rule before the other way in.
+  why: { textAlign: 'center', marginTop: -2 },
+  or: {
+    textAlign: 'center',
+    marginTop: 10,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#C9B99A',
+  },
   legal: { textAlign: 'center', marginTop: 4 },
 });

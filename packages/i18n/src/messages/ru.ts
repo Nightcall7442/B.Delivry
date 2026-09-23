@@ -205,16 +205,18 @@ export const ru = {
     'Продукты с {count} точек — в корзине они лягут отдельными заказами, каждый со своим курьером.',
 
   // ---------------------------------------------------------------- login
-  'login.title': 'Вход по номеру',
+  'login.title': 'Вход',
   'login.code': 'Код из SMS',
   'login.codeTelegram': 'Код из Telegram',
   'login.sentTelegram': 'Отправили {count} цифр в Telegram-бот — SMS не нужна',
   'login.sendSms': 'Отправить код по SMS',
   'login.viaTelegram': 'Войти через Telegram',
+  'login.telegramWhy': 'Бот подтвердит ваш номер — код вводить не нужно.',
+  'login.orPhone': 'или по номеру телефона',
   'login.telegramWait': 'Откройте бота и нажмите «Поделиться номером» — войдём сами, без кода.',
   'login.telegramExpired':
     'Вход через Telegram не завершился — попробуйте ещё раз или войдите по SMS.',
-  'login.hint': 'Код придёт в Telegram или SMS. Без паролей.',
+  'login.hint': 'Без паролей: вход через Telegram или по коду на номер.',
   'login.sent': 'Отправили {count} цифр на {phone}',
   'login.getCode': 'Получить код',
   'login.sending': 'Отправляем…',

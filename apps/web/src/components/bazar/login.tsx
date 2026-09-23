@@ -200,6 +200,21 @@ export function BazaarLogin({ locale }: { locale: string }) {
             </span>
           </div>
           {step === 'phone' ? (
+            <>
+              <button
+                type="button"
+                className={s.rcCta}
+                disabled={busy}
+                onClick={() => void viaTelegram()}
+                style={{ width: '100%', marginTop: 4 }}
+              >
+                {t('login.viaTelegram')}
+              </button>
+              <p className={s.rcHint}>{t('login.telegramWhy')}</p>
+              <p className={`${s.rcHint} ${s.rcOr}`}>{t('login.orPhone')}</p>
+            </>
+          ) : null}
+          {step === 'phone' ? (
             <label className={s.phone}>
               <span>+998</span>
               <input
@@ -288,6 +303,13 @@ export function BazaarLogin({ locale }: { locale: string }) {
                 style={{
                   opacity: (step === 'phone' ? canSend : canEnter) ? 1 : 0.55,
                   width: '100%',
+                  ...(step === 'phone'
+                    ? {
+                        background: 'transparent',
+                        color: 'var(--pomegranate)',
+                        border: '1.5px solid var(--pomegranate)',
+                      }
+                    : {}),
                 }}
               >
                 {step === 'phone'
@@ -297,24 +319,6 @@ export function BazaarLogin({ locale }: { locale: string }) {
                   : busy
                     ? t('login.checking')
                     : t('login.enter')}
-              </button>
-            </div>
-          ) : null}
-          {step === 'phone' ? (
-            <div className={s.rcActions} style={{ marginTop: 8 }}>
-              <button
-                type="button"
-                className={s.rcCta}
-                disabled={busy}
-                onClick={() => void viaTelegram()}
-                style={{
-                  width: '100%',
-                  background: 'transparent',
-                  color: 'var(--pomegranate)',
-                  border: '1.5px solid var(--pomegranate)',
-                }}
-              >
-                {t('login.viaTelegram')}
               </button>
             </div>
           ) : null}
