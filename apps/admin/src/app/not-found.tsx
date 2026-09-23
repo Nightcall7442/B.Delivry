@@ -4,7 +4,7 @@ import Link from 'next/link';
 export default function NotFound() {
   return (
     <main className="flex min-h-screen items-end justify-start p-8 sm:items-center sm:p-12">
-      <div className="ground" style={{ backgroundImage: 'url(/scenes/morning.jpg)' }} />
+      <div className="ground" />
       <div className="w-full max-w-md">
         <div className="hand text-[20px]" style={{ color: 'var(--cream-muted)' }}>
           Чорсу · Алайский · Фархадский

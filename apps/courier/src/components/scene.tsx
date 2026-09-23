@@ -37,8 +37,36 @@ const SCENES = {
 };
 
 /** The photograph with a dark scrim, so paper reads on it. */
-export function Ground({ children, dim = 0.75 }: { children: ReactNode; dim?: number }) {
+/**
+ * The ground under every shift screen: the night, warm where the lamps are.
+ * The photograph of the rows hangs at the door (login) and nowhere else —
+ * behind twelve screens in a row it stopped being the bazaar and became
+ * wallpaper.
+ */
+export function Ground({
+  children,
+  photo = false,
+  dim = 0.75,
+}: {
+  children: ReactNode;
+  /** The rows themselves behind the paper — the door (login) and nowhere else. */
+  photo?: boolean;
+  dim?: number;
+}) {
   const evening = isEvening();
+  if (!photo) {
+    return (
+      <View style={s.ground}>
+        <LinearGradient
+          colors={['#241906', '#1E1408', '#160F06']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        {children}
+      </View>
+    );
+  }
   return (
     <ImageBackground source={SCENES[evening ? 'evening' : 'morning']} style={s.ground}>
       <LinearGradient

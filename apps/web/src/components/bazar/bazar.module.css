@@ -17,7 +17,14 @@
   --saffron-light: #f2c56b;
   position: relative;
   min-height: 100dvh;
-  background: var(--night);
+  /* The hall after the lamps are lit: the night, warm where the light falls.
+     The photograph itself is kept for the door (login) — everywhere else it
+     was wallpaper competing with the paper. */
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(227, 155, 47, 0.16), rgba(227, 155, 47, 0) 60%),
+    radial-gradient(90% 50% at 100% 100%, rgba(158, 42, 43, 0.14), rgba(158, 42, 43, 0) 65%),
+    var(--night);
+  background-attachment: fixed;
   color: var(--cream);
   font-family: var(--font-display), 'Manrope', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -120,7 +127,8 @@
 }
 .greeting {
   padding-top: clamp(28px, 6vh, 64px);
-  min-height: 42vh;
+  /* 42vh was room for the photograph behind it; without one that is dead ground. */
+  min-height: 24vh;
 }
 .head {
   display: flex;

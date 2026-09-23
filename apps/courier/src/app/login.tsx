@@ -13,7 +13,7 @@ export default function LoginRoute() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   return (
-    <Ground dim={0.55}>
+    <Ground photo dim={0.55}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={[s.root, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 16 }]}

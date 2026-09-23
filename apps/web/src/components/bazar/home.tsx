@@ -94,10 +94,6 @@ export function BazaarHome({
 
   return (
     <main className={s.scene}>
-      <div
-        className={`${s.photo} ${evening ? s.photoEvening : ''}`}
-        style={{ backgroundImage: `url(/scenes/${evening ? 'evening' : 'morning'}.jpg)` }}
-      />
       <div className={s.body}>
         <div className={s.top}>
           <span className={s.tag}>

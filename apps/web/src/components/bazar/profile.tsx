@@ -28,7 +28,6 @@ import {
 import { useAuth } from '@/features/auth';
 import { api } from '@/lib/api';
 
-import { isEvening } from './index';
 import s from './bazar.module.css';
 
 type Item = { key: MessageKey; href: string; icon: React.ReactNode };
@@ -53,7 +52,6 @@ export function BazaarProfile({ locale }: { locale: string }) {
   const t = createT(locale);
   const router = useRouter();
   const { user, ready, signOut } = useAuth();
-  const evening = isEvening();
   const home = `/${locale}`;
   const [balance, setBalance] = useState<number | null>(null);
   useEffect(() => {
@@ -81,10 +79,6 @@ export function BazaarProfile({ locale }: { locale: string }) {
 
   return (
     <main className={s.scene}>
-      <div
-        className={`${s.photo} ${s.photoDim} ${evening ? s.photoEvening : ''}`}
-        style={{ backgroundImage: `url(/scenes/${evening ? 'evening' : 'morning'}.jpg)` }}
-      />
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>
