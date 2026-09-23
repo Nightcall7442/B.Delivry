@@ -252,10 +252,12 @@ export function BazaarCheckout({
 
   return (
     <main className={s.scene}>
-      <div
-        className={`${s.photo} ${s.photoDim}`}
-        style={{ backgroundImage: `url(${ground ? photo(ground, 1280) : '/scenes/morning.jpg'})` }}
-      />
+      {ground ? (
+        <div
+          className={`${s.photo} ${s.photoDim}`}
+          style={{ backgroundImage: `url(${photo(ground, 1280)})` }}
+        />
+      ) : null}
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={`/${locale}/cart`} className={s.round} aria-label={t('common.back')}>

@@ -25,10 +25,6 @@ export function BazaarLegal({ doc, locale }: { doc: LegalDoc; locale: string }) 
   const home = `/${locale}`;
   return (
     <main className={s.scene}>
-      <div
-        className={`${s.photo} ${s.photoDim}`}
-        style={{ backgroundImage: 'url(/scenes/morning.jpg)' }}
-      />
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label="Bazar">

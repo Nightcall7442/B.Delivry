@@ -64,17 +64,17 @@
   /* The counter's back office: paper on the bazaar, big targets, handwritten numbers. */
 
   /* The bazaar hall behind everything, dimmed so paper reads on it. */
+  /* The night behind the counter, warm where the lamps hang. The photograph
+     of the rows is kept for the login screen — everywhere else it was
+     wallpaper under the paper. */
   .ground {
     position: fixed;
     inset: 0;
     z-index: -1;
-    background: var(--night) center / cover no-repeat;
-  }
-  .ground::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(rgba(30, 20, 8, 0.72), rgba(30, 20, 8, 0.86));
+    background:
+      radial-gradient(120% 60% at 50% -10%, rgba(227, 155, 47, 0.16), rgba(227, 155, 47, 0) 60%),
+      radial-gradient(90% 50% at 100% 100%, rgba(158, 42, 43, 0.14), rgba(158, 42, 43, 0) 65%),
+      var(--night);
   }
 
   .btn {

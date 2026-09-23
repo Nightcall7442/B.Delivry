@@ -100,10 +100,6 @@ export function BazaarCatalog({
 
   return (
     <main className={s.scene}>
-      <div
-        className={`${s.photo} ${s.photoDim} ${evening ? s.photoEvening : ''}`}
-        style={{ backgroundImage: `url(/scenes/${evening ? 'evening' : 'morning'}.jpg)` }}
-      />
       <div className={s.body}>
         <div className={s.top}>
           <Link href={walking ? base : home} className={s.round} aria-label={t('common.back')}>

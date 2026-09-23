@@ -31,10 +31,6 @@ export function BazaarOrders({ locale }: { locale: string }) {
 
   return (
     <main className={s.scene}>
-      <div
-        className={`${s.photo} ${s.photoDim} ${s.photoEvening}`}
-        style={{ backgroundImage: 'url(/scenes/evening.jpg)' }}
-      />
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>

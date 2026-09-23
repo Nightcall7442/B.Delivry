@@ -8,7 +8,6 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Image } from 'expo-image';
 import {
   Animated,
   Pressable,
@@ -23,7 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Bag, Button, Text, color, press, shadow, useLocale } from '@bazar/mobile';
 
 import { useCartCount } from '@/features/cart/store';
-import { SCENES, isEvening, sceneFont } from '@/components/bazar';
+import { sceneFont } from '@/components/bazar';
 
 /** Ground and surfaces of the redesign; the brand colours stay in @bazar/mobile's theme. */
 export const ui = {
@@ -112,18 +111,14 @@ export function Page({
   return (
     <View style={[s.root, scene && { backgroundColor: '#1E1408' }]}>
       {scene ? (
-        <View style={StyleSheet.absoluteFill}>
-          <Image
-            source={SCENES[isEvening() ? 'evening' : 'morning']}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-          />
-          <LinearGradient
-            colors={['rgba(30,20,8,0.62)', 'rgba(30,20,8,0.8)', 'rgba(30,20,8,0.94)']}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
+        /* The hall itself hangs at the door (the login screen); here it would be
+           wallpaper behind the paper. The night and its lamps are enough. */
+        <LinearGradient
+          colors={['#241906', '#1E1408', '#160F06']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
       ) : (
         <LinearGradient
           colors={[ui.mint, ui.peach]}

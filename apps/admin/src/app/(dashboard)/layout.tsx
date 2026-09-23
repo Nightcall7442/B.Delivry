@@ -63,10 +63,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      <div
-        className="ground"
-        style={{ backgroundImage: `url(/scenes/${isEvening() ? 'evening' : 'morning'}.jpg)` }}
-      />
+      <div className="ground" />
 
       {/* Phones and tablets: a strip of kraft across the top, the signs scroll sideways. */}
       <header

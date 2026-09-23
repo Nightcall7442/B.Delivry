@@ -39,7 +39,6 @@ import {
 } from '@/features/cart';
 import { api } from '@/lib/api';
 
-import { isEvening } from './index';
 import s from './bazar.module.css';
 
 const WEIGHED = new Set(['KG', 'G']);
@@ -140,7 +139,6 @@ export function BazaarCart({
   // Cross-bazaar: stalls of one bazaar → one courier trip on offer; shops always ride alone.
   const oneTrip = useMemo(() => oneTripStores(groups, storeById), [groups, storeById]);
 
-  const evening = isEvening();
   const first = groups[0] ? storeById.get(groups[0].storeId) : null;
   const ground = first?.counterPhotoUrl ?? first?.coverUrl ?? null;
   const today = new Intl.DateTimeFormat(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', {
@@ -151,12 +149,13 @@ export function BazaarCart({
 
   return (
     <main className={s.scene}>
-      <div
-        className={`${s.photo} ${s.photoDim} ${evening ? s.photoEvening : ''}`}
-        style={{
-          backgroundImage: `url(${ground ? photo(ground, 1280) : `/scenes/${evening ? 'evening' : 'morning'}.jpg`})`,
-        }}
-      />
+      {/* The counter's own photograph, when the basket comes from one stall. */}
+      {ground ? (
+        <div
+          className={`${s.photo} ${s.photoDim}`}
+          style={{ backgroundImage: `url(${photo(ground, 1280)})` }}
+        />
+      ) : null}
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <button

@@ -13,13 +13,11 @@ import { ArrowLeft, Chat, Leaf, Phone } from '@/components/go/icons';
 import { useAuth } from '@/features/auth';
 import { api } from '@/lib/api';
 
-import { isEvening } from './index';
 import s from './bazar.module.css';
 
 export function BazaarSupport({ locale }: { locale: string }) {
   const t = createT(locale);
   const { user } = useAuth();
-  const evening = isEvening();
   const home = `/${locale}`;
   const line = (icon: React.ReactNode, title: string, hint: string) => (
     <>
@@ -38,10 +36,6 @@ export function BazaarSupport({ locale }: { locale: string }) {
 
   return (
     <main className={s.scene}>
-      <div
-        className={`${s.photo} ${s.photoDim} ${evening ? s.photoEvening : ''}`}
-        style={{ backgroundImage: `url(/scenes/${evening ? 'evening' : 'morning'}.jpg)` }}
-      />
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>
@@ -117,10 +111,6 @@ export function BazaarError({ locale, onRetry }: { locale: string; onRetry: () =
   const t = createT(locale);
   return (
     <main className={s.scene}>
-      <div
-        className={`${s.photo} ${s.photoDim}`}
-        style={{ backgroundImage: 'url(/scenes/morning.jpg)' }}
-      />
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.greeting} style={{ minHeight: 0, padding: '48px 0 26px' }}>
           <h1 className={s.display} style={{ fontSize: 'clamp(30px, 4.6vw, 48px)' }}>
@@ -157,10 +147,6 @@ export function BazaarNotFound({ locale }: { locale: string }) {
   const home = `/${locale}`;
   return (
     <main className={s.scene}>
-      <div
-        className={`${s.photo} ${s.photoDim}`}
-        style={{ backgroundImage: 'url(/scenes/morning.jpg)' }}
-      />
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>

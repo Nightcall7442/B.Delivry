@@ -21,7 +21,6 @@ import { useAppName } from '@/features/branding';
 import { useCartCount } from '@/features/cart';
 import { api } from '@/lib/api';
 
-import { isEvening } from '@/components/bazar/index';
 import bz from '@/components/bazar/bazar.module.css';
 
 export function MarketShell({
@@ -77,14 +76,8 @@ export function MarketShell({
     { href: `/${locale}/orders`, icon: <Receipt />, label: t('menu.orders') },
   ];
 
-  const evening = isEvening();
-
   return (
     <div className={bz.scene}>
-      <div
-        className={`${bz.photo} ${bz.photoDim} ${evening ? bz.photoEvening : ''}`}
-        style={{ backgroundImage: `url(/scenes/${evening ? 'evening' : 'morning'}.jpg)` }}
-      />
       <div className={`${bz.body} ${bz.narrow}`} style={{ paddingBottom: 120 }}>
         <div className={bz.top}>
           <div className="flex min-w-0 items-center gap-3">
