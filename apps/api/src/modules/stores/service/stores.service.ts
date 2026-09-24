@@ -126,14 +126,16 @@ export class StoresService extends BaseService {
   }
 
   /**
-   * What the order flow needs: the store exists, is open right now, and has a
-   * map location a courier can be sent to. Every failure here is a reason the
-   * order cannot be placed, so they are all raised as distinct errors.
+   * What the order flow needs: the store exists, is open at the hour the order
+   * is for (now, or the slot the customer picked — the rows shut at six and
+   * still take orders for the morning), and has a map location a courier can
+   * be sent to. Every failure here is a reason the order cannot be placed, so
+   * they are all raised as distinct errors.
    */
-  async getOpenStore(id: string): Promise<OpenStore> {
+  async getOpenStore(id: string, at: Date = new Date()): Promise<OpenStore> {
     const store = await this.get(id);
 
-    if (!this.isOpen(store)) throw new StoreClosedError(id);
+    if (!this.isOpen(store, at)) throw new StoreClosedError(id);
     if (store.lat === null || store.lng === null) {
       throw new StoreClosedError(id);
     }

@@ -207,9 +207,18 @@ export function CheckoutScreen({
     const request =
       followers.length > 0
         ? api()
-            .orders.quoteGroup({ point: address.point, stores: groupStores })
+            .orders.quoteGroup({
+              point: address.point,
+              stores: groupStores,
+              ...(slot ? { scheduledFor: slot } : {}),
+            })
             .then((quotes) => combineQuotes(quotes))
-        : api().orders.quote({ storeId: store.id, point: address.point, items });
+        : api().orders.quote({
+            storeId: store.id,
+            point: address.point,
+            items,
+            ...(slot ? { scheduledFor: slot } : {}),
+          });
     request
       .then((result) => alive && setQuote(result))
       .catch((e) => alive && setError(describeOrderError(e, locale)))
@@ -217,7 +226,7 @@ export function CheckoutScreen({
     return () => {
       alive = false;
     };
-  }, [user, store, address, items, followers.length, groupStores, locale]);
+  }, [user, store, address, items, followers.length, groupStores, locale, slot]);
 
   const orderLines = [...(group?.lines ?? []), ...followers.flatMap((f) => f.group.lines)];
   const weightKg = orderLines
@@ -225,6 +234,9 @@ export function CheckoutScreen({
     .reduce((sum, line) => sum + line.quantity, 0);
   const totals = quote?.totals;
   const deliverable = quote?.deliverable ?? false;
+  // A disabled button explains nothing: it carries the reason itself.
+  const blocker = quote && !deliverable ? orderReasonText(quote.reason, locale) : null;
+  const closedNow = quote?.reason === 'Store is closed';
   const subtotal = totals?.subtotal.amount ?? group?.subtotal.amount ?? 0;
   const total = totals?.total.amount ?? subtotal;
   const ready = Boolean(
@@ -275,7 +287,7 @@ export function CheckoutScreen({
             address
               ? quoting
                 ? t('checkout.calculating')
-                : t('checkout.order')
+                : (blocker ?? t('checkout.order'))
               : t('checkout.needAddress')
           }
           trailing={t.money(total)}
@@ -377,6 +389,11 @@ export function CheckoutScreen({
           />
         ))}
       </ScrollView>
+      {closedNow && !slot ? (
+        <Text role="muted" style={{ color: color.danger, marginTop: 8 }}>
+          {t('checkout.closedPickSlot')}
+        </Text>
+      ) : null}
       {slot ? (
         <Text role="caption" style={{ marginTop: 8 }}>
           {t('checkout.slotHint')}

@@ -117,6 +117,7 @@ export const uz: Catalogue = {
     'Tortiladigan mahsulotlarni kuryer sotuvchida tortadi — yakuniy summa bir necha foizga farq qilishi mumkin.',
   'checkout.reason.minOrder': 'Summa bu hudud uchun minimaldan kam',
   'checkout.reason.outOfZone': 'Bu yerga hali olib bormaymiz — boshqa manzilni sinang',
+  'checkout.closedPickSlot': 'Rastalar hozir yopiq — quyidan yetkazish oynasini tanlang.',
   'checkout.reason.storeClosed': 'Nuqta hozir yopiq',
 
   'order.title': 'Buyurtma',

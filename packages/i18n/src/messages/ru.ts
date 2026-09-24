@@ -127,6 +127,7 @@ export const ru = {
   'checkout.reason.minOrder': 'Сумма ниже минимальной для этого района',
   'checkout.reason.outOfZone': 'Сюда пока не возим — попробуйте другой адрес',
   'checkout.reason.storeClosed': 'Точка сейчас закрыта',
+  'checkout.closedPickSlot': 'Ряды сейчас закрыты — выберите окно доставки ниже.',
 
   // ---------------------------------------------------------------- order
   'order.title': 'Заказ',

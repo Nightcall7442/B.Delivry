@@ -106,7 +106,7 @@ export class OrdersService extends BaseService {
     // A job placing a subscription's order names the customer; a request is the customer.
     const customerId = asCustomerId ?? this.callerCustomerId();
 
-    const store = await this.stores.getOpenStore(input.storeId);
+    const store = await this.stores.getOpenStore(input.storeId, input.scheduledFor);
     const address = await this.addresses.getFrozen(input.addressId, customerId);
 
     const items = await this.priceItems(input, customerId);
@@ -249,7 +249,10 @@ export class OrdersService extends BaseService {
    * fee on the first, and a shared group id the dispatch follows.
    */
   async createGroup(input: CreateGroupInput): Promise<OrderWithRelations[]> {
-    await this.assertSameBazaar(input.stores.map((entry) => entry.storeId));
+    await this.assertSameBazaar(
+      input.stores.map((entry) => entry.storeId),
+      input.scheduledFor,
+    );
     const groupId = randomUUID();
     const { stores, ...common } = input;
     const groupSubtotal = await this.groupSubtotal(input.addressId, stores);
@@ -270,7 +273,10 @@ export class OrdersService extends BaseService {
   }
 
   async quoteGroup(input: QuoteGroupInput): Promise<OrderQuote[]> {
-    await this.assertSameBazaar(input.stores.map((entry) => entry.storeId));
+    await this.assertSameBazaar(
+      input.stores.map((entry) => entry.storeId),
+      input.scheduledFor === undefined ? undefined : new Date(input.scheduledFor),
+    );
     const { stores, ...common } = input;
     const groupSubtotal = await this.groupSubtotal(input.addressId, stores, input.point);
     const quotes: OrderQuote[] = [];
@@ -314,9 +320,9 @@ export class OrdersService extends BaseService {
   }
 
   /** Stalls farther apart than a bazaar's rows are two trips, not one. */
-  private async assertSameBazaar(storeIds: string[]): Promise<void> {
+  private async assertSameBazaar(storeIds: string[], at?: Date): Promise<void> {
     if (new Set(storeIds).size < 2) throw new ConflictError('A group needs two different stalls');
-    const stores = await Promise.all(storeIds.map((id) => this.stores.getOpenStore(id)));
+    const stores = await Promise.all(storeIds.map((id) => this.stores.getOpenStore(id, at)));
     // One courier walks one bazaar; a supermarket is a separate trip however close it is.
     if (stores.some((store) => !STALL_TYPES.includes(store.type))) {
       throw new ConflictError('Only bazaar stalls can share one delivery');
@@ -393,10 +399,12 @@ export class OrdersService extends BaseService {
         : {}),
     });
 
+    // The slot the customer picked, or this minute for «as soon as possible».
+    const openAt = input.scheduledFor === undefined ? new Date() : new Date(input.scheduledFor);
     return {
-      deliverable: quote.deliverable && this.stores.isOpen(store),
+      deliverable: quote.deliverable && this.stores.isOpen(store, openAt),
       reason: quote.deliverable
-        ? this.stores.isOpen(store)
+        ? this.stores.isOpen(store, openAt)
           ? null
           : 'Store is closed'
         : quote.reason,

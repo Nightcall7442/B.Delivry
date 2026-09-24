@@ -54,6 +54,7 @@ export const quoteGroupOrderSchema = z
     point: latLngSchema.optional(),
     couponCode: z.string().trim().toUpperCase().regex(COUPON_CODE_REGEX).optional(),
     stores: z.array(groupEntrySchema).min(2).max(5),
+    scheduledFor: isoDateSchema.optional(),
   })
   .refine((value) => value.addressId !== undefined || value.point !== undefined, {
     message: 'addressId or point is required',
@@ -68,6 +69,8 @@ export const quoteOrderSchema = z
     point: latLngSchema.optional(),
     couponCode: z.string().trim().toUpperCase().regex(COUPON_CODE_REGEX).optional(),
     items: z.array(orderItemInputSchema).min(1).max(LIMITS.ORDER_MAX_ITEMS).optional(),
+    /** The slot the basket is for: the store is judged open or shut at that hour. */
+    scheduledFor: isoDateSchema.optional(),
   })
   .refine((value) => value.addressId !== undefined || value.point !== undefined, {
     message: 'addressId or point is required',
