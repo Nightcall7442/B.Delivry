@@ -21,12 +21,6 @@ const VENDOR_NAV = [
   { href: '/orders', label: 'Заказы' },
 ];
 
-/** Tashkent hour: the bazaar lives on its own clock, not the visitor's. */
-const isEvening = () => {
-  const hour = (new Date().getUTCHours() + 5) % 24;
-  return hour >= 17 || hour < 5;
-};
-
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
