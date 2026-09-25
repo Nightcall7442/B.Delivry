@@ -184,9 +184,18 @@ export function BazaarCheckout({
     const request =
       followers.length > 0
         ? api()
-            .orders.quoteGroup({ point: address.point, stores: groupStores })
+            .orders.quoteGroup({
+              point: address.point,
+              stores: groupStores,
+              ...(slot ? { scheduledFor: slot } : {}),
+            })
             .then((quotes) => combineQuotes(quotes))
-        : api().orders.quote({ storeId: store.id, point: address.point, items });
+        : api().orders.quote({
+            storeId: store.id,
+            point: address.point,
+            items,
+            ...(slot ? { scheduledFor: slot } : {}),
+          });
     request
       .then((result) => alive && setQuote(result))
       .catch((e) => alive && setError(describeOrderError(e, locale)))
@@ -194,10 +203,13 @@ export function BazaarCheckout({
     return () => {
       alive = false;
     };
-  }, [user, address, items, store.id, followers.length, groupStores, locale]);
+  }, [user, address, items, store.id, followers.length, groupStores, locale, slot]);
 
   const totals = quote?.totals;
   const deliverable = quote?.deliverable ?? false;
+  // Why the order cannot be placed right now, in the customer's words.
+  const blocker = quote && !deliverable ? orderReasonText(quote.reason, locale) : null;
+  const closedNow = quote?.reason === 'Store is closed';
   const ready = Boolean(
     user && group && address && items.length > 0 && deliverable && !submitting && !quoting,
   );
@@ -383,6 +395,9 @@ export function BazaarCheckout({
               </button>
             ))}
           </div>
+          {closedNow && !slot ? (
+            <p className={`${s.rcHint} ${s.rcWarn}`}>{t('checkout.closedPickSlot')}</p>
+          ) : null}
           {slot ? <p className={s.rcHint}>{t('checkout.slotHint')}</p> : null}
 
           <div className={s.rcSection}>{t('checkout.vendor')}</div>
@@ -613,7 +628,8 @@ export function BazaarCheckout({
                     ? t('checkout.placing')
                     : quoting
                       ? t('checkout.calculating')
-                      : t('checkout.order')}
+                      : /* A dead button explains nothing: carry the reason on it. */
+                        (blocker ?? t('checkout.order'))}
               </div>
               {totals ? <div className={s.checkoutSub}>{t.money(totals.total.amount)}</div> : null}
             </span>

@@ -134,6 +134,8 @@ export interface QuoteOrderDto {
   couponCode?: string;
   /** Omit to price the current cart for that store. */
   items?: { productId: Id; quantity: number }[];
+  /** The slot the basket is for; the store counts as open at that hour, not this one. */
+  scheduledFor?: string;
 }
 
 export interface OrderQuoteDto {
