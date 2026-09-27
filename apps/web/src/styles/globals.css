@@ -152,6 +152,12 @@
   }
 
   /* Paper for sheets and the menu, whatever the theme: cream, ink, the light tokens. */
+  :root {
+    /* The night belongs to the site, not only to the scene's own classes. */
+    --night: #101524;
+    --night-rgb: 16 21 36;
+  }
+
   .paper-sheet {
     --ink-muted: 106 90 69;
     --ink-faint: 160 143 118;

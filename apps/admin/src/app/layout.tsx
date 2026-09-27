@@ -30,7 +30,7 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = { title: 'За прилавком — Bazar Delivery' };
-export const viewport: Viewport = { themeColor: '#1e1408', colorScheme: 'light' };
+export const viewport: Viewport = { themeColor: '#101524', colorScheme: 'light' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

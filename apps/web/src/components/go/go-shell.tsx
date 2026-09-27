@@ -49,7 +49,7 @@ export function GoShell({ locale, map, back, peek = 0.46, children, ...sheet }: 
   }
 
   return (
-    <div className="relative h-dvh overflow-hidden bg-[#1e1408]">
+    <div className="relative h-dvh overflow-hidden bg-[#101524]">
       <MapView {...map} inset={peek} />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between p-3 pt-[max(0.75rem,env(safe-area-inset-top))] md:left-[440px]">

@@ -48,7 +48,7 @@ export default function StoresPage() {
                   : undefined
               }
             >
-              <span className="absolute inset-0 bg-gradient-to-t from-[rgba(30,20,8,0.7)] via-transparent to-transparent" />
+              <span className="absolute inset-0 bg-gradient-to-t from-[rgba(16,21,36,0.7)] via-transparent to-transparent" />
               <span
                 className="absolute bottom-4 left-4 max-w-[80%] bg-[#fbf5e6] px-3 pb-2 pt-2 text-[#1f1a14] shadow-[0_6px_14px_rgba(0,0,0,0.35)] transition-transform group-hover:-translate-y-1"
                 style={{

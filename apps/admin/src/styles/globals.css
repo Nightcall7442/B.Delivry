@@ -44,7 +44,8 @@
     --kraft-deep: #dcc59a;
     --pomegranate: #9e2a2b;
     --saffron: #e39b2f;
-    --night: #1e1408;
+    --night: #101524;
+    --night-rgb: 16 21 36;
   }
 
   body {

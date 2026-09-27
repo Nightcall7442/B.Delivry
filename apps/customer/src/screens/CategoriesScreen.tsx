@@ -18,10 +18,10 @@ import { listCategories, listProducts, listStores } from '@/lib/catalog';
 import { EMPTY, useData } from '@/lib/use-data';
 import { color, isDark, press, useLocale } from '@bazar/mobile';
 
-const KRAFT = isDark ? '#2A2014' : '#EAD8B2';
-const PAPER = isDark ? '#1E1408' : '#F4EFE4';
-const SIGN = isDark ? '#3A2E1C' : '#FBF5E6';
-const SIGN_EDGE = isDark ? '#5A4A2E' : '#C9B99A';
+const KRAFT = isDark ? '#1C2438' : '#EAD8B2';
+const PAPER = isDark ? '#151C2E' : '#F4EFE4';
+const SIGN = isDark ? '#232C45' : '#FBF5E6';
+const SIGN_EDGE = isDark ? '#3C4767' : '#C9B99A';
 
 export function CategoriesScreen() {
   const router = useRouter();

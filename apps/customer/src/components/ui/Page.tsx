@@ -109,12 +109,12 @@ export function Page({
   };
 
   return (
-    <View style={[s.root, scene && { backgroundColor: '#1E1408' }]}>
+    <View style={[s.root, scene && { backgroundColor: '#101524' }]}>
       {scene ? (
         /* The hall itself hangs at the door (the login screen); here it would be
            wallpaper behind the paper. The night and its lamps are enough. */
         <LinearGradient
-          colors={['#241906', '#1E1408', '#160F06']}
+          colors={['#16203A', '#101524', '#0C1019']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}

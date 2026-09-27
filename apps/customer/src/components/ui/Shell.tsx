@@ -212,7 +212,7 @@ const MENU: ReadonlyArray<{ href: Href; key: MessageKey }> = [
 ];
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#1E1408' },
+  root: { flex: 1, backgroundColor: '#101524' },
   // One sheet of paper for the screen's content, on the hall.
   paper: {
     backgroundColor: '#F4EFE4',

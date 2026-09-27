@@ -36,8 +36,8 @@ import {
   useLocale,
 } from '@bazar/mobile';
 
-const KRAFT = isDark ? '#2A2014' : '#E4D3AE';
-const PAPER = isDark ? '#1E1408' : '#F4EFE4';
+const KRAFT = isDark ? '#1C2438' : '#E4D3AE';
+const PAPER = isDark ? '#151C2E' : '#F4EFE4';
 
 type IconComponent = ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
 interface Item {
