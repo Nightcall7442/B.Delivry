@@ -4,7 +4,7 @@
  * sees the weight, the photo and the new total before paying.
  */
 import { WEIGHTED_UNITS } from '@bazar/constants';
-import { Button, Text, api, color, font, radius } from '@bazar/mobile';
+import { Button, Text, api, color, font, radius, scale } from '@bazar/mobile';
 import { UNIT_LABEL, tr } from '@bazar/storefront';
 import type { OrderDto, OrderItemDto } from '@bazar/types';
 import { formatMoney } from '@bazar/utils/money';
@@ -126,7 +126,7 @@ export function WeighingSheet({
             <Text role="body" numberOfLines={1}>
               {tr(line.item.name, 'ru')}
             </Text>
-            <Text role="caption">
+            <Text role="caption" style={s.figures}>
               заказано {line.item.quantity} {UNIT_LABEL[line.item.unit]} ·{' '}
               {formatMoney(line.item.unitPrice.amount)} / {UNIT_LABEL[line.item.unit]}
             </Text>
@@ -148,6 +148,7 @@ export function WeighingSheet({
                 style={[s.photo, line.photoUrl ? s.photoDone : null]}
               >
                 {line.photoUrl ? (
+                  // Evidence of the weight, not a picture of the goods: shown as shot, no grade.
                   <Image source={{ uri: line.photoUrl }} style={s.thumb} />
                 ) : (
                   <Text
@@ -168,7 +169,7 @@ export function WeighingSheet({
         <Text style={s.totalValue}>{formatMoney(total)}</Text>
       </View>
 
-      {error ? <Text style={{ color: color.danger }}>{error}</Text> : null}
+      {error ? <Text style={s.error}>{error}</Text> : null}
 
       <Button
         label={saving || busy ? 'Секунду…' : 'Сохранить и забрать'}
@@ -195,8 +196,9 @@ const s = StyleSheet.create({
     borderRadius: radius.paper,
     backgroundColor: color.sand50,
     paddingHorizontal: 12,
-    fontSize: 18,
+    fontSize: scale.lead.fontSize,
     fontFamily: font.displayBold,
+    fontVariant: ['tabular-nums'],
     color: color.ink,
   },
   photo: {
@@ -219,5 +221,13 @@ const s = StyleSheet.create({
     alignItems: 'baseline',
     marginTop: 8,
   },
-  totalValue: { fontFamily: font.display, fontSize: 20, color: color.ink },
+  totalValue: {
+    fontFamily: font.display,
+    ...scale.title,
+    color: color.ink,
+    fontVariant: ['tabular-nums'],
+  },
+  figures: { fontVariant: ['tabular-nums'] },
+  // Pomegranate, as on the shift sheet: the palette's one red, and it reads on paper.
+  error: { ...scale.body, color: color.brand500 },
 });

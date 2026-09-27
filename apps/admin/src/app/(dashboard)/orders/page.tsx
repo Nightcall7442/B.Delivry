@@ -66,11 +66,9 @@ export default function OrdersPage() {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="font-display text-2xl font-extrabold">Заказы</h1>
-        <div
-          className="ml-auto flex gap-1 rounded-full p-1"
-          style={{ background: 'rgba(16,21,36,0.45)', border: '1px solid rgba(251,241,222,0.28)' }}
-        >
+        <h1 className="font-display text-headline font-extrabold">Заказы</h1>
+        {/* The filter and the search float over the ground: glass, not paper. */}
+        <div className="glass ml-auto flex gap-1 rounded-full p-1">
           {(
             [
               ['active', 'Активные'],
@@ -81,7 +79,7 @@ export default function OrdersPage() {
             <button
               key={key}
               type="button"
-              className={`hand h-9 rounded-full px-4 text-[17px] ${filter === key ? 'bg-[#fbf1de] text-ink' : 'text-[#d9c7a6]'}`}
+              className={`h-9 rounded-full px-4 text-sm font-semibold ${filter === key ? 'bg-[var(--cream)] text-[var(--ink-paper)]' : 'text-[var(--cream-muted)]'}`}
               onClick={() => setFilter(key)}
             >
               {label}
@@ -89,7 +87,7 @@ export default function OrdersPage() {
           ))}
         </div>
         <input
-          className="field w-56"
+          className="glass h-11 w-56 rounded-full px-4 text-lead text-[var(--cream)] placeholder:text-[var(--cream-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-saffron-400"
           placeholder="Номер заказа"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -98,7 +96,7 @@ export default function OrdersPage() {
 
       <div className="card mt-4 overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wider text-ink-muted">
+          <thead className="text-left">
             <tr>
               <th className="px-4 py-3">Заказ</th>
               <th className="px-4 py-3">Статус</th>

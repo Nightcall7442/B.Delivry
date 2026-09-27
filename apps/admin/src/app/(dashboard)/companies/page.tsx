@@ -50,7 +50,7 @@ export default function CompaniesPage() {
   const Table = ({ rows, approvedRows }: { rows: CustomerDto[]; approvedRows: boolean }) => (
     <div className="card mt-3 overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="text-left text-xs uppercase tracking-wider text-ink-muted">
+        <thead className="text-left">
           <tr>
             <th className="px-4 py-3">Компания</th>
             <th className="px-4 py-3">Контакт</th>
@@ -121,14 +121,15 @@ export default function CompaniesPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-extrabold">Компании</h1>
+      <h1 className="font-display text-headline font-extrabold">Компании</h1>
       <p className="mt-1 text-sm text-ink-muted">
         Кафе и столовые с оплатой по счёту: заявки ждут одобрения, у одобренных — отсрочка и лимит.
       </p>
-      {note ? <p className="mt-2 text-sm text-brand-700">{note}</p> : null}
-      <h2 className="mt-4 font-display text-lg font-bold">Заявки</h2>
+      {/* On the ground, not on paper: ochre as text, the one accent that reads there. */}
+      {note ? <p className="mt-2 text-sm text-[var(--ochre-light)]">{note}</p> : null}
+      <h2 className="mt-4 font-display text-lead font-bold">Заявки</h2>
       <Table rows={pending} approvedRows={false} />
-      <h2 className="mt-6 font-display text-lg font-bold">Одобренные</h2>
+      <h2 className="mt-6 font-display text-lead font-bold">Одобренные</h2>
       <Table rows={approved} approvedRows />
     </div>
   );

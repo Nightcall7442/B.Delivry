@@ -35,7 +35,7 @@ export default function InvoicesPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-extrabold">Счета</h1>
+      <h1 className="font-display text-headline font-extrabold">Счета</h1>
       <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
         {[
           ['Открыто', formatMoney(open.reduce((s, o) => s + o.totals.total.amount, 0))],
@@ -43,15 +43,16 @@ export default function InvoicesPage() {
           ['Всего по счёту', String(rows.length)],
         ].map(([label, value]) => (
           <div key={label} className="card p-4">
-            <div className="text-xs uppercase tracking-wider text-ink-muted">{label}</div>
-            <div className="mt-1 font-display text-xl font-extrabold tabular-nums">{value}</div>
+            <div className="eyebrow">{label}</div>
+            <div className="mt-1 text-title font-extrabold tabular-nums">{value}</div>
           </div>
         ))}
       </div>
-      {note ? <p className="mt-2 text-sm text-brand-700">{note}</p> : null}
+      {/* On the ground, not on paper: ochre as text, the one accent that reads there. */}
+      {note ? <p className="mt-2 text-sm text-[var(--ochre-light)]">{note}</p> : null}
       <div className="card mt-3 overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wider text-ink-muted">
+          <thead className="text-left">
             <tr>
               <th className="px-4 py-3">Заказ</th>
               <th className="px-4 py-3">Покупатель</th>

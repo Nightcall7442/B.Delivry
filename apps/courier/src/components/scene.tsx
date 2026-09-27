@@ -1,34 +1,32 @@
 /**
- * The courier app's slice of the bazaar language: the hall photograph as a
- * ground (morning or evening by Tashkent time), paper slips to write on, kraft
- * for the counter, handwriting for money and asides. Kept small on purpose —
- * a courier needs one big button, not a scene.
+ * The courier app's slice of the bazaar language: the hall under the screens,
+ * the photograph of the rows at the door, paper slips to write on, kraft for
+ * the counter. Colours are «Свет купола» (@bazar/storefront HALL/TONE/GROUND).
+ * Kept small on purpose — a courier needs one big button, not a scene.
  */
+import { DomeGround, PhotoGrade, font, radius, scale, shadow } from '@bazar/mobile';
+import { GROUND, HALL, TONE, alpha, hallLight } from '@bazar/storefront';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
-import { ImageBackground, StyleSheet, View, type ViewStyle } from 'react-native';
+import { ImageBackground, StyleSheet, View, type TextStyle, type ViewStyle } from 'react-native';
 
-export const PAPER = '#F4EFE4';
-export const PAPER_EDGE = '#C9B99A';
-export const KRAFT = '#EAD8B2';
-export const INK = '#2B1B0E';
-export const INK_MUTED = '#6A5A45';
-export const POMEGRANATE = '#9E2A2B';
-export const SAFFRON = '#E39B2F';
-export const CREAM = '#FBF1DE';
-export const CREAM_MUTED = '#D9C7A6';
-
+/** Alegreya names things (italic: a line said aloud); Manrope runs the interface. */
 export const sceneFont = {
-  display: 'Alegreya_700Bold',
-  hand: 'Caveat_700Bold',
-  ui: 'Manrope_600SemiBold',
-  uiHeavy: 'Manrope_700Bold',
+  display: font.heading,
+  /** The evening greeting: the lamps are lit, the hall speaks softer. */
+  displayItalic: 'Alegreya_700Bold_Italic',
+  italic: 'Alegreya_500Medium_Italic',
+  ui: font.bodySemi,
+  uiHeavy: font.displayBold,
+  heavy: font.display,
 } as const;
 
-/** Tashkent hour: the bazaar lives on its own clock, not the phone's. */
-export const isEvening = () => {
-  const hour = (new Date().getUTCHours() + 5) % 24;
-  return hour >= 17 || hour < 5;
+/** The one capital: Manrope 800, 12 px, 0.14em, caps — ochre on the ground, ink-soft on paper. */
+export const capital: TextStyle = {
+  fontFamily: sceneFont.heavy,
+  ...scale.caption,
+  letterSpacing: scale.caption.fontSize * 0.14,
+  textTransform: 'uppercase',
 };
 
 const SCENES = {
@@ -36,12 +34,10 @@ const SCENES = {
   evening: require('../../assets/scenes/evening.jpg'),
 };
 
-/** The photograph with a dark scrim, so paper reads on it. */
 /**
- * The ground under every shift screen: the night, warm where the lamps are.
- * The photograph of the rows hangs at the door (login) and nowhere else —
- * behind twelve screens in a row it stopped being the bazaar and became
- * wallpaper.
+ * The ground under a screen: the hall. The photograph of the rows hangs at the
+ * door (login) and nowhere else — behind twelve screens in a row it stopped
+ * being the bazaar and became wallpaper.
  */
 export function Ground({
   children,
@@ -53,27 +49,25 @@ export function Ground({
   photo?: boolean;
   dim?: number;
 }) {
-  const evening = isEvening();
+  const hall = hallLight();
   if (!photo) {
     return (
       <View style={s.ground}>
-        <LinearGradient
-          colors={['#16203A', '#101524', '#0C1019']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
+        <DomeGround light={hall} />
         {children}
       </View>
     );
   }
+  // Graded like every photograph, then dimmed into the ground's own dark so paper reads on it.
+  const deep = GROUND[hall].deep;
   return (
-    <ImageBackground source={SCENES[evening ? 'evening' : 'morning']} style={s.ground}>
+    <ImageBackground source={SCENES[hall]} style={s.ground}>
+      <PhotoGrade />
       <LinearGradient
         colors={[
-          `rgba(16,21,36,${dim - 0.15})`,
-          `rgba(16,21,36,${dim})`,
-          `rgba(16,21,36,${Math.min(0.96, dim + 0.15)})`,
+          alpha(deep, dim - 0.15),
+          alpha(deep, dim),
+          alpha(deep, Math.min(0.96, dim + 0.15)),
         ]}
         style={StyleSheet.absoluteFill}
       />
@@ -82,23 +76,29 @@ export function Ground({
   );
 }
 
-/** A slip of paper with a dashed edge, the way receipts and price signs look. */
-export function Paper({ children, style }: { children: ReactNode; style?: ViewStyle }) {
-  return <View style={[s.paper, style]}>{children}</View>;
+/**
+ * A slip of paper. Over the ground it lifts with the one shadow; `flat` when it
+ * lies on another sheet — what lies on paper lies flat.
+ */
+export function Paper({
+  children,
+  style,
+  flat = false,
+}: {
+  children: ReactNode;
+  style?: ViewStyle;
+  flat?: boolean;
+}) {
+  return <View style={[s.paper, !flat && shadow.paper, style]}>{children}</View>;
 }
 
 const s = StyleSheet.create({
   ground: { flex: 1 },
   paper: {
-    backgroundColor: PAPER,
-    borderRadius: 6,
+    backgroundColor: HALL.cream,
+    borderRadius: radius.paper,
     borderWidth: 1,
-    borderColor: '#E6DCC6',
+    borderColor: alpha(TONE.paperEdge, 0.4),
     padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 8,
   },
 });
