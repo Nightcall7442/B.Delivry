@@ -153,6 +153,11 @@
 
   /* Paper for sheets and the menu, whatever the theme: cream, ink, the light tokens. */
   :root {
+    /* Self-hosted faces (@fontsource-variable) — next/font used to define these four. */
+    --font-sans: 'Roboto Variable';
+    --font-display: 'Manrope Variable';
+    --font-serif: 'Alegreya Variable';
+    --font-hand: 'Caveat Variable';
     /* The night belongs to the site, not only to the scene's own classes. */
     --night: #101524;
     --night-rgb: 16 21 36;

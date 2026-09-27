@@ -35,6 +35,10 @@
     --sand-100: 244 237 225;
     --sand-200: 234 216 178;
     --sand-300: 201 185 154;
+    /* Self-hosted faces (@fontsource-variable) — next/font used to define these. */
+    --font-sans: 'Roboto Variable';
+    --font-display: 'Alegreya Variable';
+    --font-hand: 'Caveat Variable';
     /* The scene's own colours, as the app and the site name them. */
     --cream: #fbf1de;
     --cream-muted: #d9c7a6;
