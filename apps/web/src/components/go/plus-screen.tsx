@@ -67,20 +67,20 @@ export function PlusScreen({ locale }: { locale: string }) {
       back="history"
       expanded
       header={
-        <h1 className="font-display text-[22px] font-extrabold leading-7">
+        <h1>
           {t('plus.title')}
           <span className="text-saffron-500">.</span>
         </h1>
       }
     >
       <p className="mt-1 text-sm text-ink-muted">{t('plus.tagline', { price })}</p>
-      <ul className="mt-4 space-y-2 rounded-2xl bg-sand-50 p-4 text-sm">
+      <ul className="mt-4 space-y-2 rounded-paper bg-sand-50 p-4 text-sm">
         {PERKS.map((key) => (
           <li key={key}>✓ {t(key)}</li>
         ))}
       </ul>
       {active ? (
-        <p className="mt-4 font-display text-base font-bold text-brand-700">
+        <p className="mt-4 text-[length:var(--fs-lead)] font-bold leading-6 text-brand-700">
           {t('plus.activeUntil', { date: until })}
         </p>
       ) : null}

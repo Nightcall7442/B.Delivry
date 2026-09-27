@@ -41,6 +41,8 @@
     --sand-100: 244 237 225;
     --sand-200: 234 216 178;
     --sand-300: 201 185 154;
+    /* Errors are pomegranate; lit on the dark. */
+    --danger: 158 42 43;
   }
   /* Dark: a blue-cool near-black, tiles one step up, raised things one more; tints of the brand and saffron flip. */
   :root[data-theme='dark'],
@@ -58,6 +60,7 @@
     --sand-100: 29 45 84;
     --sand-200: 44 62 104;
     --sand-300: 72 90 132;
+    --danger: 217 118 122;
     --brand-50: 58 24 24;
     --brand-100: 74 34 36;
     --brand-200: 100 44 46;
@@ -83,6 +86,7 @@
       --sand-100: 29 45 84;
       --sand-200: 44 62 104;
       --sand-300: 72 90 132;
+      --danger: 217 118 122;
       --brand-50: 58 24 24;
       --brand-100: 74 34 36;
       --brand-200: 100 44 46;
@@ -178,15 +182,44 @@
     /* The hall, layer by layer: grain, vignette, the pattern sinking into the rows, the girih, the dome. */
     --hall-ground:
       var(--grain),
-      radial-gradient(130% 90% at 50% 32%, transparent 45%, rgb(var(--ground-deep-rgb) / 0.62) 100%),
-      linear-gradient(rgb(var(--ground-deep-rgb) / 0) 0%, rgb(var(--ground-deep-rgb) / 0.3) 42%, rgb(var(--ground-deep-rgb) / 0.84) 100%),
+      radial-gradient(
+        130% 90% at 50% 32%,
+        transparent 45%,
+        rgb(var(--ground-deep-rgb) / 0.62) 100%
+      ),
+      linear-gradient(
+        rgb(var(--ground-deep-rgb) / 0) 0%,
+        rgb(var(--ground-deep-rgb) / 0.3) 42%,
+        rgb(var(--ground-deep-rgb) / 0.84) 100%
+      ),
       var(--hall-tile) 50% 0 / 672px 672px repeat,
       linear-gradient(var(--ground-top), var(--ground) 42%, var(--ground-deep));
     /* Morning: three shafts from the ring of arched windows above the frame. */
     --hall-light:
-      linear-gradient(104deg, transparent 6%, rgb(var(--light-rgb) / 0.11) 12%, rgb(var(--light-rgb) / 0.16) 15%, rgb(var(--light-rgb) / 0.11) 18%, transparent 25%),
-      linear-gradient(104deg, transparent 38%, rgb(var(--light-rgb) / 0.085) 45%, rgb(var(--light-rgb) / 0.125) 49%, rgb(var(--light-rgb) / 0.085) 53%, transparent 61%),
-      linear-gradient(104deg, transparent 70%, rgb(var(--light-rgb) / 0.1) 77%, rgb(var(--light-rgb) / 0.14) 80%, rgb(var(--light-rgb) / 0.1) 83%, transparent 90%);
+      linear-gradient(
+        104deg,
+        transparent 6%,
+        rgb(var(--light-rgb) / 0.11) 12%,
+        rgb(var(--light-rgb) / 0.16) 15%,
+        rgb(var(--light-rgb) / 0.11) 18%,
+        transparent 25%
+      ),
+      linear-gradient(
+        104deg,
+        transparent 38%,
+        rgb(var(--light-rgb) / 0.085) 45%,
+        rgb(var(--light-rgb) / 0.125) 49%,
+        rgb(var(--light-rgb) / 0.085) 53%,
+        transparent 61%
+      ),
+      linear-gradient(
+        104deg,
+        transparent 70%,
+        rgb(var(--light-rgb) / 0.1) 77%,
+        rgb(var(--light-rgb) / 0.14) 80%,
+        rgb(var(--light-rgb) / 0.1) 83%,
+        transparent 90%
+      );
     --hall-light-mask: linear-gradient(#000, rgba(0, 0, 0, 0.4) 55%, transparent 92%);
   }
 
@@ -200,16 +233,71 @@
     --light-rgb: 255 184 102;
     --hall-tile: url('/dome/evening.svg');
     --hall-light:
-      radial-gradient(circle at 10% 81px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
-      radial-gradient(circle at 20% 89px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
-      radial-gradient(circle at 30% 94px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
-      radial-gradient(circle at 40% 97px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
-      radial-gradient(circle at 50% 98px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
-      radial-gradient(circle at 60% 97px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
-      radial-gradient(circle at 70% 94px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
-      radial-gradient(circle at 80% 89px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
-      radial-gradient(circle at 90% 81px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120' preserveAspectRatio='none'%3E%3Cpath d='M-2 62 Q50 118 102 62' fill='none' stroke='%23040810' stroke-opacity='.7' stroke-width='1.2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0 / 100% 120px no-repeat,
+      radial-gradient(
+        circle at 10% 81px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 20% 89px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 30% 94px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 40% 97px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 50% 98px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 60% 97px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 70% 94px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 80% 89px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 90% 81px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120' preserveAspectRatio='none'%3E%3Cpath d='M-2 62 Q50 118 102 62' fill='none' stroke='%23040810' stroke-opacity='.7' stroke-width='1.2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")
+        0 0 / 100% 120px no-repeat,
       radial-gradient(90% 34% at 50% 0, rgba(255, 170, 80, 0.12), transparent 70%);
     --hall-light-mask: none;
   }
@@ -313,19 +401,11 @@
     @apply mx-auto w-full max-w-container px-4 md:px-6 lg:px-8;
   }
 
-  /* Button: 48px tall, 10px radius, uppercase — the shape the whole site uses. */
+  /* Button: 48px tall, a pill — the shape of every button on the bazaar. */
   .btn {
-    @apply inline-flex h-12 items-center justify-center gap-2 rounded-control px-6
+    @apply inline-flex h-12 items-center justify-center gap-2 rounded-full px-6
            text-sm font-medium uppercase tracking-[0.03em] transition-colors
            disabled:cursor-not-allowed disabled:opacity-50;
-  }
-
-  .btn-primary {
-    @apply btn bg-brand-500 text-white hover:bg-brand-400 active:bg-brand-600;
-  }
-
-  .btn-ghost {
-    @apply btn border border-line bg-white text-ink hover:border-brand-400 hover:text-brand-600;
   }
 }
 
@@ -333,20 +413,13 @@
 @layer components {
   /* One focus treatment for every interactive thing on the sheets. */
   .go-fab,
-  .go-row,
   .go-chip,
   .btn-go,
   .btn-go-secondary {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2;
   }
 
-  /* Headings on the old GO screens speak serif now, like everything else on the bazaar. */
-  .font-display {
-    font-family: var(--font-serif), 'Alegreya', Georgia, serif;
-    font-weight: 700;
-  }
-
-  /* Paper for sheets and the menu, whatever the theme: cream, ink, the light tokens. */
+  /* Paper for sheets and the menu, whatever the theme: the paper, its ink, the light tokens. */
   .paper-sheet {
     --ink-muted: 106 90 69;
     --ink-faint: 160 143 118;
@@ -364,72 +437,86 @@
     --brand-100: 238 200 196;
     --brand-700: 100 24 25;
     --saffron-100: 251 235 201;
-    /* The scene's own names, so bazar.module.css classes read the same inside a sheet (--ink stays the triplet). */
-    --cream: #fbf1de;
-    --cream-muted: #d9c7a6;
-    --paper: #f4efe4;
-    --paper-edge: #c9b99a;
-    --kraft: #ead8b2;
-    --pomegranate: #9e2a2b;
-    --saffron: #e39b2f;
-    --saffron-light: #f2c56b;
-    background: #f4efe4;
-    color: #2b1b0e;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+    background: var(--paper);
+    color: var(--ink-paper);
+    box-shadow: var(--shadow);
   }
 
-  /* A round cream disc, the same as the scene's back button. */
+  /* A round cream disc, the same as the scene's back button. shadow-paper, not a plain
+     box-shadow, so the focus ring adds to the one shadow instead of replacing it. */
   .go-fab {
-    @apply flex h-11 w-11 items-center justify-center rounded-full bg-[#fbf1de] text-[#2b1b0e] shadow-[0_6px_16px_rgba(0,0,0,0.3)] transition-colors hover:bg-white;
+    @apply flex h-11 w-11 items-center justify-center rounded-full transition-colors;
+    box-shadow: var(--shadow);
+    background: var(--cream);
+    color: var(--ink-paper);
+  }
+  .go-fab:hover {
+    background: var(--paper);
   }
 
-  /* The grey tile every marketplace card sits on: no border, no shadow. */
-  .tile {
-    @apply rounded-3xl bg-surface-soft;
-  }
-
-  /* A row in a sheet: icon, text, chevron — the address line, a store, a setting. */
-  /* A line on paper: rows part with a dashed rule, fields are cream with a dashed underline. */
-  .go-row {
-    @apply flex w-full items-center gap-3 px-1 py-3 text-left transition-colors hover:bg-[rgba(234,216,178,0.35)];
-    border-top: 1px dashed #c9b99a;
-  }
-  .go-row:first-child,
-  .go-row:first-of-type {
-    border-top: 0;
-  }
-
+  /* Fields are a line on paper: kraft with a dashed underline, written in the interface voice. */
   .go-field {
-    @apply flex h-12 w-full items-center rounded-t-lg border-0 border-b-2 border-dashed border-[#c9b99a] bg-[rgba(234,216,178,0.4)] px-3 text-[17px] text-[#2b1b0e] outline-none placeholder:text-[#a08f76] focus:border-[#9e2a2b] focus:bg-[rgba(234,216,178,0.6)];
-    font-family: var(--font-hand), 'Caveat', cursive;
-    font-weight: 700;
+    @apply flex h-12 w-full items-center border-0 border-b-2 border-dashed px-3 font-sans font-semibold outline-none;
+    border-radius: var(--radius-paper) var(--radius-paper) 0 0;
+    border-bottom-color: var(--paper-edge);
+    background: color-mix(in srgb, var(--kraft) 40%, transparent);
+    font-size: var(--fs-lead);
+    line-height: 24px;
+    color: var(--ink-paper);
+  }
+  .go-field::placeholder {
+    color: var(--ink-soft);
+  }
+  .go-field:focus {
+    border-bottom-color: var(--pomegranate);
+    background: color-mix(in srgb, var(--kraft) 60%, transparent);
   }
   textarea.go-field {
     @apply h-auto py-2;
   }
 
-  /* Chips are cardboard: paper with a dashed edge, the chosen one pomegranate. */
+  /* Chips are cardboard: paper with a worn edge, the chosen one pomegranate. */
   .go-chip {
-    @apply inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9b99a] bg-transparent px-3.5 text-[16px] text-[#2b1b0e] transition-colors hover:bg-[rgba(227,155,47,0.12)];
-    font-family: var(--font-hand), 'Caveat', cursive;
-    font-weight: 700;
+    @apply inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border bg-transparent px-3.5 font-sans font-bold transition-colors;
+    border-color: var(--paper-edge);
+    font-size: var(--fs-body);
+    color: var(--ink-paper);
+  }
+  .go-chip:hover {
+    background: color-mix(in srgb, var(--ochre) 12%, transparent);
   }
   .go-chip[aria-pressed='true'],
   .go-chip[aria-current='true'] {
-    @apply border-[#9e2a2b] bg-[#9e2a2b] text-[#fbf1de] hover:bg-[#9e2a2b];
+    border-color: var(--pomegranate);
+    background: var(--pomegranate);
+    color: var(--cream);
   }
 
+  /* The primary button: pomegranate, named in serif, the one shadow — no glow. */
   .btn-go {
-    @apply btn h-[52px] w-full rounded-full bg-[#9e2a2b] font-serif text-[18px] font-bold normal-case tracking-normal text-[#fbf1de] hover:bg-[#7e1f21] active:bg-[#641819];
-    box-shadow: 0 10px 24px rgba(158, 42, 43, 0.35);
+    @apply btn h-[52px] w-full font-serif font-bold normal-case tracking-normal;
+    background: var(--pomegranate);
+    color: var(--cream);
+    font-size: var(--fs-lead);
+  }
+  .btn-go:hover,
+  .btn-go:active {
+    background: var(--pomegranate-deep);
   }
   .btn-go-secondary {
-    @apply btn h-[52px] w-full rounded-full border-[1.5px] border-[#c9b99a] bg-transparent font-serif text-[18px] font-bold normal-case tracking-normal text-[#2b1b0e] hover:bg-[rgba(227,155,47,0.12)];
+    @apply btn h-[52px] w-full border-[1.5px] bg-transparent font-serif font-bold normal-case tracking-normal;
+    border-color: var(--paper-edge);
+    color: var(--ink-paper);
+    font-size: var(--fs-lead);
+  }
+  .btn-go-secondary:hover {
+    background: color-mix(in srgb, var(--ochre) 12%, transparent);
   }
 
-  /* MapLibre chrome, kept quiet: tiny attribution, no logo. */
+  /* MapLibre chrome, kept quiet: small attribution, no logo. */
   .maplibregl-ctrl-attrib {
-    @apply rounded-md bg-surface/80 text-[10px] text-ink-muted;
+    @apply bg-surface/80 text-xs text-ink-muted;
+    border-radius: var(--radius-paper);
   }
   /* Keep the control clear of the sheet's rounded top edge. */
   .maplibregl-ctrl-bottom-right {
@@ -439,10 +526,13 @@
     display: none;
   }
 
-  /* Kraft paper with a faint dot grid: the map when no engine can load. */
+  /* Paper with a faint ink dot grid: the map when no engine can load. */
   .map-fallback {
-    background-color: #f4ede1;
-    background-image: radial-gradient(rgba(27, 31, 34, 0.14) 1px, transparent 1.5px);
+    background-color: var(--paper);
+    background-image: radial-gradient(
+      color-mix(in srgb, var(--ink-paper) 14%, transparent) 1px,
+      transparent 1.5px
+    );
     background-size: 28px 28px;
   }
 
@@ -457,48 +547,42 @@
   .map-pin {
     @apply pointer-events-none flex flex-col-reverse items-center gap-2;
   }
+  /* Glyphs are cream on pomegranate and ink on ochre in both themes: the tiles do not follow it. */
   .map-pin__glyph {
-    @apply flex h-9 w-9 rotate-45 items-center justify-center rounded-[10px] bg-brand-500 text-white shadow-pop;
+    @apply flex h-9 w-9 rotate-45 items-center justify-center bg-brand-500;
+    border-radius: var(--radius-paper);
+    box-shadow: var(--shadow);
     margin: 6px 0 8px;
+    color: var(--cream);
   }
   .map-pin__glyph > svg {
     @apply h-5 w-5 -rotate-45;
   }
   .map-pin--home .map-pin__glyph {
-    @apply bg-saffron-500 text-ink;
+    @apply bg-saffron-500;
+    color: var(--ink-paper);
   }
   .map-pin--courier .map-pin__glyph {
-    @apply h-11 w-11 rotate-0 rounded-full bg-white text-brand-600 ring-4 ring-brand-500/30;
+    @apply h-11 w-11 rotate-0 rounded-full text-brand-600 ring-4 ring-brand-500/30;
     margin: 0;
+    background: var(--cream);
   }
   .map-pin--courier .map-pin__glyph > svg {
     @apply h-6 w-6 rotate-0;
   }
   .map-pin--centre .map-pin__glyph {
-    @apply h-11 w-11 bg-saffron-500 text-ink;
+    @apply h-11 w-11 bg-saffron-500;
+    color: var(--ink-paper);
   }
   .map-pin__label {
-    @apply max-w-[150px] truncate rounded-lg bg-white/95 px-2 py-0.5 font-display text-[11px] font-bold text-ink shadow-card;
+    @apply max-w-[150px] truncate px-2 py-0.5 font-sans text-xs font-bold;
+    border-radius: var(--radius-paper);
+    box-shadow: var(--shadow);
+    background: color-mix(in srgb, var(--cream) 95%, transparent);
+    color: var(--ink-paper);
   }
-
-  /* Order progress: five tiles on a thread. */
-  .tile-step {
-    @apply relative flex flex-1 flex-col items-center gap-2;
-  }
-  .tile-step__tile {
-    @apply h-4 w-4 rotate-45 rounded-[4px] border-2 border-[#c9b99a] bg-[#fbf5e6] transition-colors;
-  }
-  .tile-step[data-state='done'] .tile-step__tile {
-    @apply border-brand-500 bg-brand-500;
-  }
-  .tile-step[data-state='active'] .tile-step__tile {
-    @apply border-saffron-500 bg-saffron-400 motion-safe:animate-pulse;
-  }
-  .tile-step + .tile-step::before {
-    @apply absolute right-1/2 top-[7px] -z-10 h-0.5 w-full bg-sand-300 content-[''];
-  }
-  .tile-step[data-state='done'] + .tile-step::before,
-  .tile-step[data-state='active'] + .tile-step::before {
-    @apply bg-brand-500;
+  /* The same tiles in the sheet's legend lie on the paper: flat (the courier keeps its ring). */
+  .paper-sheet .map-pin__glyph {
+    @apply shadow-none;
   }
 }

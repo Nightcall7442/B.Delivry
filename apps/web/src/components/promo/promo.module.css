@@ -1,29 +1,17 @@
-/* The landing keeps the scene palette of the customer app: night, cream, kraft, pomegranate, saffron. */
+/*
+ * The landing is «Свет купола» (globals.css): the film under the dome at dawn, then the same
+ * hall the product stands in. Every colour is one of the six or its tones; the scrims and
+ * shadows are the ground's own dark, never black.
+ */
 .page {
-  --cream: #fbf1de;
-  --cream-muted: #d9c7a6;
-  --ink: #2b1b0e;
-  --night: #101524;
-  --night-rgb: 16 21 36;
-  --paper: #f4efe4;
-  --paper-edge: #c9b99a;
-  --kraft: #ead8b2;
-  --pomegranate: #9e2a2b;
-  --saffron: #e39b2f;
-  --saffron-light: #f2c56b;
-  background: var(--night);
+  background: var(--ground-deep);
   color: var(--cream);
-  font-family: var(--font-display), 'Manrope', system-ui, sans-serif;
+  font-family: var(--font-sans), 'Manrope', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-}
-.serif {
-  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
-}
-.hand {
-  font-family: var(--font-hand), 'Caveat', cursive;
 }
 
 /* ---- top bar ---- */
+/* Over the film it is the film's own scrim, not a band: the bar keeps no fill of its own. */
 .bar {
   position: fixed;
   inset: 0 0 auto 0;
@@ -32,18 +20,19 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 24px;
-  background: linear-gradient(rgb(var(--night-rgb) / 0.75), rgb(var(--night-rgb) / 0));
+  background: linear-gradient(rgb(var(--ground-deep-rgb) / 0.75), rgb(var(--ground-deep-rgb) / 0));
 }
 .wordmark {
   font-family: var(--font-serif), Georgia, serif;
-  font-size: 28px;
+  font-size: var(--fs-headline);
+  line-height: 34px;
   font-weight: 700;
   color: var(--cream);
   text-decoration: none;
   letter-spacing: -0.01em;
 }
 .wordmark b {
-  color: var(--saffron);
+  color: var(--ochre);
 }
 .chapters {
   position: absolute;
@@ -57,50 +46,49 @@
   display: grid;
   gap: 6px;
   width: clamp(56px, 9vw, 120px);
+  /* the caption step never wraps a chapter's name onto two lines */
+  min-width: max-content;
 }
 .chapter i {
   display: block;
   height: 2px;
-  background: var(--saffron);
+  background: var(--ochre);
   transform-origin: left;
   transition: transform 0.15s linear;
-  box-shadow: 0 0 0 1px rgba(251, 241, 222, 0.12);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--cream) 12%, transparent);
 }
 .chapter em {
   font-style: normal;
-  font-size: 10px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--cream-muted);
 }
-.loader {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 2px;
-  background: var(--saffron);
-  transform-origin: left;
-  transition:
-    transform 0.2s ease,
-    opacity 0.6s ease 0.4s;
-}
+/* A glass pill over the film and the hall. */
 .barLink {
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: var(--fs-body);
+  line-height: 20px;
   font-weight: 700;
   color: var(--cream);
   text-decoration: none;
-  padding: 9px 14px;
-  border: 1px solid rgba(251, 241, 222, 0.35);
+  border: 1px solid var(--glass-edge);
   border-radius: 999px;
-  background: rgb(var(--night-rgb) / 0.4);
-  backdrop-filter: blur(6px);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
 }
 
 /* ---- film ---- */
+/* The hall after the film (the global `.hall`) is fixed to the window, so the film plays one
+   step above it; once the last frame has scrolled away, the dome is what is left. */
 .track {
   position: relative;
+  z-index: 1;
 }
 .sticky {
   position: sticky;
@@ -117,16 +105,19 @@
   background-size: cover;
   background-position: center;
 }
+/* The last line of the frame is the ground itself, so the film meets the door (.tableSection)
+   without a seam. */
 .scrim {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: linear-gradient(
-    rgb(var(--night-rgb) / 0.55) 0%,
-    rgb(var(--night-rgb) / 0.05) 22%,
-    rgb(var(--night-rgb) / 0) 40%,
-    rgb(var(--night-rgb) / 0.5) 65%,
-    rgb(var(--night-rgb) / 0.92) 100%
+    rgb(var(--ground-deep-rgb) / 0.55) 0%,
+    rgb(var(--ground-deep-rgb) / 0.05) 22%,
+    rgb(var(--ground-deep-rgb) / 0) 40%,
+    rgb(var(--ground-deep-rgb) / 0.5) 65%,
+    rgb(var(--ground-deep-rgb) / 0.92) 97%,
+    var(--ground-deep) 100%
   );
 }
 /* film grain: an SVG noise tile, barely there — hides the softness of 720p and reads as film */
@@ -149,31 +140,39 @@
   justify-items: start;
   gap: 10px;
   padding: 0 clamp(20px, 6vw, 96px) calc(clamp(40px, 8vh, 96px) + env(safe-area-inset-bottom));
-  background: linear-gradient(rgb(var(--night-rgb) / 0.2), rgb(var(--night-rgb) / 0.85));
+  background: linear-gradient(
+    rgb(var(--ground-deep-rgb) / 0.2),
+    rgb(var(--ground-deep-rgb) / 0.85)
+  );
   transition: opacity 0.6s ease;
 }
+/* «Открываем ряд» is said, not labelled: Alegreya italic. */
 .veilLine {
-  font-family: var(--font-hand), cursive;
-  font-size: clamp(28px, 4vw, 44px);
-  color: var(--saffron-light);
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-size: var(--fs-headline);
+  line-height: 34px;
+  color: var(--ochre-light);
 }
 .veilBar {
   width: min(320px, 60vw);
   height: 3px;
-  background: rgba(251, 241, 222, 0.18);
+  background: color-mix(in srgb, var(--cream) 18%, transparent);
   overflow: hidden;
 }
 .veilBar i {
   display: block;
   height: 100%;
-  background: var(--saffron);
+  background: var(--ochre);
   transform-origin: left;
   transition: transform 0.25s ease;
 }
 .veilPct {
-  font-size: 11px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
   font-weight: 800;
   letter-spacing: 0.14em;
+  font-variant-numeric: tabular-nums;
   color: var(--cream-muted);
 }
 .copyRight {
@@ -193,9 +192,6 @@
   text-align: center;
   padding-bottom: 0;
 }
-.copyCenter .line {
-  max-width: 28ch;
-}
 .scrollHint {
   position: absolute;
   left: 50%;
@@ -204,14 +200,17 @@
   display: grid;
   justify-items: center;
   gap: 8px;
-  font-family: var(--font-hand), cursive;
-  font-size: 20px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--cream-muted);
 }
 .scrollHint i {
   width: 1px;
   height: 34px;
-  background: linear-gradient(var(--saffron), transparent);
+  background: linear-gradient(var(--ochre), transparent);
   animation: drip 1.6s ease-in-out infinite;
 }
 @keyframes drip {
@@ -243,31 +242,40 @@
   bottom: auto;
   top: clamp(96px, 18vh, 160px);
 }
-.eyebrow {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--saffron-light);
-}
+/* Captions over the film: the display step; the greeting alone grows with a wide window. */
 .display {
   font-family: var(--font-serif), Georgia, serif;
   font-weight: 700;
-  font-size: clamp(40px, 8vw, 96px);
-  line-height: 0.98;
+  font-size: var(--fs-display);
+  line-height: 46px;
   letter-spacing: -0.01em;
   color: var(--cream);
   text-wrap: balance;
   max-width: 12ch;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 2px 24px rgb(var(--ground-deep-rgb) / 0.45);
 }
-.line {
-  font-family: var(--font-hand), cursive;
-  font-size: clamp(26px, 3.6vw, 44px);
+.hero {
+  font-size: var(--fs-hero);
   line-height: 1.05;
-  color: var(--saffron-light);
+}
+/* A spoken line — a quote from the row: Alegreya italic, ochre on the film. */
+.line {
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-size: var(--fs-title);
+  line-height: 26px;
+  color: var(--ochre-light);
   max-width: 24ch;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 16px rgb(var(--ground-deep-rgb) / 0.5);
+}
+/* The narrator between the quotes: the interface voice at the lead step. */
+.lede {
+  font-size: var(--fs-lead);
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--cream);
+  max-width: 40ch;
+  text-shadow: 0 1px 12px rgb(var(--ground-deep-rgb) / 0.7);
 }
 .pills {
   display: flex;
@@ -275,28 +283,30 @@
   gap: 8px;
   margin-top: 8px;
 }
+/* glass over the film */
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   height: 36px;
   padding: 0 14px;
-  border-radius: 18px;
-  font-size: 13px;
+  border-radius: 999px;
+  font-size: var(--fs-body);
+  line-height: 20px;
   font-weight: 700;
   color: var(--cream);
-  background: rgb(var(--night-rgb) / 0.45);
-  border: 1px solid rgba(251, 241, 222, 0.28);
-  backdrop-filter: blur(8px);
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  backdrop-filter: var(--glass-blur);
 }
 .pill i {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--saffron);
+  background: var(--ochre);
 }
 
-/* cardboard price sign, pushpin on the top edge */
+/* cardboard price sign on its pushpin: the one place the vendor's hand (Caveat) is left */
 .sign {
   position: relative;
   display: inline-grid;
@@ -304,9 +314,10 @@
   padding: 14px 18px 12px;
   background: var(--paper);
   border: 1px solid var(--paper-edge);
-  color: #1f1a14;
+  border-radius: var(--radius-paper);
+  color: var(--ink-paper);
   transform: rotate(-1.5deg);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow);
   justify-self: start;
 }
 .sign::before {
@@ -316,35 +327,38 @@
   left: 50%;
   width: 11px;
   height: 11px;
-  margin-left: -6px;
+  translate: -50% 0;
   border-radius: 50%;
-  background: #b42a31;
-  border: 1px solid #8e1f26;
+  background: var(--pomegranate);
+  border: 1px solid var(--pomegranate-deep);
 }
+/* The hero sign reads from across the frame: the headline step, the title step on a phone. */
 .signTitle {
   font-family: var(--font-hand), cursive;
-  font-size: 30px;
-  line-height: 1;
+  font-size: var(--fs-headline);
+  line-height: 34px;
   text-transform: uppercase;
 }
 .signPrice {
   font-family: var(--font-hand), cursive;
-  font-size: 34px;
-  line-height: 1;
+  font-size: var(--fs-headline);
+  line-height: 34px;
+  font-variant-numeric: tabular-nums;
   color: var(--pomegranate);
 }
 .signPrice small {
-  font-size: 18px;
-  color: #6a5a45;
+  font-size: var(--fs-lead);
+  color: var(--ink-soft);
 }
 .signNote {
-  font-size: 11px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
   font-weight: 700;
-  color: #6a5a45;
+  color: var(--ink-soft);
   letter-spacing: 0.04em;
 }
 
-/* kraft luggage tag */
+/* kraft luggage tag: the vendor's promise, spoken */
 .tag {
   justify-self: start;
   display: inline-flex;
@@ -352,19 +366,23 @@
   gap: 10px;
   padding: 6px 14px 6px 10px;
   background: var(--kraft);
-  color: var(--ink);
-  font-family: var(--font-hand), cursive;
-  font-size: 22px;
-  border-radius: 3px;
+  color: var(--ink-paper);
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: var(--fs-lead);
+  line-height: 24px;
+  border-radius: var(--radius-paper);
   transform: rotate(2deg);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow);
 }
 .tag::before {
   content: '';
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  border: 2px solid #b8a27a;
+  /* the eyelet: kraft pressed toward ink */
+  border: 2px solid color-mix(in srgb, var(--ink-soft) 50%, var(--kraft));
 }
 
 /* stats written on the frame */
@@ -376,31 +394,33 @@
 }
 .stat b {
   display: block;
-  font-family: var(--font-hand), cursive;
-  font-weight: 700;
-  font-size: clamp(44px, 6vw, 72px);
-  line-height: 1;
-  color: var(--saffron-light);
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.6);
+  font-weight: 800;
+  font-size: var(--fs-display);
+  line-height: 46px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ochre-light);
+  text-shadow: 0 2px 18px rgb(var(--ground-deep-rgb) / 0.6);
 }
 .stat span {
-  font-size: 14px;
+  font-size: var(--fs-body);
+  line-height: 20px;
   font-weight: 700;
   color: var(--cream);
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 1px 10px rgb(var(--ground-deep-rgb) / 0.7);
 }
 
-/* paper receipt with a quote */
+/* paper receipt with a quote: the perforated edge belongs to a receipt alone */
 .receipt {
   position: relative;
   justify-self: start;
   max-width: 440px;
   padding: 18px 20px 16px;
   background: var(--paper);
-  color: #1f1a14;
-  border-radius: 6px;
+  color: var(--ink-paper);
+  border-radius: var(--radius-paper);
+  font-variant-numeric: tabular-nums;
   transform: rotate(1deg);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow);
 }
 .receipt::before {
   content: '';
@@ -408,23 +428,25 @@
   left: 0;
   right: 0;
   top: -1px;
-  border-top: 3px dashed rgba(43, 27, 14, 0.3);
+  border-top: 3px dashed color-mix(in srgb, var(--ink-paper) 30%, transparent);
 }
 .quote {
-  font-family: var(--font-hand), cursive;
-  font-size: 28px;
-  line-height: 1.05;
-  color: var(--pomegranate);
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-size: var(--fs-title);
+  line-height: 26px;
 }
 .who {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
   font-weight: 700;
-  color: #6a5a45;
+  color: var(--ink-soft);
 }
 
-/* ---- after the film ---- */
+/* ---- after the film: the hall ---- */
 .inner {
+  position: relative;
   max-width: 1040px;
   margin: 0 auto;
 }
@@ -436,37 +458,30 @@
 .h2 {
   font-family: var(--font-serif), Georgia, serif;
   font-weight: 700;
-  font-size: clamp(34px, 5.5vw, 64px);
-  line-height: 1;
+  font-size: var(--fs-headline);
+  line-height: 34px;
   letter-spacing: -0.01em;
   text-wrap: balance;
   margin: 0;
 }
 .lineDark {
-  font-family: var(--font-hand), cursive;
-  font-size: clamp(22px, 3vw, 32px);
-  line-height: 1.05;
-  color: var(--saffron-light);
-}
-.eyebrowDark {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--saffron);
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-size: var(--fs-title);
+  line-height: 26px;
+  color: var(--ochre-light);
 }
 .tableSection {
   position: relative;
-  background: var(--night);
   padding: clamp(72px, 12vh, 140px) clamp(20px, 6vw, 96px);
 }
+/* The door: the film's last frame sinks into the rows' shadow, then the dome opens overhead. */
 .tableSection::before {
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
   height: 160px;
-  background: linear-gradient(rgb(var(--night-rgb) / 0), var(--night));
-  transform: translateY(-100%);
+  background: linear-gradient(var(--ground-deep), rgb(var(--ground-deep-rgb) / 0));
   pointer-events: none;
 }
 .products {
@@ -478,21 +493,23 @@
   position: relative;
   display: block;
   text-decoration: none;
-  color: #1f1a14;
+  color: var(--ink-paper);
   padding-bottom: 8px;
   transition: transform 0.2s ease;
 }
 .product:hover {
   transform: translateY(-4px) rotate(0deg) !important;
 }
+/* The product crop, through the one camera (the global `photo-grade` takes its ::after). */
 .productPhoto {
+  position: relative;
   display: block;
-  aspect-ratio: 1.1;
-  border-radius: 12px;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-photo);
   background-size: cover;
   background-position: center;
-  background-color: #3a2a1a;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  background-color: var(--ink-paper);
+  box-shadow: var(--shadow);
 }
 .productSign {
   position: relative;
@@ -502,7 +519,8 @@
   padding: 12px 14px 10px;
   background: var(--paper);
   border: 1px solid var(--paper-edge);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  border-radius: var(--radius-paper);
+  box-shadow: var(--shadow);
 }
 .productSign::before {
   content: '';
@@ -511,40 +529,43 @@
   left: 50%;
   width: 10px;
   height: 10px;
-  margin-left: -5px;
+  translate: -50% 0;
   border-radius: 50%;
-  background: #b42a31;
-  border: 1px solid #8e1f26;
+  background: var(--pomegranate);
+  border: 1px solid var(--pomegranate-deep);
 }
 .productSign b {
   font-family: var(--font-hand), cursive;
   font-weight: 700;
-  font-size: 24px;
-  line-height: 1;
+  font-size: var(--fs-title);
+  line-height: 26px;
   text-transform: uppercase;
   padding-right: 22px;
 }
 .productPrice {
   font-family: var(--font-hand), cursive;
-  font-size: 26px;
-  line-height: 1;
+  font-size: var(--fs-title);
+  line-height: 26px;
+  font-variant-numeric: tabular-nums;
   color: var(--pomegranate);
 }
 .productPrice small {
-  font-size: 15px;
-  color: #6a5a45;
+  font-size: var(--fs-lead);
+  color: var(--ink-soft);
 }
 .productSay {
   font-family: var(--font-hand), cursive;
-  font-size: 18px;
-  line-height: 1.05;
-  color: #3a2a1a;
+  font-size: var(--fs-lead);
+  line-height: 24px;
+  color: var(--ink-paper);
 }
 .productWho {
-  font-size: 11px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
   font-weight: 700;
-  color: #6a5a45;
+  color: var(--ink-soft);
 }
+/* the «+» lies on the sign: flat */
 .productPlus {
   position: absolute;
   right: -10px;
@@ -557,15 +578,13 @@
   background: var(--pomegranate);
   color: var(--cream);
   font-weight: 800;
-  font-size: 18px;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+  font-size: var(--fs-lead);
 }
 
 /* the phone */
 .phoneTrack {
   position: relative;
   height: 320vh;
-  background: var(--night);
 }
 .phoneSticky {
   position: sticky;
@@ -596,40 +615,42 @@
   display: grid;
   gap: 4px;
   padding-left: 18px;
-  border-left: 2px solid rgba(251, 241, 222, 0.15);
+  border-left: 2px solid color-mix(in srgb, var(--cream) 15%, transparent);
   color: var(--cream-muted);
   transition:
     color 0.25s ease,
     border-color 0.25s ease;
 }
 .phoneItemOn {
-  border-color: var(--saffron);
+  border-color: var(--ochre);
   color: var(--cream);
 }
 .phoneItem b,
 .phoneItemOn b {
   font-family: var(--font-serif), Georgia, serif;
-  font-size: 22px;
-  line-height: 1.1;
+  font-size: var(--fs-title);
+  line-height: 26px;
 }
 .phoneItem span,
 .phoneItemOn span {
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: var(--fs-body);
+  line-height: 20px;
   max-width: 44ch;
 }
+/* The handset is drawn in the hall's own dark with a lit rim; its corners are the device's,
+   not one of the three (paper, photo, pill). */
 .phone {
   position: relative;
   height: min(760px, 82vh);
   max-width: 74vw;
   aspect-ratio: 390 / 844;
   border-radius: 48px;
-  background: #0b0704;
+  background: var(--ground-deep);
   padding: 12px;
   box-shadow:
-    0 0 0 2px #3a2a1a,
-    0 40px 90px rgba(0, 0, 0, 0.7),
-    inset 0 0 0 1px rgba(251, 241, 222, 0.08);
+    0 0 0 2px var(--ground-top),
+    var(--shadow),
+    inset 0 0 0 1px color-mix(in srgb, var(--cream) 8%, transparent);
   transition: transform 0.2s ease-out;
 }
 .phoneScreen {
@@ -638,7 +659,7 @@
   height: 100%;
   border-radius: 38px;
   overflow: hidden;
-  background: #101524;
+  background: var(--ground-deep);
 }
 .phoneScreen img {
   position: absolute;
@@ -655,25 +676,38 @@
   width: 92px;
   height: 26px;
   transform: translateX(-50%);
-  border-radius: 14px;
-  background: #0b0704;
+  border-radius: 999px;
+  background: var(--ground-deep);
 }
 
 /* ---- closing paper section ---- */
 .paperTitle {
   font-family: var(--font-serif), Georgia, serif;
   font-weight: 700;
-  font-size: clamp(36px, 6vw, 72px);
-  line-height: 1;
+  font-size: var(--fs-headline);
+  line-height: 34px;
   letter-spacing: -0.01em;
   max-width: 14ch;
   text-wrap: balance;
 }
+/* A wide window takes the next step: quotes to the headline, titles to the display. */
+@media (min-width: 768px) {
+  .line {
+    font-size: var(--fs-headline);
+    line-height: 34px;
+  }
+  .h2,
+  .paperTitle {
+    font-size: var(--fs-display);
+    line-height: 46px;
+  }
+}
 .paperLine {
-  font-family: var(--font-hand), cursive;
-  font-size: clamp(24px, 3vw, 34px);
-  color: var(--pomegranate);
-  line-height: 1.05;
+  font-family: var(--font-serif), Georgia, serif;
+  font-style: italic;
+  font-size: var(--fs-title);
+  line-height: 26px;
+  color: var(--ink-soft);
 }
 .rows {
   display: grid;
@@ -684,51 +718,43 @@
   position: relative;
   padding: 18px 16px 14px;
   background: var(--paper);
-  border: 1.5px dashed var(--ink);
-  border-radius: 4px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--radius-paper);
   text-decoration: none;
-  color: var(--ink);
+  color: var(--ink-paper);
   transition: transform 0.15s ease;
 }
 .row:hover {
   transform: translateY(-2px);
 }
+/* The row's name: a kraft label in capitals, no pin; it lies on the paper, flat. */
 .rowSign {
   position: absolute;
-  top: -14px;
+  top: -12px;
   left: 12px;
-  padding: 3px 10px;
-  background: #fbf5e6;
+  padding: 4px 10px;
+  background: var(--kraft);
   border: 1px solid var(--paper-edge);
-  font-family: var(--font-hand), cursive;
-  font-size: 19px;
+  border-radius: var(--radius-paper);
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  line-height: 1;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
-}
-.rowSign::before {
-  content: '';
-  position: absolute;
-  top: -5px;
-  left: 50%;
-  width: 9px;
-  height: 9px;
-  margin-left: -4px;
-  border-radius: 50%;
-  background: #b42a31;
-  border: 1px solid #8e1f26;
 }
 .rowBody {
   margin-top: 10px;
-  font-size: 13px;
+  font-size: var(--fs-body);
+  line-height: 20px;
   font-weight: 600;
-  color: #6a5a45;
+  color: var(--ink-soft);
 }
 .rowCount {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
   font-weight: 800;
-  color: var(--pomegranate);
+  font-variant-numeric: tabular-nums;
 }
 .ctaRow {
   display: flex;
@@ -736,20 +762,21 @@
   gap: 12px;
   align-items: center;
 }
+/* The one button on the landing: a pomegranate pill with the one shadow, as `.btn-go`. */
 .cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 56px;
   padding: 0 26px;
-  border-radius: 18px;
+  border-radius: 999px;
   background: var(--pomegranate);
   color: var(--cream);
   font-family: var(--font-serif), Georgia, serif;
   font-weight: 700;
-  font-size: 19px;
+  font-size: var(--fs-lead);
   text-decoration: none;
-  box-shadow: 0 12px 30px rgba(158, 42, 43, 0.4);
+  box-shadow: var(--shadow);
 }
 
 @media (max-width: 900px) {
@@ -797,25 +824,30 @@
   .copyRight .receipt {
     justify-self: start;
   }
-  .signTitle {
-    font-size: 24px;
-  }
+  .signTitle,
   .signPrice {
-    font-size: 28px;
+    font-size: var(--fs-title);
+    line-height: 26px;
   }
   .stats {
     grid-template-columns: 1fr 1fr;
   }
 }
+/* Nothing moves for a reader who asked for stillness: hovers settle at once, the scroll hint
+   stops dripping, the phone neither lifts nor tilts (its inline transform follows the scroll). */
 @media (prefers-reduced-motion: reduce) {
-  .row {
+  .row,
+  .product,
+  .phone,
+  .phoneScreen img {
     transition: none;
   }
-}
-
-.ctaSoon {
-  opacity: 0.6;
-  cursor: default;
+  .scrollHint i {
+    animation: none;
+  }
+  .phone {
+    transform: none !important;
+  }
 }
 
 /* ---- the gate at dusk: the last screen ---- */
@@ -824,21 +856,24 @@
   overflow: hidden;
   color: var(--cream);
 }
+/* The door: the one photograph left on the ground, through the one camera (`photo-grade` takes
+   ::after, so the scrim is ::before). Its top edge fades in from the hall above. */
 .gatePhoto {
   position: absolute;
   inset: 0;
   background-size: cover;
   background-position: center;
+  mask-image: linear-gradient(transparent, #000 160px);
 }
-.gatePhoto::after {
+.gatePhoto::before {
   content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    rgb(var(--night-rgb) / 0.96) 0%,
-    rgb(var(--night-rgb) / 0.35) 28%,
-    rgb(var(--night-rgb) / 0.5) 70%,
-    rgb(var(--night-rgb) / 0.96) 100%
+    rgb(var(--ground-deep-rgb) / 0.96) 0%,
+    rgb(var(--ground-deep-rgb) / 0.35) 28%,
+    rgb(var(--ground-deep-rgb) / 0.5) 70%,
+    rgb(var(--ground-deep-rgb) / 0.96) 100%
   );
 }
 .gateInner {
@@ -855,49 +890,27 @@
   gap: 14px;
   padding: clamp(24px, 3vw, 40px);
   background: var(--paper);
-  color: var(--ink);
-  border-radius: 6px;
+  color: var(--ink-paper);
+  border-radius: var(--radius-paper);
   transform: rotate(-0.6deg);
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow);
 }
-.gateSheet::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: -1px;
-  border-top: 3px dashed rgba(43, 27, 14, 0.3);
+/* The capitals on paper are ink, not ochre (the global `.eyebrow`). */
+.gateSheet :global(.eyebrow) {
+  color: var(--ink-soft);
 }
-.eyebrowInk {
-  font-size: 11px;
+/* A kraft label on the sheet: capitals, no pin, lying flat. */
+.soonTag {
+  display: inline-flex;
+  padding: 6px 12px;
+  background: var(--kraft);
+  color: var(--ink-paper);
+  border-radius: var(--radius-paper);
+  font-size: var(--fs-caption);
+  line-height: 16px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--pomegranate);
-}
-.soonTag {
-  position: relative;
-  display: inline-flex;
-  padding: 9px 14px 6px;
-  background: var(--kraft);
-  color: var(--ink);
-  font-family: var(--font-hand), cursive;
-  font-size: 19px;
-  line-height: 1;
-  transform: rotate(2deg);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
-}
-.soonTag::before {
-  content: '';
-  position: absolute;
-  top: -5px;
-  left: 50%;
-  width: 9px;
-  height: 9px;
-  margin-left: -4px;
-  border-radius: 50%;
-  background: #b42a31;
-  border: 1px solid #8e1f26;
 }
 .gate .rows {
   grid-template-columns: 1fr 1fr;
@@ -906,7 +919,7 @@
 .gate .row {
   display: grid;
   gap: 6px;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow);
 }
 .gate .rowBody,
 .gate .rowCount {
@@ -918,11 +931,12 @@
 .gate .rowSign {
   white-space: nowrap;
 }
+/* glass over the door */
 .footer {
   position: relative;
-  border-top: 1px solid rgba(251, 241, 222, 0.14);
-  background: rgb(var(--night-rgb) / 0.55);
-  backdrop-filter: blur(6px);
+  border-top: 1px solid var(--glass-edge);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
 }
 .footerInner {
   display: flex;
@@ -930,18 +944,20 @@
   align-items: baseline;
   gap: 10px 22px;
   padding: 18px clamp(20px, 6vw, 96px) calc(18px + env(safe-area-inset-bottom));
-  font-size: 12px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
   font-weight: 600;
   color: var(--cream-muted);
 }
 .footWordmark {
   font-family: var(--font-serif), Georgia, serif;
   font-weight: 700;
-  font-size: 20px;
+  font-size: var(--fs-title);
+  line-height: 26px;
   color: var(--cream);
 }
 .footWordmark span {
-  color: var(--saffron);
+  color: var(--ochre);
 }
 .footNav {
   display: flex;

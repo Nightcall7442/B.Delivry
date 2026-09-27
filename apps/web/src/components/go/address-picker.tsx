@@ -191,7 +191,7 @@ export function AddressPicker({ locale }: { locale: string }) {
               style={{ alignItems: 'center', padding: '10px 0' }}
             >
               <span
-                className={bz.thumb}
+                className={`${bz.thumb} photo-grade`}
                 style={{ backgroundImage: `url(${PHOTOS[bazaar.photo]})` }}
                 aria-hidden
               />
@@ -201,12 +201,7 @@ export function AddressPicker({ locale }: { locale: string }) {
                   {i === 0 && !far ? (
                     <span
                       className={bz.stamp}
-                      style={{
-                        margin: '0 0 0 10px',
-                        padding: '2px 8px',
-                        fontSize: 15,
-                        verticalAlign: 'middle',
-                      }}
+                      style={{ margin: '0 0 0 10px', padding: '2px 8px', verticalAlign: 'middle' }}
                     >
                       {t('address.nearest')}
                     </span>

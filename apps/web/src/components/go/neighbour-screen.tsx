@@ -35,16 +35,7 @@ export function NeighbourScreen({ locale }: { locale: string }) {
   };
 
   return (
-    <GoShell
-      locale={locale}
-      back="history"
-      expanded
-      header={
-        <h1 className="font-display text-[22px] font-extrabold leading-7">
-          {t('neighbour.title')}
-        </h1>
-      }
-    >
+    <GoShell locale={locale} back="history" expanded header={<h1>{t('neighbour.title')}</h1>}>
       <p className="mt-1 text-sm text-ink-muted">
         {t('neighbour.intro', { km: NEIGHBOUR_COURIER.HOME_RADIUS_METERS / 1000 })}
       </p>
@@ -56,7 +47,7 @@ export function NeighbourScreen({ locale }: { locale: string }) {
           {t('common.signIn')}
         </Link>
       ) : done ? (
-        <p className="mt-4 rounded-2xl bg-brand-50 p-4 text-sm">{t('neighbour.applied')}</p>
+        <p className="mt-4 rounded-paper bg-brand-50 p-4 text-sm">{t('neighbour.applied')}</p>
       ) : (
         <>
           <p className="mt-3 text-sm">

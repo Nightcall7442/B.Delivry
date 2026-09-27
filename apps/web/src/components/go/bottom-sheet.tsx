@@ -1,5 +1,5 @@
 /**
- * The GO-style sheet: a white panel over the map with a drag handle.
+ * The GO-style sheet: a paper panel over the map with a drag handle.
  *
  * Mobile: fixed to the bottom, two snap points (peek / full), dragged by the
  * handle or the header; the sheet changes *height*, not offset, so the footer
@@ -97,7 +97,7 @@ export function BottomSheet({
 
   return (
     <section
-      className="go-sheet paper-sheet fixed inset-x-0 bottom-0 z-20 flex flex-col rounded-t-lg md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[420px] md:rounded-lg"
+      className="go-sheet paper-sheet fixed inset-x-0 bottom-0 z-20 flex flex-col rounded-t-paper md:inset-auto md:bottom-4 md:left-4 md:top-4 md:w-[420px] md:rounded-paper"
       style={
         viewport.desktop || !viewport.height
           ? undefined
@@ -118,7 +118,7 @@ export function BottomSheet({
       >
         <button
           type="button"
-          className="mx-auto block h-1.5 w-10 rounded-full bg-[#c9b99a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 md:hidden"
+          className="mx-auto block h-1.5 w-10 rounded-full bg-[var(--paper-edge)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 md:hidden"
           aria-label={expanded ? t('sheet.collapse') : t('sheet.expand')}
           aria-expanded={expanded}
           onClick={() => setExpanded((value) => !value)}
@@ -129,7 +129,7 @@ export function BottomSheet({
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">{children}</div>
 
       {footer ? (
-        <div className="shrink-0 border-t border-dashed border-[#c9b99a] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:rounded-b-lg">
+        <div className="shrink-0 border-t border-dashed border-[var(--paper-edge)] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:rounded-b-paper">
           {footer}
         </div>
       ) : null}
