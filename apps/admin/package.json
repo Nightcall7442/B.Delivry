@@ -18,6 +18,9 @@
     "@bazar/storefront": "workspace:*",
     "@bazar/types": "workspace:*",
     "@bazar/utils": "workspace:*",
+    "@fontsource-variable/alegreya": "5.3.0",
+    "@fontsource-variable/caveat": "5.3.0",
+    "@fontsource-variable/roboto": "5.3.0",
     "next": "^15.5.26",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
@@ -29,10 +32,10 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^4.3.0",
     "autoprefixer": "^10.6.1",
+    "jsdom": "^25.0.0",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.6.0",
-    "vitest": "^3.0.0",
-    "jsdom": "^25.0.0"
+    "vitest": "^3.0.0"
   }
 }
