@@ -7,6 +7,7 @@
 
 import { isApiError } from '@bazar/api-client';
 import { createT, type MessageKey, type T } from '@bazar/i18n';
+import { isEvening } from '@bazar/storefront';
 import type { OtpChannel } from '@bazar/types';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -15,7 +16,6 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft } from '@/components/go/icons';
 import { useAuth } from '@/features/auth';
 
-import { isEvening } from './index';
 import s from './bazar.module.css';
 
 const KNOWN_ERRORS = [
@@ -154,8 +154,9 @@ export function BazaarLogin({ locale }: { locale: string }) {
 
   return (
     <main className={`hall ${s.scene}`}>
+      {/* The door: the one photograph of the rows; its scrim is the hall's own light. */}
       <div
-        className={`${s.photo} ${evening ? s.photoEvening : ''}`}
+        className={`photo-grade ${s.photo} ${evening ? s.photoEvening : ''}`}
         style={{ backgroundImage: `url(/scenes/${evening ? 'evening' : 'morning'}.jpg)` }}
       />
       <div className={`${s.body} ${s.narrow}`}>
@@ -166,23 +167,17 @@ export function BazaarLogin({ locale }: { locale: string }) {
           <span className={s.tag}>{t('login.tagline')}</span>
         </div>
         <div className={s.greeting} style={{ minHeight: '26vh', padding: '12px 0 22px' }}>
-          <div className={s.eyebrow}>{t('login.taglineHint')}</div>
-          <h1
-            className={`${s.display} ${evening ? s.displayEvening : ''}`}
-            style={{ fontSize: 'clamp(38px, 6vw, 64px)' }}
-          >
+          <div className="eyebrow">{t('login.taglineHint')}</div>
+          <h1 className={`${s.display} ${evening ? s.displayEvening : ''}`}>
             {t(evening ? 'scene.evening' : 'scene.morning')}
           </h1>
-          <p
-            className={s.hand}
-            style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}
-          >
+          <p className={s.say} style={{ margin: '6px 0 0' }}>
             {t('login.hint')}
           </p>
         </div>
 
         <form
-          className={s.receipt}
+          className={`${s.receipt} ${s.sheet}`}
           onSubmit={(event) => {
             event.preventDefault();
             void (step === 'phone' ? sendCode() : step === 'code' ? confirm() : undefined);
@@ -250,7 +245,7 @@ export function BazaarLogin({ locale }: { locale: string }) {
                 <button
                   type="button"
                   className={s.rcLink}
-                  style={{ color: '#7a6749' }}
+                  style={{ color: 'var(--ink-soft)' }}
                   onClick={() => {
                     setStep('phone');
                     setCode('');

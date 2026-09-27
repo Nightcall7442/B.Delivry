@@ -7,7 +7,7 @@
 'use client';
 
 import { createT } from '@bazar/i18n';
-import { branchesOf, closesToday, photo, tr, type MapStoreDto } from '@bazar/storefront';
+import { branchesOf, closesToday, isEvening, photo, tr, type MapStoreDto } from '@bazar/storefront';
 import type { Paginated } from '@bazar/api-client';
 import type { CategoryDto, OrderDto, ProductDto } from '@bazar/types';
 import Link from 'next/link';
@@ -20,7 +20,7 @@ import { useCartActions, useCartQuantities } from '@/features/cart';
 import { api } from '@/lib/api';
 import { SHELF_PAGE } from '@/lib/catalog';
 
-import { BasketBar, ProductCard, isEvening } from './index';
+import { BasketBar, ProductCard } from './index';
 import s from './bazar.module.css';
 
 export function BazaarShop({
@@ -132,7 +132,7 @@ export function BazaarShop({
     <main className={`hall ${s.scene}`}>
       {hero ? (
         <div
-          className={`${s.photo} ${s.photoStall}`}
+          className={`photo-grade ${s.photo} ${s.photoStall}`}
           style={{ backgroundImage: `url(${photo(hero, 1280)})` }}
         />
       ) : null}
@@ -245,9 +245,7 @@ export function BazaarShop({
           ))}
         </div>
         {items.length === 0 && !loading ? (
-          <p className={s.hand} style={{ fontSize: 22, color: 'var(--cream-muted)' }}>
-            {search ? t('shop.notFound') : t('shop.empty')}
-          </p>
+          <p className={s.say}>{search ? t('shop.notFound') : t('shop.empty')}</p>
         ) : null}
         <div ref={sentinel} className={s.more}>
           {loading ? t('shop.loading') : ''}

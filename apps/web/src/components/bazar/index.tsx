@@ -1,7 +1,7 @@
 /**
  * The bazaar pieces the web screens share: a product as a photo card with the
- * cardboard sign hanging off a corner (the vendor's line on it, «+» into the
- * basket), the bottom bar that turns into «Оформить», and the clock.
+ * cardboard sign hanging off a corner on its pin (the vendor's line on it, «+»
+ * into the basket), and the bottom bar that turns into «Оформить».
  */
 'use client';
 
@@ -9,15 +9,12 @@ import type { T } from '@bazar/i18n';
 import { arrivedToday, photo, tr, unitLabel } from '@bazar/storefront';
 import type { ProductDto, StoreDto } from '@bazar/types';
 import Link from 'next/link';
+import { useState } from 'react';
 
 import { Bag, Mic } from '@/components/go/icons';
 import { useCartActions, useCartQuantities } from '@/features/cart';
 
 import s from './bazar.module.css';
-
-/** Tashkent hour: the bazaar lives on its own clock, not the visitor's. */
-export const tashkentHour = (now = new Date()) => (now.getUTCHours() + 5) % 24;
-export const isEvening = (hour = tashkentHour()) => hour >= 17 || hour < 5;
 
 export function ProductCard({
   product,
@@ -40,7 +37,13 @@ export function ProductCard({
   const qty = quantities[product.id] ?? 0;
   const image = product.images[0]?.url ?? null;
   const step = product.quantityStep || 1;
-  const add = () => setQuantity(product.id, qty === 0 ? product.minQuantity || step : qty + step);
+  // The sign swings on its pin when the product goes into the basket — not when a page opens
+  // on a basket that already holds it.
+  const [swing, setSwing] = useState(false);
+  const add = () => {
+    if (qty === 0) setSwing(true);
+    setQuantity(product.id, qty === 0 ? product.minQuantity || step : qty + step);
+  };
   const note = [
     stall ? (stall.ownerName ?? tr(stall.name, locale)) : null,
     arrivedToday(product) ? t('store.arrivedToday') : null,
@@ -51,14 +54,16 @@ export function ProductCard({
     <div className={s.card}>
       <Link
         href={href}
-        className={s.cardPhoto}
+        className={`${s.cardPhoto} ${image ? 'photo-grade' : ''}`}
         style={image ? { backgroundImage: `url(${photo(image, 960)})` } : undefined}
         aria-label={tr(product.name, locale)}
       />
       <div
-        className={`${s.sign} ${index % 2 ? s.signRight : ''} ${qty > 0 ? s.signChosen : ''}`}
+        className={`${s.sign} ${index % 2 ? s.signRight : ''} ${qty > 0 ? s.signChosen : ''} ${swing ? s.signSwing : ''}`}
         style={{ transform: `rotate(${[-1.2, 1, 0.6, -0.8][index % 4]}deg)` }}
+        onAnimationEnd={() => setSwing(false)}
       >
+        <span className={s.pin} aria-hidden />
         <div className={s.signTitle}>{tr(product.name, locale)}</div>
         <div className={s.signPrice}>
           {t.money(product.price.amount)} <small>/ {units[product.unit]}</small>
@@ -126,7 +131,7 @@ export function BasketBar({
         ) : (
           <>
             <Link href={`${home}/list`} className={s.glass}>
-              <span style={{ color: 'var(--saffron)' }}>
+              <span style={{ color: 'var(--ochre)' }}>
                 <Mic />
               </span>
               <span style={{ minWidth: 0 }}>
@@ -134,11 +139,7 @@ export function BasketBar({
                 <div className={s.glassHint}>{t('scene.sayHint')}</div>
               </span>
             </Link>
-            <Link
-              href={`${home}/cart`}
-              className={`${s.disc} ${evening ? s.discEvening : ''}`}
-              aria-label={t('cart.title')}
-            >
+            <Link href={`${home}/cart`} className={s.disc} aria-label={t('cart.title')}>
               <Bag />
             </Link>
           </>

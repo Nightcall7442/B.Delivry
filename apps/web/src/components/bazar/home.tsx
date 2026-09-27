@@ -1,7 +1,7 @@
 /**
- * The front door on the web, as in the app: a photograph of the rows fills
- * the window (morning or evening by Tashkent time), the greeting sits on it,
- * then the people at their counters, the rows to walk along, and everything
+ * The front door on the web, as in the app: the hall under the dome (morning
+ * or evening by Tashkent time), the greeting on it, then the people at their
+ * counters, the rows to walk along, and everything
  * on the counters today as photo cards with a cardboard sign you can take
  * straight into the basket. Once the basket has something in it the voice
  * line at the bottom gives way to «Оформить».
@@ -14,6 +14,7 @@ import {
   chorsuTemperature,
   closesToday,
   degrees,
+  isEvening,
   isShopfront,
   photo,
   shopfronts,
@@ -28,7 +29,7 @@ import { Bell } from '@/components/go/icons';
 import { useAddress } from '@/features/address';
 import { useAuth } from '@/features/auth';
 
-import { BasketBar, ProductCard, isEvening } from './index';
+import { BasketBar, ProductCard } from './index';
 import s from './bazar.module.css';
 
 /** The motto is a sentence; the card has room for four words of it. */
@@ -117,7 +118,7 @@ export function BazaarHome({
         </div>
 
         <div className={s.greeting}>
-          <div className={s.eyebrow}>
+          <div className="eyebrow">
             {dateLine.charAt(0).toUpperCase() + dateLine.slice(1)} ·{' '}
             {t(evening ? 'scene.eveningLine' : 'scene.morningLine')}
           </div>
@@ -140,7 +141,7 @@ export function BazaarHome({
               <Link
                 key={store.id}
                 href={`${home}/stores/${store.id}`}
-                className={s.vendor}
+                className={`${s.vendor} ${face ? 'photo-grade' : ''}`}
                 style={face ? { backgroundImage: `url(${photo(face, 500)})` } : undefined}
               >
                 <span className={s.vendorText}>
@@ -196,7 +197,6 @@ export function BazaarHome({
               className={s.rowSign}
               style={{ transform: `rotate(${[-1.5, 1, -1, 1.5][i % 4]}deg)` }}
             >
-              <span className={s.pin} />
               {tr(category.name, locale)}
             </Link>
           ))}
