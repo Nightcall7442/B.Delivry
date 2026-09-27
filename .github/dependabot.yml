@@ -5,11 +5,33 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
-    # Majors are hand-done: Expo pins react-native/react per SDK, Tailwind 4 and
-    # Babel 8 are migrations, not bumps. Patch/minor only.
+    # Majors are hand-done: Tailwind 4 and Babel 8 are migrations, not bumps.
     ignore:
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
+      # Expo SDK 57 pins this family (react, react-native and the modules built against them).
+      # For react-native a minor IS a breaking change, and a React minor outruns the SDK: the
+      # 0.87 bump of 2026-09-22 broke every typecheck. They move with `npx expo install --fix`.
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-minor']
+      - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-minor']
+      - dependency-name: '@types/react'
+        update-types: ['version-update:semver-minor']
+      - dependency-name: '@types/react-dom'
+        update-types: ['version-update:semver-minor']
+      - dependency-name: 'react-native'
+        update-types: ['version-update:semver-minor']
+      - dependency-name: 'react-native-*'
+        update-types: ['version-update:semver-minor']
+      - dependency-name: '@react-native/*'
+        update-types: ['version-update:semver-minor']
+      - dependency-name: 'expo'
+        update-types: ['version-update:semver-minor']
+      - dependency-name: 'expo-*'
+        update-types: ['version-update:semver-minor']
+      - dependency-name: '@expo/*'
+        update-types: ['version-update:semver-minor']
     groups:
       minor-and-patch:
         update-types: ['minor', 'patch']
