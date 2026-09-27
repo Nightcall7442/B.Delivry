@@ -43,6 +43,8 @@ export const TONE = {
   ochreDeep: '#C8851F',
   /** pomegranate, pressed */
   pomegranateDeep: '#7E1F21',
+  /** pomegranate, lit: an error or a warning on the dark */
+  pomegranateLit: '#D9767A',
   /** cream as text and discs on the ground */
   creamLight: '#FBF1DE',
   /** cream, second line on the ground */

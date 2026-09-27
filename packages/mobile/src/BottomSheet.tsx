@@ -18,7 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useT } from './locale';
-import { shadow } from './theme';
+import { color, radius, shadow } from './theme';
 
 export interface BottomSheetProps {
   /** Share of the screen the collapsed sheet takes. */
@@ -122,13 +122,13 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    // Paper, whatever the theme: the sheet over a map is a slip on the counter.
-    backgroundColor: '#F4EFE4',
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    borderTopWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: '#C9B99A',
+    // Paper over the map: the theme's paper, so the text on it flips with it. A plain edge —
+    // the torn one belongs to receipts.
+    backgroundColor: color.surface,
+    borderTopLeftRadius: radius.paper,
+    borderTopRightRadius: radius.paper,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: color.lineStrong,
     ...shadow.paper,
   },
   grip: { paddingHorizontal: 16, paddingTop: 8 },
@@ -137,15 +137,14 @@ const s = StyleSheet.create({
     width: 40,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#C9B99A',
+    backgroundColor: color.lineStrong,
   },
   body: { paddingHorizontal: 16, paddingBottom: 16 },
   footer: {
     paddingHorizontal: 16,
     paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#C9B99A',
-    borderStyle: 'dashed',
-    backgroundColor: '#F4EFE4',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: color.line,
+    backgroundColor: color.surface,
   },
 });

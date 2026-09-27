@@ -35,6 +35,8 @@ const LIGHT = {
     string,
   ],
   blurTint: 'light' as 'light' | 'dark',
+  /** Errors are pomegranate — there is no seventh colour for them; lit on the dark. */
+  danger: HALL.pomegranate,
   brand50: '#F5E0DA',
   brand100: '#EEC8C4',
   saffron100: '#FBEBC9',
@@ -67,6 +69,7 @@ const DARK: Palette = {
   glassSoft: 'rgba(14,26,51,0.7)',
   fade: ['rgba(14,26,51,0)', 'rgba(14,26,51,0.94)', HALL.lapis],
   blurTint: 'dark',
+  danger: TONE.pomegranateLit,
   brand50: '#3A1B1D',
   brand100: '#4A2224',
   saffron100: '#4A2E05',
@@ -90,7 +93,6 @@ export const color = {
   saffron600: TONE.ochreDeep,
   /** Text on green and on photos — white in both themes. */
   white: '#FFFFFF',
-  danger: '#E4394F',
 } as const;
 
 /** Three corners: paper (every sheet, slip, field and sign), photographs, and pills (buttons, glass). */

@@ -3,6 +3,7 @@
  * as the web's .go-* classes: 56px fields and buttons, 36px chips, rows with an
  * icon tile on the left and a chevron on the right.
  */
+import { HALL } from '@bazar/storefront';
 import { forwardRef, type ReactNode } from 'react';
 import {
   Pressable,
@@ -78,9 +79,10 @@ export function Button({
   variant?: 'primary' | 'secondary' | 'danger';
   style?: StyleProp<ViewStyle>;
 }) {
-  // Primary is the pomegranate stamp; secondary is a paper slip with a kraft edge.
+  // Primary is the pomegranate pill; danger the same pill pressed deeper; secondary a paper slip.
+  // Buttons lie on paper, so they lie flat — the one shadow is for what lifts off the ground.
   const bg =
-    variant === 'primary' ? color.brand500 : variant === 'danger' ? color.danger : color.tile;
+    variant === 'primary' ? color.brand500 : variant === 'danger' ? color.brand600 : color.tile;
   const fg = variant === 'secondary' ? color.ink : color.white;
   return (
     <Pressable
@@ -88,7 +90,6 @@ export function Button({
       style={({ pressed }) => [
         s.button,
         press.base,
-        variant === 'primary' && shadow.paper,
         variant === 'secondary' && s.buttonPaper,
         { backgroundColor: bg, opacity: disabled ? 0.5 : pressed ? 0.9 : 1 },
         pressed && press.down,
@@ -116,6 +117,7 @@ export function Chip({
   return (
     <Pressable
       onPress={onPress}
+      hitSlop={4}
       style={({ pressed }) => [s.chip, press.base, active && s.chipActive, pressed && press.down]}
     >
       {leading}
@@ -231,19 +233,19 @@ export function Line({ label, value, strong }: { label: string; value: string; s
 const s = StyleSheet.create({
   button: {
     height: 56,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  buttonLabel: { fontFamily: font.heading, fontSize: 18, letterSpacing: 0 },
+  buttonLabel: { fontFamily: font.heading, ...scale.lead, letterSpacing: 0 },
   buttonPaper: { borderWidth: 1, borderColor: color.lineStrong },
-  // A chip is a small paper sign: square-ish corners, a kraft edge; the chosen one is stamped.
+  // A chip is a small paper pill with a kraft edge; the chosen one is stamped pomegranate.
   chip: {
     height: 38,
-    borderRadius: 10,
+    borderRadius: radius.pill,
     backgroundColor: color.tile,
     borderWidth: 1,
     borderColor: color.lineStrong,
@@ -253,10 +255,10 @@ const s = StyleSheet.create({
     gap: 6,
   },
   chipActive: { backgroundColor: color.brand500, borderColor: color.brand500 },
-  chipLabel: { fontFamily: font.bodySemi, fontSize: 14, color: color.ink },
+  chipLabel: { fontFamily: font.bodySemi, fontSize: scale.body.fontSize, color: color.ink },
   field: {
     height: 56,
-    borderRadius: 14,
+    borderRadius: radius.paper,
     backgroundColor: color.field,
     borderWidth: 1,
     borderColor: color.line,
@@ -268,7 +270,7 @@ const s = StyleSheet.create({
   fieldInput: {
     flex: 1,
     fontFamily: font.body,
-    fontSize: 16,
+    fontSize: scale.lead.fontSize,
     color: color.ink,
     paddingVertical: 0,
     ...noOutline,
@@ -285,7 +287,7 @@ const s = StyleSheet.create({
   rowTile: {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: radius.paper,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -306,18 +308,23 @@ const s = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     paddingHorizontal: 5,
-    backgroundColor: color.brand500,
+    // Counters are ochre light, like every badge in the apps; pomegranate is only a button.
+    backgroundColor: color.saffron500,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: { color: color.white, fontSize: 11, fontFamily: font.bodySemi },
-  // A slip of paper: cream, a dashed edge — the same slip the receipts use.
+  badgeText: {
+    color: HALL.ink,
+    fontSize: scale.caption.fontSize,
+    fontFamily: font.display,
+    fontVariant: ['tabular-nums'],
+  },
+  // A slip of paper with a plain edge — the torn edge belongs to receipts alone.
   panel: {
-    backgroundColor: '#FBF5E6',
-    borderRadius: 6,
+    backgroundColor: color.tile,
+    borderRadius: radius.paper,
     borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#C9B99A',
+    borderColor: color.line,
     padding: 16,
   },
   line: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 },
