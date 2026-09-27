@@ -9,6 +9,7 @@ export * from './branding.js';
 export * from './bundles.js';
 export * from './cart.js';
 export * from './cart-group.js';
+export * from './dome.js';
 export * from './checkout.js';
 export * from './catalog-data.js';
 export * from './i18n.js';

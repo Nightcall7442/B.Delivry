@@ -30,7 +30,7 @@ export function BazaarOrders({ locale }: { locale: string }) {
   });
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>

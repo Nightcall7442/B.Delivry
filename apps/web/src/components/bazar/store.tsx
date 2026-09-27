@@ -56,7 +56,7 @@ export function BazaarStore({
     : null;
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div
         className={`${s.photo} ${s.photoStall}`}
         style={hero ? { backgroundImage: `url(${photo(hero, 1280)})` } : undefined}

@@ -93,7 +93,7 @@ export function BazaarHome({
   }).format(new Date());
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={s.body}>
         <div className={s.top}>
           <span className={s.tag}>

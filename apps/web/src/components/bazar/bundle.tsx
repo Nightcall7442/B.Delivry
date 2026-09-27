@@ -59,7 +59,7 @@ export function BazaarBundle({
   };
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div
         className={`${s.photo} ${s.photoDim}`}
         style={{ backgroundImage: `url(${photo(bundle.photo, 1280)})` }}

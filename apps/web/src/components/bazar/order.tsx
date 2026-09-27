@@ -159,7 +159,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
 
   if (!order) {
     return (
-      <main className={s.scene}>
+      <main className={`hall ${s.scene}`}>
         <div className={`${s.body} ${s.narrow}`}>
           <div className={s.top}>
             <Link href={back} className={s.round} aria-label={t('common.back')}>
@@ -222,7 +222,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
   const chip = (on: boolean) => `${s.chipPaper} ${on ? s.chipPaperOn : ''}`;
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       {/* The map is the ground while the order is on its way; a dark scrim keeps the paper readable. */}
       <div className={`${s.mapGround} ${terminal ? s.mapGroundDone : ''}`}>
         <MapView center={center} zoom={zoom} markers={markers} interactive />

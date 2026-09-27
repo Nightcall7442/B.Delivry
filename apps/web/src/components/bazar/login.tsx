@@ -153,7 +153,7 @@ export function BazaarLogin({ locale }: { locale: string }) {
   const canEnter = !busy && code.length >= codeLength;
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div
         className={`${s.photo} ${evening ? s.photoEvening : ''}`}
         style={{ backgroundImage: `url(/scenes/${evening ? 'evening' : 'morning'}.jpg)` }}

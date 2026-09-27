@@ -336,7 +336,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     transform: [{ rotate: '45deg' }],
-    ...shadow.pop,
+    ...shadow.paper,
   },
   courier: {
     width: 44,
@@ -347,7 +347,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 4,
     borderColor: 'rgba(158,42,43,0.3)',
-    ...shadow.pop,
+    ...shadow.paper,
   },
   labelSlot: { position: 'absolute', width: LABEL_W, alignItems: 'center' },
   label: {
@@ -356,7 +356,7 @@ const s = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    ...shadow.card,
+    
   },
   note: {
     position: 'absolute',

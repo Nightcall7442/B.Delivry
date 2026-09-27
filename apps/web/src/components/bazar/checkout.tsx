@@ -263,7 +263,7 @@ export function BazaarCheckout({
   const chip = (on: boolean) => `${s.chipPaper} ${on ? s.chipPaperOn : ''}`;
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       {ground ? (
         <div
           className={`${s.photo} ${s.photoDim}`}

@@ -115,7 +115,7 @@ export function ShiftScreen() {
       <MapView center={center} zoom={13} markers={markers} inset={0.45} />
 
       <View style={[s.top, { paddingTop: insets.top + 8 }]}>
-        <View style={[s.shiftCard, shadow.card]}>
+        <View style={s.shiftCard}>
           <View style={{ flex: 1 }}>
             <RNText style={s.name}>
               {courier ? `${courier.firstName}` : (user?.firstName ?? 'Курьер')}
@@ -425,7 +425,7 @@ const s = StyleSheet.create({
     borderTopWidth: 2,
     borderStyle: 'dashed',
     borderColor: PAPER_EDGE,
-    ...shadow.pop,
+    ...shadow.paper,
   },
   grip: {
     alignSelf: 'center',

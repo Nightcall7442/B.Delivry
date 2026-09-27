@@ -8,7 +8,8 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { color } from './theme';
+import { PhotoGrade } from './DomeGround';
+import { color, radius } from './theme';
 
 export function Photo({
   uri,
@@ -16,6 +17,7 @@ export function Photo({
   fallback,
   priority = 'normal',
   sharedTag,
+  grade = true,
 }: {
   uri: string | null | undefined;
   style?: StyleProp<ViewStyle>;
@@ -28,6 +30,8 @@ export function Photo({
    * between them (Reanimated shared element, native stack only; ignored on web).
    */
   sharedTag?: string;
+  /** The one camera's light over the picture; off only where the photo is a map tile or a logo. */
+  grade?: boolean;
 }) {
   const image = uri ? (
     <Image
@@ -52,11 +56,12 @@ export function Photo({
       ) : (
         image
       )}
+      {grade && uri ? <PhotoGrade /> : null}
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  frame: { overflow: 'hidden', backgroundColor: color.field },
+  frame: { overflow: 'hidden', borderRadius: radius.photo, backgroundColor: color.field },
   fallback: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

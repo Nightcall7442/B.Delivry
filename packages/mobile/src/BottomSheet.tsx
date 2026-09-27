@@ -129,7 +129,7 @@ const s = StyleSheet.create({
     borderTopWidth: 2,
     borderStyle: 'dashed',
     borderColor: '#C9B99A',
-    ...shadow.pop,
+    ...shadow.paper,
   },
   grip: { paddingHorizontal: 16, paddingTop: 8 },
   handle: {

@@ -37,7 +37,6 @@ export const ui = {
   brandDeep: color.brand600,
   brandSoft: color.brand50,
   radius: 20,
-  shadow: shadow.card,
   /** The rhythm: gutters 16, gaps between siblings 12, card padding 14, sections 24 apart. */
   gap: 12,
   pad: 14,
@@ -460,7 +459,6 @@ const s = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#E6DCC6',
-    ...ui.shadow,
   },
   bone: { backgroundColor: color.field, borderRadius: 20 },
   empty: { alignItems: 'center', padding: 24, paddingVertical: 36, marginTop: 12 },

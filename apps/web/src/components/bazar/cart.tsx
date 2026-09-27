@@ -148,7 +148,7 @@ export function BazaarCart({
   }).format(new Date());
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       {/* The counter's own photograph, when the basket comes from one stall. */}
       {ground ? (
         <div

@@ -99,7 +99,7 @@ export function BazaarCatalog({
     .filter((g) => g.items.length > 0);
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={s.body}>
         <div className={s.top}>
           <Link href={walking ? base : home} className={s.round} aria-label={t('common.back')}>

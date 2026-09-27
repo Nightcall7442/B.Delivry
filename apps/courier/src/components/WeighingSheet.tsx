@@ -192,7 +192,7 @@ const s = StyleSheet.create({
   input: {
     width: 96,
     height: 44,
-    borderRadius: radius.control,
+    borderRadius: radius.paper,
     backgroundColor: color.sand50,
     paddingHorizontal: 12,
     fontSize: 18,
@@ -203,7 +203,7 @@ const s = StyleSheet.create({
     marginLeft: 'auto',
     height: 44,
     minWidth: 96,
-    borderRadius: radius.control,
+    borderRadius: radius.paper,
     borderWidth: 1,
     borderColor: color.brand300,
     alignItems: 'center',

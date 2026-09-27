@@ -35,7 +35,7 @@ export function BazaarSupport({ locale }: { locale: string }) {
   );
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>
@@ -110,7 +110,7 @@ export function BazaarSupport({ locale }: { locale: string }) {
 export function BazaarError({ locale, onRetry }: { locale: string; onRetry: () => void }) {
   const t = createT(locale);
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.greeting} style={{ minHeight: 0, padding: '48px 0 26px' }}>
           <h1 className={s.display} style={{ fontSize: 'clamp(30px, 4.6vw, 48px)' }}>
@@ -146,7 +146,7 @@ export function BazaarNotFound({ locale }: { locale: string }) {
   const t = createT(locale);
   const home = `/${locale}`;
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>

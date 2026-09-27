@@ -195,7 +195,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -22,
-    ...shadow.glow,
+    ...shadow.paper,
   },
   badge: {
     position: 'absolute',

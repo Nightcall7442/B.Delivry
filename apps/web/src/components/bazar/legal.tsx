@@ -24,7 +24,7 @@ export interface LegalDoc {
 export function BazaarLegal({ doc, locale }: { doc: LegalDoc; locale: string }) {
   const home = `/${locale}`;
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label="Bazar">

@@ -60,7 +60,8 @@ const preset: Partial<Config> = {
         danger: '#E4394F',
       },
       fontFamily: {
-        sans: ['var(--font-sans)', 'Roboto', 'system-ui', 'sans-serif'],
+        // Two voices (see packages/storefront/src/dome.ts): Manrope runs the interface.
+        sans: ['var(--font-sans)', 'Manrope', 'system-ui', 'sans-serif'],
         // Headlines, prices, ETA — the numbers people glance at.
         display: ['var(--font-display)', 'Manrope', 'var(--font-sans)', 'system-ui', 'sans-serif'],
         // The bazaar's two voices: serif for names and titles, handwriting for prices and asides.
@@ -71,10 +72,15 @@ const preset: Partial<Config> = {
         // 8 for inputs and small cards, 10 for buttons, 16 for panels.
         control: '10px',
         panel: '16px',
+        // «Свет купола»: the one paper corner and the one photo corner.
+        paper: '6px',
+        photo: '14px',
       },
       boxShadow: {
         card: '0 2px 12px rgba(27, 31, 34, 0.06)',
         pop: '0 12px 32px rgba(27, 31, 34, 0.12)',
+        // The one shadow of the storefront: the ground's own dark (globals.css --shadow).
+        paper: 'var(--shadow)',
       },
       maxWidth: {
         container: '1264px',

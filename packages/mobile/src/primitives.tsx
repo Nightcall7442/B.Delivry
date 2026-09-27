@@ -18,39 +18,20 @@ import {
 } from 'react-native';
 
 import { Chevron } from './Icons';
-import { FACE, color, font, noOutline, press, radius, shadow } from './theme';
+import { FACE, color, font, noOutline, press, radius, scale, shadow } from './theme';
 
 type TextRole = 'display' | 'title' | 'section' | 'body' | 'muted' | 'caption' | 'price';
 
 const TEXT: Record<TextRole, TextStyle> = {
-  display: {
-    fontFamily: font.heading,
-    fontSize: 28,
-    lineHeight: 32,
-    letterSpacing: -0.3,
-    color: color.ink,
-  },
-  title: {
-    fontFamily: font.heading,
-    fontSize: 19,
-    lineHeight: 23,
-    letterSpacing: 0,
-    color: color.ink,
-  },
-  section: {
-    fontFamily: font.heading,
-    fontSize: 21,
-    lineHeight: 25,
-    letterSpacing: 0,
-    color: color.ink,
-  },
-  body: { fontFamily: font.body, fontSize: 16, lineHeight: 22, color: color.ink },
-  muted: { fontFamily: font.body, fontSize: 14, lineHeight: 20, color: color.inkMuted },
-  caption: { fontFamily: font.body, fontSize: 12, lineHeight: 16, color: color.inkMuted },
+  display: { fontFamily: font.heading, ...scale.headline, letterSpacing: -0.3, color: color.ink },
+  title: { fontFamily: font.heading, ...scale.title, color: color.ink },
+  section: { fontFamily: font.heading, ...scale.title, color: color.ink },
+  body: { fontFamily: font.body, ...scale.lead, color: color.ink },
+  muted: { fontFamily: font.body, ...scale.body, color: color.inkMuted },
+  caption: { fontFamily: font.body, ...scale.caption, color: color.inkMuted },
   price: {
     fontFamily: font.display,
-    fontSize: 16,
-    lineHeight: 22,
+    ...scale.lead,
     color: color.ink,
     fontVariant: ['tabular-nums'],
   },
@@ -107,7 +88,7 @@ export function Button({
       style={({ pressed }) => [
         s.button,
         press.base,
-        variant === 'primary' && shadow.glow,
+        variant === 'primary' && shadow.paper,
         variant === 'secondary' && s.buttonPaper,
         { backgroundColor: bg, opacity: disabled ? 0.5 : pressed ? 0.9 : 1 },
         pressed && press.down,
@@ -299,7 +280,7 @@ const s = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     marginHorizontal: -12,
-    borderRadius: radius.panel,
+    borderRadius: radius.paper,
   },
   rowTile: {
     width: 44,
@@ -315,7 +296,7 @@ const s = StyleSheet.create({
     backgroundColor: color.raise,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadow.pop,
+    ...shadow.paper,
   },
   badge: {
     position: 'absolute',

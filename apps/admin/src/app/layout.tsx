@@ -5,7 +5,7 @@ import { Providers } from '@/app/providers';
 import '@/styles/globals.css';
 
 // The faces ship with the cabinet too: a build must not depend on fonts.googleapis.com.
-import '@fontsource-variable/roboto';
+import '@fontsource-variable/manrope';
 import '@fontsource-variable/alegreya';
 import '@fontsource-variable/alegreya/wght-italic.css';
 import '@fontsource-variable/caveat';

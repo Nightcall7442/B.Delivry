@@ -129,7 +129,7 @@ export function BazaarShop({
   const hero = store.counterPhotoUrl ?? store.coverUrl ?? null;
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       {hero ? (
         <div
           className={`${s.photo} ${s.photoStall}`}
