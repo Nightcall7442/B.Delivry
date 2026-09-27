@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { EmptyState } from '@/components/ui/Page';
+import { scene } from '@/components/bazar';
 import { Shell } from '@/components/ui/Shell';
 
 export default function SubscriptionsRoute() {
@@ -40,7 +41,7 @@ export default function SubscriptionsRoute() {
       back="history"
       expanded
       header={
-        <Text role="display" style={{ color: '#FBF1DE' }}>
+        <Text role="display" style={{ color: scene.cream }}>
           {t('subs.title')}
         </Text>
       }

@@ -21,6 +21,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { scene } from '@/components/bazar';
 import { Shell } from '@/components/ui/Shell';
 import { useList } from '@/lib/use-data';
 import { useCartActions, useCartQuantities } from '@/features/cart/store';
@@ -115,7 +116,7 @@ export default function ListRoute() {
       back="history"
       expanded
       header={
-        <Text role="display" style={{ color: '#FBF1DE' }}>
+        <Text role="display" style={{ color: scene.cream }}>
           {t('list.title')}
         </Text>
       }

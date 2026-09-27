@@ -5,6 +5,7 @@ import { ensureServerAddress } from '@bazar/storefront';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 
+import { scene } from '@/components/bazar';
 import { Shell } from '@/components/ui/Shell';
 import { useAddress } from '@/features/address/store';
 
@@ -36,7 +37,7 @@ export default function NeighbourRoute() {
       back="history"
       expanded
       header={
-        <Text role="display" style={{ color: '#FBF1DE' }}>
+        <Text role="display" style={{ color: scene.cream }}>
           {t('neighbour.title')}
         </Text>
       }

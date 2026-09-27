@@ -3,6 +3,7 @@ import { GUARANTEE } from '@bazar/constants';
 import { Panel, Text, useT, Clock, Leaf, color } from '@bazar/mobile';
 import { View } from 'react-native';
 
+import { scene } from '@/components/bazar';
 import { Shell } from '@/components/ui/Shell';
 
 export default function RulesRoute() {
@@ -12,7 +13,7 @@ export default function RulesRoute() {
       back="history"
       peek={0.6}
       header={
-        <Text role="display" style={{ color: '#FBF1DE' }}>
+        <Text role="display" style={{ color: scene.cream }}>
           {t('rules.title')}
         </Text>
       }

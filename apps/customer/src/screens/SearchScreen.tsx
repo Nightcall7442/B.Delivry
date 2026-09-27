@@ -1,14 +1,13 @@
 /**
- * Asking around the rows: one frosted line to type into over the bazaar
- * photograph, the row signs to narrow it down, and what was found as
- * cardboard price signs grouped by the stall that sells it — the person
- * first, their signs under them, the way you would walk it.
+ * Asking around the rows: one glass line to type into over the hall, the row
+ * labels to narrow it down, and what was found as cardboard price signs
+ * grouped by the stall that sells it — the person first, their signs under
+ * them, the way you would walk it.
  */
 import { arrivedToday, tr, unitLabel } from '@bazar/storefront';
 import type { MapStoreDto } from '@bazar/storefront';
 import type { MessageKey } from '@bazar/i18n';
 import type { ProductDto } from '@bazar/types';
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -19,13 +18,13 @@ import {
   Display,
   Eyebrow,
   Glass,
-  Hand,
   RowSign,
-  SCENES,
+  SHADOW_REACH,
+  Say,
   Scene,
   SceneButton,
   Sign,
-  isEvening,
+  ground,
   scene,
   sceneFont,
   useSceneTop,
@@ -34,7 +33,7 @@ import { Bone, LoadError } from '@/components/ui/Page';
 import { useCart, useCartActions, useCartCount } from '@/features/cart/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 import { useData, useList, useLoad } from '@/lib/use-data';
-import { ArrowLeft, Search, noOutline, useLocale } from '@bazar/mobile';
+import { ArrowLeft, Photo, Search, noOutline, scale, useLocale } from '@bazar/mobile';
 
 const TILTS = [-1.5, 1, -1, 1.5, -1, 1];
 
@@ -43,7 +42,6 @@ export function SearchScreen() {
   const { locale, t } = useLocale();
   const insets = useSafeAreaInsets();
   const top = useSceneTop();
-  const evening = isEvening();
   const count = useCartCount();
   const { q = '', category } = useLocalSearchParams<{ q?: string; category?: string }>();
   const [draft, setDraft] = useState(q);
@@ -81,13 +79,10 @@ export function SearchScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: scene.night }}>
-      <Scene
-        source={evening ? SCENES.evening : SCENES.morning}
-        evening={evening}
-        style={StyleSheet.absoluteFill}
-      >
-        <View />
+    <View style={{ flex: 1 }}>
+      {/* The photograph of the rows hangs only at the door; the search stands in the hall. */}
+      <Scene source={null} style={StyleSheet.absoluteFill}>
+        {null}
       </Scene>
 
       <ScrollView
@@ -98,6 +93,7 @@ export function SearchScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: -SHADOW_REACH }}
           contentContainerStyle={s.rows}
         >
           <RowSign
@@ -119,7 +115,7 @@ export function SearchScreen() {
 
         <View style={s.sorts}>
           {(Object.keys(SORTERS) as SortKey[]).map((key) => (
-            <Pressable key={key} onPress={() => setSort(key)} hitSlop={6}>
+            <Pressable key={key} onPress={() => setSort(key)} hitSlop={14}>
               <Text style={[s.sort, sort === key && s.sortOn]}>
                 {t(`sort.${key}` as MessageKey)}
               </Text>
@@ -141,10 +137,8 @@ export function SearchScreen() {
           </View>
         ) : stalls.length === 0 ? (
           <View style={{ paddingHorizontal: 20, paddingTop: 40, gap: 8 }}>
-            <Display size={30}>{q ? `«${q}»` : t('common.all')}</Display>
-            <Hand size={24} color={scene.creamMuted}>
-              {t('search.empty')}
-            </Hand>
+            <Display step="headline">{q ? `«${q}»` : t('common.all')}</Display>
+            <Say color={scene.creamMuted}>{t('search.empty')}</Say>
           </View>
         ) : (
           stalls.map(({ store, items }) => (
@@ -166,10 +160,10 @@ export function SearchScreen() {
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
         <Glass style={s.search}>
-          <Search size={20} color={scene.saffron} />
+          <Search size={20} color={scene.ochreLight} />
           <TextInput
             placeholder={t('home.search')}
-            placeholderTextColor={scene.creamDim}
+            placeholderTextColor={scene.creamMuted}
             value={draft}
             onChangeText={setDraft}
             returnKeyType="search"
@@ -178,7 +172,7 @@ export function SearchScreen() {
             style={s.input}
           />
         </Glass>
-        <CartDisc count={count} evening={evening} onPress={() => router.push('/(tabs)/cart')} />
+        <CartDisc count={count} onPress={() => router.push('/(tabs)/cart')} />
       </View>
     </View>
   );
@@ -203,16 +197,9 @@ function StallGroup({
   return (
     <View style={s.group}>
       <Pressable onPress={onOpen} style={s.person}>
-        {person ? (
-          <Image
-            source={{ uri: person }}
-            style={s.avatar}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-          />
-        ) : null}
+        {person ? <Photo uri={person} style={s.avatar} /> : null}
         <View style={{ flex: 1, gap: 1 }}>
-          <Display size={24} numberOfLines={1}>
+          <Display step="title" numberOfLines={1}>
             {store.ownerName ?? tr(store.name, locale)}
           </Display>
           <Eyebrow>
@@ -282,12 +269,19 @@ const s = StyleSheet.create({
   input: {
     flex: 1,
     fontFamily: sceneFont.uiText,
-    fontSize: 15,
+    ...scale.body,
     color: scene.cream,
     paddingVertical: 0,
     ...(noOutline as object),
   },
-  rows: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, gap: 8, alignItems: 'flex-end' },
+  // Room for the labels' shadow, handed back by the rail's negative margin.
+  rows: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 12 + SHADOW_REACH,
+    gap: 8,
+    alignItems: 'flex-end',
+  },
   sorts: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -297,15 +291,15 @@ const s = StyleSheet.create({
   },
   sort: {
     fontFamily: sceneFont.uiText,
-    fontSize: 12,
+    ...scale.caption,
     color: scene.creamMuted,
-    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowColor: ground(0.6),
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
   sortOn: {
     fontFamily: sceneFont.uiHeavy,
-    color: scene.saffronLight,
+    color: scene.ochreLight,
     textDecorationLine: 'underline',
   },
   group: { paddingHorizontal: 20, paddingTop: 22 },
@@ -315,8 +309,8 @@ const s = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: scene.saffron,
-    backgroundColor: '#3A2A1A',
+    borderColor: scene.ochre,
+    backgroundColor: scene.kraft,
   },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 14 },
   sign: { width: '47%', flexGrow: 1 },

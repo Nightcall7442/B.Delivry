@@ -1,6 +1,6 @@
 /**
- * The bottom bar of the redesign: four tabs and the cart as a green disc in
- * the middle with the item count. Floats over the page ground with a shadow.
+ * The bottom bar: four tabs and the cart as a pomegranate disc in the middle
+ * with the item count. A sticky bar over the hall, so it is glass.
  */
 // SDK 57: expo-router's <Tabs> now ships its own bottom-tabs types instead of
 // re-exporting @react-navigation/bottom-tabs, so the prop type has to come
@@ -10,6 +10,7 @@ import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, type ComponentType } from 'react';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -21,11 +22,14 @@ import {
   User,
   color,
   press,
+  radius,
+  scale,
   shadow,
   useLocale,
 } from '@bazar/mobile';
 import type { MessageKey } from '@bazar/i18n';
 
+import { scene } from '@/components/bazar';
 import { useCartCount } from '@/features/cart/store';
 
 import { ui } from './Page';
@@ -45,11 +49,12 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const { t } = useLocale();
   const count = useCartCount();
   const current = state.routes[state.index]?.name;
-  // Something landed in the cart: the disc pops once.
+  const still = useReducedMotion();
+  // Something landed in the cart: the disc pops once (not under «Уменьшить движение»).
   const pop = useRef(new Animated.Value(1)).current;
   const previous = useRef(count);
   useEffect(() => {
-    if (count > previous.current) {
+    if (count > previous.current && !still) {
       pop.setValue(1);
       Animated.sequence([
         Animated.spring(pop, { toValue: 1.18, useNativeDriver: true, speed: 60, bounciness: 8 }),
@@ -57,7 +62,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       ]).start();
     }
     previous.current = count;
-  }, [count, pop]);
+  }, [count, pop, still]);
   const go = (name: string) => {
     const route = state.routes.find((r) => r.name === name);
     if (!route) return;
@@ -65,20 +70,18 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     if (!event.defaultPrevented) navigation.navigate(name);
   };
   const [left, right] = [TABS.slice(0, 2), TABS.slice(2)];
-  // The pomegranate pill slides to the active tab: layouts are measured once, the position springs.
+  // The ochre rule slides to the active tab: layouts are measured once, the position springs
+  // (and simply moves under «Уменьшить движение»).
   const slots = useRef<Record<string, { x: number; width: number }>>({});
   const pill = useRef(new Animated.ValueXY({ x: -100, y: 0 })).current;
   const moveTo = (name: string | undefined) => {
     const slot = name ? slots.current[name] : undefined;
     if (!slot) return;
+    const to = { x: slot.x + slot.width / 2 - 14, y: 0 };
+    if (still) return pill.setValue(to);
     // Native driver only: RN 0.86 throws if a JS-driven animation touches a
     // view that already has a native one (it was a warning on 0.76).
-    Animated.spring(pill, {
-      toValue: { x: slot.x + slot.width / 2 - 14, y: 0 },
-      useNativeDriver: true,
-      speed: 18,
-      bounciness: 6,
-    }).start();
+    Animated.spring(pill, { toValue: to, useNativeDriver: true, speed: 18, bounciness: 6 }).start();
   };
   useEffect(() => {
     moveTo(current);
@@ -105,10 +108,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       >
         <Icon
           size={22}
-          color={active ? ui.brand : color.inkMuted}
+          color={active ? scene.ochreLight : scene.cream}
           strokeWidth={active ? 2.6 : 2.2}
         />
-        <Text role="caption" style={{ color: active ? ui.brand : color.inkMuted, fontSize: 11 }}>
+        <Text role="caption" style={[s.label, active && s.labelActive]}>
           {t(label)}
         </Text>
       </Pressable>
@@ -120,7 +123,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       <View style={[s.bar, { paddingBottom: insets.bottom, height: 64 + insets.bottom }]}>
         <BlurView
           intensity={30}
-          tint={color.blurTint}
+          tint="dark"
           blurMethod="dimezisBlurView"
           style={s.barFill}
           pointerEvents="none"
@@ -150,7 +153,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               <Bag size={22} color={color.white} strokeWidth={2.2} />
               {count > 0 ? (
                 <View style={s.badge}>
-                  <Text role="caption" style={{ color: color.white, fontSize: 10, lineHeight: 12 }}>
+                  <Text role="caption" style={s.badgeText}>
                     {count}
                   </Text>
                 </View>
@@ -169,22 +172,25 @@ const s = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: color.glass,
+    backgroundColor: scene.glass,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: color.line,
+    borderTopColor: scene.glassEdge,
     paddingHorizontal: 8,
     height: 64,
   },
   barFill: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, height: 64 },
+  label: { ...scale.caption, color: scene.cream },
+  labelActive: { color: scene.ochreLight },
+  // The chosen tab's rule: ochre, the accent — pomegranate is only ever a button.
   pill: {
     position: 'absolute',
     top: 0,
     left: 0,
     width: 28,
     height: 3,
-    borderRadius: 2,
-    backgroundColor: ui.brand,
+    borderRadius: radius.pill,
+    backgroundColor: scene.ochre,
   },
   cartSlot: { width: 72, alignItems: 'center', justifyContent: 'center' },
   cart: {
@@ -205,8 +211,10 @@ const s = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     paddingHorizontal: 4,
-    backgroundColor: color.danger,
+    backgroundColor: scene.ochre,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // The cart disc's badge: ochre, ink numerals.
+  badgeText: { ...scale.caption, color: scene.ink, fontVariant: ['tabular-nums'] },
 });

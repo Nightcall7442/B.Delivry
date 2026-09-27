@@ -9,7 +9,7 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { scene, sceneFont } from '@/components/bazar';
+import { caps, scene, sceneFont } from '@/components/bazar';
 import { Shell } from '@/components/ui/Shell';
 import {
   Basket,
@@ -21,13 +21,17 @@ import {
   api,
   color,
   noOutline,
+  radius,
+  scale,
   useAuth,
   useLocale,
 } from '@bazar/mobile';
 import {
   FREE_DELIVERY_THRESHOLD,
+  HALL,
   PHOTOS,
   addressLabel,
+  alpha,
   fromAddressDto,
   tripsTo,
   type DeliveryAddress,
@@ -131,7 +135,7 @@ export function AddressScreen() {
       header={<Text style={s.head}>{t('address.title').toUpperCase()}</Text>}
       footer={<Button label={`${t('common.done')} →`} onPress={save} />}
     >
-      {/* The address is written by hand on the slip; the target finds the phone's own spot. */}
+      {/* The address is written on the slip; the target finds the phone's own spot. */}
       <View style={s.line}>
         <TextInput
           style={s.field}
@@ -141,12 +145,13 @@ export function AddressScreen() {
             setTyped(true);
           }}
           placeholder={t('address.street')}
-          placeholderTextColor="#A08F76"
+          placeholderTextColor={scene.inkSoft}
           autoComplete="street-address"
         />
         <Pressable
           onPress={locate}
           disabled={locating}
+          hitSlop={4}
           style={[s.locate, locating && { opacity: 0.5 }]}
           accessibilityLabel={t('address.myLocation')}
         >
@@ -236,12 +241,10 @@ export function AddressScreen() {
   );
 }
 
-// The sheet is a receipt: a small-caps head over a dashed rule, handwriting on kraft, dashed lines.
+// The sheet is a slip of paper: a capitals head over a dashed rule, a kraft field, dashed lines.
 const s = StyleSheet.create({
   head: {
-    fontFamily: sceneFont.uiHeavy,
-    fontSize: 11,
-    letterSpacing: 1.8,
+    ...caps,
     color: scene.pomegranate,
     paddingBottom: 10,
     borderBottomWidth: 1,
@@ -254,14 +257,14 @@ const s = StyleSheet.create({
     minHeight: 46,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+    borderTopLeftRadius: radius.paper,
+    borderTopRightRadius: radius.paper,
     borderBottomWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: scene.paperEdge,
-    backgroundColor: 'rgba(234,216,178,0.35)',
-    fontFamily: sceneFont.hand,
-    fontSize: 19,
+    backgroundColor: alpha(scene.kraft, 0.35),
+    fontFamily: sceneFont.uiText,
+    ...scale.lead,
     color: scene.ink,
     ...(noOutline as object),
   },
@@ -293,16 +296,10 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowName: { fontFamily: sceneFont.display, fontSize: 19, lineHeight: 23, color: scene.ink },
-  rowMeta: { fontFamily: sceneFont.uiText, fontSize: 12, color: '#7A6248' },
-  arrow: { fontFamily: sceneFont.display, fontSize: 20, color: scene.pomegranate },
-  hint: {
-    marginTop: 10,
-    fontFamily: sceneFont.uiText,
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#7A6248',
-  },
+  rowName: { fontFamily: sceneFont.display, ...scale.lead, color: scene.ink },
+  rowMeta: { fontFamily: sceneFont.uiText, ...scale.caption, color: scene.inkSoft },
+  arrow: { fontFamily: sceneFont.display, ...scale.title, color: scene.pomegranate },
+  hint: { marginTop: 10, fontFamily: sceneFont.uiText, ...scale.body, color: scene.inkSoft },
   section: {
     marginTop: 18,
     paddingTop: 12,
@@ -310,34 +307,25 @@ const s = StyleSheet.create({
     borderStyle: 'dashed',
     borderColor: scene.paperEdge,
     fontFamily: sceneFont.display,
-    fontSize: 19,
+    ...scale.lead,
     color: scene.ink,
   },
-  thumb: {
-    width: 48,
-    height: 48,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    backgroundColor: scene.kraft,
-  },
+  thumb: { width: 48, height: 48, backgroundColor: scene.kraft },
+  // Rubber stamps on the slip: capitals in pomegranate ink.
   nearest: {
     color: scene.pomegranate,
     borderWidth: 1.5,
     borderColor: scene.pomegranate,
-    borderRadius: 5,
+    borderRadius: radius.paper,
     paddingHorizontal: 6,
     paddingVertical: 1,
-    fontFamily: sceneFont.hand,
-    fontSize: 14,
-    lineHeight: 16,
+    ...caps,
     transform: [{ rotate: '-3deg' }],
     opacity: 0.85,
   },
   fee: {
-    fontFamily: sceneFont.hand,
-    fontSize: 24,
-    lineHeight: 26,
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.lead,
     color: scene.pomegranate,
     fontVariant: ['tabular-nums'],
   },
@@ -347,12 +335,10 @@ const s = StyleSheet.create({
     color: scene.pomegranate,
     borderWidth: 2,
     borderColor: scene.pomegranate,
-    borderRadius: 8,
+    borderRadius: radius.paper,
     paddingHorizontal: 12,
     paddingVertical: 5,
-    fontFamily: sceneFont.hand,
-    fontSize: 18,
-    lineHeight: 20,
+    ...caps,
     transform: [{ rotate: '-3deg' }],
     opacity: 0.8,
   },
@@ -363,6 +349,7 @@ const s = StyleSheet.create({
     marginBottom: 4,
   },
   legendItem: { alignItems: 'center', gap: 10 },
+  // The map's own markers, drawn small (MapView's tile and courier disc — keep them in step).
   tile: {
     width: 34,
     height: 34,
@@ -377,10 +364,10 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: color.white,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,
-    borderColor: 'rgba(158,42,43,0.3)',
+    borderColor: alpha(HALL.pomegranate, 0.3),
   },
 });

@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Linking, View } from 'react-native';
 
+import { scene } from '@/components/bazar';
 import { Shell } from '@/components/ui/Shell';
 
 const PERKS = ['plus.perk1', 'plus.perk2', 'plus.perk3'] as const;
@@ -59,9 +60,9 @@ export default function PlusRoute() {
       back="history"
       expanded
       header={
-        <Text role="display" style={{ color: '#FBF1DE' }}>
+        <Text role="display" style={{ color: scene.cream }}>
           {t('plus.title')}
-          <Text role="display" style={{ color: color.saffron500 }}>
+          <Text role="display" style={{ color: scene.ochreLight }}>
             .
           </Text>
         </Text>

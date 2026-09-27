@@ -1,30 +1,38 @@
 /**
- * One product as a scene: the photograph fills the screen, a kraft tag with
- * the name and the price hangs on it, the vendor says their line, and the
- * amount is set in the vendor's units (a melon, half a kilo of greens). What
- * the stall promises — weighing at the counter, freshness, haggling — sits as
- * pills; reviews and the rest of the counter follow, scrolling over the photo.
+ * One product as a scene: the photograph fills the screen, the product's own
+ * cardboard price sign hangs on it by its pin, the vendor says their line, and
+ * the amount is set in the vendor's units (a melon, half a kilo of greens).
+ * What the stall promises — weighing at the counter, freshness, haggling — sits
+ * as pills; reviews and the rest of the counter follow, scrolling over the photo.
  */
 import { arrivedToday, cashbackFor, estimateDelivery, tr, unitLabel } from '@bazar/storefront';
 import type { MapStoreDto } from '@bazar/storefront';
 import type { ProductDto, ReviewDto } from '@bazar/types';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import {
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
-  Display,
   Eyebrow,
   Glass,
-  Hand,
+  Pin,
+  Say,
   Scene,
   SceneButton,
   Sign,
   scene,
   sceneFont,
   useSceneTop,
+  useSwing,
 } from '@/components/bazar';
 import { Bone } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
@@ -36,6 +44,7 @@ import {
   Heart,
   Leaf,
   Minus,
+  Photo,
   Plus,
   Scale,
   Scooter,
@@ -43,6 +52,9 @@ import {
   Tag,
   Wallet,
   api,
+  radius,
+  scale,
+  shadow,
   useLocale,
 } from '@bazar/mobile';
 
@@ -88,18 +100,12 @@ export function ProductScreen({ productId }: { productId: string }) {
 
   if (!product)
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: scene.night,
-          padding: 20,
-          paddingTop: top + 60,
-          gap: 12,
-        }}
-      >
-        <Bone style={{ height: 240 }} />
-        <Bone style={{ height: 32, width: 220 }} />
-      </View>
+      <Scene source={null}>
+        <View style={{ padding: 20, paddingTop: top + 60, gap: 12 }}>
+          <Bone style={{ height: 240 }} />
+          <Bone style={{ height: 32, width: 220 }} />
+        </View>
+      </Scene>
     );
   return (
     <ProductBody
@@ -145,11 +151,12 @@ function ProductBody({
   const description = product.description ? tr(product.description, locale) : '';
   const photo = product.images[0]?.url ?? null;
   const person = store?.ownerPhotoUrl ?? store?.coverUrl ?? null;
+  const swing = useSwing(quantity);
 
   return (
-    <View style={{ flex: 1, backgroundColor: scene.night }}>
+    <View style={{ flex: 1 }}>
       <Scene source={photo} style={StyleSheet.absoluteFill}>
-        <View />
+        {null}
       </Scene>
 
       <ScrollView
@@ -160,8 +167,9 @@ function ProductBody({
         }}
       >
         <View style={s.tagWrap}>
-          <View style={s.tag}>
-            <View style={s.tagHole} />
+          {/* The product's own price sign: it hangs by its pin and swings when it goes in the basket. */}
+          <Animated.View style={[s.tag, { transform: [{ rotate: '-2deg' }, { rotate: swing }] }]}>
+            <Pin />
             <Text style={s.tagName}>{tr(product.name, locale)}</Text>
             <View
               style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}
@@ -184,24 +192,15 @@ function ProductBody({
                 .filter(Boolean)
                 .join(' · ')}
             </Text>
-          </View>
+          </Animated.View>
         </View>
 
         {store ? (
           <Pressable onPress={() => router.push(`/store/${store.id}`)} style={s.vendor}>
-            {person ? (
-              <Image
-                source={{ uri: person }}
-                style={s.avatar}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-              />
-            ) : null}
+            {person ? <Photo uri={person} style={s.avatar} /> : null}
             <View style={{ flex: 1, gap: 2 }}>
               {store.ownerMotto ? (
-                <Hand size={22} numberOfLines={3}>
-                  «{tr(store.ownerMotto, locale)}»
-                </Hand>
+                <Say numberOfLines={3}>«{tr(store.ownerMotto, locale)}»</Say>
               ) : null}
               <Text style={s.vendorName}>
                 — {store.ownerName ?? tr(store.name, locale)}
@@ -220,7 +219,7 @@ function ProductBody({
             const I = Icon as typeof Scale;
             return (
               <Glass key={String(label)} style={s.pill}>
-                <I size={14} color={scene.saffron} />
+                <I size={14} color={scene.ochreLight} />
                 <Text style={s.pillText}>{String(label)}</Text>
               </Glass>
             );
@@ -242,9 +241,9 @@ function ProductBody({
               <Minus size={22} color={scene.cream} />
             </Pressable>
             <View style={{ alignItems: 'center', gap: 2, flex: 1 }}>
-              <Hand size={42}>
+              <Text style={s.qty}>
                 {t.qty(shownQty)} {unit}
-              </Hand>
+              </Text>
               <Text style={s.amountSub} numberOfLines={2}>
                 {product.unit === 'KG' ? `${t('trust.weigh')} · ` : ''}
                 {t.money(lineTotal)}
@@ -254,19 +253,19 @@ function ProductBody({
               onPress={add}
               style={({ pressed }) => [s.round, s.roundAccent, pressed && { opacity: 0.85 }]}
             >
-              <Plus size={22} color={scene.ink} />
+              <Plus size={22} color={scene.cream} />
             </Pressable>
           </View>
           <View style={s.lines}>
             <View style={s.line}>
-              <Wallet size={16} color={scene.saffron} />
+              <Wallet size={16} color={scene.ochreLight} />
               <Text style={s.lineText}>
                 {t('product.cashback', { amount: t.money(cashbackFor(product.price.amount)) })}
               </Text>
             </View>
             {estimate ? (
               <View style={s.line}>
-                <Scooter size={16} color={scene.saffron} />
+                <Scooter size={16} color={scene.ochreLight} />
                 <Text style={s.lineText}>
                   {t('product.delivery', {
                     minutes: estimate.etaMinutes,
@@ -295,14 +294,14 @@ function ProductBody({
                     <Star
                       key={n}
                       size={12}
-                      color={scene.saffron}
-                      fill={n <= review.rating ? scene.saffron : 'transparent'}
+                      color={scene.ochreLight}
+                      fill={n <= review.rating ? scene.ochreLight : 'transparent'}
                     />
                   ))}
                 </View>
-                <Hand size={20} color={scene.creamMuted}>
+                <Say step="lead" color={scene.creamMuted}>
                   «{review.comment}»
-                </Hand>
+                </Say>
               </Glass>
             ))}
           </View>
@@ -359,7 +358,7 @@ function ProductBody({
           <Text style={s.ctaLabel}>
             {quantity > 0 ? t('product.toCart') : t('product.addToCart')}
           </Text>
-          <Display size={20}>{t.money(lineTotal)}</Display>
+          <Text style={s.ctaSum}>{t.money(lineTotal)}</Text>
         </Pressable>
       </View>
     </View>
@@ -375,46 +374,42 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
   },
   tagWrap: { paddingHorizontal: 20, alignItems: 'flex-start' },
+  // Cardboard, like every price sign: paper, the paper's edge, the pin on top.
   tag: {
-    backgroundColor: '#EBD8B4',
-    borderTopLeftRadius: 4,
-    borderBottomLeftRadius: 4,
-    borderTopRightRadius: 16,
-    borderBottomRightRadius: 16,
-    paddingVertical: 12,
-    paddingLeft: 30,
-    paddingRight: 20,
+    backgroundColor: scene.paper,
+    borderWidth: 1,
+    borderColor: scene.paperEdge,
+    borderRadius: radius.paper,
+    paddingTop: 14,
+    paddingBottom: 12,
+    paddingHorizontal: 20,
     gap: 2,
     maxWidth: '100%',
-    transform: [{ rotate: '-2deg' }],
-    shadowColor: '#000',
-    shadowOpacity: 0.45,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+    transformOrigin: 'top',
+    ...shadow.paper,
   },
-  tagHole: {
-    position: 'absolute',
-    left: 11,
-    top: '50%',
-    marginTop: -5,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: scene.cream,
-    borderWidth: 2,
-    borderColor: '#B8975C',
+  tagName: { fontFamily: sceneFont.hand, ...scale.headline, color: scene.ink },
+  tagPrice: {
+    fontFamily: sceneFont.hand,
+    ...scale.display,
+    color: scene.pomegranate,
+    fontVariant: ['tabular-nums'],
   },
-  tagName: { fontFamily: sceneFont.hand, fontSize: 30, lineHeight: 31, color: scene.ink },
-  tagPrice: { fontFamily: sceneFont.hand, fontSize: 40, lineHeight: 42, color: scene.pomegranate },
-  tagUnit: { fontFamily: sceneFont.hand, fontSize: 22, color: scene.inkSoft },
+  tagUnit: { fontFamily: sceneFont.hand, ...scale.title, color: scene.inkSoft },
   tagOld: {
     fontFamily: sceneFont.hand,
-    fontSize: 20,
+    ...scale.title,
     color: scene.inkSoft,
     textDecorationLine: 'line-through',
+    fontVariant: ['tabular-nums'],
   },
-  tagNote: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.inkSoft, marginTop: 2 },
+  tagNote: {
+    fontFamily: sceneFont.ui,
+    ...scale.caption,
+    color: scene.inkSoft,
+    marginTop: 2,
+    fontVariant: ['tabular-nums'],
+  },
   vendor: {
     flexDirection: 'row',
     gap: 12,
@@ -427,61 +422,78 @@ const s = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: scene.saffron,
-    backgroundColor: '#3A2A1A',
+    borderColor: scene.ochre,
+    backgroundColor: scene.kraft,
   },
-  vendorName: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.creamMuted },
+  vendorName: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.creamMuted },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 20, paddingTop: 14 },
   pill: {
     height: 32,
-    borderRadius: 16,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  pillText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
+  pillText: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.cream },
   amount: { paddingHorizontal: 20, paddingTop: 24, gap: 10 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  // The minus is glass over the photograph; the plus is a button, so it is pomegranate.
   round: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: 'rgba(16,21,36,0.42)',
+    backgroundColor: scene.glass,
     borderWidth: 1,
-    borderColor: 'rgba(251,241,222,0.3)',
+    borderColor: scene.glassEdge,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  roundAccent: { backgroundColor: scene.saffron, borderColor: scene.saffron },
+  roundAccent: { backgroundColor: scene.pomegranate, borderColor: scene.pomegranate },
+  qty: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.headline,
+    color: scene.cream,
+    fontVariant: ['tabular-nums'],
+  },
   amountSub: {
     fontFamily: sceneFont.ui,
-    fontSize: 12,
+    ...scale.caption,
     color: scene.creamMuted,
     textAlign: 'center',
+    fontVariant: ['tabular-nums'],
   },
   lines: { gap: 6, paddingTop: 4 },
   line: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  lineText: { fontFamily: sceneFont.uiText, fontSize: 12, color: scene.creamMuted, flex: 1 },
+  // Cashback and the delivery fee: sums, so tabular figures.
+  lineText: {
+    fontFamily: sceneFont.uiText,
+    ...scale.caption,
+    color: scene.creamMuted,
+    flex: 1,
+    fontVariant: ['tabular-nums'],
+  },
   section: { paddingHorizontal: 20, paddingTop: 24, gap: 10 },
-  body: { fontFamily: sceneFont.italic, fontSize: 17, lineHeight: 24, color: scene.creamMuted },
-  review: { borderRadius: 14, padding: 12, gap: 6 },
+  body: { fontFamily: sceneFont.italic, ...scale.lead, color: scene.creamMuted },
+  // A glass card, not a pill: the paper corner.
+  review: { borderRadius: radius.paper, padding: 12, gap: 6 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 14, paddingTop: 4 },
   sign: { width: '47%', flexGrow: 1 },
   footer: { position: 'absolute', left: 20, right: 20 },
   cta: {
     height: 56,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     backgroundColor: scene.pomegranate,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    shadowColor: scene.pomegranate,
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    ...shadow.paper,
   },
-  ctaLabel: { fontFamily: sceneFont.uiHeavy, fontSize: 14, color: scene.cream },
+  ctaLabel: { fontFamily: sceneFont.display, ...scale.lead, color: scene.cream },
+  ctaSum: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.lead,
+    color: scene.cream,
+    fontVariant: ['tabular-nums'],
+  },
 });

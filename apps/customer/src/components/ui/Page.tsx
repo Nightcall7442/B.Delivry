@@ -1,11 +1,10 @@
 /**
- * The screen frame of the redesign: a soft mint→peach ground, a slim header
- * with a round back button, scrolling content in 16px gutters, and room at
- * the bottom for the tab bar or a sticky footer. Every customer screen that
- * is not a map is one of these.
+ * The screen frame: the hall underneath, a slim header with a round back
+ * button and the title in cream serif, scrolling content in 16px gutters, and
+ * room at the bottom for the tab bar or a sticky glass footer. Every customer
+ * screen that is not a map is one of these; its content lies on paper.
  */
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
@@ -17,26 +16,31 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ArrowLeft, Bag, Button, Text, color, press, shadow, useLocale } from '@bazar/mobile';
+import {
+  ArrowLeft,
+  Bag,
+  Button,
+  DomeGround,
+  Text,
+  color,
+  press,
+  radius,
+  scale,
+  shadow,
+  useLocale,
+} from '@bazar/mobile';
 
 import { useCartCount } from '@/features/cart/store';
-import { sceneFont } from '@/components/bazar';
+import { ground, scene, sceneFont } from '@/components/bazar';
 
-/** Ground and surfaces of the redesign; the brand colours stay in @bazar/mobile's theme. */
+/** The brand colours and the rhythm; the ground is the hall, the surfaces are @bazar/mobile's theme. */
 export const ui = {
-  mint: color.surface,
-  peach: color.surface,
-  mintDeep: color.brand50,
-  peachDeep: color.sand100,
-  /** Cards are grey tiles on a white page — Megamarket's register, our green. */
-  card: color.tile,
-  white: color.surface,
   brand: color.brand500,
   brandDeep: color.brand600,
   brandSoft: color.brand50,
-  radius: 20,
   /** The rhythm: gutters 16, gaps between siblings 12, card padding 14, sections 24 apart. */
   gap: 12,
   pad: 14,
@@ -60,11 +64,8 @@ export function Page({
   glass = false,
   onRefresh,
   scrollY,
-  scene = false,
 }: {
   title?: string;
-  /** The bazaar hall behind the page and the title in cream serif (the secondary screens). */
-  scene?: boolean;
   /** Where the arrow goes; omitted = no arrow (a tab root). */
   back?: Href | 'history';
   right?: ReactNode;
@@ -108,24 +109,8 @@ export function Page({
   };
 
   return (
-    <View style={[s.root, scene && { backgroundColor: '#101524' }]}>
-      {scene ? (
-        /* The hall itself hangs at the door (the login screen); here it would be
-           wallpaper behind the paper. The night and its lamps are enough. */
-        <LinearGradient
-          colors={['#16203A', '#101524', '#0C1019']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      ) : (
-        <LinearGradient
-          colors={[ui.mint, ui.peach]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
+    <View style={s.root}>
+      <DomeGround />
       <View
         style={[
           s.header,
@@ -139,7 +124,7 @@ export function Page({
         {glass ? (
           <BlurView
             intensity={36}
-            tint={color.blurTint}
+            tint="dark"
             blurMethod="dimezisBlurView"
             style={s.glassFillBar}
             pointerEvents="none"
@@ -153,14 +138,7 @@ export function Page({
         {header ? (
           <View style={s.headerSlot}>{header}</View>
         ) : (
-          <Text
-            role="section"
-            numberOfLines={1}
-            style={[
-              { flex: 1, fontSize: 22 },
-              scene && { fontFamily: sceneFont.display, fontSize: 26, color: '#FBF1DE' },
-            ]}
-          >
+          <Text role="section" numberOfLines={1} style={s.title}>
             {title ?? ''}
           </Text>
         )}
@@ -170,7 +148,7 @@ export function Page({
             <Bag size={20} />
             {count > 0 ? (
               <View style={s.badge}>
-                <Text role="caption" style={{ color: color.white, fontSize: 10, lineHeight: 12 }}>
+                <Text role="caption" style={s.badgeText}>
                   {count}
                 </Text>
               </View>
@@ -201,7 +179,7 @@ export function Page({
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => void refresh()}
-              tintColor={ui.brandDeep}
+              tintColor={scene.ochreLight}
               colors={[ui.brandDeep]}
               progressViewOffset={floating ? insets.top + 56 : 0}
             />
@@ -211,11 +189,13 @@ export function Page({
         {children}
       </Animated.ScrollView>
       {footer ? (
+        // A sticky bar over the ground is glass, never a solid band.
         <View style={[s.footer, { paddingBottom: (tabs ? TAB_BAR_SPACE : 12) + insets.bottom }]}>
-          <LinearGradient
-            colors={[...color.fade]}
-            locations={[0, 0.45, 1]}
-            style={StyleSheet.absoluteFill}
+          <BlurView
+            intensity={36}
+            tint="dark"
+            blurMethod="dimezisBlurView"
+            style={s.glassFillBar}
             pointerEvents="none"
           />
           {footer}
@@ -258,9 +238,9 @@ export function Round({
   );
 }
 
-/** A white surface with the redesign's radius and shadow. */
+/** A paper slip lying on the hall: it lifts off the ground, so it carries the one shadow. */
 export function Card({ style, children }: { style?: StyleProp<ViewStyle>; children: ReactNode }) {
-  return <View style={[s.card, style]}>{children}</View>;
+  return <View style={[s.card, shadow.paper, style]}>{children}</View>;
 }
 
 /** A tappable card: shrinks a little under the finger. */
@@ -283,16 +263,15 @@ export function PressCard({
   );
 }
 
-/** "Could not load · Retry" — the one error surface every list shares. */
-/** A paper slip pinned where the content should be: the line in the vendor's hand, one way to try again. */
+/** "Could not load · Retry" — the one error surface every list shares: a paper slip, the line said aloud, one way to try again. */
 export function LoadError({ onRetry }: { onRetry: () => void }) {
   const { t } = useLocale();
   return (
     <View style={s.error}>
-      <View style={s.errorPin} />
       <Text style={s.errorText}>{t('common.loadError')}</Text>
       <Pressable
         onPress={onRetry}
+        hitSlop={4}
         style={({ pressed }) => [s.errorRetry, pressed && { opacity: 0.85 }]}
         accessibilityRole="button"
       >
@@ -302,7 +281,6 @@ export function LoadError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-/** Nothing here yet: a 3D icon, a title, a line, one thing to do. */
 /** A line icon in a tinted disc — the one pictogram style, no emoji, no 3D. */
 export function Glyph({
   icon: Icon,
@@ -330,6 +308,7 @@ export function Glyph({
   );
 }
 
+/** Nothing here yet: a glyph, a title, a line, one thing to do. */
 export function EmptyState({
   icon: Icon,
   title,
@@ -343,8 +322,9 @@ export function EmptyState({
   action?: string;
   onAction?: () => void;
 }) {
+  // It sits on a screen's paper sheet: paper on paper lies flat, no shadow.
   return (
-    <Card style={s.empty}>
+    <View style={[s.card, s.empty]}>
       <Glyph icon={Icon} size={88} />
       <Text role="title" style={{ marginTop: 12, textAlign: 'center' }}>
         {title}
@@ -357,14 +337,16 @@ export function EmptyState({
       {action && onAction ? (
         <Button label={action} style={{ marginTop: 20, alignSelf: 'stretch' }} onPress={onAction} />
       ) : null}
-    </Card>
+    </View>
   );
 }
 
-/** Skeleton block while data loads: a soft pulse on the card tint. */
+/** Skeleton block while data loads: a soft pulse on kraft; it holds still under «Уменьшить движение». */
 export function Bone({ style }: { style?: StyleProp<ViewStyle> }) {
   const pulse = useRef(new Animated.Value(0.55)).current;
+  const still = useReducedMotion();
   useEffect(() => {
+    if (still) return;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: false }),
@@ -373,7 +355,7 @@ export function Bone({ style }: { style?: StyleProp<ViewStyle> }) {
     );
     loop.start();
     return () => loop.stop();
-  }, [pulse]);
+  }, [pulse, still]);
   return <Animated.View style={[s.bone, { opacity: pulse }, style]} />;
 }
 
@@ -402,7 +384,7 @@ export function SectionHead({
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: ui.mint },
+  root: { flex: 1, backgroundColor: ground(1) },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -411,15 +393,18 @@ const s = StyleSheet.create({
     paddingBottom: 8,
   },
   headerSlot: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  // The title stands on the ground: cream serif, whatever the theme.
+  title: { flex: 1, fontFamily: sceneFont.display, ...scale.headline, color: scene.cream },
   floating: { position: 'absolute', left: 0, right: 0, top: 0, zIndex: 5 },
   glassBar: {
     paddingBottom: 10,
-    backgroundColor: color.glass,
+    backgroundColor: scene.glass,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: color.line,
+    borderBottomColor: scene.glassEdge,
   },
   glassFillBar: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
   glyph: { alignItems: 'center', justifyContent: 'center' },
+  // A disc of the theme's paper over the hall: it lifts, so it carries the one shadow.
   round: {
     width: 40,
     height: 40,
@@ -429,6 +414,7 @@ const s = StyleSheet.create({
     borderColor: color.lineStrong,
     alignItems: 'center',
     justifyContent: 'center',
+    ...shadow.paper,
   },
   glass: { backgroundColor: color.glassSoft },
   glassFill: { ...StyleSheet.absoluteFill, borderRadius: 20, overflow: 'hidden' },
@@ -440,10 +426,12 @@ const s = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     paddingHorizontal: 4,
-    backgroundColor: ui.brand,
+    backgroundColor: scene.ochre,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // The count is the same badge as the tab bar's and the cart disc's: ochre, ink numerals.
+  badgeText: { color: scene.ink, ...scale.caption, fontVariant: ['tabular-nums'] },
   content: { paddingHorizontal: 16, paddingTop: 4 },
   footer: {
     position: 'absolute',
@@ -451,17 +439,21 @@ const s = StyleSheet.create({
     right: 0,
     bottom: 0,
     paddingHorizontal: 16,
-    paddingTop: 28,
+    paddingTop: 12,
+    backgroundColor: scene.glass,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: scene.glassEdge,
   },
-  // Cards are paper slips now: cream with a soft edge, the same as the receipts.
+  // A paper slip: the theme's tile with its edge (light paper by day, lapis in the dark theme).
   card: {
-    backgroundColor: '#FBF5E6',
-    borderRadius: 6,
+    backgroundColor: color.tile,
+    borderRadius: radius.paper,
     borderWidth: 1,
-    borderColor: '#E6DCC6',
+    borderColor: color.line,
   },
-  bone: { backgroundColor: color.field, borderRadius: 20 },
+  bone: { backgroundColor: color.field, borderRadius: radius.paper },
   empty: { alignItems: 'center', padding: 24, paddingVertical: 36, marginTop: 12 },
+  // The error slip lies on the ground in scenes and pages alike: fixed paper, the one shadow.
   error: {
     marginTop: 12,
     paddingTop: 14,
@@ -470,42 +462,23 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#F4EFE4',
+    backgroundColor: scene.paper,
     borderWidth: 1,
-    borderColor: '#C9B99A',
+    borderColor: scene.paperEdge,
+    borderRadius: radius.paper,
     transform: [{ rotate: '-0.6deg' }],
-    shadowColor: '#000',
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    ...shadow.paper,
   },
-  errorPin: {
-    position: 'absolute',
-    top: -5,
-    left: '50%',
-    marginLeft: -4,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: '#B42A31',
-  },
-  errorText: {
-    flex: 1,
-    fontFamily: sceneFont.hand,
-    fontSize: 20,
-    lineHeight: 22,
-    color: '#2B1B0E',
-  },
+  errorText: { flex: 1, fontFamily: sceneFont.italic, ...scale.lead, color: scene.ink },
   errorRetry: {
     height: 36,
     paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: '#9E2A2B',
+    borderRadius: radius.pill,
+    backgroundColor: scene.pomegranate,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  errorRetryText: { fontFamily: sceneFont.display, fontSize: 15, color: '#FBF1DE' },
+  errorRetryText: { fontFamily: sceneFont.display, ...scale.body, color: scene.cream },
   sectionHead: {
     marginTop: 24,
     marginBottom: 12,

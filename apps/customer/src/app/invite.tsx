@@ -2,11 +2,23 @@
 import { Glyph } from '@/components/ui/Page';
 import { isApiError } from '@bazar/api-client';
 import { REFERRAL_BONUS_MINOR } from '@bazar/constants';
-import { Button, Field, Panel, Text, api, color, useAuth, useLocale, Gift } from '@bazar/mobile';
+import {
+  Button,
+  Field,
+  Panel,
+  Text,
+  api,
+  color,
+  scale,
+  useAuth,
+  useLocale,
+  Gift,
+} from '@bazar/mobile';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Share, StyleSheet, View } from 'react-native';
 
+import { scene } from '@/components/bazar';
 import { Shell } from '@/components/ui/Shell';
 
 const WEB_URL = process.env['EXPO_PUBLIC_WEB_URL'] ?? 'http://localhost:3000';
@@ -42,7 +54,7 @@ export default function InviteRoute() {
       back="history"
       expanded
       header={
-        <Text role="display" style={{ color: '#FBF1DE' }}>
+        <Text role="display" style={{ color: scene.cream }}>
           {t('invite.title')}
         </Text>
       }
@@ -113,7 +125,7 @@ export default function InviteRoute() {
                     {i + 1}
                   </Text>
                 </View>
-                <Text role="body" style={{ flex: 1, fontSize: 15 }}>
+                <Text role="body" style={{ flex: 1, ...scale.body }}>
                   {step}
                 </Text>
               </View>

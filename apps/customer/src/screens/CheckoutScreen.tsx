@@ -30,6 +30,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
+import { caps, scene } from '@/components/bazar';
 import { ui, Glyph } from '@/components/ui/Page';
 
 import {
@@ -48,6 +49,7 @@ import {
   Text,
   api,
   color,
+  radius,
   useAuth,
   useLocale,
   Wallet,
@@ -280,7 +282,11 @@ export function CheckoutScreen({
   return (
     <Shell
       back="/cart"
-      header={<Text role="display">{t('checkout.title')}</Text>}
+      header={
+        <Text role="display" style={{ color: scene.cream }}>
+          {t('checkout.title')}
+        </Text>
+      }
       footer={
         <Button
           label={
@@ -459,10 +465,7 @@ export function CheckoutScreen({
           placeholder={t('checkout.vendorComment')}
           multiline
         />
-        <Text
-          role="caption"
-          style={{ marginTop: 12, textTransform: 'uppercase', letterSpacing: 1 }}
-        >
+        <Text role="caption" style={[caps, { marginTop: 12, color: color.inkMuted }]}>
           {t('checkout.ifMissing')}
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
@@ -489,17 +492,15 @@ export function CheckoutScreen({
             style={{
               width: 22,
               height: 22,
-              borderRadius: 6,
+              borderRadius: radius.paper,
               borderWidth: 2,
               borderColor: forSomeone ? color.brand500 : color.lineStrong,
-              backgroundColor: forSomeone ? color.brand500 : color.white,
+              backgroundColor: forSomeone ? color.brand500 : color.raise,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            {forSomeone ? (
-              <Text style={{ color: color.white, fontSize: 14, lineHeight: 16 }}>✓</Text>
-            ) : null}
+            {forSomeone ? <Check size={14} color={color.white} strokeWidth={3} /> : null}
           </View>
           <Text role="title">{t('checkout.forSomeone')}</Text>
         </Pressable>
@@ -593,11 +594,11 @@ export function CheckoutScreen({
                       Math.round((line.quantity + TOP_UP_KG) * 100) / 100,
                     )
                   }
-                  hitSlop={6}
+                  hitSlop={12}
                   style={{
                     paddingHorizontal: 8,
                     paddingVertical: 2,
-                    borderRadius: 999,
+                    borderRadius: radius.pill,
                     backgroundColor: ui.brandSoft,
                   }}
                 >
@@ -716,7 +717,7 @@ const s = StyleSheet.create({
   card: { padding: ui.pad },
   balance: { marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
   thumbs: { flexDirection: 'row', gap: 6, marginBottom: 12 },
-  thumb: { width: 44, height: 44, borderRadius: 12, backgroundColor: color.field },
+  thumb: { width: 44, height: 44, borderRadius: radius.photo, backgroundColor: color.field },
   thumbMore: { backgroundColor: ui.brandSoft, alignItems: 'center', justifyContent: 'center' },
   head: { marginTop: 20, marginBottom: 10 },
   radio: {

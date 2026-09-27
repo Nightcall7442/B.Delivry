@@ -7,7 +7,6 @@
 import { isShopfront, tr, unitLabel } from '@bazar/storefront';
 import type { MapStoreDto } from '@bazar/storefront';
 import type { ProductDto } from '@bazar/types';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import {
@@ -26,10 +25,11 @@ import {
   BasketGlyph,
   Display,
   Eyebrow,
-  Hand,
+  Say,
   Scene,
   SceneButton,
   Sign,
+  caps,
   scene,
   sceneFont,
   useSceneTop,
@@ -38,7 +38,7 @@ import { Bone, LoadError } from '@/components/ui/Page';
 import { useCart, useCartActions, useCartCount } from '@/features/cart/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 import { EMPTY, useLoad } from '@/lib/use-data';
-import { ArrowLeft, Chevron, Search, useLocale } from '@bazar/mobile';
+import { ArrowLeft, Chevron, Photo, Search, radius, scale, shadow, useLocale } from '@bazar/mobile';
 
 const SIGNS_ON_PAGE = 3;
 
@@ -81,7 +81,7 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
   const next = stalls[page + 1];
 
   return (
-    <View style={{ flex: 1, backgroundColor: scene.night }}>
+    <View style={{ flex: 1 }}>
       {loading ? (
         <Scene source={null}>
           <View style={{ padding: 20, paddingTop: top + 60, gap: 12 }}>
@@ -106,10 +106,8 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
       ) : stalls.length === 0 ? (
         <Scene source={null}>
           <View style={{ padding: 20, paddingTop: top + 80, gap: 12 }}>
-            <Display size={30}>{category ? tr(category.name, locale) : ''}</Display>
-            <Hand size={24} color={scene.creamMuted}>
-              {t('scene.rowEmpty')}
-            </Hand>
+            <Display step="headline">{category ? tr(category.name, locale) : ''}</Display>
+            <Say color={scene.creamMuted}>{t('scene.rowEmpty')}</Say>
           </View>
         </Scene>
       ) : (
@@ -146,7 +144,7 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
         <View style={{ alignItems: 'center', gap: 2 }}>
-          <Display size={22} numberOfLines={1}>
+          <Display step="title" numberOfLines={1}>
             {category ? tr(category.name, locale) : ''}
           </Display>
           <Text style={s.subtitle}>{current ? `${t('scene.stalls')} · ${stalls.length}` : ''}</Text>
@@ -159,23 +157,24 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
       {stalls.length > 1 ? (
         <View style={[s.strip, { top: top + 66 }]}>
           <Text style={s.stripLabel}>{t('scene.stalls')}</Text>
-          {stalls.slice(0, 6).map((stall, index) => (
-            <Pressable
-              key={stall.store.id}
-              onPress={() => list.current?.scrollToIndex({ index, animated: true })}
-              hitSlop={4}
-            >
-              <Image
-                source={thumbOf(stall.store)}
-                style={[s.thumb, index === page && s.thumbCurrent]}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-              />
-            </Pressable>
-          ))}
-          <Text style={s.stripCount}>
-            {page + 1} / {stalls.length}
-          </Text>
+          {/* The faces keep their own narrow column, whatever the label's length. */}
+          <View style={s.stripFaces}>
+            {stalls.slice(0, 6).map((stall, index) => (
+              <Pressable
+                key={stall.store.id}
+                onPress={() => list.current?.scrollToIndex({ index, animated: true })}
+                hitSlop={5}
+              >
+                <Photo
+                  uri={stall.store.ownerPhotoUrl ?? stall.store.coverUrl}
+                  style={[s.thumb, index === page && s.thumbCurrent]}
+                />
+              </Pressable>
+            ))}
+            <Text style={s.stripCount}>
+              {page + 1} / {stalls.length}
+            </Text>
+          </View>
         </View>
       ) : null}
 
@@ -188,7 +187,7 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
           {next ? (
             <>
               <View style={{ transform: [{ rotate: '180deg' }] }}>
-                <Chevron size={20} color={scene.saffron} />
+                <Chevron size={20} color={scene.ochreLight} />
               </View>
               <View style={{ flex: 1, gap: 1 }}>
                 <Text style={s.nextTitle} numberOfLines={1}>
@@ -211,11 +210,6 @@ interface Stall {
   store: MapStoreDto;
   products: ProductDto[];
 }
-
-const thumbOf = (store: MapStoreDto) => {
-  const uri = store.ownerPhotoUrl ?? store.coverUrl;
-  return uri ? { uri } : null;
-};
 
 function StallPage({
   stall,
@@ -255,16 +249,9 @@ function StallPage({
     <Scene source={photo} style={{ width, height }}>
       <View style={[s.person, { top: Math.round(height * 0.38) }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          {person ? (
-            <Image
-              source={{ uri: person }}
-              style={s.avatar}
-              contentFit="cover"
-              cachePolicy="memory-disk"
-            />
-          ) : null}
+          {person ? <Photo uri={person} style={s.avatar} /> : null}
           <View style={{ flex: 1, gap: 1 }}>
-            <Display size={30} numberOfLines={1}>
+            <Display step="headline" numberOfLines={1}>
               {store.ownerName ?? tr(store.name, locale)}
             </Display>
             <Text style={s.personMeta} numberOfLines={1}>
@@ -279,11 +266,7 @@ function StallPage({
             </Text>
           </View>
         </View>
-        {store.ownerMotto ? (
-          <Hand size={26} numberOfLines={3}>
-            «{tr(store.ownerMotto, locale)}»
-          </Hand>
-        ) : null}
+        {store.ownerMotto ? <Say numberOfLines={3}>«{tr(store.ownerMotto, locale)}»</Say> : null}
       </View>
 
       <View style={[s.signs, { bottom: 122 + bottomInset }]}>
@@ -351,49 +334,45 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  subtitle: {
-    fontFamily: sceneFont.ui,
-    fontSize: 11,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: scene.creamMuted,
-  },
-  strip: { position: 'absolute', right: 12, alignItems: 'center', gap: 8 },
-  stripLabel: {
-    fontFamily: sceneFont.uiHeavy,
-    fontSize: 9,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: scene.creamMuted,
-  },
+  subtitle: { ...caps, color: scene.creamMuted },
+  // The label is right-aligned over the faces' own column: a long word («PESHTAXTALAR») grows
+  // to the left above the person block instead of pushing the faces into it.
+  strip: { position: 'absolute', right: 12, alignItems: 'flex-end', gap: 8 },
+  stripFaces: { alignItems: 'center', gap: 8 },
+  stripLabel: { ...caps, color: scene.creamMuted },
   thumb: {
     width: 34,
     height: 34,
     borderRadius: 17,
     borderWidth: 2,
-    borderColor: 'rgba(251,241,222,0.5)',
+    borderColor: scene.creamMuted,
     opacity: 0.8,
-    backgroundColor: '#3A2A1A',
+    backgroundColor: scene.kraft,
   },
   thumbCurrent: {
     width: 44,
     height: 44,
     borderRadius: 22,
     borderWidth: 3,
-    borderColor: scene.saffron,
+    borderColor: scene.ochre,
     opacity: 1,
   },
-  stripCount: { fontFamily: sceneFont.uiHeavy, fontSize: 10, color: scene.creamMuted },
+  stripCount: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.caption,
+    color: scene.creamMuted,
+    fontVariant: ['tabular-nums'],
+  },
   person: { position: 'absolute', left: 20, right: 80, gap: 8 },
   avatar: {
     width: 52,
     height: 52,
     borderRadius: 26,
     borderWidth: 3,
-    borderColor: scene.saffron,
-    backgroundColor: '#3A2A1A',
+    borderColor: scene.ochre,
+    backgroundColor: scene.kraft,
   },
-  personMeta: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.creamMuted },
+  personMeta: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.creamMuted },
   signs: { position: 'absolute', left: 20, right: 20 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 14 },
   sign: { width: '47%', flexGrow: 1 },
@@ -406,22 +385,23 @@ const s = StyleSheet.create({
     gap: 12,
   },
   next: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  nextTitle: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.creamMuted },
-  nextSub: { fontFamily: sceneFont.uiText, fontSize: 12, color: scene.creamDim },
+  nextTitle: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.cream },
+  nextSub: { fontFamily: sceneFont.uiText, ...scale.caption, color: scene.creamMuted },
   cartPill: {
     height: 56,
     paddingHorizontal: 18,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     backgroundColor: scene.pomegranate,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    shadowColor: scene.pomegranate,
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    ...shadow.paper,
   },
-  cartCount: { fontFamily: sceneFont.display, fontSize: 17, lineHeight: 18, color: scene.cream },
-  cartLabel: { fontFamily: sceneFont.ui, fontSize: 10, color: scene.cream, opacity: 0.85 },
+  cartCount: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.lead,
+    color: scene.cream,
+    fontVariant: ['tabular-nums'],
+  },
+  cartLabel: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.creamMuted },
 });

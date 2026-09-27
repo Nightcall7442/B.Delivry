@@ -1,7 +1,7 @@
 /**
  * "Ещё 45 000 сум — и доставка бесплатно": the cheapest AOV lever there is.
  */
-import { Text, color, useT } from '@bazar/mobile';
+import { Text, color, radius, useT } from '@bazar/mobile';
 import { freeDeliveryProgress } from '@bazar/storefront';
 import type { MoneyDto } from '@bazar/types';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -43,11 +43,16 @@ export function FreeDeliveryBar({
 const s = StyleSheet.create({
   root: {
     backgroundColor: color.raise,
-    borderRadius: 12,
+    borderRadius: radius.paper,
     paddingHorizontal: 12,
     paddingVertical: 8,
     gap: 6,
   },
-  track: { height: 6, borderRadius: 3, backgroundColor: color.sand200, overflow: 'hidden' },
-  fill: { height: 6, borderRadius: 3, backgroundColor: color.saffron400 },
+  track: {
+    height: 6,
+    borderRadius: radius.pill,
+    backgroundColor: color.sand200,
+    overflow: 'hidden',
+  },
+  fill: { height: 6, borderRadius: radius.pill, backgroundColor: color.saffron400 },
 });

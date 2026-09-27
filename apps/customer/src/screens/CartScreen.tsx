@@ -1,9 +1,10 @@
 /**
- * The basket as a receipt from the bazaar: one paper slip per stall, lines
- * in the vendor's handwriting, the stamp «взвесим при сборке» when anything
- * is sold by weight, delivery and cashback under the rule, and one
- * pomegranate «Оформить». A bazaar order is picked up at one place, so two
- * stalls are two slips; stalls on one bazaar can share a courier.
+ * The basket as a receipt from the bazaar: one paper slip per stall, printed
+ * out as it appears, the names in serif and the sums in tabular figures, the
+ * stamp «взвесим при сборке» when anything is sold by weight, delivery and
+ * cashback under the rule, and one pomegranate «Оформить». A bazaar order is
+ * picked up at one place, so two stalls are two slips; stalls on one bazaar
+ * can share a courier.
  */
 import {
   type CartLine,
@@ -23,7 +24,6 @@ import { CASHBACK } from '@bazar/constants';
 import type { ProductDto } from '@bazar/types';
 import { isApiError, room } from '@bazar/api-client';
 import { WS_EVENT, type HaggleDto } from '@bazar/types';
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRootNavigationState, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -32,9 +32,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Display,
   Glass,
-  Hand,
+  Printed,
+  Say,
   Scene,
   SceneButton,
+  caps,
+  ground,
   scene,
   sceneFont,
   useSceneTop,
@@ -52,10 +55,15 @@ import {
   ArrowLeft,
   Clock,
   Minus,
+  Photo,
   Pin,
   Plus,
   Share as ShareIcon,
   api,
+  noOutline,
+  radius,
+  scale,
+  shadow,
   useAuth,
   useLocale,
 } from '@bazar/mobile';
@@ -179,9 +187,12 @@ export function CartScreen() {
         : t.n('receipt.separate', groups.length);
 
   return (
-    <View style={{ flex: 1, backgroundColor: scene.night }}>
+    <View style={{ flex: 1 }}>
       <Scene source={backdrop} style={StyleSheet.absoluteFill}>
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(16,21,36,0.55)' }]} />
+        {/* The counter's photograph sinks into the ground so the receipts read on top of it. */}
+        {backdrop ? (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: ground(0.55) }]} />
+        ) : null}
       </Scene>
 
       <ScrollView
@@ -194,10 +205,8 @@ export function CartScreen() {
       >
         {groups.length === 0 ? (
           <View style={{ paddingHorizontal: 24, paddingTop: 60, gap: 12 }}>
-            <Display size={34}>{t('cart.empty')}</Display>
-            <Hand size={24} color={scene.creamMuted}>
-              {t('receipt.emptyLine')}
-            </Hand>
+            <Display step="headline">{t('cart.empty')}</Display>
+            <Say color={scene.creamMuted}>{t('receipt.emptyLine')}</Say>
             <Pressable onPress={() => router.replace('/')} style={s.emptyCta}>
               <Text style={s.emptyCtaText}>{t('scene.walkRow')} →</Text>
             </Pressable>
@@ -205,9 +214,9 @@ export function CartScreen() {
         ) : null}
 
         {notice ? (
-          <Hand size={20} color={scene.saffronLight} style={{ paddingHorizontal: 24 }}>
+          <Say step="lead" color={scene.ochreLight} style={{ paddingHorizontal: 24 }}>
             {notice}
-          </Hand>
+          </Say>
         ) : null}
         {groups.length > 1 && !single ? (
           <Text style={s.hint}>
@@ -215,7 +224,10 @@ export function CartScreen() {
           </Text>
         ) : null}
         {oneTrip && !single ? (
-          <Pressable onPress={() => toCheckout(oneTrip)} style={[s.cta, { marginHorizontal: 20 }]}>
+          <Pressable
+            onPress={() => toCheckout(oneTrip)}
+            style={[s.cta, s.ctaLift, { marginHorizontal: 20 }]}
+          >
             <Text style={s.ctaLabel}>{t('cart.oneTrip')}</Text>
           </Pressable>
         ) : null}
@@ -227,24 +239,25 @@ export function CartScreen() {
           const total = group.subtotal.amount + (estimate?.fee.amount ?? 0);
           const weighed = group.lines.some((l) => l.product.unit === 'KG');
           return (
-            <Receipt
-              key={group.storeId}
-              store={store ?? null}
-              lines={group.lines}
-              unavailable={group.unavailable.map((l) => tr(l.product.name, locale))}
-              subtotal={group.subtotal.amount}
-              fee={estimate?.fee.amount ?? null}
-              total={total}
-              weighed={weighed}
-              tilt={i % 2 === 0 ? -0.6 : 0.5}
-              haggles={haggles}
-              haggleError={haggleError}
-              onAsk={ask}
-              onChange={setQuantity}
-              onClear={() => clear(ids)}
-              onClearUnavailable={() => clear(group.unavailable.map((l) => l.product.id))}
-              onCheckout={single ? null : () => toCheckout([group.storeId])}
-            />
+            <Printed key={group.storeId}>
+              <Receipt
+                store={store ?? null}
+                lines={group.lines}
+                unavailable={group.unavailable.map((l) => tr(l.product.name, locale))}
+                subtotal={group.subtotal.amount}
+                fee={estimate?.fee.amount ?? null}
+                total={total}
+                weighed={weighed}
+                tilt={i % 2 === 0 ? -0.6 : 0.5}
+                haggles={haggles}
+                haggleError={haggleError}
+                onAsk={ask}
+                onChange={setQuantity}
+                onClear={() => clear(ids)}
+                onClearUnavailable={() => clear(group.unavailable.map((l) => l.product.id))}
+                onCheckout={single ? null : () => toCheckout([group.storeId])}
+              />
+            </Printed>
           );
         })}
       </ScrollView>
@@ -256,7 +269,7 @@ export function CartScreen() {
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
         <View style={{ alignItems: 'center', gap: 2, flex: 1 }}>
-          <Display size={22}>{t('cart.title')}</Display>
+          <Display step="title">{t('cart.title')}</Display>
           {subtitle ? <Text style={s.subtitle}>{subtitle}</Text> : null}
         </View>
         {groups.length > 0 ? (
@@ -272,7 +285,7 @@ export function CartScreen() {
         <View style={[s.bottom, { bottom: 24 + insets.bottom }]}>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Glass style={s.chip} onPress={() => router.push('/checkout')}>
-              <Clock size={16} color={scene.saffron} />
+              <Clock size={16} color={scene.ochreLight} />
               <Text style={s.chipText} numberOfLines={1}>
                 {firstEta
                   ? t('receipt.when', { time: etaClock(firstEta) })
@@ -280,7 +293,7 @@ export function CartScreen() {
               </Text>
             </Glass>
             <Glass style={s.chip} onPress={() => router.push('/address')}>
-              <Pin size={16} color={scene.saffron} />
+              <Pin size={16} color={scene.ochreLight} />
               <Text style={s.chipText} numberOfLines={1}>
                 {address ? address.text : t('receipt.addressNone')}
               </Text>
@@ -288,10 +301,10 @@ export function CartScreen() {
           </View>
           <Pressable
             onPress={() => toCheckout(single)}
-            style={({ pressed }) => [s.cta, pressed && { opacity: 0.92 }]}
+            style={({ pressed }) => [s.cta, s.ctaLift, pressed && { opacity: 0.92 }]}
           >
             <Text style={s.ctaLabel}>{t('cart.checkout')}</Text>
-            <Display size={20}>≈ {t.money(grandTotal)}</Display>
+            <Text style={s.ctaSum}>≈ {t.money(grandTotal)}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -361,14 +374,7 @@ function Receipt({
       {weighed ? <Text style={s.stamp}>{t('receipt.weighed')}</Text> : null}
 
       <View style={s.vendor}>
-        {person ? (
-          <Image
-            source={{ uri: person }}
-            style={s.vendorPhoto}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-          />
-        ) : null}
+        {person ? <Photo uri={person} style={s.vendorPhoto} /> : null}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={s.vendorName} numberOfLines={1}>
             {store?.ownerName ?? (store ? tr(store.name, locale) : '')}
@@ -378,7 +384,7 @@ function Receipt({
             {store?.standNumber ? ` · ${store.standNumber}` : ''}
           </Text>
         </View>
-        <Pressable onPress={onClear} hitSlop={8}>
+        <Pressable onPress={onClear} hitSlop={14}>
           <Text style={s.clear}>{t('cart.clear')}</Text>
         </Pressable>
       </View>
@@ -400,7 +406,7 @@ function Receipt({
           <Text style={s.small}>
             {t('cart.unavailable')} {unavailable.join(', ')}.
           </Text>
-          <Pressable onPress={onClearUnavailable} hitSlop={8}>
+          <Pressable onPress={onClearUnavailable} hitSlop={14}>
             <Text style={[s.small, { textDecorationLine: 'underline' }]}>{t('common.remove')}</Text>
           </Pressable>
         </View>
@@ -439,10 +445,10 @@ function Receipt({
       {onCheckout ? (
         <Pressable
           onPress={onCheckout}
-          style={({ pressed }) => [s.cta, { marginTop: 12 }, pressed && { opacity: 0.92 }]}
+          style={({ pressed }) => [s.cta, s.ctaOnPaper, pressed && { opacity: 0.92 }]}
         >
           <Text style={s.ctaLabel}>{t('cart.checkout')}</Text>
-          <Display size={18}>{t.money(total)}</Display>
+          <Text style={s.ctaSum}>{t.money(total)}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -472,16 +478,7 @@ function ReceiptRow({
   return (
     <View style={s.row}>
       <View style={s.rowMain}>
-        {photo ? (
-          <Image
-            source={{ uri: photo }}
-            style={s.thumb}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-          />
-        ) : (
-          <View style={s.thumb} />
-        )}
+        <Photo uri={photo} style={s.thumb} />
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <Text style={s.rowName} numberOfLines={2}>
             {tr(product.name, locale)}
@@ -503,14 +500,14 @@ function ReceiptRow({
           <Pressable
             onPress={() => onChange(quantity - step < min ? 0 : quantity - step)}
             style={s.step}
-            hitSlop={6}
+            hitSlop={8}
           >
             <Minus size={14} color={scene.ink} strokeWidth={2.6} />
           </Pressable>
           <Text style={s.stepValue}>
             {t.qty(quantity)} {unit}
           </Text>
-          <Pressable onPress={() => onChange(quantity + step)} style={s.step} hitSlop={6}>
+          <Pressable onPress={() => onChange(quantity + step)} style={s.step} hitSlop={8}>
             <Plus size={14} color={scene.ink} strokeWidth={2.6} />
           </Pressable>
         </View>
@@ -547,18 +544,14 @@ function ReceiptRow({
                 const minor = Number(price) * 100;
                 if (minor > 0) void onAsk(product.id, minor).then(() => setAsking(false));
               }}
-              hitSlop={6}
+              hitSlop={14}
             >
-              <Text style={[s.small, { color: scene.pomegranate, fontFamily: sceneFont.uiHeavy }]}>
-                {t('haggle.send')}
-              </Text>
+              <Text style={[s.small, s.link]}>{t('haggle.send')}</Text>
             </Pressable>
           </View>
         ) : (
-          <Pressable onPress={() => setAsking(true)} hitSlop={6}>
-            <Text style={[s.small, { color: scene.pomegranate, fontFamily: sceneFont.uiHeavy }]}>
-              {t('haggle.ask')}
-            </Text>
+          <Pressable onPress={() => setAsking(true)} hitSlop={14}>
+            <Text style={[s.small, s.link]}>{t('haggle.ask')}</Text>
           </Pressable>
         )}
       </View>
@@ -575,16 +568,10 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  subtitle: {
-    fontFamily: sceneFont.ui,
-    fontSize: 11,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: scene.creamMuted,
-  },
+  subtitle: { ...caps, color: scene.creamMuted },
   hint: {
     fontFamily: sceneFont.uiText,
-    fontSize: 12,
+    ...scale.caption,
     color: scene.creamMuted,
     paddingHorizontal: 24,
   },
@@ -592,25 +579,23 @@ const s = StyleSheet.create({
     alignSelf: 'flex-start',
     height: 48,
     paddingHorizontal: 18,
-    borderRadius: 16,
+    borderRadius: radius.pill,
     backgroundColor: scene.pomegranate,
     justifyContent: 'center',
     marginTop: 8,
+    ...shadow.paper,
   },
-  emptyCtaText: { fontFamily: sceneFont.uiHeavy, fontSize: 14, color: scene.cream },
+  emptyCtaText: { fontFamily: sceneFont.display, ...scale.lead, color: scene.cream },
   paper: {
     marginHorizontal: 24,
-    backgroundColor: '#FBF5E6',
-    borderRadius: 6,
+    backgroundColor: scene.paper,
+    borderRadius: radius.paper,
     padding: 18,
     paddingBottom: 16,
     gap: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.55,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 18 },
-    elevation: 10,
+    ...shadow.paper,
   },
+  // The torn edge off the printer: the ground shows through the perforation.
   perforation: {
     position: 'absolute',
     left: 0,
@@ -619,11 +604,11 @@ const s = StyleSheet.create({
     height: 3,
     borderStyle: 'dashed',
     borderTopWidth: 3,
-    borderColor: scene.night,
+    borderColor: ground(1),
     opacity: 0.35,
   },
-  paperTitle: { fontFamily: sceneFont.display, fontSize: 22, color: scene.ink },
-  paperDate: { fontFamily: sceneFont.uiHeavy, fontSize: 10.5, letterSpacing: 1, color: '#7A6248' },
+  paperTitle: { fontFamily: sceneFont.display, ...scale.title, color: scene.ink },
+  paperDate: { ...caps, color: scene.inkSoft, fontVariant: ['tabular-nums'] },
   stamp: {
     position: 'absolute',
     right: 16,
@@ -631,13 +616,10 @@ const s = StyleSheet.create({
     color: scene.pomegranate,
     borderWidth: 2.5,
     borderColor: scene.pomegranate,
-    borderRadius: 6,
+    borderRadius: radius.paper,
     paddingHorizontal: 10,
     paddingVertical: 4,
-    fontFamily: sceneFont.uiHeavy,
-    fontSize: 11,
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
+    ...caps,
     transform: [{ rotate: '-10deg' }],
     opacity: 0.85,
   },
@@ -647,103 +629,125 @@ const s = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: scene.saffron,
-    backgroundColor: '#3A2A1A',
+    borderColor: scene.ochre,
+    backgroundColor: scene.kraft,
   },
-  vendorName: { fontFamily: sceneFont.uiHeavy, fontSize: 12, color: scene.ink },
-  vendorMeta: { fontFamily: sceneFont.uiText, fontSize: 11, color: '#7A6248' },
-  clear: { fontFamily: sceneFont.ui, fontSize: 11, color: '#9A8A72' },
+  vendorName: { fontFamily: sceneFont.display, ...scale.body, color: scene.ink },
+  vendorMeta: { fontFamily: sceneFont.uiText, ...scale.caption, color: scene.inkSoft },
+  clear: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.inkSoft },
   row: {
     paddingVertical: 9,
     borderBottomWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#D8C7A2',
+    borderColor: scene.paperEdge,
     gap: 8,
   },
   rowMain: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  thumb: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    backgroundColor: '#E4D3AE',
-  },
-  rowName: { fontFamily: sceneFont.hand, fontSize: 22, lineHeight: 23, color: scene.ink },
+  thumb: { width: 44, height: 44, backgroundColor: scene.kraft },
+  // Names on a receipt are Alegreya; the sums beside them are Manrope in tabular figures.
+  rowName: { fontFamily: sceneFont.display, ...scale.lead, color: scene.ink },
   rowPrice: {
-    fontFamily: sceneFont.hand,
-    fontSize: 22,
-    lineHeight: 23,
+    fontFamily: sceneFont.ui,
+    ...scale.lead,
     color: scene.ink,
     marginLeft: 'auto',
+    fontVariant: ['tabular-nums'],
   },
-  small: { fontFamily: sceneFont.ui, fontSize: 11, color: '#7A6248' },
+  small: {
+    fontFamily: sceneFont.ui,
+    ...scale.caption,
+    color: scene.inkSoft,
+    fontVariant: ['tabular-nums'],
+  },
+  link: { fontFamily: sceneFont.uiHeavy, color: scene.pomegranate },
   rowBottom: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#EFE4CB',
-    borderRadius: 999,
+    backgroundColor: scene.kraft,
+    borderRadius: radius.pill,
     padding: 3,
   },
   step: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FBF5E6',
+    backgroundColor: scene.paper,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepValue: {
     fontFamily: sceneFont.uiHeavy,
-    fontSize: 12,
+    ...scale.caption,
     color: scene.ink,
     minWidth: 54,
     textAlign: 'center',
+    fontVariant: ['tabular-nums'],
   },
+  // A field on the receipt: kraft, the paper's edge.
   askInput: {
     flex: 1,
     height: 32,
-    borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    borderRadius: radius.paper,
+    backgroundColor: scene.kraft,
     borderWidth: 1,
-    borderColor: '#D8C7A2',
+    borderColor: scene.paperEdge,
     paddingHorizontal: 8,
     fontFamily: sceneFont.ui,
-    fontSize: 12,
+    ...scale.caption,
     color: scene.ink,
+    ...(noOutline as object),
   },
   totals: { marginTop: 8, paddingTop: 10, borderTopWidth: 2, borderColor: scene.ink, gap: 6 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  totalLabel: { fontFamily: sceneFont.ui, fontSize: 12, color: '#7A6248' },
-  totalValue: { fontFamily: sceneFont.hand, fontSize: 20, lineHeight: 21, color: scene.ink },
-  grand: { fontFamily: sceneFont.display, fontSize: 20, color: scene.ink },
-  grandValue: { fontFamily: sceneFont.hand, fontSize: 32, lineHeight: 34, color: scene.ink },
+  totalLabel: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.inkSoft },
+  totalValue: {
+    fontFamily: sceneFont.ui,
+    ...scale.body,
+    color: scene.ink,
+    fontVariant: ['tabular-nums'],
+  },
+  grand: { fontFamily: sceneFont.display, ...scale.title, color: scene.ink },
+  grandValue: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.title,
+    color: scene.ink,
+    fontVariant: ['tabular-nums'],
+  },
   bottom: { position: 'absolute', left: 20, right: 20, gap: 8 },
   chip: {
     flex: 1,
     height: 50,
-    borderRadius: 14,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  chipText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream, flex: 1 },
+  chipText: {
+    fontFamily: sceneFont.ui,
+    ...scale.caption,
+    color: scene.cream,
+    flex: 1,
+    fontVariant: ['tabular-nums'],
+  },
   cta: {
     height: 56,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     backgroundColor: scene.pomegranate,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    shadowColor: scene.pomegranate,
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
   },
-  ctaLabel: { fontFamily: sceneFont.uiHeavy, fontSize: 14, color: scene.cream },
+  // Over the ground the button lifts; on a receipt it lies flat.
+  ctaLift: shadow.paper,
+  ctaOnPaper: { marginTop: 12 },
+  ctaLabel: { fontFamily: sceneFont.display, ...scale.lead, color: scene.cream },
+  ctaSum: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.lead,
+    color: scene.cream,
+    fontVariant: ['tabular-nums'],
+  },
 });

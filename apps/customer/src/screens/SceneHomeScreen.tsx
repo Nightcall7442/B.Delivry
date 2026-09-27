@@ -32,6 +32,7 @@ import {
   Glass,
   KraftTag,
   RowSign,
+  SHADOW_REACH,
   Scene,
   isEvening,
   SceneButton,
@@ -48,7 +49,7 @@ import { useAddress } from '@/features/address/store';
 import { useCart, useCartActions } from '@/features/cart/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 import { EMPTY, useLoad } from '@/lib/use-data';
-import { Bell, Mic, useAuth, useLocale } from '@bazar/mobile';
+import { Bell, Mic, radius, scale, shadow, useAuth, useLocale } from '@bazar/mobile';
 
 const TILTS = [-1.5, 1, -1, 1.5, -1, 1];
 
@@ -116,10 +117,10 @@ export function SceneHomeScreen() {
   const failed = !storeLoad.data && storeLoad.error;
 
   return (
-    <View style={{ flex: 1, backgroundColor: scene.night }}>
-      {/* The hall photograph hangs at the door (the login); here the night itself is the ground. */}
-      <Scene source={null} evening={evening} style={StyleSheet.absoluteFill}>
-        <View />
+    <View style={{ flex: 1 }}>
+      {/* The photograph of the rows hangs at the door (the login); here the hall is the ground. */}
+      <Scene source={null} style={StyleSheet.absoluteFill}>
+        {null}
       </Scene>
 
       <ScrollView
@@ -130,7 +131,7 @@ export function SceneHomeScreen() {
           <Eyebrow>
             {capitalize(dateLine)} · {t(evening ? 'scene.eveningLine' : 'scene.morningLine')}
           </Eyebrow>
-          <Display size={46} italic={evening}>
+          <Display italic={evening}>
             {t(evening ? 'scene.evening' : 'scene.morning')}
             {user?.firstName ? `,\n${user.firstName}` : ''}
           </Display>
@@ -151,6 +152,7 @@ export function SceneHomeScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={s.rail}
           contentContainerStyle={s.vendors}
         >
           {vendors.map((store) => (
@@ -170,6 +172,7 @@ export function SceneHomeScreen() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
+              style={s.rail}
               contentContainerStyle={s.vendors}
             >
               {shops.map((store) => {
@@ -196,6 +199,7 @@ export function SceneHomeScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={s.rail}
           contentContainerStyle={s.rows}
         >
           {categories.slice(0, 6).map((category: CategoryDto, index) => (
@@ -290,13 +294,13 @@ export function SceneHomeScreen() {
               <Text style={s.checkoutArrow}>→</Text>
             </Pressable>
             <Glass style={s.mic} onPress={() => router.push('/list')}>
-              <Mic size={22} color={evening ? '#F2A93B' : scene.saffron} />
+              <Mic size={22} color={scene.ochreLight} />
             </Glass>
           </>
         ) : (
           <>
             <Glass style={s.voice} onPress={() => router.push('/list')}>
-              <Mic size={22} color={evening ? '#F2A93B' : scene.saffron} />
+              <Mic size={22} color={scene.ochreLight} />
               <View style={{ flex: 1, gap: 1 }}>
                 <Text style={s.voiceTitle}>{t(evening ? 'scene.sayEvening' : 'scene.say')}</Text>
                 <Text style={s.voiceHint} numberOfLines={1}>
@@ -304,7 +308,7 @@ export function SceneHomeScreen() {
                 </Text>
               </View>
             </Glass>
-            <CartDisc count={0} evening={evening} onPress={() => router.push('/(tabs)/cart')} />
+            <CartDisc count={0} onPress={() => router.push('/(tabs)/cart')} />
           </>
         )}
       </View>
@@ -330,10 +334,18 @@ const s = StyleSheet.create({
     alignItems: 'center',
     zIndex: 2,
   },
-  initial: { fontFamily: sceneFont.display, fontSize: 20, color: scene.pomegranate },
+  initial: { fontFamily: sceneFont.display, ...scale.title, color: scene.pomegranate },
   greeting: { paddingHorizontal: 20, gap: 6 },
-  vendors: { paddingHorizontal: 20, gap: 10, paddingBottom: 8 },
-  rows: { paddingHorizontal: 20, paddingTop: 6, paddingBottom: 12, gap: 8, alignItems: 'flex-end' },
+  // The rails keep room for their cards' shadow and hand it back, so the rhythm stays.
+  rail: { marginBottom: -SHADOW_REACH },
+  vendors: { paddingHorizontal: 20, gap: 10, paddingBottom: 8 + SHADOW_REACH },
+  rows: {
+    paddingHorizontal: 20,
+    paddingTop: 6,
+    paddingBottom: 12 + SHADOW_REACH,
+    gap: 8,
+    alignItems: 'flex-end',
+  },
   // Two to a row, like signs on a counter; the last odd one keeps its half.
   grid: {
     flexDirection: 'row',
@@ -360,25 +372,26 @@ const s = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 16,
   },
-  voiceTitle: { fontFamily: sceneFont.italic, fontSize: 17, color: scene.cream },
-  voiceHint: { fontFamily: sceneFont.uiText, fontSize: 11, color: scene.creamDim },
-  mic: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
+  voiceTitle: { fontFamily: sceneFont.italic, ...scale.lead, color: scene.cream },
+  voiceHint: { fontFamily: sceneFont.uiText, ...scale.caption, color: scene.creamMuted },
+  mic: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center' },
   checkout: {
     flex: 1,
     height: 56,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     backgroundColor: scene.pomegranate,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 18,
-    shadowColor: scene.pomegranate,
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    ...shadow.paper,
   },
-  checkoutTitle: { fontFamily: sceneFont.display, fontSize: 18, color: scene.cream },
-  checkoutSub: { fontFamily: sceneFont.uiText, fontSize: 11, color: '#D9C7A6' },
-  checkoutArrow: { fontFamily: sceneFont.display, fontSize: 20, color: scene.cream },
+  checkoutTitle: { fontFamily: sceneFont.display, ...scale.lead, color: scene.cream },
+  checkoutSub: {
+    fontFamily: sceneFont.uiText,
+    ...scale.caption,
+    color: scene.creamMuted,
+    fontVariant: ['tabular-nums'],
+  },
+  checkoutArrow: { fontFamily: sceneFont.display, ...scale.title, color: scene.cream },
 });

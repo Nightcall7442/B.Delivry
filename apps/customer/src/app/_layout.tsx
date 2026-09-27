@@ -21,7 +21,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { AuthProvider, BrandProvider, LocaleProvider, color } from '@bazar/mobile';
+import { AuthProvider, BrandProvider, LocaleProvider } from '@bazar/mobile';
+import { ground } from '@/components/bazar';
 import { AddressProvider } from '@/features/address/store';
 import { CartProvider } from '@/features/cart/store';
 
@@ -33,7 +34,7 @@ export default function RootLayout() {
     Manrope_600SemiBold,
     Manrope_700Bold,
     Manrope_800ExtraBold,
-    // The bazaar scenes: a serif for greetings and names, a hand for price signs.
+    // The bazaar scenes: a serif for names and spoken lines, a hand only for price signs.
     Alegreya_700Bold,
     Alegreya_700Bold_Italic,
     Alegreya_500Medium_Italic,
@@ -54,11 +55,13 @@ export default function RootLayout() {
           <BrandProvider>
             <AddressProvider>
               <CartProvider>
-                <StatusBar style="auto" />
+                {/* Every screen but the maps stands on the dark hall (the maps set their own). */}
+                <StatusBar style="light" />
                 <Stack
                   screenOptions={{
                     headerShown: false,
-                    contentStyle: { backgroundColor: color.sand100 },
+                    // What shows between two screens while they cross-fade: the hall's deep.
+                    contentStyle: { backgroundColor: ground(1) },
                     animation: 'fade',
                   }}
                 />

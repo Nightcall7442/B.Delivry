@@ -1,8 +1,7 @@
 import { isShopfront } from '@bazar/storefront';
 import { useLocalSearchParams } from 'expo-router';
-import { View } from 'react-native';
 
-import { scene } from '@/components/bazar';
+import { Scene } from '@/components/bazar';
 import { getStore } from '@/lib/catalog';
 import { useData } from '@/lib/use-data';
 import { ShopScreen } from '@/screens/ShopScreen';
@@ -14,5 +13,6 @@ export default function StoreRoute() {
   // A stall is a scene with a person; a shop is a shelf under a board.
   if (store && isShopfront(store)) return <ShopScreen store={store} />;
   if (store) return <StoreScreen storeId={storeId} />;
-  return <View style={{ flex: 1, backgroundColor: scene.night }} />;
+  // While the store loads: the hall it will stand in.
+  return <Scene source={null}>{null}</Scene>;
 }
