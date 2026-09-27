@@ -8,7 +8,11 @@
   --cream: #fbf1de;
   --cream-muted: #d9c7a6;
   --ink: #2b1b0e;
-  --night: #1e1408;
+  /* The night, and its channels for every scrim that carries a photograph into it. */
+  --night: #101524;
+  --night-rgb: 16 21 36;
+  /* The board over a shop's door: painted dark, never the ink of the paper. */
+  --board: #182034;
   --paper: #f4efe4;
   --paper-edge: #c9b99a;
   --kraft: #ead8b2;
@@ -41,11 +45,11 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    rgba(20, 12, 4, 0.55) 0%,
-    rgba(20, 12, 4, 0.05) 22%,
-    rgba(20, 12, 4, 0) 40%,
-    rgba(24, 14, 4, 0.55) 60%,
-    rgba(24, 14, 4, 0.95) 100%
+    rgb(var(--night-rgb) / 0.55) 0%,
+    rgb(var(--night-rgb) / 0.05) 22%,
+    rgb(var(--night-rgb) / 0) 40%,
+    rgb(var(--night-rgb) / 0.55) 60%,
+    rgb(var(--night-rgb) / 0.95) 100%
   );
 }
 .photoEvening::after {
@@ -127,8 +131,9 @@
 }
 .greeting {
   padding-top: clamp(28px, 6vh, 64px);
-  /* 42vh was room for the photograph behind it; without one that is dead ground. */
-  min-height: 24vh;
+  /* 42vh was room for the photograph, 24vh was half a room of nothing; the greeting
+     is two lines, and the people start right under it. */
+  padding-bottom: clamp(18px, 3vh, 32px);
 }
 .head {
   display: flex;
@@ -212,7 +217,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(transparent 40%, rgba(20, 12, 4, 0.92));
+  background: linear-gradient(transparent 40%, rgb(var(--night-rgb) / 0.92));
 }
 .vendorText {
   position: absolute;
@@ -286,7 +291,7 @@
   position: absolute;
   inset: 0;
   border-radius: 12px;
-  background: linear-gradient(transparent 55%, rgba(20, 12, 4, 0.5));
+  background: linear-gradient(transparent 55%, rgb(var(--night-rgb) / 0.5));
   pointer-events: none;
 }
 .sign {
@@ -379,7 +384,7 @@
   justify-content: center;
   padding: 0 16px calc(20px + env(safe-area-inset-bottom));
   pointer-events: none;
-  background: linear-gradient(rgba(30, 20, 8, 0), rgba(30, 20, 8, 0.85));
+  background: linear-gradient(rgb(var(--night-rgb) / 0), rgb(var(--night-rgb) / 0.85));
 }
 .barInner {
   display: flex;
@@ -396,7 +401,7 @@
   height: 56px;
   padding: 0 16px;
   border-radius: 18px;
-  background: rgba(30, 20, 8, 0.55);
+  background: rgb(var(--night-rgb) / 0.55);
   border: 1px solid rgba(251, 241, 222, 0.28);
   backdrop-filter: blur(10px);
   color: var(--cream);
@@ -524,7 +529,7 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--cream);
-  background: rgba(30, 20, 8, 0.45);
+  background: rgb(var(--night-rgb) / 0.45);
   border: 1px solid rgba(251, 241, 222, 0.28);
   backdrop-filter: blur(8px);
 }
@@ -546,7 +551,7 @@
   padding: 0 12px;
   border-radius: 16px;
   border: 1px solid rgba(251, 241, 222, 0.28);
-  background: rgba(30, 20, 8, 0.45);
+  background: rgb(var(--night-rgb) / 0.45);
   color: var(--cream);
   font:
     700 12px var(--font-display),
@@ -560,7 +565,7 @@
   border-color: var(--cream);
 }
 .discGlass {
-  background: rgba(30, 20, 8, 0.55);
+  background: rgb(var(--night-rgb) / 0.55);
   border: 1px solid rgba(251, 241, 222, 0.28);
   box-shadow: none;
 }
@@ -569,9 +574,9 @@
 .photoDim::after {
   background: linear-gradient(
     180deg,
-    rgba(30, 20, 8, 0.55) 0%,
-    rgba(30, 20, 8, 0.78) 40%,
-    rgba(30, 20, 8, 0.92) 100%
+    rgb(var(--night-rgb) / 0.55) 0%,
+    rgb(var(--night-rgb) / 0.78) 40%,
+    rgb(var(--night-rgb) / 0.92) 100%
   );
 }
 .narrow {
@@ -1117,16 +1122,16 @@
   inset: 0;
   pointer-events: none;
   background: linear-gradient(
-    rgba(30, 20, 8, 0.96) 0%,
-    rgba(30, 20, 8, 0.7) 26%,
-    rgba(30, 20, 8, 0.08) 44%,
-    rgba(30, 20, 8, 0.08) 62%,
-    rgba(30, 20, 8, 0.85) 82%,
-    rgba(30, 20, 8, 0.96) 100%
+    rgb(var(--night-rgb) / 0.96) 0%,
+    rgb(var(--night-rgb) / 0.7) 26%,
+    rgb(var(--night-rgb) / 0.08) 44%,
+    rgb(var(--night-rgb) / 0.08) 62%,
+    rgb(var(--night-rgb) / 0.85) 82%,
+    rgb(var(--night-rgb) / 0.96) 100%
   );
 }
 .mapGroundDone::after {
-  background: rgba(30, 20, 8, 0.82);
+  background: rgb(var(--night-rgb) / 0.82);
 }
 .mapWindow {
   height: min(38vh, 360px);
@@ -1207,7 +1212,7 @@
   padding: 0 18px;
   border-radius: 18px;
   border: 1px solid rgba(251, 241, 222, 0.28);
-  background: rgba(30, 20, 8, 0.55);
+  background: rgb(var(--night-rgb) / 0.55);
   backdrop-filter: blur(10px);
   color: var(--cream);
   font:
@@ -1467,11 +1472,11 @@
   /* A stall's photo is bright at the top on wide screens: the name needs the extra scrim. */
   .photoStall::after {
     background: linear-gradient(
-      rgba(20, 12, 4, 0.7) 0%,
-      rgba(20, 12, 4, 0.45) 28%,
-      rgba(20, 12, 4, 0.1) 48%,
-      rgba(24, 14, 4, 0.55) 62%,
-      rgba(24, 14, 4, 0.95) 100%
+      rgb(var(--night-rgb) / 0.7) 0%,
+      rgb(var(--night-rgb) / 0.45) 28%,
+      rgb(var(--night-rgb) / 0.1) 48%,
+      rgb(var(--night-rgb) / 0.55) 62%,
+      rgb(var(--night-rgb) / 0.95) 100%
     );
   }
 }
@@ -1486,7 +1491,7 @@
   margin-top: clamp(20px, 4vh, 40px);
   padding: 26px 24px 22px;
   border-radius: 14px;
-  background: rgba(43, 27, 14, 0.9);
+  background: rgba(16, 21, 36, 0.9);
   border: 1px solid rgba(227, 155, 47, 0.35);
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
 }
@@ -1527,7 +1532,7 @@
   min-height: 104px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: var(--ink);
+  background: var(--board);
   border: 1px solid rgba(227, 155, 47, 0.35);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
   color: var(--saffron-light);
@@ -1617,7 +1622,7 @@
   margin-top: 16px;
   padding: 0 16px;
   border-radius: 24px;
-  background: rgba(30, 20, 8, 0.42);
+  background: rgb(var(--night-rgb) / 0.42);
   border: 1px solid rgba(251, 241, 222, 0.22);
   color: var(--cream-muted);
 }

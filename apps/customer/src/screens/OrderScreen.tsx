@@ -76,9 +76,9 @@ const VEHICLES = ['FOOT', 'BICYCLE', 'SCOOTER', 'MOTORBIKE', 'CAR', 'VAN'];
 const WEB_URL = process.env['EXPO_PUBLIC_WEB_URL'] ?? 'http://localhost:3000';
 
 /** The order slip lives on kraft, the map under it gets a warm wash; dark kraft at night. */
-const KRAFT = isDark ? '#2A2014' : '#E4D3AE';
-const KRAFT_TINT = isDark ? 'rgba(42,32,20,0.55)' : 'rgba(228,211,174,0.42)';
-const PAPER = isDark ? '#3A2E1E' : '#FBF5E6';
+const KRAFT = isDark ? '#1C2438' : '#E4D3AE';
+const KRAFT_TINT = isDark ? 'rgba(28,36,56,0.55)' : 'rgba(228,211,174,0.42)';
+const PAPER = isDark ? '#242C43' : '#FBF5E6';
 const POMEGRANATE = '#9E2A2B';
 const SAFFRON = '#E39B2F';
 

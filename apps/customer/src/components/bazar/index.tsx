@@ -30,7 +30,9 @@ export const scene = {
   pomegranate: '#9E2A2B',
   saffron: '#E39B2F',
   saffronLight: '#F2B85A',
-  night: '#1E1408',
+  night: '#101524',
+  /** The board over a shop's door: painted dark, never the ink of the paper. */
+  board: '#182034',
   paper: '#F4EFE4',
   paperEdge: '#C9B99A',
   kraft: '#EAD8B2',
@@ -64,7 +66,13 @@ export function tashkentHour(now = new Date()): number {
 
 export const isEvening = (hour = tashkentHour()) => hour >= 17 || hour < 5;
 
-/** Full-bleed photograph with the warm scrims; children are laid out on top. */
+/**
+ * The night at a given opacity. A scrim exists to carry a photograph into the page,
+ * so it has to be the page's own colour — never a literal of its own.
+ */
+export const night = (alpha: number) => `rgba(16,21,36,${alpha})`;
+
+/** Full-bleed photograph with the scrims that carry it into the night; children on top. */
 export function Scene({
   source,
   children,
@@ -78,6 +86,26 @@ export function Scene({
   style?: StyleProp<ViewStyle>;
 }) {
   const uri = typeof source === 'string' ? { uri: source } : source;
+  // No photograph: the night itself, warm only where the lamps hang. The scrims below exist to
+  // carry a picture into the page — over nothing they are just a brown veil.
+  if (!uri) {
+    return (
+      <View style={[s.scene, style]}>
+        <LinearGradient
+          colors={['#16203A', '#101524', '#0C1019']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <LinearGradient
+          colors={['rgba(242,169,59,0.13)', 'rgba(242,169,59,0)']}
+          locations={[0, 0.42]}
+          style={StyleSheet.absoluteFill}
+        />
+        {children}
+      </View>
+    );
+  }
   return (
     <View style={[s.scene, style]}>
       {uri ? (
@@ -93,20 +121,8 @@ export function Scene({
       <LinearGradient
         colors={
           evening
-            ? [
-                'rgba(20,16,12,0.7)',
-                'rgba(20,16,12,0.1)',
-                'rgba(20,16,12,0.05)',
-                'rgba(20,16,12,0.7)',
-                'rgba(20,16,12,0.98)',
-              ]
-            : [
-                'rgba(20,12,4,0.55)',
-                'rgba(20,12,4,0.05)',
-                'rgba(20,12,4,0)',
-                'rgba(24,14,4,0.55)',
-                'rgba(24,14,4,0.95)',
-              ]
+            ? [night(0.7), night(0.1), night(0.05), night(0.7), night(0.98)]
+            : [night(0.55), night(0.05), night(0), night(0.55), night(0.95)]
         }
         locations={[0, 0.22, 0.4, 0.6, 1]}
         style={StyleSheet.absoluteFill}
@@ -394,7 +410,7 @@ export function ProductCard({
           <View style={[StyleSheet.absoluteFill, { backgroundColor: '#5A3E22' }]} />
         )}
         <LinearGradient
-          colors={['transparent', 'rgba(20,12,4,0.55)']}
+          colors={['transparent', night(0.55)]}
           locations={[0.5, 1]}
           style={StyleSheet.absoluteFill}
         />
@@ -521,7 +537,7 @@ export function VendorCard({
         <View style={[StyleSheet.absoluteFill, { backgroundColor: '#5A3E22' }]} />
       )}
       <LinearGradient
-        colors={['transparent', 'rgba(20,12,4,0.92)']}
+        colors={['transparent', night(0.92)]}
         locations={[0.4, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -773,7 +789,7 @@ const s = StyleSheet.create({
     paddingVertical: 12,
     justifyContent: 'flex-end',
     gap: 4,
-    backgroundColor: scene.ink,
+    backgroundColor: scene.board,
     borderWidth: 1,
     borderColor: 'rgba(227,155,47,0.35)',
     shadowColor: '#000',
@@ -831,7 +847,7 @@ const s = StyleSheet.create({
   },
   // A smoked-glass pill: dark enough to read on a bright melon, light enough to sit on night.
   glass: {
-    backgroundColor: 'rgba(30,20,8,0.42)',
+    backgroundColor: night(0.42),
     borderWidth: 1,
     borderColor: scene.glassEdge,
     borderRadius: 18,

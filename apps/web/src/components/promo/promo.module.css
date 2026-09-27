@@ -3,7 +3,8 @@
   --cream: #fbf1de;
   --cream-muted: #d9c7a6;
   --ink: #2b1b0e;
-  --night: #1e1408;
+  --night: #101524;
+  --night-rgb: 16 21 36;
   --paper: #f4efe4;
   --paper-edge: #c9b99a;
   --kraft: #ead8b2;
@@ -31,7 +32,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 24px;
-  background: linear-gradient(rgba(30, 20, 8, 0.75), rgba(30, 20, 8, 0));
+  background: linear-gradient(rgb(var(--night-rgb) / 0.75), rgb(var(--night-rgb) / 0));
 }
 .wordmark {
   font-family: var(--font-serif), Georgia, serif;
@@ -93,7 +94,7 @@
   padding: 9px 14px;
   border: 1px solid rgba(251, 241, 222, 0.35);
   border-radius: 999px;
-  background: rgba(30, 20, 8, 0.4);
+  background: rgb(var(--night-rgb) / 0.4);
   backdrop-filter: blur(6px);
 }
 
@@ -121,11 +122,11 @@
   inset: 0;
   pointer-events: none;
   background: linear-gradient(
-    rgba(20, 12, 4, 0.55) 0%,
-    rgba(20, 12, 4, 0.05) 22%,
-    rgba(20, 12, 4, 0) 40%,
-    rgba(24, 14, 4, 0.5) 65%,
-    rgba(24, 14, 4, 0.92) 100%
+    rgb(var(--night-rgb) / 0.55) 0%,
+    rgb(var(--night-rgb) / 0.05) 22%,
+    rgb(var(--night-rgb) / 0) 40%,
+    rgb(var(--night-rgb) / 0.5) 65%,
+    rgb(var(--night-rgb) / 0.92) 100%
   );
 }
 /* film grain: an SVG noise tile, barely there — hides the softness of 720p and reads as film */
@@ -148,7 +149,7 @@
   justify-items: start;
   gap: 10px;
   padding: 0 clamp(20px, 6vw, 96px) calc(clamp(40px, 8vh, 96px) + env(safe-area-inset-bottom));
-  background: linear-gradient(rgba(30, 20, 8, 0.2), rgba(30, 20, 8, 0.85));
+  background: linear-gradient(rgb(var(--night-rgb) / 0.2), rgb(var(--night-rgb) / 0.85));
   transition: opacity 0.6s ease;
 }
 .veilLine {
@@ -284,7 +285,7 @@
   font-size: 13px;
   font-weight: 700;
   color: var(--cream);
-  background: rgba(30, 20, 8, 0.45);
+  background: rgb(var(--night-rgb) / 0.45);
   border: 1px solid rgba(251, 241, 222, 0.28);
   backdrop-filter: blur(8px);
 }
@@ -464,7 +465,7 @@
   position: absolute;
   inset: 0 0 auto 0;
   height: 160px;
-  background: linear-gradient(rgba(30, 20, 8, 0), var(--night));
+  background: linear-gradient(rgb(var(--night-rgb) / 0), var(--night));
   transform: translateY(-100%);
   pointer-events: none;
 }
@@ -637,7 +638,7 @@
   height: 100%;
   border-radius: 38px;
   overflow: hidden;
-  background: #1e1408;
+  background: #101524;
 }
 .phoneScreen img {
   position: absolute;
@@ -834,10 +835,10 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    rgba(30, 20, 8, 0.96) 0%,
-    rgba(30, 20, 8, 0.35) 28%,
-    rgba(30, 20, 8, 0.5) 70%,
-    rgba(30, 20, 8, 0.96) 100%
+    rgb(var(--night-rgb) / 0.96) 0%,
+    rgb(var(--night-rgb) / 0.35) 28%,
+    rgb(var(--night-rgb) / 0.5) 70%,
+    rgb(var(--night-rgb) / 0.96) 100%
   );
 }
 .gateInner {
@@ -920,7 +921,7 @@
 .footer {
   position: relative;
   border-top: 1px solid rgba(251, 241, 222, 0.14);
-  background: rgba(20, 12, 4, 0.55);
+  background: rgb(var(--night-rgb) / 0.55);
   backdrop-filter: blur(6px);
 }
 .footerInner {

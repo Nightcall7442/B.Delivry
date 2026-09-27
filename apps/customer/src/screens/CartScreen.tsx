@@ -181,7 +181,7 @@ export function CartScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: scene.night }}>
       <Scene source={backdrop} style={StyleSheet.absoluteFill}>
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(20,12,4,0.55)' }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(16,21,36,0.55)' }]} />
       </Scene>
 
       <ScrollView

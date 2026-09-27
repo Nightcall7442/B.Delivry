@@ -21,7 +21,7 @@ import {
 import type { CategoryDto, ProductDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -32,7 +32,6 @@ import {
   Glass,
   KraftTag,
   RowSign,
-  SCENES,
   Scene,
   isEvening,
   SceneButton,
@@ -59,7 +58,6 @@ export function SceneHomeScreen() {
   const { user } = useAuth();
   const { address } = useAddress();
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
   const top = useSceneTop();
   const { quantities } = useCart();
   const { setQuantity } = useCartActions();
@@ -119,11 +117,8 @@ export function SceneHomeScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: scene.night }}>
-      <Scene
-        source={evening ? SCENES.evening : SCENES.morning}
-        evening={evening}
-        style={StyleSheet.absoluteFill}
-      >
+      {/* The hall photograph hangs at the door (the login); here the night itself is the ground. */}
+      <Scene source={null} evening={evening} style={StyleSheet.absoluteFill}>
         <View />
       </Scene>
 
@@ -141,14 +136,13 @@ export function SceneHomeScreen() {
           </Display>
         </View>
 
-        {/* Let the photograph breathe before the people arrive. */}
-        <View style={{ height: Math.round(height * 0.2) }} />
-
         {failed ? (
           <View style={{ paddingHorizontal: 20 }}>
             <LoadError onRetry={() => void storeLoad.reload()} />
           </View>
         ) : null}
+        <View style={{ height: 28 }} />
+
         <SceneHead
           title={t('scene.vendorsHere')}
           action={t('scene.vendorsAll', { count: stores.length })}

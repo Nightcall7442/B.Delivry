@@ -58,7 +58,7 @@ export function Ground({
     return (
       <View style={s.ground}>
         <LinearGradient
-          colors={['#241906', '#1E1408', '#160F06']}
+          colors={['#16203A', '#101524', '#0C1019']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -71,9 +71,9 @@ export function Ground({
     <ImageBackground source={SCENES[evening ? 'evening' : 'morning']} style={s.ground}>
       <LinearGradient
         colors={[
-          `rgba(30,20,8,${dim - 0.15})`,
-          `rgba(30,20,8,${dim})`,
-          `rgba(30,20,8,${Math.min(0.96, dim + 0.15)})`,
+          `rgba(16,21,36,${dim - 0.15})`,
+          `rgba(16,21,36,${dim})`,
+          `rgba(16,21,36,${Math.min(0.96, dim + 0.15)})`,
         ]}
         style={StyleSheet.absoluteFill}
       />

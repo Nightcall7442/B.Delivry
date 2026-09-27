@@ -25,7 +25,7 @@ import {
 import { ArrowLeft, Leaf, LoginForm, Scale, Tag, isDark, useAuth, useT } from '@bazar/mobile';
 
 // The form's type is theme-coloured, so the slip is paper by day and dark kraft in the dark theme.
-const SLIP = isDark ? '#2A2014' : scene.paper;
+const SLIP = isDark ? '#1C2438' : scene.paper;
 
 export default function LoginRoute() {
   const router = useRouter();

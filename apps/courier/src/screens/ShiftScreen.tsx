@@ -397,7 +397,7 @@ function PickupNotes({ orderId }: { orderId: string }) {
 const secondsLeft = (iso: string) => Math.max(0, Math.ceil((Date.parse(iso) - Date.now()) / 1000));
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#1E1408' },
+  root: { flex: 1, backgroundColor: '#101524' },
   top: { position: 'absolute', left: 12, right: 12, top: 0 },
   // Kraft pinned over the map: the courier's name in serif, the day's numbers by hand.
   shiftCard: {

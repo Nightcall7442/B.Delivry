@@ -69,7 +69,7 @@ export default function OrdersPage() {
         <h1 className="font-display text-2xl font-extrabold">Заказы</h1>
         <div
           className="ml-auto flex gap-1 rounded-full p-1"
-          style={{ background: 'rgba(30,20,8,0.45)', border: '1px solid rgba(251,241,222,0.28)' }}
+          style={{ background: 'rgba(16,21,36,0.45)', border: '1px solid rgba(251,241,222,0.28)' }}
         >
           {(
             [
