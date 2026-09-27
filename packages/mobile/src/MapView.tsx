@@ -5,7 +5,15 @@
  * with the same tile markers is the last resort — a page that fails to boot.
  */
 import type { LatLngDto } from '@bazar/types';
-import { createElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentRef,
+} from 'react';
 import { PanResponder, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 import { WebView } from 'react-native-webview';
@@ -84,7 +92,9 @@ function WebMap({
   interactive,
   onFail,
 }: RendererProps & { onFail: () => void }) {
-  const ref = useRef<WebView>(null);
+  // The class is the component, not the thing on screen: react-native-webview 13.16.2 resolves
+  // `WebView` as a type to its own generic default, which makes the element's props `never`.
+  const ref = useRef<ComponentRef<typeof WebView>>(null);
   const frame = useRef<HTMLIFrameElement | null>(null);
   const ready = useRef(false);
   const html = useMemo(() => mapHtml(API_KEY), []);
