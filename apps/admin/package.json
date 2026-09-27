@@ -18,9 +18,9 @@
     "@bazar/storefront": "workspace:*",
     "@bazar/types": "workspace:*",
     "@bazar/utils": "workspace:*",
-    "next": "^15.0.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "next": "^15.5.26",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@bazar/config": "workspace:*",
