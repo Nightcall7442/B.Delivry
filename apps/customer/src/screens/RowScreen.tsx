@@ -7,6 +7,7 @@
 import { isShopfront, tr, unitLabel } from '@bazar/storefront';
 import type { MapStoreDto } from '@bazar/storefront';
 import type { ProductDto } from '@bazar/types';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import {
@@ -30,6 +31,7 @@ import {
   SceneButton,
   Sign,
   caps,
+  ground,
   scene,
   sceneFont,
   useSceneTop,
@@ -247,6 +249,16 @@ function StallPage({
 
   return (
     <Scene source={photo} style={{ width, height }}>
+      {/* The person reads over any counter: the ground rises behind their name and line. */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={[ground(0), ground(0.7), ground(0.7), ground(0)]}
+        locations={[0, 0.25, 0.75, 1]}
+        style={[
+          s.personScrim,
+          { top: Math.round(height * 0.3), height: Math.round(height * 0.34) },
+        ]}
+      />
       <View style={[s.person, { top: Math.round(height * 0.38) }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           {person ? <Photo uri={person} style={s.avatar} /> : null}
@@ -363,6 +375,7 @@ const s = StyleSheet.create({
     color: scene.creamMuted,
     fontVariant: ['tabular-nums'],
   },
+  personScrim: { position: 'absolute', left: 0, right: 0 },
   person: { position: 'absolute', left: 20, right: 80, gap: 8 },
   avatar: {
     width: 52,

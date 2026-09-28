@@ -8,9 +8,14 @@
  * ponytail: a theme hook through every StyleSheet if a live switch is wanted.
  */
 import { GROUND, HALL, TONE, hallLight } from '@bazar/storefront';
+import Constants from 'expo-constants';
 import { Appearance } from 'react-native';
 
-export const isDark = Appearance.getColorScheme?.() === 'dark';
+// An app that pins its scheme (the courier: `userInterfaceStyle: light` — its paper is never dark)
+// stays pinned on the web too, where Appearance only reads the browser's prefers-color-scheme.
+const pinned = Constants.expoConfig?.userInterfaceStyle;
+export const isDark =
+  pinned === 'dark' || (pinned !== 'light' && Appearance.getColorScheme?.() === 'dark');
 
 const LIGHT = {
   ink: HALL.ink,

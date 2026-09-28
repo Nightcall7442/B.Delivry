@@ -125,7 +125,8 @@ export function SceneHomeScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: top + 56, paddingBottom: 110 + insets.bottom }}
+        // Room under the tag row, as on the web: at night the lamps hang in it, not over the date.
+        contentContainerStyle={{ paddingTop: top + 80, paddingBottom: 110 + insets.bottom }}
       >
         <View style={s.greeting}>
           <Eyebrow>

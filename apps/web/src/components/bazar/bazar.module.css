@@ -1212,11 +1212,12 @@
   background: var(--pomegranate);
   border-color: var(--pomegranate);
 }
-/* Not yet: the same pill, pressed into the ground — solid, so nothing shows through it. */
+/* Not yet: a solid worn-paper pill (as the apps' Button), never a see-through one. */
 .checkout:disabled {
   cursor: default;
-  background: color-mix(in srgb, var(--pomegranate) 55%, var(--ground-deep));
-  color: var(--cream-muted);
+  background: var(--paper-edge);
+  color: var(--ink-soft);
+  box-shadow: none;
 }
 @media (max-width: 480px) {
   .fields {
