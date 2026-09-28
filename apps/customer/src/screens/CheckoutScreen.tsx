@@ -18,6 +18,7 @@ import {
   ensureServerAddress,
   forgottenProducts,
   haggleFor,
+  isOpenAt,
   orderReasonText,
   paymentMethodText,
   plusActive,
@@ -28,7 +29,7 @@ import {
 import type { HaggleDto, OrderQuoteDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { AppState, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 import { caps, scene } from '@/components/bazar';
 import { ui, Glyph } from '@/components/ui/Page';
@@ -163,7 +164,38 @@ export function CheckoutScreen({
 
   const [payment, setPayment] = useState<PaymentMethod>(PAYMENT_METHOD.CASH);
   const [slot, setSlot] = useState<string | null>(null);
-  const slots = useMemo(() => deliverySlots(new Date(), locale), [locale]);
+  // A window is offered only when every store of the trip is open at its start — as the API decides.
+  const tripStores = useMemo(
+    () => (store ? [store, ...followers.map((f) => f.store)] : []),
+    [store, followers],
+  );
+  // No stores yet, no windows: an unfiltered row would flash windows the stores cannot serve.
+  // The windows follow the clock: every minute and when the app comes back to the front, so a screen left open
+  // never keeps a window that has already started (the API refuses one anyway).
+  const [clock, setClock] = useState(() => Date.now());
+  useEffect(() => {
+    const tick = setInterval(() => setClock(Date.now()), 60_000);
+    const wake = AppState.addEventListener('change', (state) => {
+      if (state === 'active') setClock(Date.now());
+    });
+    return () => {
+      clearInterval(tick);
+      wake.remove();
+    };
+  }, []);
+  const slots = useMemo(
+    () => (tripStores.length > 0 ? deliverySlots(new Date(clock), locale, tripStores) : []),
+    [clock, locale, tripStores],
+  );
+  const openNow =
+    tripStores.length > 0 && tripStores.every((row) => isOpenAt(row, new Date(clock)));
+  // «As soon as possible» exists only while the stores are open; at night the first window they
+  // can serve is chosen instead, so the button is never dead when there is a way to order.
+  useEffect(() => {
+    if (tripStores.length === 0) return;
+    if (slot === null ? openNow : slots.some((option) => option.startsAt === slot)) return;
+    setSlot(openNow ? null : (slots[0]?.startsAt ?? null));
+  }, [tripStores.length, openNow, slot, slots]);
   const [comment, setComment] = useState('');
   const [vendorComment, setVendorComment] = useState('');
   // "Заказ родителям": somebody else opens the door.
@@ -222,8 +254,17 @@ export function CheckoutScreen({
             ...(slot ? { scheduledFor: slot } : {}),
           });
     request
-      .then((result) => alive && setQuote(result))
-      .catch((e) => alive && setError(describeOrderError(e, locale)))
+      .then((result) => {
+        if (!alive) return;
+        setQuote(result);
+        setError(null);
+      })
+      .catch((e) => {
+        if (!alive) return;
+        // A refused re-quote must not leave the last deliverable quote enabling the button.
+        setQuote(null);
+        setError(describeOrderError(e, locale));
+      })
       .finally(() => alive && setQuoting(false));
     return () => {
       alive = false;
@@ -238,7 +279,6 @@ export function CheckoutScreen({
   const deliverable = quote?.deliverable ?? false;
   // A disabled button explains nothing: it carries the reason itself.
   const blocker = quote && !deliverable ? orderReasonText(quote.reason, locale) : null;
-  const closedNow = quote?.reason === 'Store is closed';
   const subtotal = totals?.subtotal.amount ?? group?.subtotal.amount ?? 0;
   const total = totals?.total.amount ?? subtotal;
   const ready = Boolean(
@@ -381,11 +421,13 @@ export function CheckoutScreen({
         style={{ marginHorizontal: -16 }}
         contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingBottom: 4 }}
       >
-        <Chip
-          label={`${t('checkout.asap')}${quote?.deliverable ? ` · ${t('common.eta', { minutes: quote.etaMinutes })}` : ''}`}
-          active={slot === null}
-          onPress={() => setSlot(null)}
-        />
+        {openNow ? (
+          <Chip
+            label={`${t('checkout.asap')}${quote?.deliverable ? ` · ${t('common.eta', { minutes: quote.etaMinutes })}` : ''}`}
+            active={slot === null}
+            onPress={() => setSlot(null)}
+          />
+        ) : null}
         {slots.map((option) => (
           <Chip
             key={option.id}
@@ -395,9 +437,9 @@ export function CheckoutScreen({
           />
         ))}
       </ScrollView>
-      {closedNow && !slot ? (
-        <Text role="muted" style={{ color: color.danger, marginTop: 8 }}>
-          {t('checkout.closedPickSlot')}
+      {!openNow && tripStores.length > 0 ? (
+        <Text role="muted" style={{ marginTop: 8 }}>
+          {t(slots.length > 0 ? 'checkout.closedPickSlot' : 'checkout.noWindows')}
         </Text>
       ) : null}
       {slot ? (

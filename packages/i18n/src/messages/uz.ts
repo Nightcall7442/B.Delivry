@@ -117,8 +117,11 @@ export const uz: Catalogue = {
     'Tortiladigan mahsulotlarni kuryer sotuvchida tortadi — yakuniy summa bir necha foizga farq qilishi mumkin.',
   'checkout.reason.minOrder': 'Summa bu hudud uchun minimaldan kam',
   'checkout.reason.outOfZone': 'Bu yerga hali olib bormaymiz — boshqa manzilni sinang',
-  'checkout.closedPickSlot': 'Rastalar hozir yopiq — quyidan yetkazish oynasini tanlang.',
+  'checkout.closedPickSlot': 'Rastalar hozir yopiq — tanlangan oynada yigʻib, yetkazib beramiz.',
+  'checkout.noWindows':
+    'Bir hafta davomida bu yerda ishlamaydi — yetkazish oynasi yoʻq. Boshqa rastadan oling.',
   'checkout.reason.storeClosed': 'Nuqta hozir yopiq',
+  'checkout.reason.windowStarted': 'Bu oyna allaqachon boshlangan — keyingisini tanlang',
 
   'order.title': 'Buyurtma',
   'order.signIn': 'Buyurtmani koʻrish uchun kiring',
