@@ -14,6 +14,21 @@ import {
  */
 const factor = (currency: Currency): number => 10 ** CURRENCY_MINOR_UNITS[currency];
 
+/** Intl formatters are costly to build (on Android's Hermes especially): one per locale and digits. */
+const formatters = new Map<string, Intl.NumberFormat>();
+function numberFormat(locale: string, fractionDigits: number): Intl.NumberFormat {
+  const key = `${locale}|${fractionDigits}`;
+  let format = formatters.get(key);
+  if (format === undefined) {
+    format = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    });
+    formatters.set(key, format);
+  }
+  return format;
+}
+
 /** 1234567 tiyin -> "12 345,67 soum" (uz/ru use a space as the thousands separator). */
 export function formatMoney(
   minor: number,
@@ -25,10 +40,9 @@ export function formatMoney(
   // UZS prices are large and never quoted with tiyin in the wild.
   const fractionDigits = currency === 'UZS' ? 0 : digits;
   // Soʻm is written "17 698" in every language; the locale only picks the word.
-  const formatted = new Intl.NumberFormat(currency === 'UZS' ? 'ru-RU' : locale, {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
-  }).format(value);
+  const formatted = numberFormat(currency === 'UZS' ? 'ru-RU' : locale, fractionDigits).format(
+    value,
+  );
   // "сум" is Cyrillic; Uzbek Latin readers expect "soʻm".
   const symbol = currency === 'UZS' && locale.startsWith('uz') ? 'soʻm' : CURRENCY_SYMBOL[currency];
   return `${formatted} ${symbol}`;

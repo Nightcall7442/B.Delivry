@@ -13,16 +13,22 @@ const KEY = 'bazar.tokens';
 
 const secure = Platform.OS !== 'web';
 
+/** Every request reads the tokens; on Android each SecureStore read is a Keystore decryption. */
+let remembered: Tokens | null | undefined;
+
 export const tokenStore: TokenStore = {
   async get(): Promise<Tokens | null> {
+    if (remembered !== undefined) return remembered;
     try {
       const raw = secure ? await SecureStore.getItemAsync(KEY) : await AsyncStorage.getItem(KEY);
-      return raw ? (JSON.parse(raw) as Tokens) : null;
+      remembered = raw ? (JSON.parse(raw) as Tokens) : null;
+      return remembered;
     } catch {
       return null;
     }
   },
   async set(tokens: Tokens | null): Promise<void> {
+    remembered = tokens;
     try {
       if (tokens === null) {
         if (secure) await SecureStore.deleteItemAsync(KEY);

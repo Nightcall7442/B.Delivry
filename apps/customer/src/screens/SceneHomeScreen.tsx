@@ -21,7 +21,16 @@ import {
 import type { CategoryDto, ProductDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+  type ListRenderItemInfo,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -53,12 +62,16 @@ import { Bell, Mic, radius, scale, shadow, useAuth, useLocale } from '@bazar/mob
 
 const TILTS = [-1.5, 1, -1, 1.5, -1, 1];
 
+/** The space between two rows of the counter. */
+const RowGap = () => <View style={{ height: 18 }} />;
+
 export function SceneHomeScreen() {
   const router = useRouter();
   const { locale, t } = useLocale();
   const { user } = useAuth();
   const { address } = useAddress();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const top = useSceneTop();
   const { quantities } = useCart();
   const { setQuantity } = useCartActions();
@@ -115,6 +128,43 @@ export function SceneHomeScreen() {
     timeZone: 'Asia/Tashkent',
   }).format(new Date());
   const failed = !storeLoad.data && storeLoad.error;
+  // Two to a row, like signs on a counter; the last odd one keeps its half.
+  const cardWidth = (width - 20 * 2 - 12) / 2;
+  const renderProduct = ({ item: product, index: i }: ListRenderItemInfo<ProductDto>) => {
+    const qty = quantities[product.id] ?? 0;
+    const stall = stores.find((store) => store.id === product.storeId);
+    return (
+      <ProductCard
+        style={{ width: cardWidth }}
+        compact
+        photo={product.images[0]?.url ?? null}
+        tilt={[-1.2, 1, 0.6, -0.8][i % 4] ?? 0}
+        side={i % 2 ? 'right' : 'left'}
+        title={tr(product.name, locale)}
+        price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
+        say={product.description ? tr(product.description, locale) : undefined}
+        note={
+          [
+            stall ? (stall.ownerName ?? tr(stall.name, locale)) : null,
+            arrivedToday(product) ? t('store.arrivedToday') : null,
+          ]
+            .filter(Boolean)
+            .join(' · ') || undefined
+        }
+        count={qty}
+        countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
+        onPress={() => router.push(`/product/${product.id}`)}
+        onAdd={() =>
+          setQuantity(
+            product.id,
+            qty === 0
+              ? product.minQuantity || product.quantityStep || 1
+              : qty + (product.quantityStep || 1),
+          )
+        }
+      />
+    );
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -123,142 +173,123 @@ export function SceneHomeScreen() {
         {null}
       </Scene>
 
-      <ScrollView
+      {/* The counter is a virtualized grid (a hundred cards used to be built and drawn at once);
+          the greeting and the rails are its header. */}
+      <FlatList
+        data={counter}
+        keyExtractor={(product) => product.id}
+        numColumns={2}
+        renderItem={renderProduct}
+        columnWrapperStyle={s.row}
+        ItemSeparatorComponent={RowGap}
+        initialNumToRender={6}
+        maxToRenderPerBatch={4}
+        windowSize={5}
         showsVerticalScrollIndicator={false}
         // Room under the tag row, as on the web: at night the lamps hang in it, not over the date.
         contentContainerStyle={{ paddingTop: top + 80, paddingBottom: 110 + insets.bottom }}
-      >
-        <View style={s.greeting}>
-          <Eyebrow>
-            {capitalize(dateLine)} · {t(evening ? 'scene.eveningLine' : 'scene.morningLine')}
-          </Eyebrow>
-          <Display italic={evening}>
-            {t(evening ? 'scene.evening' : 'scene.morning')}
-            {user?.firstName ? `,\n${user.firstName}` : ''}
-          </Display>
-        </View>
-
-        {failed ? (
-          <View style={{ paddingHorizontal: 20 }}>
-            <LoadError onRetry={() => void storeLoad.reload()} />
-          </View>
-        ) : null}
-        <View style={{ height: 28 }} />
-
-        <SceneHead
-          title={t('scene.vendorsHere')}
-          action={t('scene.vendorsAll', { count: stores.length })}
-          onAction={() => router.push('/(tabs)/categories')}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={s.rail}
-          contentContainerStyle={s.vendors}
-        >
-          {vendors.map((store) => (
-            <VendorCard
-              key={store.id}
-              photo={store.ownerPhotoUrl ?? store.counterPhotoUrl ?? store.coverUrl}
-              name={store.ownerName ?? tr(store.name, locale)}
-              line={store.ownerMotto ? shortLine(tr(store.ownerMotto, locale)) : null}
-              onPress={() => router.push(`/store/${store.id}`)}
-            />
-          ))}
-        </ScrollView>
-
-        {shops.length > 0 ? (
+        ListHeaderComponent={
           <>
-            <SceneHead title={t('shop.nearby')} />
+            <View style={s.greeting}>
+              <Eyebrow>
+                {capitalize(dateLine)} · {t(evening ? 'scene.eveningLine' : 'scene.morningLine')}
+              </Eyebrow>
+              <Display italic={evening}>
+                {t(evening ? 'scene.evening' : 'scene.morning')}
+                {user?.firstName ? `,\n${user.firstName}` : ''}
+              </Display>
+            </View>
+
+            {failed ? (
+              <View style={{ paddingHorizontal: 20 }}>
+                <LoadError onRetry={() => void storeLoad.reload()} />
+              </View>
+            ) : null}
+            <View style={{ height: 28 }} />
+
+            <SceneHead
+              title={t('scene.vendorsHere')}
+              action={t('scene.vendorsAll', { count: stores.length })}
+              onAction={() => router.push('/(tabs)/categories')}
+            />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               style={s.rail}
               contentContainerStyle={s.vendors}
             >
-              {shops.map((store) => {
-                const closes = closesToday(store);
-                return (
-                  <ShopSign
-                    key={store.id}
-                    name={tr(store.name, locale)}
-                    logo={store.logoUrl}
-                    line={closes ? t('shop.until', { time: closes }) : t('shop.closedToday')}
-                    onPress={() => router.push(`/store/${store.id}`)}
-                  />
-                );
-              })}
+              {vendors.map((store) => (
+                <VendorCard
+                  key={store.id}
+                  photo={store.ownerPhotoUrl ?? store.counterPhotoUrl ?? store.coverUrl}
+                  name={store.ownerName ?? tr(store.name, locale)}
+                  line={store.ownerMotto ? shortLine(tr(store.ownerMotto, locale)) : null}
+                  onPress={() => router.push(`/store/${store.id}`)}
+                />
+              ))}
             </ScrollView>
-          </>
-        ) : null}
 
-        <SceneHead
-          title={t('scene.walkRow')}
-          action={t('scene.rowsAll')}
-          onAction={() => router.push('/(tabs)/categories')}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={s.rail}
-          contentContainerStyle={s.rows}
-        >
-          {categories.slice(0, 6).map((category: CategoryDto, index) => (
-            <RowSign
-              key={category.id}
-              title={tr(category.name, locale)}
-              tilt={TILTS[index % TILTS.length] as number}
-              onPress={() =>
-                router.push({ pathname: '/ryad/[categoryId]', params: { categoryId: category.id } })
-              }
+            {shops.length > 0 ? (
+              <>
+                <SceneHead title={t('shop.nearby')} />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={s.rail}
+                  contentContainerStyle={s.vendors}
+                >
+                  {shops.map((store) => {
+                    const closes = closesToday(store);
+                    return (
+                      <ShopSign
+                        key={store.id}
+                        name={tr(store.name, locale)}
+                        logo={store.logoUrl}
+                        line={closes ? t('shop.until', { time: closes }) : t('shop.closedToday')}
+                        onPress={() => router.push(`/store/${store.id}`)}
+                      />
+                    );
+                  })}
+                </ScrollView>
+              </>
+            ) : null}
+
+            <SceneHead
+              title={t('scene.walkRow')}
+              action={t('scene.rowsAll')}
+              onAction={() => router.push('/(tabs)/categories')}
             />
-          ))}
-        </ScrollView>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={s.rail}
+              contentContainerStyle={s.rows}
+            >
+              {categories.slice(0, 6).map((category: CategoryDto, index) => (
+                <RowSign
+                  key={category.id}
+                  title={tr(category.name, locale)}
+                  tilt={TILTS[index % TILTS.length] as number}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/ryad/[categoryId]',
+                      params: { categoryId: category.id },
+                    })
+                  }
+                />
+              ))}
+            </ScrollView>
 
-        <SceneHead
-          title={t('scene.onCounterToday')}
-          action={t('scene.rowsAll')}
-          onAction={() => router.push('/(tabs)/categories')}
-        />
-        <View style={s.grid}>
-          {counter.map((product, i) => {
-            const qty = quantities[product.id] ?? 0;
-            const stall = stores.find((store) => store.id === product.storeId);
-            return (
-              <ProductCard
-                key={product.id}
-                style={s.card}
-                compact
-                photo={product.images[0]?.url ?? null}
-                tilt={[-1.2, 1, 0.6, -0.8][i % 4] ?? 0}
-                side={i % 2 ? 'right' : 'left'}
-                title={tr(product.name, locale)}
-                price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
-                say={product.description ? tr(product.description, locale) : undefined}
-                note={
-                  [
-                    stall ? (stall.ownerName ?? tr(stall.name, locale)) : null,
-                    arrivedToday(product) ? t('store.arrivedToday') : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ') || undefined
-                }
-                count={qty}
-                countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
-                onPress={() => router.push(`/product/${product.id}`)}
-                onAdd={() =>
-                  setQuantity(
-                    product.id,
-                    qty === 0
-                      ? product.minQuantity || product.quantityStep || 1
-                      : qty + (product.quantityStep || 1),
-                  )
-                }
-              />
-            );
-          })}
-        </View>
-      </ScrollView>
+            <SceneHead
+              title={t('scene.onCounterToday')}
+              action={t('scene.rowsAll')}
+              onAction={() => router.push('/(tabs)/categories')}
+            />
+            {/* The grid's own top room. */}
+            <View style={{ height: 6 }} />
+          </>
+        }
+      />
 
       <View style={[s.top, { top }]}>
         <KraftTag>
@@ -347,16 +378,7 @@ const s = StyleSheet.create({
     gap: 8,
     alignItems: 'flex-end',
   },
-  // Two to a row, like signs on a counter; the last odd one keeps its half.
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    rowGap: 18,
-    paddingHorizontal: 20,
-    paddingTop: 6,
-  },
-  card: { width: '47%', flexGrow: 1, maxWidth: '50%' },
+  row: { gap: 12, paddingHorizontal: 20 },
   bottom: {
     position: 'absolute',
     left: 20,

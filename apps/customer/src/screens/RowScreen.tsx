@@ -123,6 +123,10 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
           scrollEventThrottle={32}
           keyExtractor={(stall) => stall.store.id}
           getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+          // A pager needs the page and its neighbours, not ten full-screen stalls at once.
+          initialNumToRender={1}
+          maxToRenderPerBatch={1}
+          windowSize={3}
           renderItem={({ item, index }) => (
             <StallPage
               stall={item}

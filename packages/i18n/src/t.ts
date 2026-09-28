@@ -52,8 +52,13 @@ const fill = (text: string, params?: Params): string =>
         name in params ? String(params[name]) : match,
       );
 
+/** One translator per locale: screens call createT on every render, and each one builds formatters. */
+const translators = new Map<Locale, T>();
+
 export function createT(locale: string): T {
   const loc: Locale = isLocale(locale) ? locale : 'ru';
+  const known = translators.get(loc);
+  if (known !== undefined) return known;
   const own = MESSAGES[loc];
   const t = ((key: MessageKey, params?: Params) => fill(own[key] ?? RU[key] ?? key, params)) as T;
   t.n = (key, count, params) => {
@@ -71,5 +76,6 @@ export function createT(locale: string): T {
     return `${at.getDate()} ${months[at.getMonth()] ?? ''}`;
   };
   t.locale = loc;
+  translators.set(loc, t);
   return t;
 }

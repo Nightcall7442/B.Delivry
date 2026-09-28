@@ -34,7 +34,7 @@ import {
 } from '@bazar/mobile';
 
 import { useCartCount } from '@/features/cart/store';
-import { ground, scene, sceneFont } from '@/components/bazar';
+import { FROSTED, ground, scene, sceneFont } from '@/components/bazar';
 
 /** The brand colours and the rhythm; the ground is the hall, the surfaces are @bazar/mobile's theme. */
 export const ui = {
@@ -121,7 +121,7 @@ export function Page({
         ]}
         onLayout={glass ? (e) => setHeaderHeight(e.nativeEvent.layout.height) : undefined}
       >
-        {glass ? (
+        {glass && FROSTED ? (
           <BlurView
             intensity={36}
             tint="dark"
@@ -191,13 +191,15 @@ export function Page({
       {footer ? (
         // A sticky bar over the ground is glass, never a solid band.
         <View style={[s.footer, { paddingBottom: (tabs ? TAB_BAR_SPACE : 12) + insets.bottom }]}>
-          <BlurView
-            intensity={36}
-            tint="dark"
-            blurMethod="dimezisBlurView"
-            style={s.glassFillBar}
-            pointerEvents="none"
-          />
+          {FROSTED ? (
+            <BlurView
+              intensity={36}
+              tint="dark"
+              blurMethod="dimezisBlurView"
+              style={s.glassFillBar}
+              pointerEvents="none"
+            />
+          ) : null}
           {footer}
         </View>
       ) : null}
@@ -225,7 +227,7 @@ export function Round({
       accessibilityLabel={label}
       style={({ pressed }) => [s.round, glass && s.glass, press.base, pressed && press.down]}
     >
-      {glass ? (
+      {glass && FROSTED ? (
         <BlurView
           intensity={40}
           tint={color.blurTint}
@@ -349,8 +351,8 @@ export function Bone({ style }: { style?: StyleProp<ViewStyle> }) {
     if (still) return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: false }),
-        Animated.timing(pulse, { toValue: 0.55, duration: 700, useNativeDriver: false }),
+        Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.55, duration: 700, useNativeDriver: true }),
       ]),
     );
     loop.start();
