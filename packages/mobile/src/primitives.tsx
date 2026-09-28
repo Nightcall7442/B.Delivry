@@ -81,9 +81,15 @@ export function Button({
 }) {
   // Primary is the pomegranate pill; danger the same pill pressed deeper; secondary a paper slip.
   // Buttons lie on paper, so they lie flat — the one shadow is for what lifts off the ground.
-  const bg =
-    variant === 'primary' ? color.brand500 : variant === 'danger' ? color.brand600 : color.tile;
-  const fg = variant === 'secondary' ? color.ink : color.white;
+  // Not yet: a solid worn-paper pill, never a see-through one over the content behind it.
+  const bg = disabled
+    ? color.lineStrong
+    : variant === 'primary'
+      ? color.brand500
+      : variant === 'danger'
+        ? color.brand600
+        : color.tile;
+  const fg = disabled ? color.inkMuted : variant === 'secondary' ? color.ink : color.white;
   return (
     <Pressable
       disabled={disabled}
@@ -91,13 +97,16 @@ export function Button({
         s.button,
         press.base,
         variant === 'secondary' && s.buttonPaper,
-        { backgroundColor: bg, opacity: disabled ? 0.5 : pressed ? 0.9 : 1 },
+        { backgroundColor: bg, opacity: pressed ? 0.9 : 1 },
         pressed && press.down,
         style,
       ]}
       {...rest}
     >
-      <RNText style={[s.buttonLabel, { color: fg }]}>{label}</RNText>
+      {/* A reason on a dead button can take two lines; the pill grows instead of spilling. */}
+      <RNText style={[s.buttonLabel, s.buttonText, { color: fg }]} numberOfLines={2}>
+        {label}
+      </RNText>
       {trailing ? <RNText style={[s.buttonLabel, { color: fg }]}>{trailing}</RNText> : null}
     </Pressable>
   );
@@ -232,7 +241,8 @@ export function Line({ label, value, strong }: { label: string; value: string; s
 
 const s = StyleSheet.create({
   button: {
-    height: 56,
+    minHeight: 56,
+    paddingVertical: 8,
     borderRadius: radius.pill,
     paddingHorizontal: 20,
     flexDirection: 'row',
@@ -241,6 +251,7 @@ const s = StyleSheet.create({
     gap: 8,
   },
   buttonLabel: { fontFamily: font.heading, ...scale.lead, letterSpacing: 0 },
+  buttonText: { flexShrink: 1 },
   buttonPaper: { borderWidth: 1, borderColor: color.lineStrong },
   // A chip is a small paper pill with a kraft edge; the chosen one is stamped pomegranate.
   chip: {
