@@ -5,13 +5,7 @@
  * The tile is the one the web serves (@bazar/storefront `girih`), computed once
  * per launch; only the light moves, and only on the native driver.
  */
-import {
-  GIRIH_PAINT,
-  GROUND,
-  girih,
-  hallLight,
-  type HallLight,
-} from '@bazar/storefront';
+import { GIRIH_PAINT, GROUND, girih, hallLight, type HallLight } from '@bazar/storefront';
 import { memo, useEffect, useId, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Svg, {
@@ -187,7 +181,11 @@ export const DomeGround = memo(function DomeGround({ light }: { light?: HallLigh
         <Rect width={width} height={height} fill={`url(#${id}base)`} />
         {tiles.map(([x, y]) => (
           <G key={`${x},${y}`} transform={`translate(${x} ${y})`}>
-            <Path d={TILE.glaze.turquoise} fill={paint.turquoise} fillOpacity={paint.glazeOpacity} />
+            <Path
+              d={TILE.glaze.turquoise}
+              fill={paint.turquoise}
+              fillOpacity={paint.glazeOpacity}
+            />
             <Path d={TILE.glaze.cobalt} fill={paint.cobalt} fillOpacity={paint.glazeOpacity} />
             <Path d={TILE.glaze.ochre} fill={paint.ochre} fillOpacity={paint.glazeOpacity} />
             <Path

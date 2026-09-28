@@ -356,7 +356,6 @@ const s = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    
   },
   note: {
     position: 'absolute',
