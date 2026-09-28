@@ -21,6 +21,7 @@ import {
   forgottenProducts,
   freeDeliveryProgress,
   haggleFor,
+  isOpenAt,
   type MapStoreDto,
   orderReasonText,
   paymentMethodText,
@@ -139,7 +140,21 @@ export function BazaarCheckout({
 
   const [payment, setPayment] = useState<PaymentMethod>(PAYMENT_METHOD.CASH);
   const [slot, setSlot] = useState<string | null>(null);
-  const slots = useMemo(() => deliverySlots(new Date(), locale), [locale]);
+  // A window is offered only when every store of the trip is open at its start — as the API decides.
+  const tripStores = useMemo(() => [store, ...followers.map((f) => f.store)], [store, followers]);
+  // No stores yet, no windows: an unfiltered row would flash windows the stores cannot serve.
+  const slots = useMemo(
+    () => (tripStores.length > 0 ? deliverySlots(new Date(), locale, tripStores) : []),
+    [locale, tripStores],
+  );
+  const openNow = tripStores.length > 0 && tripStores.every((row) => isOpenAt(row));
+  // «As soon as possible» exists only while the stores are open; at night the first window they
+  // can serve is chosen instead, so the button is never dead when there is a way to order.
+  useEffect(() => {
+    if (tripStores.length === 0) return;
+    if (slot === null ? openNow : slots.some((option) => option.startsAt === slot)) return;
+    setSlot(openNow ? null : (slots[0]?.startsAt ?? null));
+  }, [tripStores.length, openNow, slot, slots]);
   const [comment, setComment] = useState('');
   const [vendorComment, setVendorComment] = useState('');
   // "Заказ родителям": somebody else opens the door.
@@ -197,8 +212,17 @@ export function BazaarCheckout({
             ...(slot ? { scheduledFor: slot } : {}),
           });
     request
-      .then((result) => alive && setQuote(result))
-      .catch((e) => alive && setError(describeOrderError(e, locale)))
+      .then((result) => {
+        if (!alive) return;
+        setQuote(result);
+        setError(null);
+      })
+      .catch((e) => {
+        if (!alive) return;
+        // A refused re-quote must not leave the last deliverable quote enabling the button.
+        setQuote(null);
+        setError(describeOrderError(e, locale));
+      })
       .finally(() => alive && setQuoting(false));
     return () => {
       alive = false;
@@ -209,7 +233,6 @@ export function BazaarCheckout({
   const deliverable = quote?.deliverable ?? false;
   // Why the order cannot be placed right now, in the customer's words.
   const blocker = quote && !deliverable ? orderReasonText(quote.reason, locale) : null;
-  const closedNow = quote?.reason === 'Store is closed';
   const ready = Boolean(
     user && group && address && items.length > 0 && deliverable && !submitting && !quoting,
   );
@@ -375,10 +398,12 @@ export function BazaarCheckout({
 
           <div className={s.rcSection}>{t('checkout.when')}</div>
           <div className={s.chips}>
-            <button type="button" className={chip(slot === null)} onClick={() => setSlot(null)}>
-              {t('checkout.asap')}
-              {quote?.deliverable ? ` · ${t('common.eta', { minutes: quote.etaMinutes })}` : ''}
-            </button>
+            {openNow ? (
+              <button type="button" className={chip(slot === null)} onClick={() => setSlot(null)}>
+                {t('checkout.asap')}
+                {quote?.deliverable ? ` · ${t('common.eta', { minutes: quote.etaMinutes })}` : ''}
+              </button>
+            ) : null}
             {slots.map((option) => (
               <button
                 key={option.id}
@@ -390,8 +415,10 @@ export function BazaarCheckout({
               </button>
             ))}
           </div>
-          {closedNow && !slot ? (
-            <p className={`${s.rcHint} ${s.rcWarn}`}>{t('checkout.closedPickSlot')}</p>
+          {!openNow ? (
+            <p className={s.rcHint}>
+              {t(slots.length > 0 ? 'checkout.closedPickSlot' : 'checkout.noWindows')}
+            </p>
           ) : null}
           {slot ? <p className={s.rcHint}>{t('checkout.slotHint')}</p> : null}
 
