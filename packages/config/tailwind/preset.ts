@@ -57,24 +57,41 @@ const preset: Partial<Config> = {
           200: 'rgb(var(--sand-200) / <alpha-value>)',
           300: 'rgb(var(--sand-300) / <alpha-value>)',
         },
-        danger: '#E4394F',
+        // Errors are pomegranate (lit on the dark) — not a seventh colour. Each app's globals.css
+        // defines --danger; the default keeps a page without it on the light value.
+        danger: 'rgb(var(--danger, 158 42 43) / <alpha-value>)',
       },
       fontFamily: {
-        sans: ['var(--font-sans)', 'Roboto', 'system-ui', 'sans-serif'],
+        // Two voices (see packages/storefront/src/dome.ts): Manrope runs the interface.
+        sans: ['var(--font-sans)', 'Manrope', 'system-ui', 'sans-serif'],
         // Headlines, prices, ETA — the numbers people glance at.
         display: ['var(--font-display)', 'Manrope', 'var(--font-sans)', 'system-ui', 'sans-serif'],
         // The bazaar's two voices: serif for names and titles, handwriting for prices and asides.
         serif: ['var(--font-serif)', 'Alegreya', 'Georgia', 'serif'],
         hand: ['var(--font-hand)', 'Caveat', 'cursive'],
       },
+      // «Свет купола»'s one scale (globals.css --fs-*): text-caption … text-display.
+      fontSize: {
+        caption: ['12px', '16px'],
+        body: ['14px', '20px'],
+        lead: ['17px', '24px'],
+        title: ['22px', '26px'],
+        headline: ['30px', '34px'],
+        display: ['44px', '46px'],
+      },
       borderRadius: {
         // 8 for inputs and small cards, 10 for buttons, 16 for panels.
         control: '10px',
         panel: '16px',
+        // «Свет купола»: the one paper corner and the one photo corner.
+        paper: '6px',
+        photo: '14px',
       },
       boxShadow: {
         card: '0 2px 12px rgba(27, 31, 34, 0.06)',
         pop: '0 12px 32px rgba(27, 31, 34, 0.12)',
+        // The one shadow of the storefront: the ground's own dark (globals.css --shadow).
+        paper: 'var(--shadow)',
       },
       maxWidth: {
         container: '1264px',

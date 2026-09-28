@@ -1,4 +1,5 @@
 export * from './theme';
+export * from './DomeGround';
 export * from './primitives';
 export * from './Icons';
 export * from './Photo';

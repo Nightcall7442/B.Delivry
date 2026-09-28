@@ -125,7 +125,7 @@ export function OrderChat({
 }
 
 const s = StyleSheet.create({
-  root: { backgroundColor: color.raise, borderRadius: radius.panel, padding: 12, gap: 8 },
+  root: { backgroundColor: color.raise, borderRadius: radius.paper, padding: 12, gap: 8 },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   list: { maxHeight: 220 },
   bubble: { maxWidth: '80%', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14 },

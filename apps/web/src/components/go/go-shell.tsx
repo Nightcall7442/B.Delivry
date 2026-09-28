@@ -49,7 +49,8 @@ export function GoShell({ locale, map, back, peek = 0.46, children, ...sheet }: 
   }
 
   return (
-    <div className="relative h-dvh overflow-hidden bg-[#101524]">
+    // The map is the ground here; until its tiles paint, the deep of the hall shows.
+    <div className="relative h-dvh overflow-hidden bg-[var(--ground-deep)]">
       <MapView {...map} inset={peek} />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between p-3 pt-[max(0.75rem,env(safe-area-inset-top))] md:left-[440px]">
@@ -80,7 +81,7 @@ export function GoShell({ locale, map, back, peek = 0.46, children, ...sheet }: 
         >
           <Bag />
           {count > 0 ? (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1 text-[11px] font-medium text-white">
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-saffron-500 px-1 text-xs font-extrabold tabular-nums text-[var(--ink-paper)]">
               {count}
             </span>
           ) : null}
@@ -134,14 +135,14 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
     >
       <button
         type="button"
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-[rgb(var(--ground-deep-rgb)/0.4)]"
         aria-label={t('common.close')}
         onClick={onClose}
       />
-      <nav className="paper-sheet relative flex h-full w-[82%] max-w-xs flex-col p-5 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-pop">
-        <p className="font-serif text-[28px] font-bold">
+      <nav className="paper-sheet relative flex h-full w-[82%] max-w-xs flex-col p-5 pt-[max(1.25rem,env(safe-area-inset-top))]">
+        <p className="font-serif text-[length:var(--fs-headline)] font-bold leading-[34px]">
           {appName}
-          <span className="text-brand-500">.</span>
+          <span className="text-saffron-500">.</span>
         </p>
         <ul className="mt-6 flex flex-col">
           {MENU.map((item) => (
@@ -149,7 +150,7 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
               <Link
                 href={`/${locale}${item.href}`}
                 onClick={onClose}
-                className="block py-3 text-lg"
+                className="block py-3 text-[length:var(--fs-lead)] leading-6"
               >
                 {t(item.key)}
               </Link>
@@ -159,7 +160,7 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
         {user ? (
           <button
             type="button"
-            className="mt-2 block rounded-lg py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+            className="mt-2 block rounded-paper py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
             onClick={() => {
               // The link is one-shot: fetch it fresh, then hand off to Telegram.
               const tab = window.open('', '_blank');
@@ -171,7 +172,9 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
                 .catch(() => tab?.close());
             }}
           >
-            <span className="block text-lg">{t('menu.telegram')}</span>
+            <span className="block text-[length:var(--fs-lead)] leading-6">
+              {t('menu.telegram')}
+            </span>
             <span className="block text-xs text-ink-muted">
               {user.telegramLinked ? t('menu.telegramLinked') : t('menu.telegramHint')}
             </span>
@@ -183,7 +186,7 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
               <span className="min-w-0 truncate text-ink-muted">{user.phone}</span>
               <button
                 type="button"
-                className="shrink-0 rounded-lg px-2 py-1 text-ink-muted underline decoration-line-strong underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+                className="shrink-0 rounded-paper px-2 py-1 text-ink-muted underline decoration-line-strong underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
                 onClick={() => {
                   onClose();
                   void signOut();
@@ -210,7 +213,7 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
               type="button"
               onClick={() => setTheme(option)}
               aria-pressed={option === theme}
-              className="rounded-full bg-surface-mute px-3 py-1 font-medium text-ink-muted transition-colors aria-pressed:bg-brand-500 aria-pressed:text-white"
+              className="rounded-full bg-surface-mute px-3 py-1 font-medium text-ink-muted transition-colors aria-pressed:bg-brand-500 aria-pressed:text-[var(--cream)]"
             >
               {t(`theme.${option}`)}
             </button>

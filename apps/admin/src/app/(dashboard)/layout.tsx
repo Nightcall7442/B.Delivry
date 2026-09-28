@@ -45,8 +45,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const signOutButton = (
     <button
       type="button"
-      className="hand text-[17px] underline decoration-dotted underline-offset-4"
-      style={{ color: 'var(--pomegranate)' }}
+      className="text-sm font-bold underline decoration-dotted underline-offset-4"
       onClick={() => {
         void signOut().then(() => router.replace('/login'));
       }}
@@ -59,13 +58,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen flex-col md:flex-row">
       <div className="ground" />
 
-      {/* Phones and tablets: a strip of kraft across the top, the signs scroll sideways. */}
+      {/* Phones and tablets: a strip of glass over the ground, the labels scroll sideways. */}
       <header
-        className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3 md:hidden"
-        style={{ background: 'var(--kraft)', boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
+        className="glass sticky top-0 z-10 flex items-center gap-3 border-x-0 border-t-0 px-4 py-3 md:hidden"
+        style={{ color: 'var(--cream)' }}
       >
-        <div className="font-display shrink-0 text-[24px] font-bold leading-none">
-          Bazar<span style={{ color: 'var(--saffron)' }}>.</span>
+        <div className="font-display shrink-0 text-title font-bold">
+          Bazar<span style={{ color: 'var(--ochre)' }}>.</span>
         </div>
         <nav className="flex min-w-0 flex-1 gap-2 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {nav}
@@ -73,25 +72,30 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="shrink-0">{signOutButton}</div>
       </header>
 
-      {/* Laptops: a sheet of kraft pinned along the left. */}
+      {/* Laptops: a sheet of kraft along the left, the plan of the rows, lifted off the ground. */}
       <aside
-        className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col p-5 md:flex"
-        style={{ background: 'var(--kraft)', boxShadow: '8px 0 30px rgba(0,0,0,0.35)' }}
+        className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col p-5 shadow-paper md:flex"
+        style={{ background: 'var(--kraft)' }}
       >
-        <div className="font-display text-[30px] font-bold leading-none">
-          Bazar<span style={{ color: 'var(--saffron)' }}>.</span>
+        <div className="font-display text-headline font-bold">
+          Bazar<span style={{ color: 'var(--ochre)' }}>.</span>
         </div>
-        <div className="hand mt-1 text-[19px] text-ink-muted">
+        <div className="font-display mt-1 text-lead italic text-ink-muted">
           {isVendor ? 'за прилавком' : 'диспетчерская'}
         </div>
         <nav className="mt-7 flex flex-col gap-2">{nav}</nav>
-        <div className="mt-auto pt-4" style={{ borderTop: '1.5px dashed rgba(43,27,14,0.35)' }}>
-          <div className="hand truncate text-[18px]">{user.phone}</div>
+        <div
+          className="mt-auto pt-4"
+          style={{
+            borderTop: '1.5px dashed color-mix(in srgb, var(--ink-paper) 35%, transparent)',
+          }}
+        >
+          <div className="truncate text-sm font-bold tabular-nums">{user.phone}</div>
           <div className="mt-1">{signOutButton}</div>
         </div>
       </aside>
 
-      <main className="on-ground min-w-0 flex-1 p-4 text-[#fbf1de] sm:p-6 lg:p-8 [&_h1+p]:text-[#d9c7a6] [&_h1]:text-[clamp(30px,4vw,44px)] [&_h1]:font-bold [&_h1]:leading-none [&_h1]:text-[#fbf1de]">
+      <main className="on-ground min-w-0 flex-1 p-4 text-[var(--cream)] sm:p-6 lg:p-8 [&_h1+p]:text-[var(--cream-muted)] [&_h1]:font-bold [&_h1]:text-[var(--cream)]">
         {children}
       </main>
     </div>

@@ -10,17 +10,10 @@ import { GoShell } from '@/components/go/go-shell';
 export function RulesScreen({ locale }: { locale: string }) {
   const t = createT(locale);
   return (
-    <GoShell
-      locale={locale}
-      back="history"
-      peek={0.6}
-      header={
-        <h1 className="font-display text-[22px] font-extrabold leading-7">{t('rules.title')}</h1>
-      }
-    >
+    <GoShell locale={locale} back="history" peek={0.6} header={<h1>{t('rules.title')}</h1>}>
       <p className="mt-1 text-sm text-ink-muted">{t('rules.intro')}</p>
-      <section className="mt-4 rounded-2xl bg-sand-50 p-4">
-        <h2 className="flex items-center gap-2 font-display text-base font-bold">
+      <section className="mt-4 rounded-paper bg-sand-50 p-4">
+        <h2 className="flex items-center gap-2 font-serif text-[length:var(--fs-lead)] font-bold leading-6">
           <span className="text-brand-600">
             <Leaf size={20} />
           </span>
@@ -30,8 +23,8 @@ export function RulesScreen({ locale }: { locale: string }) {
           {t('rules.freshness.body', { hours: GUARANTEE.FRESHNESS_WINDOW_HOURS })}
         </p>
       </section>
-      <section className="mt-3 rounded-2xl bg-sand-50 p-4">
-        <h2 className="flex items-center gap-2 font-display text-base font-bold">
+      <section className="mt-3 rounded-paper bg-sand-50 p-4">
+        <h2 className="flex items-center gap-2 font-serif text-[length:var(--fs-lead)] font-bold leading-6">
           <span className="text-brand-600">
             <Clock size={20} />
           </span>

@@ -16,7 +16,6 @@ import '@/styles/globals.css';
 // The faces ship with the app. `next/font/google` downloads them while the page compiles, so a
 // build needs fonts.googleapis.com to answer — on CI runners it answers with something else and
 // the build dies inside the loader's regex. Same families, same weights, served by us.
-import '@fontsource-variable/roboto';
 import '@fontsource-variable/manrope';
 import '@fontsource-variable/alegreya';
 import '@fontsource-variable/alegreya/wght-italic.css';
@@ -43,8 +42,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
-    { media: '(prefers-color-scheme: dark)', color: '#0F1216' },
+    // The browser's own bar is the top of the hall: the dome, lapis for a dark reader.
+    { media: '(prefers-color-scheme: light)', color: '#123A3A' },
+    { media: '(prefers-color-scheme: dark)', color: '#0E1A33' },
   ],
   width: 'device-width',
   initialScale: 1,

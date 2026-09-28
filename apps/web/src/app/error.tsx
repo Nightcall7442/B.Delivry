@@ -1,4 +1,4 @@
-/** Route-level error boundary, on the scene like every other page. */
+/** Route-level error boundary, in the hall like every other page (BazaarError carries `hall`). */
 'use client';
 
 import { useParams } from 'next/navigation';

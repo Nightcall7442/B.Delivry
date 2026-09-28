@@ -2,8 +2,11 @@
  * Root layout: fonts, the signed-in courier and their shift, a header-less
  * stack. The courier app has two screens and no navigation chrome.
  */
-import { Alegreya_700Bold } from '@expo-google-fonts/alegreya';
-import { Caveat_700Bold } from '@expo-google-fonts/caveat';
+import {
+  Alegreya_500Medium_Italic,
+  Alegreya_700Bold,
+  Alegreya_700Bold_Italic,
+} from '@expo-google-fonts/alegreya';
 import {
   Manrope_500Medium,
   Manrope_600SemiBold,
@@ -12,6 +15,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/manrope';
 import { AuthProvider } from '@bazar/mobile';
+import { GROUND, hallLight } from '@bazar/storefront';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -28,8 +32,11 @@ export default function RootLayout() {
     Manrope_600SemiBold,
     Manrope_700Bold,
     Manrope_800ExtraBold,
+    // Alegreya names things, its italic is a line said aloud (and the evening greeting). No price
+    // signs here, so no Caveat.
     Alegreya_700Bold,
-    Caveat_700Bold,
+    Alegreya_700Bold_Italic,
+    Alegreya_500Medium_Italic,
   });
 
   useEffect(() => {
@@ -46,7 +53,8 @@ export default function RootLayout() {
           <Stack
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: '#101524' },
+              // Between screens: the hall's own dark, never a flash of another colour.
+              contentStyle: { backgroundColor: GROUND[hallLight()].deep },
               animation: 'fade',
             }}
           />

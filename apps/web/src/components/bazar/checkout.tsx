@@ -263,10 +263,10 @@ export function BazaarCheckout({
   const chip = (on: boolean) => `${s.chipPaper} ${on ? s.chipPaperOn : ''}`;
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       {ground ? (
         <div
-          className={`${s.photo} ${s.photoDim}`}
+          className={`photo-grade ${s.photo} ${s.photoDim}`}
           style={{ backgroundImage: `url(${photo(ground, 1280)})` }}
         />
       ) : null}
@@ -277,15 +277,10 @@ export function BazaarCheckout({
           </Link>
           <span className={s.tag}>{tr(store.name, locale)}</span>
         </div>
-        <div className={s.greeting} style={{ minHeight: 0, padding: '12px 0 26px' }}>
-          <h1 className={s.display} style={{ fontSize: 'clamp(36px, 5vw, 56px)' }}>
-            {t('checkout.title')}
-          </h1>
+        <div className={s.greeting} style={{ padding: '12px 0 26px' }}>
+          <h1 className={`${s.display} ${s.displayPage}`}>{t('checkout.title')}</h1>
           {followers.length > 0 ? (
-            <p
-              className={s.hand}
-              style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}
-            >
+            <p className={s.say} style={{ margin: '6px 0 0' }}>
               {t('checkout.oneTrip', {
                 stores: [store, ...followers.map((f) => f.store)]
                   .map((row) => tr(row.name, locale))
@@ -295,7 +290,7 @@ export function BazaarCheckout({
           ) : null}
         </div>
 
-        <section className={s.receipt}>
+        <section className={`${s.receipt} ${s.sheet}`}>
           <div className={s.rcHead}>
             <span className={s.rcTitle}>{t('receipt.address')}</span>
           </div>
@@ -308,7 +303,7 @@ export function BazaarCheckout({
             </span>
             <span style={{ minWidth: 0, flex: 1 }}>
               <span className={s.rcVendorMeta}>{t('checkout.where')}</span>
-              <span className={s.rcVendorName} style={{ fontSize: 19 }}>
+              <span className={s.rcName}>
                 {address ? addressLabel(address.text) : t('home.setAddress')}
               </span>
             </span>
@@ -447,7 +442,7 @@ export function BazaarCheckout({
                       {icon}
                     </span>
                     <span style={{ minWidth: 0, flex: 1 }}>
-                      <span className={s.rcName} style={{ fontSize: 17 }}>
+                      <span className={s.rcName}>
                         {method === PAYMENT_METHOD.BALANCE
                           ? t('payment.BALANCE.withAmount', { amount: t.money(balance) })
                           : text.title}
@@ -470,7 +465,7 @@ export function BazaarCheckout({
         <section className={s.receipt}>
           <div className={s.rcHead}>
             <span className={s.rcTitle}>{t('receipt.title')}</span>
-            <span className={s.rcDate}>{count > 0 ? t.n('cart.items', count) : ''}</span>
+            <span>{count > 0 ? t.n('cart.items', count) : ''}</span>
           </div>
           {[{ store, group }, ...followers].map((part) =>
             part.group ? (
@@ -486,9 +481,7 @@ export function BazaarCheckout({
                       style={{ alignItems: 'center', padding: '10px 0' }}
                     >
                       <span style={{ minWidth: 0, flex: 1 }}>
-                        <span className={s.rcName} style={{ fontSize: 17 }}>
-                          {tr(line.product.name, locale)}
-                        </span>
+                        <span className={s.rcName}>{tr(line.product.name, locale)}</span>
                         <span className={s.rcUnit}>
                           {t.qty(line.quantity)} {unitLabel(locale)[line.product.unit]}
                           {line.product.unit === 'KG' && part.store.id === store.id ? (
@@ -510,9 +503,7 @@ export function BazaarCheckout({
                           ) : null}
                         </span>
                       </span>
-                      <span className={s.rcSum} style={{ fontSize: 22, paddingTop: 0 }}>
-                        {t.money(lineTotal(line))}
-                      </span>
+                      <span className={s.rcSum}>{t.money(lineTotal(line))}</span>
                     </li>
                   ))}
                 </ul>
@@ -613,13 +604,7 @@ export function BazaarCheckout({
 
       <div className={s.bar}>
         <div className={s.barInner}>
-          <button
-            type="button"
-            className={s.checkout}
-            disabled={!ready}
-            onClick={submit}
-            style={{ opacity: ready ? 1 : 0.6 }}
-          >
+          <button type="button" className={s.checkout} disabled={!ready} onClick={submit}>
             <span style={{ flex: 1, textAlign: 'left' }}>
               <div className={s.checkoutTitle}>
                 {!address

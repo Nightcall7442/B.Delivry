@@ -67,7 +67,7 @@ export function BazaarProfile({ locale }: { locale: string }) {
     <li key={item.key}>
       <Link href={`${home}${item.href}`} className={s.payRow}>
         <span className={s.payIcon}>{item.icon}</span>
-        <span className={s.rcName} style={{ flex: 1, fontSize: 18 }}>
+        <span className={s.rcName} style={{ flex: 1 }}>
           {t(item.key)}
         </span>
         <span className={s.checkoutArrow} style={{ color: 'var(--pomegranate)' }}>
@@ -78,7 +78,7 @@ export function BazaarProfile({ locale }: { locale: string }) {
   );
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>
@@ -95,7 +95,7 @@ export function BazaarProfile({ locale }: { locale: string }) {
           <div className={s.rcVendor} style={{ margin: '12px 0 0' }}>
             <span
               className={`${s.avatar} ${s.avatarSmall}`}
-              style={{ width: 56, height: 56, fontSize: 26 }}
+              style={{ width: 56, height: 56, fontSize: 'var(--fs-headline)' }}
             >
               {user
                 ? user.firstName
@@ -104,7 +104,7 @@ export function BazaarProfile({ locale }: { locale: string }) {
                 : '·'}
             </span>
             <span style={{ minWidth: 0, flex: 1 }}>
-              <span className={s.rcVendorName} style={{ fontSize: 26 }}>
+              <span className={s.rcVendorName}>
                 {!ready ? '' : user ? user.firstName || user.phone : t('profile.guest')}
               </span>
               <span className={s.rcVendorMeta}>
@@ -144,14 +144,14 @@ export function BazaarProfile({ locale }: { locale: string }) {
           ) : null}
         </div>
 
-        <section className={s.receipt}>
+        <section className={`${s.receipt} ${s.sheet}`}>
           <div className={s.rcHead}>
             <span className={s.rcTitle}>{t('profile.services')}</span>
           </div>
           <ul className={s.rcLines}>{SERVICES.map(row)}</ul>
         </section>
 
-        <section className={s.receipt}>
+        <section className={`${s.receipt} ${s.sheet}`}>
           <div className={s.rcHead}>
             <span className={s.rcTitle}>{t('profile.more')}</span>
           </div>
@@ -173,9 +173,7 @@ export function BazaarProfile({ locale }: { locale: string }) {
                     <Chat />
                   </span>
                   <span style={{ minWidth: 0, flex: 1 }}>
-                    <span className={s.rcName} style={{ fontSize: 18 }}>
-                      {t('menu.telegram')}
-                    </span>
+                    <span className={s.rcName}>{t('menu.telegram')}</span>
                     <span className={s.rcUnit}>
                       {user.telegramLinked ? t('menu.telegramLinked') : t('menu.telegramHint')}
                     </span>

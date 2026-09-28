@@ -59,9 +59,12 @@ export function OrderChat({
   };
 
   return (
-    <section className="mt-3 rounded-2xl bg-surface-raise p-3 shadow-pop">
+    // On the courier's receipt: paper on paper lies flat.
+    <section className="mt-3 rounded-paper bg-surface-raise p-3">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-base font-bold">{t('chat.title')}</h2>
+        <h2 className="font-serif text-[length:var(--fs-lead)] font-bold leading-6">
+          {t('chat.title')}
+        </h2>
         <button type="button" className="text-sm text-ink-muted" onClick={onClose}>
           {t('common.close')}
         </button>
@@ -69,14 +72,15 @@ export function OrderChat({
       <div ref={list} className="mt-2 flex max-h-56 flex-col gap-1.5 overflow-y-auto py-1">
         {messages.length === 0 ? <p className="text-xs text-ink-muted">{t('chat.empty')}</p> : null}
         {messages.map((message) => {
+          // Pomegranate is only ever a button: my lines are kraft, theirs paper.
           const mine = message.senderRole === 'CUSTOMER';
           return (
             <div
               key={message.id}
-              className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${mine ? 'self-end rounded-br-sm bg-brand-500 text-white' : 'self-start rounded-bl-sm bg-sand-100'}`}
+              className={`max-w-[80%] rounded-paper px-3 py-2 text-sm ${mine ? 'self-end bg-[var(--kraft)]' : 'self-start bg-sand-100'}`}
             >
               <p>{message.text}</p>
-              <p className={`mt-0.5 text-[10px] ${mine ? 'text-white/75' : 'text-ink-muted'}`}>
+              <p className="mt-0.5 text-xs text-ink-muted">
                 {new Date(message.createdAt).toLocaleTimeString([], {
                   hour: '2-digit',
                   minute: '2-digit',

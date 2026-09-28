@@ -26,7 +26,7 @@ export function Demand({ storeId }: { storeId?: string }) {
     hint: string;
   }) => (
     <div className="card p-4">
-      <div className="text-xs uppercase tracking-wider text-ink-muted">{title}</div>
+      <div className="eyebrow">{title}</div>
       <p className="mt-1 text-xs text-ink-muted">{hint}</p>
       <ul className="mt-3 divide-y divide-line text-sm">
         {rows.length === 0 ? <li className="py-2 text-ink-muted">Пока пусто</li> : null}

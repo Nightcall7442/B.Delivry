@@ -1,8 +1,8 @@
 /**
  * Profile as the regular's card at the bazaar: a kraft card with the name in
- * serif and the phone under it, the balance and Plus written on it by hand,
- * then everything else as lists on paper slips. A guest gets the card blank
- * with one thing to do — sign in.
+ * serif and the phone under it, the balance and Plus stamped on it, then
+ * everything else as lists on paper slips lying on the hall. A guest gets the
+ * card blank with one thing to do — sign in.
  */
 import { PLUS } from '@bazar/constants';
 import { plusActive } from '@bazar/storefront';
@@ -11,7 +11,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useEffect, useState, type ComponentType } from 'react';
 import { Linking, Pressable, StyleSheet, Text as RNText, View } from 'react-native';
 
-import { sceneFont } from '@/components/bazar';
+import { caps, scene, sceneFont } from '@/components/bazar';
 import { Page } from '@/components/ui/Page';
 import {
   Basket,
@@ -30,14 +30,13 @@ import {
   User,
   api,
   color,
-  isDark,
   press,
+  radius,
+  scale,
+  shadow,
   useAuth,
   useLocale,
 } from '@bazar/mobile';
-
-const KRAFT = isDark ? '#1C2438' : '#E4D3AE';
-const PAPER = isDark ? '#151C2E' : '#F4EFE4';
 
 type IconComponent = ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
 interface Item {
@@ -98,7 +97,7 @@ export function ProfileScreen() {
         <View style={s.cardHead}>
           <View style={s.avatar}>
             {user && !user.firstName ? (
-              <User size={26} color="#FBF1DE" strokeWidth={2.4} />
+              <User size={26} color={scene.cream} strokeWidth={2.4} />
             ) : (
               <RNText style={s.avatarText}>
                 {(user?.firstName ?? '?').slice(0, 1).toUpperCase()}
@@ -136,7 +135,6 @@ export function ProfileScreen() {
                 pressed && press.down,
               ]}
             >
-              {plus ? <View style={s.pin} /> : null}
               <RNText style={s.stampLabel}>Bazar Plus</RNText>
               <RNText style={[s.stampValue, plus && { color: color.brand500 }]} numberOfLines={1}>
                 {plus
@@ -155,14 +153,10 @@ export function ProfileScreen() {
       </View>
 
       <RNText style={s.section}>{t('profile.services')}</RNText>
-      <View style={s.slip}>
-        <View style={s.perforation} />
-        {SERVICES.map(row)}
-      </View>
+      <View style={s.slip}>{SERVICES.map(row)}</View>
 
       <RNText style={s.section}>{t('profile.more')}</RNText>
       <View style={s.slip}>
-        <View style={s.perforation} />
         {MORE.map(row)}
         {user ? (
           <Pressable
@@ -214,18 +208,17 @@ export function ProfileScreen() {
   );
 }
 
+// The card is kraft and the slips are paper, both in the theme's own tones (the type on them is
+// theme-coloured); they lie on the hall, so they carry the one shadow. Labels on the ground are
+// the eyebrow's ochre.
 const s = StyleSheet.create({
   card: {
     marginTop: 8,
-    backgroundColor: KRAFT,
-    borderRadius: 8,
+    backgroundColor: color.field,
+    borderRadius: radius.paper,
     padding: 16,
     transform: [{ rotate: '-0.4deg' }],
-    shadowColor: '#3A2A1A',
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 5,
+    ...shadow.paper,
   },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   avatar: {
@@ -238,27 +231,21 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontFamily: sceneFont.display, fontSize: 26, color: '#FBF1DE' },
-  eyebrow: {
-    fontFamily: sceneFont.uiHeavy,
-    fontSize: 10,
-    letterSpacing: 1.2,
+  avatarText: { fontFamily: sceneFont.display, ...scale.title, color: scene.cream },
+  eyebrow: { ...caps, color: color.inkMuted },
+  name: { fontFamily: sceneFont.display, ...scale.title, color: color.ink, marginTop: 2 },
+  phone: {
+    fontFamily: sceneFont.uiText,
+    ...scale.body,
     color: color.inkMuted,
-    textTransform: 'uppercase',
+    fontVariant: ['tabular-nums'],
   },
-  name: {
-    fontFamily: sceneFont.display,
-    fontSize: 26,
-    lineHeight: 30,
-    color: color.ink,
-    marginTop: 2,
-  },
-  phone: { fontFamily: sceneFont.uiText, fontSize: 13, color: color.inkMuted },
   stamps: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  // Paper on kraft lies flat.
   stamp: {
     flex: 1,
-    backgroundColor: PAPER,
-    borderRadius: 4,
+    backgroundColor: color.surface,
+    borderRadius: radius.paper,
     padding: 12,
     paddingTop: 10,
     gap: 2,
@@ -266,58 +253,26 @@ const s = StyleSheet.create({
     borderColor: color.lineStrong,
   },
   stampPlus: { borderColor: color.saffron500, borderStyle: 'dashed' },
-  pin: {
-    position: 'absolute',
-    top: -6,
-    left: '50%',
-    marginLeft: -6,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: color.saffron500,
-    borderWidth: 1.5,
-    borderColor: color.saffron600,
-  },
-  stampLabel: {
+  stampLabel: { ...caps, color: color.inkMuted },
+  stampValue: {
     fontFamily: sceneFont.uiHeavy,
-    fontSize: 10,
-    letterSpacing: 1,
-    color: color.inkMuted,
-    textTransform: 'uppercase',
+    ...scale.lead,
+    color: color.ink,
+    fontVariant: ['tabular-nums'],
   },
-  stampValue: { fontFamily: sceneFont.hand, fontSize: 24, lineHeight: 28, color: color.ink },
-  section: {
-    fontFamily: sceneFont.uiHeavy,
-    fontSize: 10,
-    letterSpacing: 1.2,
-    color: color.inkMuted,
-    textTransform: 'uppercase',
-    marginTop: 24,
-    marginBottom: 10,
-    marginLeft: 4,
-  },
+  section: { ...caps, color: scene.ochreLight, marginTop: 24, marginBottom: 10, marginLeft: 4 },
   slip: {
-    backgroundColor: PAPER,
-    borderRadius: 6,
+    backgroundColor: color.surface,
+    borderRadius: radius.paper,
     paddingVertical: 4,
     paddingHorizontal: 14,
-    shadowColor: '#3A2A1A',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
-  perforation: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: -1,
-    height: 3,
-    borderStyle: 'dashed',
-    borderTopWidth: 3,
-    borderColor: color.ink,
-    opacity: 0.22,
+    ...shadow.paper,
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 13 },
-  signOut: { fontFamily: sceneFont.hand, fontSize: 20, color: color.inkMuted },
+  signOut: {
+    fontFamily: sceneFont.uiText,
+    ...scale.body,
+    color: scene.creamMuted,
+    textDecorationLine: 'underline',
+  },
 });

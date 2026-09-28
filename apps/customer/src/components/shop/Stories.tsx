@@ -4,7 +4,7 @@
  * photo, the person behind the counter and one way in. Auto-advances like
  * the format everyone already knows; nothing to learn.
  */
-import { tr, type MapStoreDto } from '@bazar/storefront';
+import { TONE, alpha, tr, type MapStoreDto } from '@bazar/storefront';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -19,8 +19,19 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { caps, ground, scene, sceneFont } from '@/components/bazar';
 import { ui } from '@/components/ui/Page';
-import { Photo, Text, color, noOutline, press, useLocale } from '@bazar/mobile';
+import {
+  Photo,
+  Text,
+  color,
+  noOutline,
+  press,
+  radius,
+  scale,
+  shadow,
+  useLocale,
+} from '@bazar/mobile';
 
 const STORY_MS = 5000;
 
@@ -168,8 +179,9 @@ export function StoryViewer({
         {...pan.panHandlers}
       >
         <Photo uri={photoOf(store)} style={StyleSheet.absoluteFill} priority="high" />
+        {/* The scrims carry the photograph into the ground, top and bottom. */}
         <LinearGradient
-          colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.75)']}
+          colors={[ground(0.55), ground(0), ground(0), ground(0.75)]}
           locations={[0, 0.25, 0.6, 1]}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
@@ -210,7 +222,12 @@ export function StoryViewer({
             ))}
           </View>
           <View style={s.topRow}>
-            <Photo uri={store.logoUrl ?? photoOf(store)} style={s.topAvatar} />
+            {/* A logo is not a photograph: no grade on it. */}
+            <Photo
+              uri={store.logoUrl ?? photoOf(store)}
+              grade={!store.logoUrl}
+              style={s.topAvatar}
+            />
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text role="body" numberOfLines={1} style={s.topName}>
                 {tr(store.name, locale)}
@@ -228,7 +245,7 @@ export function StoryViewer({
               accessibilityRole="button"
               accessibilityLabel={t('common.close')}
             >
-              <Text role="body" style={{ color: color.white, fontSize: 20, lineHeight: 22 }}>
+              <Text role="body" style={s.closeText}>
                 ×
               </Text>
             </Pressable>
@@ -287,41 +304,43 @@ const s = StyleSheet.create({
   avatar: { flex: 1, borderRadius: 30 },
   name: {
     color: color.ink,
-    fontSize: 11,
-    lineHeight: 13,
+    ...scale.caption,
     fontWeight: '600',
     maxWidth: 76,
     textAlign: 'center',
   },
-  bazaar: { color: color.inkMuted, fontSize: 10, lineHeight: 12, maxWidth: 76, marginTop: -2 },
-  viewer: { flex: 1, backgroundColor: '#0B1020', overflow: 'hidden' },
+  bazaar: { color: color.inkMuted, ...scale.caption, maxWidth: 76, marginTop: -2 },
+  // The story is a photograph over the ground: cream type, ochre capitals, the pomegranate button.
+  viewer: { flex: 1, backgroundColor: ground(1), overflow: 'hidden' },
   zone: { ...StyleSheet.absoluteFill, ...(noOutline as object) },
   top: { position: 'absolute', left: 0, right: 0, top: 0, paddingHorizontal: 12, gap: 10 },
   bars: { flexDirection: 'row', gap: 4 },
-  bar: { flex: 1, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.35)' },
-  barFill: { height: 3, borderRadius: 2, backgroundColor: color.white, width: '0%' },
+  bar: {
+    flex: 1,
+    height: 3,
+    borderRadius: radius.pill,
+    backgroundColor: alpha(TONE.creamLight, 0.35),
+  },
+  barFill: { height: 3, borderRadius: radius.pill, backgroundColor: scene.cream, width: '0%' },
   topRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   topAvatar: { width: 36, height: 36, borderRadius: 18 },
-  topName: { color: color.white, fontWeight: '700', fontSize: 15 },
-  topTime: { color: 'rgba(255,255,255,0.8)' },
+  topName: { fontFamily: sceneFont.display, ...scale.body, color: scene.cream },
+  topTime: { color: scene.creamMuted },
   close: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  closeText: { color: scene.cream, ...scale.title },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 20, gap: 6 },
-  eyebrow: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  owner: { color: color.white, fontSize: 26, lineHeight: 30 },
-  motto: { color: 'rgba(255,255,255,0.9)', fontSize: 16, lineHeight: 22 },
+  eyebrow: { ...caps, color: scene.ochreLight },
+  owner: { color: scene.cream },
+  motto: { fontFamily: sceneFont.italic, ...scale.lead, color: scene.cream },
   cta: {
     marginTop: 12,
     height: 52,
-    borderRadius: 16,
-    backgroundColor: color.white,
+    borderRadius: radius.pill,
+    backgroundColor: scene.pomegranate,
     alignItems: 'center',
     justifyContent: 'center',
+    // Over the photograph it lifts, like every CTA over the ground.
+    ...shadow.paper,
   },
-  ctaText: { color: ui.brandDeep, fontWeight: '700' },
+  ctaText: { fontFamily: sceneFont.display, ...scale.lead, color: scene.cream },
 });

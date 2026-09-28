@@ -1,8 +1,9 @@
 /**
- * The frame for every secondary screen: the bazaar hall behind, the scene's
- * top row (back or wordmark, the address as a kraft tag, cart, menu), the
- * page title in cream serif, the content on one sheet of paper, and on phones
- * a glass tab bar. The map screens keep GoShell.
+ * The frame for every secondary screen: the hall under the dome behind, the
+ * scene's top row (back or wordmark, the address as a kraft tag, cart, menu),
+ * the page title in cream serif, the content on one sheet of paper (a sheet,
+ * not a receipt: no perforated edge, it does not print in), and on phones a
+ * glass tab bar. The map screens keep GoShell.
  */
 'use client';
 
@@ -77,7 +78,7 @@ export function MarketShell({
   ];
 
   return (
-    <div className={bz.scene}>
+    <div className={`hall ${bz.scene}`}>
       <div className={`${bz.body} ${bz.narrow}`} style={{ paddingBottom: 120 }}>
         <div className={bz.top}>
           <div className="flex min-w-0 items-center gap-3">
@@ -93,7 +94,7 @@ export function MarketShell({
             ) : (
               <Link
                 href={`/${locale}`}
-                className="shrink-0 font-serif text-[26px] font-bold tracking-tight text-[#fbf1de]"
+                className="shrink-0 font-serif text-[length:var(--fs-headline)] font-bold leading-[34px] tracking-tight text-[var(--cream)]"
               >
                 {appName}
                 <span className="text-saffron-500">.</span>
@@ -147,17 +148,18 @@ export function MarketShell({
           />
         </form>
 
-        {/* The page's title row comes in as `header`: it sits on the scene, in cream serif. */}
+        {/* The page's title row comes in as `header`: it sits on the hall in cream serif, a
+            page title's steps (headline on a phone, display on a wide window). */}
         {header ? (
           <div
-            className={`${bz.greeting} [&_h1]:font-serif [&_h1]:text-[clamp(30px,4.6vw,44px)] [&_h1]:font-bold [&_h1]:leading-none [&_h1]:text-[#fbf1de] [&_p]:text-[#d9c7a6]`}
+            className={`${bz.greeting} [&_h1]:font-serif [&_h1]:text-[length:var(--fs-headline)] [&_h1]:font-bold [&_h1]:leading-[34px] [&_h1]:text-[var(--cream)] md:[&_h1]:text-[length:var(--fs-display)] md:[&_h1]:leading-[46px] [&_p]:text-[var(--cream-muted)]`}
             style={{ minHeight: 0, padding: '14px 0 22px' }}
           >
             {header}
           </div>
         ) : null}
 
-        <main className={bz.receipt}>
+        <main className={`${bz.receipt} ${bz.sheet}`}>
           {children}
           {footer ? <div className="mt-5">{footer}</div> : null}
         </main>
@@ -176,7 +178,7 @@ export function MarketShell({
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] ${active ? 'text-saffron-400' : 'text-[#d9c7a6]'}`}
+                className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 text-xs ${active ? 'text-[var(--ochre-light)]' : 'text-[var(--cream-muted)]'}`}
               >
                 {tab.icon}
                 {tab.badge ? <span className={bz.badge}>{tab.badge}</span> : null}
@@ -187,7 +189,7 @@ export function MarketShell({
           <button
             type="button"
             onClick={() => setMenu(true)}
-            className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-[#d9c7a6]"
+            className="flex flex-1 flex-col items-center justify-center gap-0.5 text-xs text-[var(--cream-muted)]"
           >
             <Burger />
             {t('common.menu')}

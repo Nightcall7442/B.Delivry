@@ -121,8 +121,9 @@ export default function OrderPage() {
         ← Все заказы
       </Link>
       <div className="mt-2 flex flex-wrap items-center gap-3">
-        <h1 className="font-display text-2xl font-extrabold">{order.number}</h1>
-        <span className={`badge ${label.tone}`}>{label.text}</span>
+        <h1 className="font-display text-headline font-extrabold">{order.number}</h1>
+        {/* On the ground the paper tones vanish: the stamp is pressed in ochre as text. */}
+        <span className="badge text-[var(--ochre-light)]">{label.text}</span>
         <span className="text-sm text-ink-muted">{when(order.placedAt)}</span>
       </div>
 
@@ -133,7 +134,7 @@ export default function OrderPage() {
       <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_360px]">
         <div className="flex flex-col gap-4">
           <section className="card p-4">
-            <h2 className="font-display text-base font-bold">Кто и куда</h2>
+            <h2 className="font-display text-lead font-bold">Кто и куда</h2>
             <dl className="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
               <dt className="text-ink-muted">Клиент</dt>
               <dd className="tabular-nums">
@@ -188,13 +189,13 @@ export default function OrderPage() {
           </section>
 
           <section className="card p-4">
-            <h2 className="font-display text-base font-bold">Состав</h2>
+            <h2 className="font-display text-lead font-bold">Состав</h2>
             <ul className="mt-2 divide-y divide-line text-sm">
               {order.items.map((item) => (
                 <li key={item.id} className="flex justify-between gap-3 py-2">
                   <span>
                     {tr(item.name, 'ru')}{' '}
-                    <span className="text-ink-muted">
+                    <span className="tabular-nums text-ink-muted">
                       × {item.actualQuantity ?? item.quantity} {UNIT_LABEL[item.unit]}
                     </span>
                   </span>
@@ -217,7 +218,7 @@ export default function OrderPage() {
           </section>
 
           <section className="card p-4">
-            <h2 className="font-display text-base font-bold">История</h2>
+            <h2 className="font-display text-lead font-bold">История</h2>
             <ol className="mt-2 text-sm">
               {order.statusHistory.map((entry, index) => (
                 <li key={`${entry.status}-${index}`} className="flex gap-3 py-1">
@@ -238,7 +239,7 @@ export default function OrderPage() {
 
         <aside className="flex flex-col gap-4">
           <section className="card p-4">
-            <h2 className="font-display text-base font-bold">Курьер</h2>
+            <h2 className="font-display text-lead font-bold">Курьер</h2>
             {courier ? (
               <div className="mt-2 text-sm">
                 <div className="font-medium">
@@ -314,7 +315,7 @@ export default function OrderPage() {
           </section>
 
           <section className="card p-4">
-            <h2 className="font-display text-base font-bold">Статус</h2>
+            <h2 className="font-display text-lead font-bold">Статус</h2>
             <div className="mt-2 flex flex-col gap-2">
               {order.status === ORDER_STATUS.PENDING ? (
                 <button

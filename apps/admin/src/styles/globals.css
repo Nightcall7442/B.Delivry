@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @layer base {
-  /* The same bazaar as the app and the site: pomegranate, saffron, cream paper, kraft. */
+  /* The same bazaar as the app and the site: pomegranate, ochre, cream paper, kraft. */
   :root {
     --brand-50: 248 233 230;
     --brand-100: 238 200 196;
@@ -35,21 +35,182 @@
     --sand-100: 244 237 225;
     --sand-200: 234 216 178;
     --sand-300: 201 185 154;
-    /* Self-hosted faces (@fontsource-variable) — next/font used to define these. */
-    --font-sans: 'Roboto Variable';
+    /* Self-hosted faces (@fontsource-variable): Manrope runs the cabinet, Alegreya names things. */
+    --font-sans: 'Manrope Variable';
     --font-display: 'Alegreya Variable';
-    --font-hand: 'Caveat Variable';
-    /* The scene's own colours, as the app and the site name them. */
+  }
+}
+
+/*
+ * «Свет купола» — packages/storefront/src/dome.ts is the source of these values (HALL, TONE,
+ * GROUND), under the same names as the site's globals.css; keep them in step. The palette only as
+ * far as the cabinet uses it, the scale whole. The hall's light (data-hall) is stamped before
+ * paint by the root layout.
+ */
+@layer base {
+  :root {
+    --ochre: #e39b2f;
+    --ochre-light: #f2c56b;
+    --paper: #f4efe4;
+    --ink-paper: #2b1b0e;
+    --ink-soft: #6a5a44;
     --cream: #fbf1de;
     --cream-muted: #d9c7a6;
-    --paper: #f4efe4;
-    --paper-edge: #c9b99a;
     --kraft: #ead8b2;
-    --kraft-deep: #dcc59a;
-    --pomegranate: #9e2a2b;
-    --saffron: #e39b2f;
-    --night: #101524;
-    --night-rgb: 16 21 36;
+    --paper-edge: #c9b99a;
+    --board: #16213d;
+    /* The ground: the dome in the morning, lapis under the lamps. Channels for every scrim. */
+    --ground-top: #1b4a48;
+    --ground: #123a3a;
+    --ground-deep: #0a2424;
+    --ground-rgb: 18 58 58;
+    --ground-deep-rgb: 10 36 36;
+    --light-rgb: 255 226 176;
+    --hall-tile: url('/dome/morning.svg');
+    /* The door: the photograph of the rows at the sign-in, at the hour's light. */
+    --door: url('/scenes/morning.jpg');
+
+    /* One scale; nothing between its steps. */
+    --fs-caption: 12px;
+    --fs-body: 14px;
+    --fs-lead: 17px;
+    --fs-title: 22px;
+    --fs-headline: 30px;
+    --fs-display: 44px;
+
+    /* One shadow — the ground's own dark, never black — one paper corner, and glass. */
+    --shadow: 0 12px 28px rgb(var(--ground-deep-rgb) / 0.5);
+    --radius-paper: 6px;
+    --glass: rgb(var(--ground-rgb) / 0.55);
+    --glass-edge: rgba(251, 241, 222, 0.22);
+    --glass-blur: blur(12px);
+
+    /* One camera for every photograph: the film's warm morning light, its contrast, grain. */
+    --photo-grade: saturate(1.06) contrast(1.05) sepia(0.06);
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+    /* The hall, layer by layer: grain, vignette, the pattern sinking into the rows, the girih, the dome. */
+    --hall-ground:
+      var(--grain),
+      radial-gradient(
+        130% 90% at 50% 32%,
+        transparent 45%,
+        rgb(var(--ground-deep-rgb) / 0.62) 100%
+      ),
+      linear-gradient(
+        rgb(var(--ground-deep-rgb) / 0) 0%,
+        rgb(var(--ground-deep-rgb) / 0.3) 42%,
+        rgb(var(--ground-deep-rgb) / 0.84) 100%
+      ),
+      var(--hall-tile) 50% 0 / 672px 672px repeat,
+      linear-gradient(var(--ground-top), var(--ground) 42%, var(--ground-deep));
+    /* Morning: three shafts from the ring of arched windows above the frame. */
+    --hall-light:
+      linear-gradient(
+        104deg,
+        transparent 6%,
+        rgb(var(--light-rgb) / 0.11) 12%,
+        rgb(var(--light-rgb) / 0.16) 15%,
+        rgb(var(--light-rgb) / 0.11) 18%,
+        transparent 25%
+      ),
+      linear-gradient(
+        104deg,
+        transparent 38%,
+        rgb(var(--light-rgb) / 0.085) 45%,
+        rgb(var(--light-rgb) / 0.125) 49%,
+        rgb(var(--light-rgb) / 0.085) 53%,
+        transparent 61%
+      ),
+      linear-gradient(
+        104deg,
+        transparent 70%,
+        rgb(var(--light-rgb) / 0.1) 77%,
+        rgb(var(--light-rgb) / 0.14) 80%,
+        rgb(var(--light-rgb) / 0.1) 83%,
+        transparent 90%
+      );
+    --hall-light-mask: linear-gradient(#000, rgba(0, 0, 0, 0.4) 55%, transparent 92%);
+  }
+
+  /* Evening: the same dome in lapis, the windows dark, a string of lamps over the rows. */
+  :root[data-hall='evening'] {
+    --ground-top: #17264a;
+    --ground: #0e1a33;
+    --ground-deep: #070e1e;
+    --ground-rgb: 14 26 51;
+    --ground-deep-rgb: 7 14 30;
+    --light-rgb: 255 184 102;
+    --hall-tile: url('/dome/evening.svg');
+    --door: url('/scenes/evening.jpg');
+    --hall-light:
+      radial-gradient(
+        circle at 10% 81px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 20% 89px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 30% 94px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 40% 97px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 50% 98px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 60% 97px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 70% 94px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 80% 89px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      radial-gradient(
+        circle at 90% 81px,
+        rgba(255, 236, 196, 0.95) 0 2.5px,
+        rgba(255, 190, 110, 0.3) 4px,
+        rgba(255, 160, 70, 0.1) 22px,
+        transparent 56px
+      ),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120' preserveAspectRatio='none'%3E%3Cpath d='M-2 62 Q50 118 102 62' fill='none' stroke='%23040810' stroke-opacity='.7' stroke-width='1.2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")
+        0 0 / 100% 120px no-repeat,
+      radial-gradient(90% 34% at 50% 0, rgba(255, 170, 80, 0.12), transparent 70%);
+    --hall-light-mask: none;
   }
 
   body {
@@ -66,114 +227,231 @@
 }
 
 @layer components {
-  /* The counter's back office: paper on the bazaar, big targets, handwritten numbers. */
+  /*
+   * The hall under a scene page (the sign-in, the 404): put `hall` on the page's outermost
+   * element. Two fixed layers sit behind everything the page draws (isolation keeps them under
+   * z-index 0 content): the dome itself, and its light — shafts that breathe in the morning,
+   * lamps that flicker at night.
+   */
+  .hall {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--ground-deep);
+  }
+  .hall::before,
+  .hall::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+  .hall::before {
+    z-index: -2;
+    background: var(--hall-ground);
+  }
+  .hall::after {
+    z-index: -1;
+    background: var(--hall-light);
+    -webkit-mask-image: var(--hall-light-mask);
+    mask-image: var(--hall-light-mask);
+    animation: hall-breathe 16s ease-in-out infinite alternate;
+  }
+  :root[data-hall='evening'] .hall::after {
+    animation: hall-flicker 6s ease-in-out infinite alternate;
+  }
+  @keyframes hall-breathe {
+    from {
+      opacity: 0.72;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes hall-flicker {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    43% {
+      opacity: 0.9;
+    }
+    47% {
+      opacity: 0.97;
+    }
+    71% {
+      opacity: 0.92;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hall::after {
+      animation: none;
+    }
+  }
 
-  /* The bazaar hall behind everything, dimmed so paper reads on it. */
-  /* The night behind the counter, warm where the lamps hang. The photograph
-     of the rows is kept for the login screen — everywhere else it was
-     wallpaper under the paper. */
+  /* The door at the sign-in: the rows, graded (`photo-grade`) and dimmed into the ground's dark. */
+  .door {
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(
+        rgb(var(--ground-deep-rgb) / 0.4),
+        rgb(var(--ground-deep-rgb) / 0.55) 50%,
+        rgb(var(--ground-deep-rgb) / 0.7)
+      ),
+      var(--door) center / cover no-repeat;
+  }
+
+  /* Behind the dashboard: the hall's own colours without the girih or its moving light — the
+     office stays quiet. The whole hall is for the door and the 404. */
   .ground {
     position: fixed;
     inset: 0;
     z-index: -1;
-    background:
-      radial-gradient(120% 60% at 50% -10%, rgba(227, 155, 47, 0.16), rgba(227, 155, 47, 0) 60%),
-      radial-gradient(90% 50% at 100% 100%, rgba(158, 42, 43, 0.14), rgba(158, 42, 43, 0) 65%),
-      var(--night);
+    background: linear-gradient(var(--ground-top), var(--ground) 42%, var(--ground-deep));
   }
 
+  /* Glass: what floats over the ground — the one tint, the one edge, the one blur. */
+  .glass {
+    background: var(--glass);
+    border: 1px solid var(--glass-edge);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+  }
+
+  /* The one capital: small caps in ochre over the ground, ink-soft on paper. */
+  .eyebrow {
+    font-family: var(--font-sans), 'Manrope', system-ui, sans-serif;
+    font-size: var(--fs-caption);
+    line-height: 16px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ochre-light);
+  }
+  .card .eyebrow {
+    color: var(--ink-soft);
+  }
+
+  /*
+   * One camera: on the element that paints a photograph (a background box, or a wrapper around
+   * an <img>). Warm light from the upper left, a soft vignette, the grain. The element must be
+   * positioned; its own ::after is taken.
+   */
+  .photo-grade {
+    filter: var(--photo-grade);
+  }
+  .photo-grade::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      var(--grain),
+      radial-gradient(95% 85% at 50% 42%, transparent 55%, rgb(var(--ground-deep-rgb) / 0.34) 100%),
+      linear-gradient(155deg, rgba(255, 214, 150, 0.16), rgba(255, 214, 150, 0) 46%);
+  }
+
+  /* The pomegranate stamp and its paper siblings: pills, Alegreya on the label. */
   .btn {
-    @apply inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-[15px] font-bold transition-colors
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 font-bold transition-colors
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron-400 focus-visible:ring-offset-2
            disabled:cursor-not-allowed disabled:opacity-50;
     font-family: var(--font-display), Georgia, serif;
+    font-size: var(--fs-lead);
   }
+  /* Flat: it lies on paper. The one shadow is for what lifts off the ground. */
   .btn-primary {
-    @apply btn bg-brand-500 text-[#fbf1de] hover:bg-brand-600 active:bg-brand-700;
-    box-shadow: 0 8px 20px rgba(158, 42, 43, 0.28);
+    @apply btn bg-brand-500 hover:bg-brand-600 active:bg-brand-700;
+    color: var(--cream);
   }
   /* Inherits its colour: cream on the ground, ink on paper. */
   .btn-secondary {
-    @apply btn border bg-transparent hover:bg-[rgba(227,155,47,0.12)];
+    @apply btn border bg-transparent;
     color: inherit;
     border-color: currentColor;
+  }
+  .btn-secondary:hover {
+    background-color: color-mix(in srgb, var(--ochre) 12%, transparent);
   }
   .btn-danger {
     @apply btn border border-danger/30 bg-transparent text-danger hover:bg-danger/5;
   }
 
-  /* A line on the paper: cream field, dashed rule underneath, handwritten. */
+  /* A line on the paper: a kraft wash, a dashed rule underneath; typed in Manrope. */
   .field {
-    @apply h-11 w-full rounded-t-lg border-0 border-b-2 border-dashed border-line-strong bg-[rgba(234,216,178,0.4)] px-3 text-[17px] text-ink
-           placeholder:text-ink-faint focus:border-brand-500 focus:bg-[rgba(234,216,178,0.6)] focus:outline-none;
-    font-family: var(--font-hand), 'Caveat', cursive;
-    font-weight: 700;
+    @apply h-11 w-full border-0 border-b-2 border-dashed border-line-strong px-3 text-ink
+           placeholder:text-ink-faint focus:border-brand-500 focus:outline-none;
+    border-radius: var(--radius-paper) var(--radius-paper) 0 0;
+    background-color: color-mix(in srgb, var(--kraft) 40%, transparent);
+    font-family: var(--font-sans), 'Manrope', sans-serif;
+    font-size: var(--fs-lead);
   }
-  select.field {
-    font-family: var(--font-sans), sans-serif;
-    font-weight: 400;
-    font-size: 14px;
+  .field:focus {
+    background-color: color-mix(in srgb, var(--kraft) 60%, transparent);
   }
   textarea.field {
     @apply h-auto py-2;
   }
 
-  /* A sheet of paper with a perforated top edge. */
+  /* A sheet of paper lifted off the ground: the paper corner, a worn edge, the one shadow. */
   .card {
-    @apply relative rounded-md border border-[#e6dcc6] bg-[#f4efe4] text-ink;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-  }
-  .card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: -1px;
-    height: 8px;
-    background: radial-gradient(circle at 50% 0, var(--night) 4px, transparent 4.5px) 0 0 / 16px 8px
-      repeat-x;
-    opacity: 0.9;
-    pointer-events: none;
+    @apply relative text-ink;
+    border: 1px solid color-mix(in srgb, var(--paper-edge) 40%, var(--paper));
+    border-radius: var(--radius-paper);
+    background: var(--paper);
+    box-shadow: var(--shadow);
   }
 
-  /* Status as a rubber stamp. */
+  /* Status as a rubber stamp: the capital, pressed in its own colour. */
   .badge {
-    @apply inline-flex items-center rounded-md border-2 px-2 py-0.5 text-[15px] leading-tight;
-    font-family: var(--font-hand), 'Caveat', cursive;
-    font-weight: 700;
+    @apply inline-flex items-center border-2 px-2 py-0.5 uppercase;
+    font-family: var(--font-sans), 'Manrope', sans-serif;
+    font-size: var(--fs-caption);
+    line-height: 16px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    border-radius: var(--radius-paper);
     border-color: currentColor;
     background: transparent !important;
     transform: rotate(-2deg);
   }
+  /* The stamp that is set (paid, on sale, the tag the stall wears): the chosen sign's ochre. */
+  .badge.badge-ok {
+    color: var(--ink-paper);
+    border-color: var(--ochre);
+    background: color-mix(in srgb, var(--ochre) 22%, transparent) !important;
+  }
 
-  /* The sidebar is kraft; the links are handwritten, the active one a pinned sign. */
+  /* The plan of the rows: each link a label in the capital, the current one a slip of paper on it
+     (flat — it lies on kraft; no pin — pins are for price signs). */
   .nav-link {
-    @apply relative flex h-11 items-center rounded-md px-3 text-[20px] text-ink hover:bg-[rgba(0,0,0,0.05)];
-    font-family: var(--font-hand), 'Caveat', cursive;
-    font-weight: 700;
+    @apply relative flex h-11 items-center px-3 uppercase;
+    border-radius: var(--radius-paper);
+    font-family: var(--font-sans), 'Manrope', sans-serif;
+    font-size: var(--fs-caption);
+    line-height: 16px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: inherit;
+  }
+  .nav-link:hover {
+    background-color: color-mix(in srgb, currentColor 8%, transparent);
   }
   .nav-link[aria-current='page'] {
-    @apply bg-[#fbf5e6] text-[#1f1a14] uppercase;
     border: 1px solid var(--paper-edge);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
-    transform: rotate(-1deg);
-  }
-  .nav-link[aria-current='page']::before {
-    content: '';
-    position: absolute;
-    top: -5px;
-    left: 50%;
-    width: 9px;
-    height: 9px;
-    margin-left: -4px;
-    border-radius: 50%;
-    background: #b42a31;
-    border: 1px solid #8e1f26;
+    background: var(--paper);
+    color: var(--ink-paper);
   }
 
-  /* Tables live on paper: dashed rules, uppercase kraft headers. */
+  /* Tables live on paper: dashed rules, the capital over the columns. */
   table thead th {
-    @apply text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted;
+    @apply uppercase;
+    font-size: var(--fs-caption);
+    line-height: 16px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: var(--ink-soft);
   }
   table tbody tr {
     border-top: 1px dashed var(--paper-edge);
@@ -181,18 +459,14 @@
   .divide-line > * + * {
     border-top: 1px dashed var(--paper-edge) !important;
   }
-  .hand {
-    font-family: var(--font-hand), 'Caveat', cursive;
-    font-weight: 700;
-  }
 }
 
 /* Muted text on the ground (outside any paper) reads in cream, not ink.
    Attribute selectors on purpose: a `.text-ink` class selector here would be
    folded into the utility and clash with the `@apply text-ink` above. */
 .on-ground [class~='text-ink-muted']:not(.card [class~='text-ink-muted']) {
-  color: #d9c7a6;
+  color: var(--cream-muted);
 }
 .on-ground [class~='text-ink']:not(.card [class~='text-ink']) {
-  color: #fbf1de;
+  color: var(--cream);
 }

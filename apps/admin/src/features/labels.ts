@@ -5,10 +5,11 @@
 import type { OrderStatus } from '@bazar/constants';
 import type { CourierStatus, DeliveryStatus } from '@bazar/constants';
 
+// Ochre does not read as text on paper (2.8:1): its stamps keep the ochre rim and ink letters.
 export const ORDER_LABEL: Record<OrderStatus, { text: string; tone: string }> = {
-  PENDING: { text: 'Новый', tone: 'bg-saffron-100 text-saffron-600' },
+  PENDING: { text: 'Новый', tone: 'border-saffron-500 text-ink' },
   CONFIRMED: { text: 'Подтверждён', tone: 'bg-brand-50 text-brand-700' },
-  SEARCHING_COURIER: { text: 'Ищем курьера', tone: 'bg-saffron-100 text-saffron-600' },
+  SEARCHING_COURIER: { text: 'Ищем курьера', tone: 'border-saffron-500 text-ink' },
   COURIER_ASSIGNED: { text: 'Курьер назначен', tone: 'bg-brand-50 text-brand-700' },
   COURIER_ARRIVED_PICKUP: { text: 'Курьер у продавца', tone: 'bg-brand-50 text-brand-700' },
   PICKING_UP: { text: 'Сборка', tone: 'bg-brand-50 text-brand-700' },

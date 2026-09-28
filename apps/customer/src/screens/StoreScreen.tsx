@@ -5,7 +5,6 @@
  * opens it full-size (the "counter now" story); the cart pill floats.
  */
 import { arrivedToday, estimateDelivery, tr, unitLabel } from '@bazar/storefront';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -17,7 +16,7 @@ import {
   Display,
   Eyebrow,
   Glass,
-  Hand,
+  Say,
   Scene,
   SceneButton,
   Sign,
@@ -30,7 +29,18 @@ import { useAddress } from '@/features/address/store';
 import { useCart, useCartActions } from '@/features/cart/store';
 import { getStore, listCategories, listProducts } from '@/lib/catalog';
 import { EMPTY, useList, useLoad } from '@/lib/use-data';
-import { ArrowLeft, Clock, Heart, Scooter, Star, useLocale } from '@bazar/mobile';
+import {
+  ArrowLeft,
+  Clock,
+  Heart,
+  Photo,
+  Scooter,
+  Star,
+  radius,
+  scale,
+  shadow,
+  useLocale,
+} from '@bazar/mobile';
 
 export function StoreScreen({ storeId }: { storeId: string }) {
   const router = useRouter();
@@ -75,9 +85,9 @@ export function StoreScreen({ storeId }: { storeId: string }) {
     : null;
 
   return (
-    <View style={{ flex: 1, backgroundColor: scene.night }}>
+    <View style={{ flex: 1 }}>
       <Scene source={hero} style={StyleSheet.absoluteFill}>
-        <View />
+        {null}
       </Scene>
 
       {store ? (
@@ -107,17 +117,14 @@ export function StoreScreen({ storeId }: { storeId: string }) {
               {store.ownerName ? (
                 <View style={s.avatar}>
                   <Text style={s.avatarInitial}>{store.ownerName.slice(0, 1)}</Text>
-                  {person ? (
-                    <Image
-                      source={{ uri: person }}
-                      style={StyleSheet.absoluteFill}
-                      contentFit="cover"
-                      cachePolicy="memory-disk"
-                    />
-                  ) : null}
+                  {person ? <Photo uri={person} style={s.avatarPhoto} /> : null}
                 </View>
               ) : null}
-              <Display size={store.ownerName ? 40 : 32} style={{ flex: 1 }} numberOfLines={2}>
+              <Display
+                step={store.ownerName ? 'display' : 'headline'}
+                style={{ flex: 1 }}
+                numberOfLines={2}
+              >
                 {store.ownerName ?? tr(store.name, locale)}
               </Display>
             </View>
@@ -127,17 +134,15 @@ export function StoreScreen({ storeId }: { storeId: string }) {
               </Text>
             ) : null}
             {store.ownerMotto ? (
-              <Hand size={25} numberOfLines={3}>
-                «{tr(store.ownerMotto, locale)}»
-              </Hand>
+              <Say numberOfLines={3}>«{tr(store.ownerMotto, locale)}»</Say>
             ) : store.description ? (
-              <Hand size={22} color={scene.creamMuted} numberOfLines={2}>
+              <Say color={scene.creamMuted} numberOfLines={2}>
                 {tr(store.description, locale)}
-              </Hand>
+              </Say>
             ) : null}
             <View style={s.pills}>
               <Glass style={s.pill}>
-                <Star size={14} color={scene.saffron} fill={scene.saffron} />
+                <Star size={14} color={scene.ochreLight} fill={scene.ochreLight} />
                 <Text style={s.pillText}>
                   {store.rating.toFixed(1)}
                   {store.reviewCount ? ` · ${store.reviewCount}` : ''}
@@ -177,7 +182,7 @@ export function StoreScreen({ storeId }: { storeId: string }) {
                 contentContainerStyle={s.chips}
                 style={{ marginHorizontal: -20 }}
               >
-                <Pressable onPress={() => setCategory(null)}>
+                <Pressable onPress={() => setCategory(null)} hitSlop={6}>
                   <Glass style={[s.chip, category === null && s.chipOn]}>
                     <Text style={[s.chipText, category === null && s.chipTextOn]}>
                       {t('common.all')}
@@ -185,7 +190,7 @@ export function StoreScreen({ storeId }: { storeId: string }) {
                   </Glass>
                 </Pressable>
                 {present.map((c) => (
-                  <Pressable key={c.id} onPress={() => setCategory(c.id)}>
+                  <Pressable key={c.id} onPress={() => setCategory(c.id)} hitSlop={6}>
                     <Glass style={[s.chip, category === c.id && s.chipOn]}>
                       <Text style={[s.chipText, category === c.id && s.chipTextOn]}>
                         {tr(c.name, locale)}
@@ -288,30 +293,36 @@ const s = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     borderWidth: 3,
-    borderColor: scene.saffron,
-    backgroundColor: '#3A2A1A',
+    borderColor: scene.ochre,
+    backgroundColor: scene.board,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarInitial: { fontFamily: sceneFont.display, fontSize: 22, color: scene.saffronLight },
-  storeName: { fontFamily: sceneFont.ui, fontSize: 13, color: scene.creamMuted, marginTop: -2 },
+  avatarPhoto: { ...StyleSheet.absoluteFill, borderRadius: 0 },
+  avatarInitial: { fontFamily: sceneFont.display, ...scale.title, color: scene.ochreLight },
+  storeName: { fontFamily: sceneFont.ui, ...scale.body, color: scene.creamMuted, marginTop: -2 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
   pill: {
     height: 32,
-    borderRadius: 16,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  pillText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
-  closed: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.saffronLight },
+  // Rating, minutes and the fee: tabular figures.
+  pillText: {
+    fontFamily: sceneFont.ui,
+    ...scale.caption,
+    color: scene.cream,
+    fontVariant: ['tabular-nums'],
+  },
+  closed: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.ochreLight },
   counter: { paddingHorizontal: 20, paddingTop: 22, gap: 12 },
   chips: { paddingHorizontal: 20, gap: 6 },
-  chip: { height: 32, borderRadius: 16, paddingHorizontal: 12, justifyContent: 'center' },
+  chip: { height: 32, paddingHorizontal: 12, justifyContent: 'center' },
   chipOn: { backgroundColor: scene.cream, borderColor: scene.cream },
-  chipText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
+  chipText: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.cream },
   chipTextOn: { color: scene.ink },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 14, paddingTop: 4 },
   sign: { width: '47%', flexGrow: 1 },
@@ -320,19 +331,25 @@ const s = StyleSheet.create({
     left: 20,
     right: 20,
     height: 56,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     backgroundColor: scene.pomegranate,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 18,
-    shadowColor: scene.pomegranate,
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    ...shadow.paper,
   },
-  cartTitle: { fontFamily: sceneFont.uiHeavy, fontSize: 13, color: scene.cream },
-  cartSub: { fontFamily: sceneFont.uiText, fontSize: 10.5, color: '#D9C7A6' },
-  cartTotal: { fontFamily: sceneFont.display, fontSize: 18, color: scene.cream },
+  cartTitle: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.body,
+    color: scene.cream,
+    fontVariant: ['tabular-nums'],
+  },
+  cartSub: { fontFamily: sceneFont.uiText, ...scale.caption, color: scene.creamMuted },
+  cartTotal: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.lead,
+    color: scene.cream,
+    fontVariant: ['tabular-nums'],
+  },
 });

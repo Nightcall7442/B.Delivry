@@ -43,6 +43,8 @@ export function BazaarBundle({
   const quantities = useCartQuantities();
   const { setQuantity } = useCartActions();
   const [added, setAdded] = useState(false);
+  // The sign that just went into the basket swings on its pin (see ProductCard).
+  const [swinging, setSwinging] = useState<string | null>(null);
 
   const resolved = useMemo(() => resolveBundle(bundle, products), [bundle, products]);
   const storeById = useMemo(() => new Map(stores.map((store) => [store.id, store])), [stores]);
@@ -59,9 +61,9 @@ export function BazaarBundle({
   };
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div
-        className={`${s.photo} ${s.photoDim}`}
+        className={`photo-grade ${s.photo} ${s.photoDim}`}
         style={{ backgroundImage: `url(${photo(bundle.photo, 1280)})` }}
       />
       <div className={s.body}>
@@ -73,18 +75,8 @@ export function BazaarBundle({
         </div>
 
         <div className={s.greeting} style={{ minHeight: '30vh', padding: '12px 0 22px' }}>
-          <h1 className={s.display} style={{ fontSize: 'clamp(36px, 5vw, 56px)' }}>
-            {tr(bundle.title, locale)}
-          </h1>
-          <p
-            className={s.hand}
-            style={{
-              fontSize: 22,
-              margin: '8px 0 0',
-              color: 'var(--cream-muted)',
-              maxWidth: '44ch',
-            }}
-          >
+          <h1 className={`${s.display} ${s.displayPage}`}>{tr(bundle.title, locale)}</h1>
+          <p className={s.say} style={{ margin: '8px 0 0', maxWidth: '44ch' }}>
             {tr(bundle.description, locale)}
           </p>
         </div>
@@ -114,14 +106,16 @@ export function BazaarBundle({
               <div key={line.product.id} className={s.card}>
                 <Link
                   href={`${home}/stores/${line.product.storeId}`}
-                  className={s.cardPhoto}
+                  className={`${s.cardPhoto} ${image ? 'photo-grade' : ''}`}
                   style={image ? { backgroundImage: `url(${photo(image, 960)})` } : undefined}
                   aria-label={tr(line.product.name, locale)}
                 />
                 <div
-                  className={`${s.sign} ${i % 2 ? s.signRight : ''} ${qty > 0 ? s.signChosen : ''}`}
+                  className={`${s.sign} ${i % 2 ? s.signRight : ''} ${qty > 0 ? s.signChosen : ''} ${swinging === line.product.id ? s.signSwing : ''}`}
                   style={{ transform: `rotate(${[-1.2, 1, 0.6, -0.8][i % 4]}deg)` }}
+                  onAnimationEnd={() => setSwinging(null)}
                 >
+                  <span className={s.pin} aria-hidden />
                   <div className={s.signTitle}>{tr(line.product.name, locale)}</div>
                   <div className={s.signPrice}>
                     {t.qty(line.quantity)} {units[line.product.unit]} · {t.money(line.total)}
@@ -131,7 +125,10 @@ export function BazaarBundle({
                   ) : null}
                   <button
                     type="button"
-                    onClick={() => setQuantity(line.product.id, qty + line.quantity)}
+                    onClick={() => {
+                      if (qty === 0) setSwinging(line.product.id);
+                      setQuantity(line.product.id, qty + line.quantity);
+                    }}
                     className={`${s.plus} ${qty > 0 ? s.plusChosen : ''}`}
                     aria-label={t('common.add')}
                   >
@@ -146,15 +143,12 @@ export function BazaarBundle({
         </div>
 
         {resolved.missing.length > 0 ? (
-          <p
-            className={s.hand}
-            style={{ fontSize: 20, margin: '18px 0 0', color: 'var(--cream-muted)' }}
-          >
+          <p className={s.say} style={{ margin: '18px 0 0' }}>
             {t.n('bundle.missing', resolved.missing.length)}
           </p>
         ) : null}
         {stalls.length > 1 ? (
-          <p className={s.eyebrow} style={{ marginTop: 12 }}>
+          <p className="eyebrow" style={{ marginTop: 12 }}>
             {t('bundle.multiStall', { count: stalls.length })}
           </p>
         ) : null}

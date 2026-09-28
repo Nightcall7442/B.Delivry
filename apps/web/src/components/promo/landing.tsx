@@ -296,85 +296,91 @@ export function PromoLanding({ locale }: { locale: string }) {
         {(p) => <Film p={p} c={c} onP={setP} />}
       </ScrollFilm>
 
-      {/* What was on the table — the real products, priced as on the counter */}
-      <section id="table" className={styles.tableSection}>
-        <div className={styles.inner}>
-          <div className={styles.head}>
-            <h2 className={styles.h2}>{c.products.title}</h2>
-            <div className={styles.lineDark}>{c.products.line}</div>
-          </div>
-          <div className={styles.products}>
-            {c.products.items.map(([id, name, price, unit, who, say], i) => (
-              <a
-                key={id}
-                href={home}
-                className={styles.product}
-                style={{ transform: `rotate(${[-0.6, 0.5, -0.4, 0.6][i]}deg)` }}
-              >
-                <span
-                  className={styles.productPhoto}
-                  style={{ backgroundImage: `url(${photo(PHOTOS[id] ?? '', 960)})` }}
-                />
-                <span className={styles.productSign}>
-                  <b>{name}</b>
-                  <span className={styles.productPrice}>
-                    {price} <small>сум / {unit}</small>
+      {/* The film ends at the door; the rest stands in the product's own hall, under the dome. */}
+      <div className="hall">
+        {/* What was on the table — the real products, priced as on the counter */}
+        <section id="table" className={styles.tableSection}>
+          <div className={styles.inner}>
+            <div className={styles.head}>
+              <h2 className={styles.h2}>{c.products.title}</h2>
+              <div className={styles.lineDark}>{c.products.line}</div>
+            </div>
+            <div className={styles.products}>
+              {c.products.items.map(([id, name, price, unit, who, say], i) => (
+                <a
+                  key={id}
+                  href={home}
+                  className={styles.product}
+                  style={{ transform: `rotate(${[-0.6, 0.5, -0.4, 0.6][i]}deg)` }}
+                >
+                  <span
+                    className={`photo-grade ${styles.productPhoto}`}
+                    style={{ backgroundImage: `url(${photo(PHOTOS[id] ?? '', 960)})` }}
+                  />
+                  <span className={styles.productSign}>
+                    <b>{name}</b>
+                    <span className={styles.productPrice}>
+                      {price} <small>сум / {unit}</small>
+                    </span>
+                    <span className={styles.productSay}>{say}</span>
+                    <span className={styles.productWho}>{who}</span>
+                    <span className={styles.productPlus}>+</span>
                   </span>
-                  <span className={styles.productSay}>{say}</span>
-                  <span className={styles.productWho}>{who}</span>
-                  <span className={styles.productPlus}>+</span>
-                </span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* The app on a phone: screens change as you scroll past */}
-      <PhoneSection c={c} />
-
-      {/* The gate at dusk: the way in, the rows with their hours, the small print */}
-      <section id="rows" className={styles.gate}>
-        <div className={styles.gatePhoto} style={{ backgroundImage: 'url(/scenes/evening.jpg)' }} />
-        <div className={`${styles.inner} ${styles.gateInner}`}>
-          <div className={styles.gateSheet}>
-            <div className={styles.eyebrowInk}>{c.gate.eyebrow}</div>
-            <h2 className={styles.paperTitle}>{c.gate.title}</h2>
-            <div className={styles.paperLine}>{c.gate.line}</div>
-            <div className={styles.ctaRow}>
-              <a href={home} className={styles.cta}>
-                {c.gate.cta} →
-              </a>
-              <span className={styles.soonTag}>{c.gate.app}</span>
+                </a>
+              ))}
             </div>
           </div>
-          <div className={styles.rows}>
-            {c.gate.rows.map(([sign, body, hours]) => (
-              <a key={sign} href={home} className={styles.row}>
-                <span className={styles.rowSign}>{sign}</span>
-                <span className={styles.rowBody}>{body}</span>
-                <span className={styles.rowCount}>{hours}</span>
-              </a>
-            ))}
+        </section>
+
+        {/* The app on a phone: screens change as you scroll past */}
+        <PhoneSection c={c} />
+
+        {/* The gate at dusk: the way in, the rows with their hours, the small print */}
+        <section id="rows" className={styles.gate}>
+          <div
+            className={`photo-grade ${styles.gatePhoto}`}
+            style={{ backgroundImage: 'url(/scenes/evening.jpg)' }}
+          />
+          <div className={`${styles.inner} ${styles.gateInner}`}>
+            <div className={styles.gateSheet}>
+              <div className="eyebrow">{c.gate.eyebrow}</div>
+              <h2 className={styles.paperTitle}>{c.gate.title}</h2>
+              <div className={styles.paperLine}>{c.gate.line}</div>
+              <div className={styles.ctaRow}>
+                <a href={home} className={styles.cta}>
+                  {c.gate.cta} →
+                </a>
+                <span className={styles.soonTag}>{c.gate.app}</span>
+              </div>
+            </div>
+            <div className={styles.rows}>
+              {c.gate.rows.map(([sign, body, hours]) => (
+                <a key={sign} href={home} className={styles.row}>
+                  <span className={styles.rowSign}>{sign}</span>
+                  <span className={styles.rowBody}>{body}</span>
+                  <span className={styles.rowCount}>{hours}</span>
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
-        <footer className={styles.footer}>
-          <div className={`${styles.inner} ${styles.footerInner}`}>
-            <span className={styles.footWordmark}>
-              Bazar<span>.</span>
-            </span>
-            <span>{c.gate.foot}</span>
-            <nav className={styles.footNav}>
-              <a href={`/${locale}/offer`}>{c.gate.offer}</a>
-              <a href={`/${locale}/privacy`}>{c.gate.privacy}</a>
-              <a href={`/${locale}/support`}>{c.gate.support}</a>
-              <a href={SUPPORT.telegram} rel="noopener">
-                {c.gate.telegram}
-              </a>
-            </nav>
-          </div>
-        </footer>
-      </section>
+          <footer className={styles.footer}>
+            <div className={`${styles.inner} ${styles.footerInner}`}>
+              <span className={styles.footWordmark}>
+                Bazar<span>.</span>
+              </span>
+              <span>{c.gate.foot}</span>
+              <nav className={styles.footNav}>
+                <a href={`/${locale}/offer`}>{c.gate.offer}</a>
+                <a href={`/${locale}/privacy`}>{c.gate.privacy}</a>
+                <a href={`/${locale}/support`}>{c.gate.support}</a>
+                <a href={SUPPORT.telegram} rel="noopener">
+                  {c.gate.telegram}
+                </a>
+              </nav>
+            </div>
+          </footer>
+        </section>
+      </div>
     </main>
   );
 }
@@ -390,8 +396,8 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
 
       {/* dome: the greeting */}
       <div className={`${styles.copy} ${styles.copyTop}`} style={reveal(p, 0, at('dome', 0.6))}>
-        <div className={styles.eyebrow}>{c.dome.eyebrow}</div>
-        <h1 className={styles.display}>{c.dome.title}</h1>
+        <div className="eyebrow">{c.dome.eyebrow}</div>
+        <h1 className={`${styles.display} ${styles.hero}`}>{c.dome.title}</h1>
         <div className={styles.line}>{c.dome.line}</div>
       </div>
       <div className={styles.scrollHint} style={reveal(p, 0, at('dome', 0.12))}>
@@ -401,9 +407,7 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
 
       {/* hall: the people of the row, then the counter */}
       <div className={styles.copy} style={reveal(p, at('bazaar', 0.12), at('bazaar', 0.5))}>
-        <div className={styles.line} style={{ color: 'var(--cream)' }}>
-          {c.row.about}
-        </div>
+        <div className={styles.lede}>{c.row.about}</div>
         <div className={styles.pills}>
           {c.row.pills.map((pill) => (
             <span key={pill} className={styles.pill}>
@@ -439,7 +443,7 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
             className={`${styles.copy} ${styles.copyTop}`}
             style={reveal(p, at('road', 0.02), at('road', 0.4))}
           >
-            <div className={styles.eyebrow}>{c.street.eyebrow}</div>
+            <div className="eyebrow">{c.street.eyebrow}</div>
             <h2 className={styles.display}>{c.street.title}</h2>
             <div className={styles.line}>{c.street.line}</div>
           </div>
@@ -454,9 +458,7 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
             </div>
           </div>
           <div className={styles.copy} style={reveal(p, at('road', 0.62), at('road', 0.95))}>
-            <div className={styles.line} style={{ color: 'var(--cream)' }}>
-              {c.stairs.line}
-            </div>
+            <div className={styles.lede}>{c.stairs.line}</div>
           </div>
         </>
       ) : null}
@@ -468,7 +470,7 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
             className={`${styles.copy} ${styles.copyTop}`}
             style={reveal(p, at('home', 0.04), at('home', 0.45))}
           >
-            <div className={styles.eyebrow}>{c.door.eyebrow}</div>
+            <div className="eyebrow">{c.door.eyebrow}</div>
             <h2 className={styles.display}>{c.door.title}</h2>
           </div>
           <div
@@ -485,7 +487,7 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
             style={reveal(p, at('home', 0.88), 1)}
           >
             <h2 className={styles.display}>{c.table.title}</h2>
-            <div className={styles.line}>{c.table.hint}</div>
+            <div className={styles.lede}>{c.table.hint}</div>
           </div>
         </>
       ) : (
@@ -494,7 +496,7 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
             <div className={styles.quote}>{c.door.quote}</div>
             <div className={styles.who}>{c.door.who}</div>
           </div>
-          <div className={styles.line} style={{ marginTop: 8 }}>
+          <div className={styles.lede} style={{ marginTop: 8 }}>
             {c.table.hint}
           </div>
         </div>
@@ -534,7 +536,7 @@ function PhoneSection({ c }: { c: Copy }) {
     <section id="app" ref={ref} className={styles.phoneTrack}>
       <div className={styles.phoneSticky}>
         <div className={styles.phoneCopy}>
-          <div className={styles.eyebrowDark}>{c.phone.eyebrow}</div>
+          <div className="eyebrow">{c.phone.eyebrow}</div>
           <h2 className={styles.h2}>{c.phone.title}</h2>
           <ol className={styles.phoneList}>
             {c.phone.screens.map(([title, text], i) => (

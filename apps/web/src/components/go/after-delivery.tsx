@@ -22,7 +22,7 @@ function Stars({ value, onChange }: { value: number; onChange: (n: number) => vo
           key={n}
           type="button"
           onClick={() => onChange(n)}
-          className={`text-2xl leading-none ${n <= value ? 'text-saffron-500' : 'text-sand-300'}`}
+          className={`text-[length:var(--fs-title)] leading-none ${n <= value ? 'text-saffron-500' : 'text-sand-300'}`}
           aria-label={`${n}`}
         >
           ★
@@ -132,7 +132,7 @@ export function AfterDelivery({ order, locale }: { order: OrderDto; locale: stri
   const done = (!order.courierId || reviewed('COURIER')) && reviewed('STORE');
 
   return (
-    <section className="mt-3 flex flex-col gap-3 rounded-2xl bg-sand-50 p-3 text-sm">
+    <section className="mt-3 flex flex-col gap-3 rounded-paper bg-sand-50 p-3 text-sm">
       {done ? (
         <p className="text-ink-muted">{t('review.thanks')}</p>
       ) : (
@@ -191,7 +191,7 @@ export function AfterDelivery({ order, locale }: { order: OrderDto; locale: stri
                   <button
                     key={amount}
                     type="button"
-                    className="go-chip h-9"
+                    className="go-chip h-9 tabular-nums"
                     disabled={busy}
                     onClick={() => void tip(amount)}
                   >

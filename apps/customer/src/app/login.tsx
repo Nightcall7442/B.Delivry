@@ -1,8 +1,9 @@
 /**
- * Sign in at the gate of the bazaar: the rows in the photograph behind, the
- * greeting and the promise in handwriting, the three guarantees, and the
- * phone form on a paper slip at the bottom. `next` is where the customer was
- * going before we asked who they are.
+ * Sign in at the gate of the bazaar: the rows in the photograph behind (the
+ * one photograph of the hall — the door keeps it), the greeting and the
+ * promise said aloud, the three guarantees, and the phone form on a paper slip
+ * at the bottom. `next` is where the customer was going before we asked who
+ * they are.
  */
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect } from 'react';
@@ -12,9 +13,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Display,
   Glass,
-  Hand,
   KraftTag,
   SCENES,
+  Say,
   Scene,
   SceneButton,
   isEvening,
@@ -22,10 +23,19 @@ import {
   sceneFont,
   useSceneTop,
 } from '@/components/bazar';
-import { ArrowLeft, Leaf, LoginForm, Scale, Tag, isDark, useAuth, useT } from '@bazar/mobile';
-
-// The form's type is theme-coloured, so the slip is paper by day and dark kraft in the dark theme.
-const SLIP = isDark ? '#1C2438' : scene.paper;
+import {
+  ArrowLeft,
+  Leaf,
+  LoginForm,
+  Scale,
+  Tag,
+  color,
+  radius,
+  scale,
+  shadow,
+  useAuth,
+  useT,
+} from '@bazar/mobile';
 
 export default function LoginRoute() {
   const router = useRouter();
@@ -43,13 +53,13 @@ export default function LoginRoute() {
   }, [ready, user, router, target]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: scene.night }}>
+    <View style={{ flex: 1 }}>
       <Scene
         source={evening ? SCENES.evening : SCENES.morning}
         evening={evening}
         style={StyleSheet.absoluteFill}
       >
-        <View />
+        {null}
       </Scene>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -67,10 +77,10 @@ export default function LoginRoute() {
         >
           <View style={s.pitch}>
             <KraftTag>{t('login.taglineHint')}</KraftTag>
-            <Display size={38} style={{ marginTop: 14 }}>
+            <Display italic={evening} style={{ marginTop: 14 }}>
               {evening ? t('scene.evening') : t('scene.morning')}
             </Display>
-            <Hand size={26}>«{t('login.tagline')}»</Hand>
+            <Say>«{t('login.tagline')}»</Say>
             <View style={s.pills}>
               {(
                 [
@@ -80,7 +90,7 @@ export default function LoginRoute() {
                 ] as const
               ).map(([Icon, label]) => (
                 <Glass key={label} style={s.pill}>
-                  <Icon size={14} color={scene.saffron} />
+                  <Icon size={14} color={scene.ochreLight} />
                   <Text style={s.pillText}>{label}</Text>
                 </Glass>
               ))}
@@ -88,7 +98,6 @@ export default function LoginRoute() {
           </View>
 
           <View style={s.slip}>
-            <View style={s.perforation} />
             <LoginForm onSignedIn={() => router.replace(target)} />
           </View>
         </ScrollView>
@@ -108,35 +117,21 @@ const s = StyleSheet.create({
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   pill: {
     height: 32,
-    borderRadius: 16,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  pillText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
+  pillText: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.cream },
+  // The form's type is theme-coloured, so the slip is the theme's paper (lapis in the dark
+  // theme). A slip, not a receipt: no perforated edge.
   slip: {
     marginTop: 20,
     marginHorizontal: 16,
-    backgroundColor: SLIP,
-    borderRadius: 6,
+    backgroundColor: color.surface,
+    borderRadius: radius.paper,
     padding: 18,
     paddingTop: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.45,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 8,
-  },
-  perforation: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: -1,
-    height: 3,
-    borderStyle: 'dashed',
-    borderTopWidth: 3,
-    borderColor: isDark ? '#EAD8B2' : '#2B1B0E',
-    opacity: 0.25,
+    ...shadow.paper,
   },
 });

@@ -148,11 +148,11 @@ export function BazaarCart({
   }).format(new Date());
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       {/* The counter's own photograph, when the basket comes from one stall. */}
       {ground ? (
         <div
-          className={`${s.photo} ${s.photoDim}`}
+          className={`photo-grade ${s.photo} ${s.photoDim}`}
           style={{ backgroundImage: `url(${photo(ground, 1280)})` }}
         />
       ) : null}
@@ -169,16 +169,11 @@ export function BazaarCart({
           <span className={s.tag}>{t('receipt.title')}</span>
         </div>
 
-        <div className={s.greeting} style={{ minHeight: 0, padding: '12px 0 26px' }}>
-          <div className={s.eyebrow}>{today}</div>
-          <h1 className={s.display} style={{ fontSize: 'clamp(36px, 5vw, 56px)' }}>
-            {t('cart.title')}
-          </h1>
+        <div className={s.greeting} style={{ padding: '12px 0 26px' }}>
+          <div className="eyebrow">{today}</div>
+          <h1 className={`${s.display} ${s.displayPage}`}>{t('cart.title')}</h1>
           {groups.length > 0 ? (
-            <p
-              className={s.hand}
-              style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}
-            >
+            <p className={s.say} style={{ margin: '6px 0 0' }}>
               {oneTrip
                 ? t.n('receipt.together', oneTrip.length)
                 : groups.length === 1
@@ -196,7 +191,7 @@ export function BazaarCart({
           <section className={s.receipt}>
             <div className={s.rcHead}>
               <span className={s.rcTitle}>{t('receipt.title')}</span>
-              <span className={s.rcDate}>{today}</span>
+              <span>{today}</span>
             </div>
             <p className={s.rcEmpty}>{t('cart.empty')}</p>
             <p className={s.rcHint}>{t('receipt.emptyLine')}</p>
@@ -243,12 +238,12 @@ export function BazaarCart({
                 >
                   <div className={s.rcHead}>
                     <span className={s.rcTitle}>{t('receipt.title')}</span>
-                    <span className={s.rcDate}>{today}</span>
+                    <span>{today}</span>
                   </div>
 
                   <Link href={`${home}/stores/${group.storeId}`} className={s.rcVendor}>
                     <span
-                      className={`${s.avatar} ${s.avatarSmall}`}
+                      className={`${s.avatar} ${s.avatarSmall} ${face ? 'photo-grade' : ''}`}
                       style={face ? { backgroundImage: `url(${photo(face, 250)})` } : undefined}
                     >
                       {face
@@ -372,7 +367,7 @@ function ReceiptLine({
   return (
     <li className={s.rcLine}>
       <span
-        className={s.thumb}
+        className={`${s.thumb} ${image ? 'photo-grade' : ''}`}
         style={image ? { backgroundImage: `url(${photo(image, 250)})` } : undefined}
       />
       <div style={{ minWidth: 0, flex: 1 }}>

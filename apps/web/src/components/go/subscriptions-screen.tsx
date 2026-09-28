@@ -37,14 +37,7 @@ export function SubscriptionsScreen({ locale }: { locale: string }) {
       .catch(() => undefined);
 
   return (
-    <GoShell
-      locale={locale}
-      back="history"
-      expanded
-      header={
-        <h1 className="font-display text-[22px] font-extrabold leading-7">{t('subs.title')}</h1>
-      }
-    >
+    <GoShell locale={locale} back="history" expanded header={<h1>{t('subs.title')}</h1>}>
       <p className="mt-1 text-sm text-ink-muted">{t('subs.intro')}</p>
       {!ready ? null : !user ? (
         <Link
@@ -58,8 +51,10 @@ export function SubscriptionsScreen({ locale }: { locale: string }) {
       ) : (
         <ul className="mt-4 flex flex-col gap-3">
           {rows.map((row) => (
-            <li key={row.id} className="rounded-2xl bg-sand-50 p-4">
-              <p className="font-display text-base font-bold">{subscriptionWhen(row, locale)}</p>
+            <li key={row.id} className="rounded-paper bg-sand-50 p-4">
+              <p className="font-serif text-[length:var(--fs-lead)] font-bold leading-6">
+                {subscriptionWhen(row, locale)}
+              </p>
               <p className="mt-1 text-sm text-ink-muted">
                 {tr(row.storeName, locale)} · {t.n('cart.items', row.items.length)} ·{' '}
                 {row.addressText}

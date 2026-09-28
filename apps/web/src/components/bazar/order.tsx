@@ -159,21 +159,16 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
 
   if (!order) {
     return (
-      <main className={s.scene}>
+      <main className={`hall ${s.scene}`}>
         <div className={`${s.body} ${s.narrow}`}>
           <div className={s.top}>
             <Link href={back} className={s.round} aria-label={t('common.back')}>
               <ArrowLeft />
             </Link>
           </div>
-          <div className={s.greeting} style={{ minHeight: 0, padding: '12px 0 26px' }}>
-            <h1 className={s.display} style={{ fontSize: 'clamp(36px, 5vw, 56px)' }}>
-              {t('order.title')}
-            </h1>
-            <p
-              className={s.hand}
-              style={{ fontSize: 24, margin: '6px 0 0', color: 'var(--cream-muted)' }}
-            >
+          <div className={s.greeting} style={{ padding: '12px 0 26px' }}>
+            <h1 className={`${s.display} ${s.displayPage}`}>{t('order.title')}</h1>
+            <p className={s.say} style={{ margin: '6px 0 0' }}>
               {!authReady || !ready ? (
                 t('common.loading')
               ) : !user ? (
@@ -222,7 +217,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
   const chip = (on: boolean) => `${s.chipPaper} ${on ? s.chipPaperOn : ''}`;
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       {/* The map is the ground while the order is on its way; a dark scrim keeps the paper readable. */}
       <div className={`${s.mapGround} ${terminal ? s.mapGroundDone : ''}`}>
         <MapView center={center} zoom={zoom} markers={markers} interactive />
@@ -235,15 +230,10 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
           <span className={s.tag}>{t('order.number', { number: order.number })}</span>
         </div>
 
-        <div className={s.greeting} style={{ minHeight: 0, padding: '12px 0 18px' }}>
-          <div className={s.eyebrow}>{placed}</div>
-          <h1 className={s.display} style={{ fontSize: 'clamp(32px, 4.6vw, 52px)' }}>
-            {text.title}
-          </h1>
-          <p
-            className={s.hand}
-            style={{ fontSize: 22, margin: '6px 0 0', color: 'var(--cream-muted)' }}
-          >
+        <div className={s.greeting} style={{ padding: '12px 0 18px' }}>
+          <div className="eyebrow">{placed}</div>
+          <h1 className={`${s.display} ${s.displayPage}`}>{text.title}</h1>
+          <p className={s.say} style={{ margin: '6px 0 0' }}>
             {text.hint}
           </p>
           {order.scheduledFor && !courier && !terminal ? (
@@ -284,7 +274,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
         {!terminal ? <div className={s.mapWindow} /> : null}
 
         {courierInfo && !terminal ? (
-          <section className={s.receipt}>
+          <section className={`${s.receipt} ${s.sheet}`}>
             <div className={s.rcVendor} style={{ margin: 0 }}>
               <span className={`${s.avatar} ${s.avatarSmall}`}>{courierInfo.firstName[0]}</span>
               <span style={{ minWidth: 0, flex: 1 }}>
@@ -322,7 +312,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
         ) : null}
 
         {payDue === 'due' ? (
-          <section className={s.receipt}>
+          <section className={`${s.receipt} ${s.sheet}`}>
             <p className={s.rcName}>
               {t('order.payNow', { amount: t.money(order.totals.total.amount) })}
             </p>
@@ -365,7 +355,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
         <section className={s.receipt}>
           <div className={s.rcHead}>
             <span className={s.rcTitle}>{t('receipt.title')}</span>
-            <span className={s.rcDate}>
+            <span>
               {paymentMethodText(locale)[order.paymentMethod].title}
               {order.paymentMethod === 'ONLINE'
                 ? ` · ${paymentStatusText(locale)[order.paymentStatus]}`
@@ -381,9 +371,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
             </span>
             <span style={{ minWidth: 0, flex: 1 }}>
               <span className={s.rcVendorMeta}>{t('order.where')}</span>
-              <span className={s.rcVendorName} style={{ fontSize: 18 }}>
-                {order.address.formatted}
-              </span>
+              <span className={s.rcName}>{order.address.formatted}</span>
               {order.recipientPhone ? (
                 <span className={s.rcVendorMeta}>
                   {t('order.recipient', { name: order.recipientName || order.recipientPhone })}
@@ -423,7 +411,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                     href={item.weighingPhotoUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className={s.thumb}
+                    className={`photo-grade ${s.thumb}`}
                     style={{
                       backgroundImage: `url(${item.weighingPhotoUrl})`,
                       width: 44,
@@ -433,9 +421,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                   />
                 ) : null}
                 <span style={{ minWidth: 0, flex: 1 }}>
-                  <span className={s.rcName} style={{ fontSize: 17 }}>
-                    {tr(item.name, locale)}
-                  </span>
+                  <span className={s.rcName}>{tr(item.name, locale)}</span>
                   <span className={s.rcUnit}>
                     {t.qty(item.actualQuantity ?? item.quantity)} {units[item.unit]}
                     {item.actualQuantity !== null && item.actualQuantity !== item.quantity
@@ -443,9 +429,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                       : ''}
                   </span>
                 </span>
-                <span className={s.rcSum} style={{ fontSize: 22, paddingTop: 0 }}>
-                  {t.money((item.actualTotal ?? item.total).amount)}
-                </span>
+                <span className={s.rcSum}>{t.money((item.actualTotal ?? item.total).amount)}</span>
               </li>
             ))}
           </ul>
@@ -495,7 +479,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                   <button
                     type="button"
                     className={s.rcLink}
-                    style={{ color: '#7a6749' }}
+                    style={{ color: 'var(--ink-soft)' }}
                     onClick={() => setConfirming(false)}
                   >
                     {t('order.keep')}
@@ -505,7 +489,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                 <button
                   type="button"
                   className={s.rcLink}
-                  style={{ color: '#7a6749' }}
+                  style={{ color: 'var(--ink-soft)' }}
                   onClick={() => setConfirming(true)}
                 >
                   {t('order.cancel')}
@@ -516,13 +500,13 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
         </section>
 
         {status === ORDER_STATUS.DELIVERED ? (
-          <section className={s.receipt}>
+          <section className={`${s.receipt} ${s.sheet}`}>
             <AfterDelivery order={order} locale={locale} />
           </section>
         ) : null}
 
         {status === ORDER_STATUS.DELIVERED && freshnessOpen(order) ? (
-          <section className={s.receipt}>
+          <section className={`${s.receipt} ${s.sheet}`}>
             {complaintSent ? (
               <p className={s.rcName}>{t('order.freshnessSent', { number: complaintSent })}</p>
             ) : (
@@ -558,7 +542,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
         ) : null}
 
         {terminal ? (
-          <section className={s.receipt}>
+          <section className={`${s.receipt} ${s.sheet}`}>
             {subscribed ? (
               <p className={s.rcName}>
                 {t('subs.subscribed', { when: slotLabel(subscribed, locale) })}

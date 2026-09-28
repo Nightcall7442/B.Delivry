@@ -9,6 +9,7 @@ import {
   ONLINE_PROVIDERS,
   SLOT_HOURS,
   WEEKDAY_ORDER,
+  alpha,
   freshnessDeadline,
   freshnessOpen,
   lateMinutes,
@@ -32,7 +33,6 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
-  Image,
   Linking,
   Pressable,
   ScrollView,
@@ -40,6 +40,7 @@ import {
   Text as RNText,
   View,
 } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import {
   Button,
@@ -59,11 +60,14 @@ import {
   api,
   color,
   font,
+  radius,
+  scale,
   useAuth,
   useLocale,
   useT,
   isDark,
 } from '@bazar/mobile';
+import { scene, sceneFont } from '@/components/bazar';
 import { AfterDelivery } from '@/components/order/AfterDelivery';
 import { Shell } from '@/components/ui/Shell';
 
@@ -75,12 +79,9 @@ const VEHICLES = ['FOOT', 'BICYCLE', 'SCOOTER', 'MOTORBIKE', 'CAR', 'VAN'];
 
 const WEB_URL = process.env['EXPO_PUBLIC_WEB_URL'] ?? 'http://localhost:3000';
 
-/** The order slip lives on kraft, the map under it gets a warm wash; dark kraft at night. */
-const KRAFT = isDark ? '#1C2438' : '#E4D3AE';
-const KRAFT_TINT = isDark ? 'rgba(28,36,56,0.55)' : 'rgba(228,211,174,0.42)';
-const PAPER = isDark ? '#242C43' : '#FBF5E6';
-const POMEGRANATE = '#9E2A2B';
-const SAFFRON = '#E39B2F';
+/** The order slip lives on the theme's kraft, the map under it gets a warm wash of the same. */
+const KRAFT = color.field;
+const KRAFT_TINT = alpha(color.field, isDark ? 0.55 : 0.42);
 
 export function OrderScreen({ orderId }: { orderId: string }) {
   const router = useRouter();
@@ -260,41 +261,25 @@ function OrderSheet({
             <View style={{ flex: 1, minWidth: 0 }}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
                 {!terminal ? <Pulse /> : null}
-                <Text
-                  role="display"
-                  style={{ flex: 1, fontSize: 26, lineHeight: 28, fontFamily: 'Alegreya_700Bold' }}
-                >
+                <Text role="display" style={s.status}>
                   {text.title}
                 </Text>
               </View>
-              <Text
-                role="muted"
-                style={{
-                  marginTop: 4,
-                  fontFamily: 'Caveat_700Bold',
-                  fontSize: 20,
-                  lineHeight: 22,
-                  color: isDark ? '#D9B36A' : '#7A5A2B',
-                }}
-              >
+              <Text role="muted" style={s.hint}>
                 {text.hint}
               </Text>
             </View>
             {order.scheduledFor && !courier && !terminal ? (
               <View style={s.eta}>
-                <RNText style={[s.etaValue, { fontSize: 15 }]}>
+                <RNText style={[s.etaValue, s.etaSlot]}>
                   {slotLabel(order.scheduledFor, locale)}
                 </RNText>
-                <Text role="caption" style={{ fontSize: 11 }}>
-                  {t('order.window')}
-                </Text>
+                <Text role="caption">{t('order.window')}</Text>
               </View>
             ) : eta && !terminal ? (
               <View style={s.eta}>
                 <RNText style={s.etaValue}>{t('common.eta', { minutes: eta })}</RNText>
-                <Text role="caption" style={{ fontSize: 11 }}>
-                  {t('order.toDoor')}
-                </Text>
+                <Text role="caption">{t('order.toDoor')}</Text>
               </View>
             ) : null}
           </View>
@@ -312,15 +297,15 @@ function OrderSheet({
                   <View key={step.label} style={s.step}>
                     {index > 0 ? (
                       <View
-                        style={[s.thread, state !== 'todo' && { backgroundColor: POMEGRANATE }]}
+                        style={[s.thread, state !== 'todo' && { backgroundColor: color.brand500 }]}
                       />
                     ) : null}
                     <View
                       style={[
                         s.tile,
                         state === 'done' && {
-                          backgroundColor: POMEGRANATE,
-                          borderColor: POMEGRANATE,
+                          backgroundColor: color.brand500,
+                          borderColor: color.brand500,
                         },
                         state === 'active' && {
                           backgroundColor: color.saffron400,
@@ -330,12 +315,11 @@ function OrderSheet({
                     />
                     <Text
                       role="caption"
-                      style={[
-                        { fontSize: 11 },
+                      style={
                         state === 'todo'
                           ? { color: color.inkMuted }
-                          : { color: color.ink, fontWeight: '500' },
-                      ]}
+                          : { color: color.ink, fontWeight: '500' }
+                      }
                     >
                       {step.label}
                     </Text>
@@ -408,7 +392,7 @@ function OrderSheet({
                     <Text
                       role="body"
                       numberOfLines={2}
-                      style={{ flex: 1, fontWeight: last ? '600' : '500', fontSize: 15 }}
+                      style={{ flex: 1, fontWeight: last ? '600' : '500', ...scale.body }}
                     >
                       {orderStatusText(locale)[entry.status].title}
                     </Text>
@@ -489,7 +473,7 @@ function OrderSheet({
             </Text>
           ) : !subscribing ? (
             <Pressable onPress={() => setSubscribing(true)}>
-              <Text role="body" style={{ color: POMEGRANATE, fontWeight: '500' }}>
+              <Text role="body" style={{ color: color.brand500, fontWeight: '500' }}>
                 {t('subs.repeatWeekly')}
               </Text>
               <Text role="caption">{t('subs.intro')}</Text>
@@ -529,7 +513,7 @@ function OrderSheet({
                   style={{
                     marginTop: 8,
                     textAlign: 'center',
-                    color: POMEGRANATE,
+                    color: color.brand500,
                     fontWeight: '500',
                   }}
                 >
@@ -624,7 +608,7 @@ function OrderSheet({
             onPress={() => Linking.openURL(`${WEB_URL}/${locale}/orders/${order.id}/invoice`)}
             hitSlop={6}
           >
-            <Text role="caption" style={{ paddingHorizontal: 12, color: POMEGRANATE }}>
+            <Text role="caption" style={{ paddingHorizontal: 12, color: color.brand500 }}>
               {order.dueAt ? `${t('order.invoiceDue', { date: t.date(order.dueAt) })} · ` : ''}
               {t('order.invoice')} ↗
             </Text>
@@ -638,7 +622,7 @@ function OrderSheet({
             <View key={item.id} style={s.item}>
               {item.weighingPhotoUrl ? (
                 <Pressable onPress={() => Linking.openURL(item.weighingPhotoUrl ?? '')}>
-                  <Image source={{ uri: item.weighingPhotoUrl }} style={s.thumb} />
+                  <Photo uri={item.weighingPhotoUrl} style={s.thumb} />
                 </Pressable>
               ) : null}
               <Text role="muted" numberOfLines={1} style={{ flex: 1, color: color.ink }}>
@@ -709,51 +693,50 @@ function OrderSheet({
   );
 }
 
-/** The "live" dot next to the status while something is still moving. */
+/** The "live" dot next to the status while something is still moving; still under «Уменьшить движение». */
 function Pulse() {
-  const scale = useRef(new Animated.Value(1)).current;
+  const grow = useRef(new Animated.Value(1)).current;
+  const still = useReducedMotion();
   useEffect(() => {
+    if (still) return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(scale, { toValue: 2.2, duration: 900, useNativeDriver: true }),
-        Animated.timing(scale, { toValue: 1, duration: 0, useNativeDriver: true }),
+        Animated.timing(grow, { toValue: 2.2, duration: 900, useNativeDriver: true }),
+        Animated.timing(grow, { toValue: 1, duration: 0, useNativeDriver: true }),
       ]),
     );
     loop.start();
     return () => loop.stop();
-  }, [scale]);
-  const opacity = scale.interpolate({ inputRange: [1, 2.2], outputRange: [0.6, 0] });
+  }, [grow, still]);
+  const opacity = grow.interpolate({ inputRange: [1, 2.2], outputRange: [0.6, 0] });
   return (
     <View style={{ width: 10, height: 10, marginTop: 8 }}>
-      <Animated.View style={[s.pulseRing, { transform: [{ scale }], opacity }]} />
+      <Animated.View style={[s.pulseRing, { transform: [{ scale: grow }], opacity }]} />
       <View style={s.pulseDot} />
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  paper: {
-    backgroundColor: PAPER,
-    borderRadius: 6,
-    shadowColor: '#3A2A1A',
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-  },
+  // The live status, on the sheet's kraft: serif, the title step; the hint under it is said.
+  status: { flex: 1, ...scale.title },
+  hint: { marginTop: 4, fontFamily: sceneFont.italic, ...scale.lead, color: color.inkMuted },
+  // Paper lying on the sheet's kraft: flat.
+  paper: { backgroundColor: color.tile, borderRadius: radius.paper },
   eta: {
     backgroundColor: color.saffron100,
-    borderRadius: 16,
+    borderRadius: radius.paper,
     paddingHorizontal: 12,
     paddingVertical: 6,
     alignItems: 'flex-end',
   },
   etaValue: {
     fontFamily: font.display,
-    fontSize: 18,
-    lineHeight: 24,
+    ...scale.lead,
     color: color.ink,
     fontVariant: ['tabular-nums'],
   },
+  etaSlot: scale.body,
   steps: { flexDirection: 'row', marginTop: 20 },
   step: { flex: 1, alignItems: 'center', gap: 8 },
   thread: {
@@ -767,7 +750,7 @@ const s = StyleSheet.create({
   tile: {
     width: 16,
     height: 16,
-    borderRadius: 4,
+    borderRadius: radius.paper,
     borderWidth: 2,
     borderColor: color.sand300,
     backgroundColor: color.raise,
@@ -778,23 +761,23 @@ const s = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: POMEGRANATE,
+    backgroundColor: color.brand500,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: color.white, fontFamily: font.display, fontSize: 18 },
+  avatarText: { color: color.white, fontFamily: font.display, ...scale.lead },
   action: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#F6EBD3',
+    backgroundColor: color.raise,
     alignItems: 'center',
     justifyContent: 'center',
   },
   arrived: {
     marginTop: 12,
     backgroundColor: color.saffron100,
-    borderRadius: 16,
+    borderRadius: radius.paper,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -806,8 +789,13 @@ const s = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: color.line,
   },
-  thumb: { width: 40, height: 40, borderRadius: 8, backgroundColor: color.sand100 },
-  payDue: { marginTop: 12, backgroundColor: color.saffron100, borderRadius: 16, padding: 12 },
+  thumb: { width: 40, height: 40 },
+  payDue: {
+    marginTop: 12,
+    backgroundColor: color.saffron100,
+    borderRadius: radius.paper,
+    padding: 12,
+  },
   storyRow: { flexDirection: 'row', gap: 12 },
   storyRail: { width: 14, alignItems: 'center' },
   storyDot: {
@@ -815,7 +803,7 @@ const s = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     marginTop: 6,
-    backgroundColor: POMEGRANATE,
+    backgroundColor: color.brand500,
   },
   storyDotLive: {
     backgroundColor: color.saffron400,
@@ -830,20 +818,23 @@ const s = StyleSheet.create({
   storyPhoto: {
     width: 108,
     height: 108,
-    borderRadius: 14,
+    borderRadius: radius.photo,
     overflow: 'hidden',
     backgroundColor: color.field,
     justifyContent: 'flex-end',
   },
+  // A glass pill over the weighing photo.
   storyPhotoTag: {
     margin: 6,
     alignSelf: 'flex-start',
-    backgroundColor: color.glass,
-    borderRadius: 8,
+    backgroundColor: scene.glass,
+    borderWidth: 1,
+    borderColor: scene.glassEdge,
+    borderRadius: radius.pill,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  storyPhotoText: { color: color.ink, fontSize: 10, lineHeight: 12, fontWeight: '700' },
+  storyPhotoText: { color: scene.cream, ...scale.caption, fontWeight: '700' },
   cancelRow: {
     marginTop: 16,
     paddingBottom: 8,
@@ -857,7 +848,7 @@ const s = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: SAFFRON,
+    backgroundColor: color.saffron500,
   },
-  pulseDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: POMEGRANATE },
+  pulseDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: color.brand500 },
 });

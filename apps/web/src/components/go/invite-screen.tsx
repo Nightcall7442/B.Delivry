@@ -60,14 +60,7 @@ export function InviteScreen({ locale }: { locale: string }) {
   };
 
   return (
-    <GoShell
-      locale={locale}
-      back="history"
-      expanded
-      header={
-        <h1 className="font-display text-[22px] font-extrabold leading-7">{t('invite.title')}</h1>
-      }
-    >
+    <GoShell locale={locale} back="history" expanded header={<h1>{t('invite.title')}</h1>}>
       <p className="mt-1 text-sm text-ink-muted">
         {t('invite.intro', { bonus: t.money(REFERRAL_BONUS_MINOR) })}
       </p>
@@ -80,9 +73,9 @@ export function InviteScreen({ locale }: { locale: string }) {
         </Link>
       ) : (
         <>
-          <div className="mt-4 flex flex-col items-center gap-2 rounded-2xl bg-sand-50 p-4">
+          <div className="mt-4 flex flex-col items-center gap-2 rounded-paper bg-sand-50 p-4">
             <span className="text-xs text-ink-muted">{t('invite.yourCode')}</span>
-            <span className="font-display text-3xl font-extrabold tracking-[0.3em] text-brand-700">
+            <span className="text-[length:var(--fs-headline)] font-extrabold leading-[34px] tracking-[0.3em] text-brand-700">
               {code ?? '······'}
             </span>
             <button

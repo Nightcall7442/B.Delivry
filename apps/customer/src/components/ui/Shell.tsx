@@ -1,15 +1,17 @@
 /**
  * Screen frame. With a `map`: the map underneath, round buttons on top, the
- * sheet in front (address picking, order tracking). Without one: the
- * redesign's Page — gradient ground, header row, scrolling content.
+ * sheet in front (address picking, order tracking). Without one: a Page — the
+ * hall, the header row, the content on one sheet of paper.
  */
-import { useRouter, type Href } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { setStatusBarStyle } from 'expo-status-bar';
+import { useCallback, useState, type ReactNode } from 'react';
 import { Linking, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { UI_LOCALES, type MessageKey } from '@bazar/i18n';
 
+import { ground } from '@/components/bazar';
 import { Page } from '@/components/ui/Page';
 import { useCartCount } from '@/features/cart/store';
 import {
@@ -24,6 +26,8 @@ import {
   Text,
   api,
   color,
+  radius,
+  shadow,
   useAuth,
   useBrand,
   Chip,
@@ -48,6 +52,15 @@ export function Shell({ map, back, peek = 0.46, tint, children, ...sheet }: Shel
   const { locale, t, setLocale } = useLocale();
   const { user, ready, signOut } = useAuth();
   const brand = useBrand();
+  // The map is light under the status bar; every other screen stands on the dark hall.
+  const onMap = map !== undefined;
+  useFocusEffect(
+    useCallback(() => {
+      if (!onMap) return;
+      setStatusBarStyle('dark');
+      return () => setStatusBarStyle('light');
+    }, [onMap]),
+  );
 
   // Pop when there is somewhere to pop to (keeps scroll and state); land on the
   // named screen only when the app was opened straight into this one.
@@ -63,7 +76,6 @@ export function Shell({ map, back, peek = 0.46, tint, children, ...sheet }: Shel
         header={<View style={{ flex: 1, minWidth: 0 }}>{sheet.header}</View>}
         footer={sheet.footer}
         cart
-        scene
       >
         <View style={s.paper}>{children}</View>
       </Page>
@@ -115,9 +127,7 @@ export function Shell({ map, back, peek = 0.46, tint, children, ...sheet }: Shel
                 }}
                 style={{ paddingVertical: 12 }}
               >
-                <Text role="body" style={{ fontSize: 18 }}>
-                  {t(item.key)}
-                </Text>
+                <Text role="body">{t(item.key)}</Text>
               </Pressable>
             ))}
           </View>
@@ -132,9 +142,7 @@ export function Shell({ map, back, peek = 0.46, tint, children, ...sheet }: Shel
               }}
               style={{ paddingVertical: 12 }}
             >
-              <Text role="body" style={{ fontSize: 18 }}>
-                {t('menu.telegram')}
-              </Text>
+              <Text role="body">{t('menu.telegram')}</Text>
               <Text role="caption">
                 {user.telegramLinked ? t('menu.telegramLinked') : t('menu.telegramHint')}
               </Text>
@@ -183,7 +191,7 @@ export function Shell({ map, back, peek = 0.46, tint, children, ...sheet }: Shel
                 }}
                 style={{ paddingVertical: 12 }}
               >
-                <Text role="body" style={{ fontSize: 18, color: color.brand600 }}>
+                <Text role="body" style={{ color: color.brand600 }}>
                   {t('common.signIn')}
                 </Text>
               </Pressable>
@@ -212,20 +220,18 @@ const MENU: ReadonlyArray<{ href: Href; key: MessageKey }> = [
 ];
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#101524' },
-  // One sheet of paper for the screen's content, on the hall.
+  // The map paints its own ground at once; this only shows for the frame before it does.
+  root: { flex: 1, backgroundColor: ground(1) },
+  // One sheet of paper for the screen's content, on the hall. The theme's paper: the
+  // primitives on it are theme-coloured (light paper by day, lapis in the dark theme).
   paper: {
-    backgroundColor: '#F4EFE4',
-    borderRadius: 6,
+    backgroundColor: color.surface,
+    borderRadius: radius.paper,
     borderWidth: 1,
-    borderColor: '#E6DCC6',
+    borderColor: color.line,
     padding: 16,
     gap: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 8,
+    ...shadow.paper,
   },
   account: {
     marginTop: 'auto',
@@ -247,7 +253,8 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
   },
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(27,31,34,0.4)' },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: ground(0.4) },
+  // A sheet of the theme's paper that lifts off the map.
   menu: {
     position: 'absolute',
     left: 0,
@@ -255,7 +262,8 @@ const s = StyleSheet.create({
     bottom: 0,
     width: '82%',
     maxWidth: 320,
-    backgroundColor: '#F4EFE4',
+    backgroundColor: color.surface,
     paddingHorizontal: 20,
+    ...shadow.paper,
   },
 });

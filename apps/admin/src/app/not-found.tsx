@@ -1,21 +1,15 @@
-/** A wrong address in the cabinet: the same ground and card as the sign-in page. */
+/** A wrong address in the cabinet: the hall and the same card as the sign-in page. */
 import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-screen items-end justify-start p-8 sm:items-center sm:p-12">
-      <div className="ground" />
+    <main className="hall flex min-h-screen items-end justify-start p-8 sm:items-center sm:p-12">
       <div className="w-full max-w-md">
-        <div className="hand text-[20px]" style={{ color: 'var(--cream-muted)' }}>
-          Чорсу · Алайский · Фархадский
-        </div>
-        <h1
-          className="font-display mt-1 text-[clamp(38px,6vw,64px)] font-bold leading-[1.05]"
-          style={{ color: 'var(--cream)' }}
-        >
+        <div className="eyebrow">Чорсу · Алайский · Фархадский</div>
+        <h1 className="font-display mt-1 text-display font-bold" style={{ color: 'var(--cream)' }}>
           Такой страницы нет
         </h1>
-        <p className="hand mt-2 text-[22px]" style={{ color: 'var(--cream-muted)' }}>
+        <p className="font-display mt-2 text-lead italic" style={{ color: 'var(--cream-muted)' }}>
           Ссылка устарела или набрана с ошибкой.
         </p>
         <div className="card mt-6 w-full p-6">

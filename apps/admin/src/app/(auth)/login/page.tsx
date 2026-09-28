@@ -46,24 +46,15 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-end justify-start p-8 sm:items-center sm:p-12">
-      <div
-        className="ground"
-        style={{
-          backgroundImage: `url(/scenes/${(new Date().getUTCHours() + 5) % 24 >= 17 ? 'evening' : 'morning'}.jpg)`,
-        }}
-      />
-      <div className="w-full max-w-md">
-        <div className="hand text-[20px]" style={{ color: 'var(--cream-muted)' }}>
-          Чорсу · Алайский · Фархадский
-        </div>
-        <div
-          className="font-display mt-1 text-[clamp(38px,6vw,64px)] font-bold leading-[1.05]"
-          style={{ color: 'var(--cream)' }}
-        >
+    <main className="hall flex min-h-screen items-end justify-start p-8 sm:items-center sm:p-12">
+      {/* The door: the rows at the hour's light (data-hall picks the photograph). */}
+      <div className="door photo-grade" aria-hidden />
+      <div className="relative w-full max-w-md">
+        <div className="eyebrow">Чорсу · Алайский · Фархадский</div>
+        <div className="font-display mt-1 text-display font-bold" style={{ color: 'var(--cream)' }}>
           За прилавком
         </div>
-        <p className="hand mt-2 text-[22px]" style={{ color: 'var(--cream-muted)' }}>
+        <p className="font-display mt-2 text-lead italic" style={{ color: 'var(--cream-muted)' }}>
           Вход по номеру продавца или сотрудника — без паролей.
         </p>
         <form
@@ -80,18 +71,13 @@ export default function LoginPage() {
             });
           }}
         >
-          <h1
-            className="text-[11px] font-bold uppercase tracking-[0.16em]"
-            style={{ color: 'var(--pomegranate)' }}
-          >
-            {step === 'phone' ? 'Вход по номеру' : 'Код из SMS'}
-          </h1>
+          <h1 className="eyebrow">{step === 'phone' ? 'Вход по номеру' : 'Код из SMS'}</h1>
           {step === 'code' ? (
             <p className="mt-1 text-sm text-ink-muted">Отправили на {normalize(phone)}</p>
           ) : null}
 
           {user && !isStaff ? (
-            <p className="mt-4 rounded-control bg-saffron-100 p-3 text-sm">
+            <p className="mt-4 rounded-paper bg-saffron-100 p-3 text-sm">
               {user.phone} — не сотрудник.{' '}
               <button type="button" className="underline" onClick={() => void signOut()}>
                 Выйти

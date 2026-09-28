@@ -29,103 +29,109 @@ export function InvoiceView({ orderId, locale }: { orderId: string; locale: stri
       .catch(() => undefined);
   }, [user, orderId]);
 
-  if (!ready || !order) return <main className="p-6 text-sm text-ink-muted">…</main>;
+  if (!ready || !order)
+    return <main className="hall min-h-dvh p-6 text-sm text-[var(--cream-muted)]">…</main>;
   const paid = order.paymentStatus === 'CAPTURED';
   return (
-    <main
-      data-theme="light"
-      className="mx-auto max-w-[720px] bg-white p-8 text-sm text-ink print:p-0"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-xl font-extrabold">
-            {t('invoice.title', { number: order.number })}
-          </h1>
-          <p className="mt-1 text-ink-muted">{t.date(order.placedAt)}</p>
+    // A sheet of paper in the hall on the screen; on the printer only the sheet is left.
+    <div className="hall min-h-dvh px-4 py-8 print:min-h-0 print:bg-transparent print:p-0 print:before:hidden print:after:hidden">
+      <main
+        data-theme="light"
+        className="paper-sheet mx-auto max-w-[720px] rounded-paper p-8 text-sm text-ink print:bg-transparent print:p-0 print:shadow-none"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="font-serif text-[length:var(--fs-title)] font-bold leading-[26px]">
+              {t('invoice.title', { number: order.number })}
+            </h1>
+            <p className="mt-1 text-ink-muted">{t.date(order.placedAt)}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="btn-go-secondary h-10 w-auto px-4 print:hidden"
+          >
+            {t('docs.print')}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="btn-go-secondary h-10 w-auto px-4 print:hidden"
-        >
-          {t('docs.print')}
-        </button>
-      </div>
-      <dl className="mt-6 grid grid-cols-2 gap-4">
-        <div>
-          <dt className="text-xs uppercase tracking-wider text-ink-muted">{t('invoice.seller')}</dt>
-          <dd className="mt-1 font-medium">{tr(order.store.name, locale)}</dd>
-        </div>
-        <div>
-          <dt className="text-xs uppercase tracking-wider text-ink-muted">{t('invoice.buyer')}</dt>
-          <dd className="mt-1 font-medium">{me?.companyName ?? order.customer?.firstName ?? ''}</dd>
-          <dd className="text-ink-muted">
-            {me?.companyInn ? t('invoice.inn', { inn: me.companyInn }) : ''}
-            {order.customer?.phone ? ` · ${order.customer.phone}` : ''}
-          </dd>
-          <dd className="text-ink-muted">{order.address.formatted}</dd>
-        </div>
-      </dl>
-      <table className="mt-6 w-full border-collapse text-left">
-        <thead>
-          <tr className="border-b border-line text-xs uppercase tracking-wider text-ink-muted">
-            <th className="py-2">{t('invoice.item')}</th>
-            <th className="py-2 text-right">{t('invoice.qty')}</th>
-            <th className="py-2 text-right">{t('invoice.price')}</th>
-            <th className="py-2 text-right">{t('invoice.sum')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {order.items.map((item) => (
-            <tr key={item.id} className="border-b border-line">
-              <td className="py-2">{tr(item.name, locale)}</td>
-              <td className="py-2 text-right tabular-nums">
-                {item.actualQuantity ?? item.quantity} {units[item.unit]}
-              </td>
-              <td className="py-2 text-right tabular-nums">{t.money(item.unitPrice.amount)}</td>
-              <td className="py-2 text-right tabular-nums">{t.money(item.total.amount)}</td>
+        <dl className="mt-6 grid grid-cols-2 gap-4">
+          <div>
+            <dt className="eyebrow text-ink-muted">{t('invoice.seller')}</dt>
+            <dd className="mt-1 font-medium">{tr(order.store.name, locale)}</dd>
+          </div>
+          <div>
+            <dt className="eyebrow text-ink-muted">{t('invoice.buyer')}</dt>
+            <dd className="mt-1 font-medium">
+              {me?.companyName ?? order.customer?.firstName ?? ''}
+            </dd>
+            <dd className="text-ink-muted">
+              {me?.companyInn ? t('invoice.inn', { inn: me.companyInn }) : ''}
+              {order.customer?.phone ? ` · ${order.customer.phone}` : ''}
+            </dd>
+            <dd className="text-ink-muted">{order.address.formatted}</dd>
+          </div>
+        </dl>
+        <table className="mt-6 w-full border-collapse text-left">
+          <thead>
+            <tr className="border-b border-line text-ink-muted">
+              <th className="eyebrow py-2">{t('invoice.item')}</th>
+              <th className="eyebrow py-2 text-right">{t('invoice.qty')}</th>
+              <th className="eyebrow py-2 text-right">{t('invoice.price')}</th>
+              <th className="eyebrow py-2 text-right">{t('invoice.sum')}</th>
             </tr>
-          ))}
-          <tr className="border-b border-line">
-            <td className="py-2" colSpan={3}>
-              {t('invoice.delivery')}
-            </td>
-            <td className="py-2 text-right tabular-nums">
-              {t.money(order.totals.deliveryFee.amount)}
-            </td>
-          </tr>
-          {order.totals.serviceFee.amount > 0 ? (
+          </thead>
+          <tbody>
+            {order.items.map((item) => (
+              <tr key={item.id} className="border-b border-line">
+                <td className="py-2">{tr(item.name, locale)}</td>
+                <td className="py-2 text-right tabular-nums">
+                  {item.actualQuantity ?? item.quantity} {units[item.unit]}
+                </td>
+                <td className="py-2 text-right tabular-nums">{t.money(item.unitPrice.amount)}</td>
+                <td className="py-2 text-right tabular-nums">{t.money(item.total.amount)}</td>
+              </tr>
+            ))}
             <tr className="border-b border-line">
               <td className="py-2" colSpan={3}>
-                {t('checkout.serviceFee')}
+                {t('invoice.delivery')}
               </td>
               <td className="py-2 text-right tabular-nums">
-                {t.money(order.totals.serviceFee.amount)}
+                {t.money(order.totals.deliveryFee.amount)}
               </td>
             </tr>
-          ) : null}
-        </tbody>
-        <tfoot>
-          <tr className="font-display text-base font-extrabold">
-            <td className="py-3" colSpan={3}>
-              {t('invoice.total')}
-            </td>
-            <td className="py-3 text-right tabular-nums">{t.money(order.totals.total.amount)}</td>
-          </tr>
-        </tfoot>
-      </table>
-      <p className="mt-4 text-ink-muted">
-        {order.dueAt ? `${t('invoice.due')}: ${t.date(order.dueAt)} · ` : ''}
-        {paid ? t('invoice.paid') : t('invoice.unpaid')}
-      </p>
-      <div className="mt-10 grid grid-cols-2 gap-8 text-xs text-ink-muted">
-        <p className="border-t border-line pt-2">
-          {t('invoice.seller')} · {t('invoice.sign')}
+            {order.totals.serviceFee.amount > 0 ? (
+              <tr className="border-b border-line">
+                <td className="py-2" colSpan={3}>
+                  {t('checkout.serviceFee')}
+                </td>
+                <td className="py-2 text-right tabular-nums">
+                  {t.money(order.totals.serviceFee.amount)}
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+          <tfoot>
+            <tr className="text-[length:var(--fs-lead)] font-extrabold leading-6">
+              <td className="py-3" colSpan={3}>
+                {t('invoice.total')}
+              </td>
+              <td className="py-3 text-right tabular-nums">{t.money(order.totals.total.amount)}</td>
+            </tr>
+          </tfoot>
+        </table>
+        <p className="mt-4 text-ink-muted">
+          {order.dueAt ? `${t('invoice.due')}: ${t.date(order.dueAt)} · ` : ''}
+          {paid ? t('invoice.paid') : t('invoice.unpaid')}
         </p>
-        <p className="border-t border-line pt-2">
-          {t('invoice.buyer')} · {t('invoice.sign')}
-        </p>
-      </div>
-    </main>
+        <div className="mt-10 grid grid-cols-2 gap-8 text-xs text-ink-muted">
+          <p className="border-t border-line pt-2">
+            {t('invoice.seller')} · {t('invoice.sign')}
+          </p>
+          <p className="border-t border-line pt-2">
+            {t('invoice.buyer')} · {t('invoice.sign')}
+          </p>
+        </div>
+      </main>
+    </div>
   );
 }

@@ -7,7 +7,7 @@
 'use client';
 
 import { createT } from '@bazar/i18n';
-import { estimateDelivery, photo, tr, type MapStoreDto } from '@bazar/storefront';
+import { estimateDelivery, isEvening, photo, tr, type MapStoreDto } from '@bazar/storefront';
 import type { CategoryDto, ProductDto } from '@bazar/types';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -15,7 +15,7 @@ import { useMemo, useState } from 'react';
 import { ArrowLeft, Star } from '@/components/go/icons';
 import { useAddress } from '@/features/address';
 
-import { BasketBar, ProductCard, isEvening } from './index';
+import { BasketBar, ProductCard } from './index';
 import s from './bazar.module.css';
 
 export function BazaarStore({
@@ -56,11 +56,14 @@ export function BazaarStore({
     : null;
 
   return (
-    <main className={s.scene}>
-      <div
-        className={`${s.photo} ${s.photoStall}`}
-        style={hero ? { backgroundImage: `url(${photo(hero, 1280)})` } : undefined}
-      />
+    <main className={`hall ${s.scene}`}>
+      {/* No counter photo: no scrim either — the hall shows through, lamps and all. */}
+      {hero ? (
+        <div
+          className={`photo-grade ${s.photo} ${s.photoStall}`}
+          style={{ backgroundImage: `url(${photo(hero, 1280)})` }}
+        />
+      ) : null}
       <div className={s.body}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>
@@ -80,14 +83,14 @@ export function BazaarStore({
           <div className={s.person}>
             {store.ownerName ? (
               <span
-                className={s.avatar}
+                className={`${s.avatar} ${face ? 'photo-grade' : ''}`}
                 style={face ? { backgroundImage: `url(${photo(face, 250)})` } : undefined}
               >
                 {face ? '' : store.ownerName.slice(0, 1)}
               </span>
             ) : null}
             <div>
-              <h1 className={s.display} style={{ fontSize: 'clamp(36px, 5.5vw, 64px)' }}>
+              <h1 className={`${s.display} ${s.displayPage}`}>
                 {store.ownerName ?? tr(store.name, locale)}
               </h1>
               {store.ownerName ? <div className={s.storeName}>{tr(store.name, locale)}</div> : null}
@@ -95,21 +98,13 @@ export function BazaarStore({
           </div>
           {store.ownerMotto ? (
             <p
-              className={s.hand}
-              style={{ fontSize: 'clamp(24px, 3vw, 34px)', maxWidth: '28ch', margin: '10px 0 0' }}
+              className={`${s.say} ${s.sayMotto}`}
+              style={{ maxWidth: '28ch', margin: '10px 0 0' }}
             >
               «{tr(store.ownerMotto, locale)}»
             </p>
           ) : store.description ? (
-            <p
-              className={s.hand}
-              style={{
-                fontSize: 22,
-                color: 'var(--cream-muted)',
-                maxWidth: '40ch',
-                margin: '10px 0 0',
-              }}
-            >
+            <p className={s.say} style={{ maxWidth: '40ch', margin: '10px 0 0' }}>
               {tr(store.description, locale)}
             </p>
           ) : null}

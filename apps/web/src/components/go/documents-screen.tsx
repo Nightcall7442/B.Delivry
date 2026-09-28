@@ -28,14 +28,7 @@ export function DocumentsScreen({ locale }: { locale: string }) {
   const openTotal = open.reduce((sum, o) => sum + o.totals.total.amount, 0);
 
   return (
-    <GoShell
-      locale={locale}
-      back="history"
-      expanded
-      header={
-        <h1 className="font-display text-[22px] font-extrabold leading-7">{t('docs.title')}</h1>
-      }
-    >
+    <GoShell locale={locale} back="history" expanded header={<h1>{t('docs.title')}</h1>}>
       <p className="mt-1 text-sm text-ink-muted">{t('docs.intro')}</p>
       {!ready ? null : !user ? (
         <Link
@@ -48,9 +41,9 @@ export function DocumentsScreen({ locale }: { locale: string }) {
         <p className="mt-4 text-sm text-ink-muted">{t('docs.empty')}</p>
       ) : (
         <>
-          <p className="mt-3 flex justify-between rounded-2xl bg-saffron-100 px-4 py-3 text-sm">
+          <p className="mt-3 flex justify-between rounded-paper bg-saffron-100 px-4 py-3 text-sm">
             <span>{t('docs.open')}</span>
-            <span className="font-display font-bold tabular-nums">{t.money(openTotal)}</span>
+            <span className="font-bold tabular-nums">{t.money(openTotal)}</span>
           </p>
           <ul className="mt-2 divide-y divide-line text-sm">
             {rows.map((order) => (

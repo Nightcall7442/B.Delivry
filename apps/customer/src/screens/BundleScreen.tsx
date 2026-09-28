@@ -4,7 +4,7 @@
  * and the stall it comes from — and one pomegranate bar that puts the whole
  * dastarkhan in the basket. Prices are live, never the set's own number.
  */
-import { ArrowLeft, Text as UiText, useLocale } from '@bazar/mobile';
+import { ArrowLeft, Text as UiText, radius, scale, shadow, useLocale } from '@bazar/mobile';
 import {
   getBundle,
   photo,
@@ -23,9 +23,9 @@ import {
   CartDisc,
   Display,
   Eyebrow,
-  Hand,
   KraftTag,
   ProductCard,
+  Say,
   Scene,
   SceneButton,
   scene,
@@ -70,9 +70,9 @@ export function BundleScreen({ slug }: { slug: string }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: scene.night }}>
+    <View style={{ flex: 1 }}>
       <Scene source={bundle ? photo(bundle.photo, 960) : null} style={StyleSheet.absoluteFill}>
-        <View />
+        {null}
       </Scene>
 
       <ScrollView
@@ -81,17 +81,15 @@ export function BundleScreen({ slug }: { slug: string }) {
       >
         {!bundle ? (
           <View style={{ paddingHorizontal: 20, paddingTop: 40 }}>
-            <Hand size={24} color={scene.creamMuted}>
-              {t('bundle.notFound')}
-            </Hand>
+            <Say color={scene.creamMuted}>{t('bundle.notFound')}</Say>
           </View>
         ) : (
           <>
             <View style={s.greeting}>
-              <Display size={40}>{tr(bundle.title, locale)}</Display>
-              <Hand size={22} color={scene.creamMuted} numberOfLines={3}>
+              <Display>{tr(bundle.title, locale)}</Display>
+              <Say color={scene.creamMuted} numberOfLines={3}>
                 {tr(bundle.description, locale)}
-              </Hand>
+              </Say>
             </View>
             {/* Let the dish breathe before the counters. */}
             <View style={{ height: 120 }} />
@@ -139,9 +137,9 @@ export function BundleScreen({ slug }: { slug: string }) {
                   })}
                 </View>
                 {resolved.missing.length > 0 ? (
-                  <Hand size={20} color={scene.creamMuted} style={s.note}>
+                  <Say step="lead" color={scene.creamMuted} style={s.note}>
                     {t.n('bundle.missing', resolved.missing.length)}
-                  </Hand>
+                  </Say>
                 ) : null}
                 {stalls.length > 1 ? (
                   <UiText role="caption" style={s.multi}>
@@ -207,7 +205,7 @@ const s = StyleSheet.create({
   },
   card: { width: '47%', flexGrow: 1, maxWidth: '50%' },
   note: { paddingHorizontal: 20, paddingTop: 16 },
-  multi: { paddingHorizontal: 20, paddingTop: 10, color: scene.creamDim },
+  multi: { paddingHorizontal: 20, paddingTop: 10, color: scene.creamMuted },
   bottom: {
     position: 'absolute',
     left: 20,
@@ -219,19 +217,20 @@ const s = StyleSheet.create({
   cta: {
     flex: 1,
     height: 56,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     backgroundColor: scene.pomegranate,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 18,
-    shadowColor: scene.pomegranate,
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    ...shadow.paper,
   },
-  ctaTitle: { fontFamily: sceneFont.display, fontSize: 18, color: scene.cream },
-  ctaSub: { fontFamily: sceneFont.uiText, fontSize: 11, color: '#D9C7A6' },
-  ctaArrow: { fontFamily: sceneFont.display, fontSize: 20, color: scene.cream },
+  ctaTitle: { fontFamily: sceneFont.display, ...scale.lead, color: scene.cream },
+  ctaSub: {
+    fontFamily: sceneFont.uiText,
+    ...scale.caption,
+    color: scene.creamMuted,
+    fontVariant: ['tabular-nums'],
+  },
+  ctaArrow: { fontFamily: sceneFont.display, ...scale.title, color: scene.cream },
 });

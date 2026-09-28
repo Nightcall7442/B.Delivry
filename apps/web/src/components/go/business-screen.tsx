@@ -44,14 +44,7 @@ export function BusinessScreen({ locale }: { locale: string }) {
   };
 
   return (
-    <GoShell
-      locale={locale}
-      back="history"
-      expanded
-      header={
-        <h1 className="font-display text-[22px] font-extrabold leading-7">{t('business.title')}</h1>
-      }
-    >
+    <GoShell locale={locale} back="history" expanded header={<h1>{t('business.title')}</h1>}>
       <p className="mt-1 text-sm text-ink-muted">{t('business.intro')}</p>
       {!ready ? null : !user ? (
         <Link
@@ -61,7 +54,7 @@ export function BusinessScreen({ locale }: { locale: string }) {
           {t('common.signIn')}
         </Link>
       ) : me?.businessApprovedAt ? (
-        <section className="mt-4 rounded-2xl bg-brand-50 p-4 text-sm">
+        <section className="mt-4 rounded-paper bg-brand-50 p-4 text-sm">
           <p className="font-medium">{me.companyName}</p>
           <p className="mt-1">
             {t('business.approved', { days: me.creditDays, limit: t.money(me.creditLimit) })}
@@ -72,7 +65,7 @@ export function BusinessScreen({ locale }: { locale: string }) {
           </Link>
         </section>
       ) : me?.businessAppliedAt ? (
-        <section className="mt-4 rounded-2xl bg-sand-50 p-4 text-sm">
+        <section className="mt-4 rounded-paper bg-sand-50 p-4 text-sm">
           <p className="font-medium">
             {me.companyName} · {t('invoice.inn', { inn: me.companyInn ?? '' })}
           </p>

@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 
+import { scene } from '@/components/bazar';
 import { Shell } from '@/components/ui/Shell';
 import { Button, Text, useT } from '@bazar/mobile';
 
@@ -10,7 +11,7 @@ export default function NotFound() {
     <Shell
       peek={0.34}
       header={
-        <Text role="display" style={{ color: '#FBF1DE' }}>
+        <Text role="display" style={{ color: scene.cream }}>
           {t('notFound.title')}
         </Text>
       }

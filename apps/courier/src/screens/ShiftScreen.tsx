@@ -10,12 +10,14 @@ import {
   Text,
   api,
   color,
+  radius,
+  scale,
   shadow,
   useAuth,
   type MapMarker,
   OrderChat,
 } from '@bazar/mobile';
-import { SUBSTITUTION_TEXT, plural } from '@bazar/storefront';
+import { GROUND, HALL, SUBSTITUTION_TEXT, TONE, alpha, hallLight, plural } from '@bazar/storefront';
 import { formatMoney } from '@bazar/utils/money';
 import type { DeliveryDto, DeliveryOfferDto, OrderDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
@@ -32,18 +34,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import {
-  CREAM,
-  INK,
-  INK_MUTED,
-  KRAFT,
-  PAPER,
-  PAPER_EDGE,
-  POMEGRANATE,
-  SAFFRON,
-  Paper,
-  sceneFont,
-} from '@/components/scene';
+import { Paper, capital, sceneFont } from '@/components/scene';
 import { WeighingSheet } from '@/components/WeighingSheet';
 import { useShift } from '@/features/shift';
 
@@ -115,7 +106,7 @@ export function ShiftScreen() {
       <MapView center={center} zoom={13} markers={markers} inset={0.45} />
 
       <View style={[s.top, { paddingTop: insets.top + 8 }]}>
-        <View style={[s.shiftCard, shadow.card]}>
+        <View style={s.shiftCard}>
           <View style={{ flex: 1 }}>
             <RNText style={s.name}>
               {courier ? `${courier.firstName}` : (user?.firstName ?? 'Курьер')}
@@ -130,8 +121,8 @@ export function ShiftScreen() {
             value={online}
             disabled={busy || !courier}
             onValueChange={(next) => void setOnline(next)}
-            trackColor={{ false: PAPER_EDGE, true: POMEGRANATE }}
-            thumbColor={CREAM}
+            trackColor={{ false: TONE.paperEdge, true: HALL.pomegranate }}
+            thumbColor={TONE.creamLight}
           />
         </View>
       </View>
@@ -160,9 +151,9 @@ export function ShiftScreen() {
               />
             ))
           ) : (
-            <Paper style={s.idle}>
+            <Paper style={s.idle} flat>
               <RNText style={s.slipTitle}>{online ? 'Ждём заказы' : 'Смена не начата'}</RNText>
-              <RNText style={s.hand}>
+              <RNText style={s.aside}>
                 {online
                   ? 'Заказы рядом с вами появятся здесь. Держите приложение открытым.'
                   : 'Включите переключатель наверху, чтобы получать заказы.'}
@@ -202,7 +193,7 @@ function OfferCard({
   }, [offer.expiresAt]);
 
   return (
-    <Paper style={s.offer}>
+    <Paper style={s.offer} flat>
       <View style={s.offerHead}>
         <RNText style={s.money}>{formatMoney(offer.payout.amount)}</RNText>
         <View style={s.timer}>
@@ -216,7 +207,7 @@ function OfferCard({
       <RNText style={s.muted} numberOfLines={1}>
         → {offer.dropoffAddress}
       </RNText>
-      <RNText style={s.hand}>
+      <RNText style={s.trip}>
         {(offer.distanceMeters / 1000).toFixed(1)} км · {offer.itemCount} поз. ·{' '}
         {Math.max(1, Math.round(offer.weightGrams / 1000))} кг
       </RNText>
@@ -264,7 +255,7 @@ function ActiveCard({
   // At the stall the button first opens the scale sheet; "picked up" follows the save.
   if (weighing) {
     return (
-      <Paper style={s.active}>
+      <Paper style={s.active} flat>
         <WeighingSheet
           orderId={delivery.orderId}
           busy={busy}
@@ -281,8 +272,8 @@ function ActiveCard({
   }
 
   return (
-    <Paper style={s.active}>
-      <RNText style={s.hand}>Заказ · {formatMoney(delivery.payout.amount)} за доставку</RNText>
+    <Paper style={s.active} flat>
+      <RNText style={s.payout}>Заказ · {formatMoney(delivery.payout.amount)} за доставку</RNText>
       <RNText style={s.stepTitle}>{step.title}</RNText>
       <RNText style={s.muted}>{step.hint}</RNText>
 
@@ -292,7 +283,7 @@ function ActiveCard({
           {toPickup ? delivery.pickupAddress : delivery.dropoffAddress}
         </RNText>
         {siblings.length > 0 && toPickup ? (
-          <Text role="muted" style={{ color: color.ink, marginTop: 4 }}>
+          <Text role="muted" style={{ color: HALL.ink, marginTop: 4 }}>
             Одной поездкой · ещё {siblings.length}:{' '}
             {siblings.map((row) => row.pickupAddress).join('; ')}
           </Text>
@@ -373,20 +364,32 @@ function PickupNotes({ orderId }: { orderId: string }) {
   }, [orderId]);
   if (!order) return null;
   return (
-    <View style={[s.addressBlock, { backgroundColor: '#FBEBC9' }]}>
+    <View style={[s.addressBlock, s.asks]}>
       <RNText style={s.label}>Клиент просит</RNText>
-      {order.vendorComment ? <Text role="body">{order.vendorComment}</Text> : null}
-      <Text role="muted" style={{ color: color.ink }}>
+      {order.vendorComment ? (
+        <Text role="body" style={{ color: HALL.ink }}>
+          {order.vendorComment}
+        </Text>
+      ) : null}
+      <Text role="muted" style={{ color: HALL.ink }}>
         {SUBSTITUTION_TEXT[order.substitutionPolicy].courier}
       </Text>
       {order.recipientPhone ? (
-        <Text role="caption" onPress={() => Linking.openURL(`tel:${order.recipientPhone}`)}>
+        <Text
+          role="caption"
+          style={s.call}
+          onPress={() => Linking.openURL(`tel:${order.recipientPhone}`)}
+        >
           Получатель{order.recipientName ? ` ${order.recipientName}` : ''} · позвонить ·{' '}
           {order.recipientPhone}
         </Text>
       ) : null}
       {order.customer?.phone ? (
-        <Text role="caption" onPress={() => Linking.openURL(`tel:${order.customer?.phone}`)}>
+        <Text
+          role="caption"
+          style={s.call}
+          onPress={() => Linking.openURL(`tel:${order.customer?.phone}`)}
+        >
           Позвонить {order.recipientPhone ? 'заказчику' : 'клиенту'} · {order.customer.phone}
         </Text>
       ) : null}
@@ -396,113 +399,135 @@ function PickupNotes({ orderId }: { orderId: string }) {
 
 const secondsLeft = (iso: string) => Math.max(0, Math.ceil((Date.parse(iso) - Date.now()) / 1000));
 
+// The sheet is paper in either theme: these colours are HALL/TONE, not the themed `color`.
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#101524' },
+  // Under the map while its tiles load: the hall's own dark.
+  root: { flex: 1, backgroundColor: GROUND[hallLight()].deep },
   top: { position: 'absolute', left: 12, right: 12, top: 0 },
-  // Kraft pinned over the map: the courier's name in serif, the day's numbers by hand.
+  // Kraft lifted over the map: the courier's name in serif, the day's numbers in Manrope.
   shiftCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: KRAFT,
-    borderRadius: 6,
+    backgroundColor: TONE.kraft,
+    borderRadius: radius.paper,
     paddingHorizontal: 16,
     paddingVertical: 12,
     transform: [{ rotate: '-0.4deg' }],
+    ...shadow.paper,
   },
-  name: { fontFamily: sceneFont.display, fontSize: 24, lineHeight: 28, color: INK },
-  meta: { fontFamily: sceneFont.hand, fontSize: 17, color: INK_MUTED, marginTop: 1 },
-  // The sheet is a sheet of paper with a perforated edge.
+  name: { fontFamily: sceneFont.display, ...scale.title, color: HALL.ink },
+  meta: {
+    fontFamily: sceneFont.ui,
+    ...scale.body,
+    color: TONE.inkSoft,
+    fontVariant: ['tabular-nums'],
+    marginTop: 1,
+  },
+  // A sheet of paper over the map, with a plain edge: the perforated one belongs to receipts.
   sheet: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
     maxHeight: '58%',
-    backgroundColor: PAPER,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    borderTopWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: PAPER_EDGE,
-    ...shadow.pop,
+    backgroundColor: HALL.cream,
+    borderTopLeftRadius: radius.paper,
+    borderTopRightRadius: radius.paper,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: TONE.paperEdge,
+    ...shadow.paper,
   },
   grip: {
     alignSelf: 'center',
     width: 40,
     height: 4,
-    borderRadius: 2,
-    backgroundColor: PAPER_EDGE,
+    borderRadius: radius.pill,
+    backgroundColor: TONE.paperEdge,
     marginTop: 8,
   },
   sheetContent: { padding: 16, gap: 12 },
-  idle: { gap: 4, backgroundColor: '#FBF5E6' },
-  error: { color: POMEGRANATE, fontFamily: sceneFont.hand, fontSize: 17 },
-  slipTitle: { fontFamily: sceneFont.display, fontSize: 22, lineHeight: 26, color: INK },
-  stepTitle: {
-    fontFamily: sceneFont.display,
-    fontSize: 32,
-    lineHeight: 36,
-    color: INK,
-    marginTop: 2,
+  // Slips on the sheet: the same paper one step lit, lying flat.
+  idle: { gap: 4, backgroundColor: TONE.creamLight },
+  error: { color: HALL.pomegranate, fontFamily: sceneFont.ui, ...scale.body },
+  slipTitle: { fontFamily: sceneFont.display, ...scale.title, color: HALL.ink },
+  stepTitle: { fontFamily: sceneFont.display, ...scale.headline, color: HALL.ink, marginTop: 2 },
+  // An aside from the bazaar, said aloud: Alegreya italic.
+  aside: { fontFamily: sceneFont.italic, ...scale.lead, color: TONE.inkSoft },
+  muted: { fontFamily: sceneFont.ui, ...scale.body, color: TONE.inkSoft },
+  trip: {
+    fontFamily: sceneFont.ui,
+    ...scale.body,
+    color: TONE.inkSoft,
+    fontVariant: ['tabular-nums'],
   },
-  hand: { fontFamily: sceneFont.hand, fontSize: 18, lineHeight: 22, color: INK_MUTED },
-  muted: { fontFamily: sceneFont.ui, fontSize: 14, lineHeight: 20, color: INK_MUTED },
-  label: {
-    fontFamily: sceneFont.uiHeavy,
-    fontSize: 11,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    color: INK_MUTED,
-  },
-  address: { fontFamily: sceneFont.ui, fontSize: 16, lineHeight: 22, color: INK, marginTop: 2 },
+  label: { ...capital, color: TONE.inkSoft },
+  payout: { ...capital, color: TONE.inkSoft, fontVariant: ['tabular-nums'] },
+  address: { fontFamily: sceneFont.ui, ...scale.lead, color: HALL.ink, marginTop: 2 },
+  // Lead, not body: one thumb on a scooter — the link keeps the height it had in Caveat.
   link: {
-    fontFamily: sceneFont.hand,
-    fontSize: 19,
-    color: POMEGRANATE,
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.lead,
+    color: HALL.pomegranate,
     textDecorationLine: 'underline',
   },
-  offer: { gap: 4, backgroundColor: '#FBF5E6', borderColor: SAFFRON, borderWidth: 1.5 },
+  // The offer is the chosen slip: an ochre edge. Pomegranate stays on its button.
+  offer: { gap: 4, backgroundColor: TONE.creamLight, borderColor: HALL.ochre, borderWidth: 1.5 },
   offerHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  money: { fontFamily: sceneFont.hand, fontSize: 40, lineHeight: 44, color: POMEGRANATE },
-  // The countdown as a rubber stamp.
+  money: {
+    fontFamily: sceneFont.heavy,
+    ...scale.headline,
+    color: HALL.ink,
+    fontVariant: ['tabular-nums'],
+  },
+  // The countdown as a rubber stamp in ink.
   timer: {
     borderWidth: 2,
-    borderColor: POMEGRANATE,
-    borderRadius: 6,
+    borderColor: HALL.ink,
+    borderRadius: radius.paper,
     paddingHorizontal: 10,
     paddingVertical: 3,
     transform: [{ rotate: '-4deg' }],
   },
   timerText: {
-    fontFamily: sceneFont.hand,
-    fontSize: 20,
-    color: POMEGRANATE,
+    fontFamily: sceneFont.heavy,
+    ...scale.body,
+    color: HALL.ink,
     fontVariant: ['tabular-nums'],
   },
   offerActions: { flexDirection: 'row', gap: 8, marginTop: 8 },
-  active: { gap: 4, backgroundColor: '#FBF5E6' },
+  active: { gap: 4, backgroundColor: TONE.creamLight },
   addressBlock: {
     marginTop: 8,
-    backgroundColor: KRAFT,
-    borderRadius: 6,
+    backgroundColor: TONE.kraft,
+    borderRadius: radius.paper,
     padding: 12,
     gap: 2,
   },
+  // What the customer asked for: an ochre wash instead of kraft.
+  asks: { backgroundColor: alpha(HALL.ochre, 0.16) },
+  call: { color: TONE.inkSoft, fontVariant: ['tabular-nums'] },
+  // A line to write on: kraft wash, dashed rule underneath; the code in big tabular figures.
   codeInput: {
     marginTop: 8,
     height: 56,
-    borderRadius: 6,
+    borderRadius: radius.paper,
     borderBottomWidth: 2,
     borderStyle: 'dashed',
-    borderColor: PAPER_EDGE,
-    backgroundColor: 'rgba(234,216,178,0.45)',
+    borderColor: TONE.paperEdge,
+    backgroundColor: alpha(TONE.kraft, 0.45),
     paddingHorizontal: 16,
-    fontSize: 26,
+    fontSize: scale.headline.fontSize,
     letterSpacing: 6,
-    color: INK,
-    fontFamily: sceneFont.hand,
+    color: HALL.ink,
+    fontFamily: sceneFont.heavy,
+    fontVariant: ['tabular-nums'],
   },
   signOut: { alignSelf: 'center', paddingVertical: 8 },
-  signOutText: { fontFamily: sceneFont.hand, fontSize: 17, color: INK_MUTED },
+  signOutText: {
+    fontFamily: sceneFont.ui,
+    ...scale.body,
+    color: TONE.inkSoft,
+    fontVariant: ['tabular-nums'],
+  },
 });

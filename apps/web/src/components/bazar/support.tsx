@@ -1,5 +1,5 @@
 /**
- * Support: the hours in the vendor's hand, then one slip of paper with the
+ * Support: the hours in the bazaar's voice, then one slip of paper with the
  * three ways in — a call, the Telegram bot for the signed-in, the rules.
  * Mirrors the app's support screen line for line.
  */
@@ -23,9 +23,7 @@ export function BazaarSupport({ locale }: { locale: string }) {
     <>
       <span className={s.payIcon}>{icon}</span>
       <span style={{ minWidth: 0, flex: 1 }}>
-        <span className={s.rcName} style={{ fontSize: 18 }}>
-          {title}
-        </span>
+        <span className={s.rcName}>{title}</span>
         <span className={s.rcUnit}>{hint}</span>
       </span>
       <span className={s.checkoutArrow} style={{ color: 'var(--pomegranate)' }}>
@@ -35,31 +33,21 @@ export function BazaarSupport({ locale }: { locale: string }) {
   );
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>
             <ArrowLeft />
           </Link>
         </div>
-        <div className={s.greeting} style={{ minHeight: 0, padding: '12px 0 26px' }}>
-          <h1 className={s.display} style={{ fontSize: 'clamp(30px, 4.6vw, 48px)' }}>
-            {t('support.title')}
-          </h1>
-          <p
-            className={s.hand}
-            style={{
-              fontSize: 22,
-              margin: '8px 0 0',
-              color: 'var(--cream-muted)',
-              maxWidth: '44ch',
-            }}
-          >
+        <div className={s.greeting} style={{ padding: '12px 0 26px' }}>
+          <h1 className={`${s.display} ${s.displayPage}`}>{t('support.title')}</h1>
+          <p className={s.say} style={{ margin: '8px 0 0', maxWidth: '44ch' }}>
             {t('support.hours')}
           </p>
         </div>
 
-        <section className={s.receipt}>
+        <section className={`${s.receipt} ${s.sheet}`}>
           <ul className={s.rcLines}>
             {SUPPORT.phone ? (
               <li>
@@ -110,21 +98,11 @@ export function BazaarSupport({ locale }: { locale: string }) {
 export function BazaarError({ locale, onRetry }: { locale: string; onRetry: () => void }) {
   const t = createT(locale);
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={`${s.body} ${s.narrow}`}>
-        <div className={s.greeting} style={{ minHeight: 0, padding: '48px 0 26px' }}>
-          <h1 className={s.display} style={{ fontSize: 'clamp(30px, 4.6vw, 48px)' }}>
-            {t('error.title')}
-          </h1>
-          <p
-            className={s.hand}
-            style={{
-              fontSize: 22,
-              margin: '8px 0 0',
-              color: 'var(--cream-muted)',
-              maxWidth: '44ch',
-            }}
-          >
+        <div className={s.greeting} style={{ padding: '48px 0 26px' }}>
+          <h1 className={`${s.display} ${s.displayPage}`}>{t('error.title')}</h1>
+          <p className={s.say} style={{ margin: '8px 0 0', maxWidth: '44ch' }}>
             {t('error.hint')}
           </p>
           <button
@@ -146,26 +124,16 @@ export function BazaarNotFound({ locale }: { locale: string }) {
   const t = createT(locale);
   const home = `/${locale}`;
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>
             <ArrowLeft />
           </Link>
         </div>
-        <div className={s.greeting} style={{ minHeight: 0, padding: '12px 0 26px' }}>
-          <h1 className={s.display} style={{ fontSize: 'clamp(30px, 4.6vw, 48px)' }}>
-            {t('notFound.title')}
-          </h1>
-          <p
-            className={s.hand}
-            style={{
-              fontSize: 22,
-              margin: '8px 0 0',
-              color: 'var(--cream-muted)',
-              maxWidth: '44ch',
-            }}
-          >
+        <div className={s.greeting} style={{ padding: '12px 0 26px' }}>
+          <h1 className={`${s.display} ${s.displayPage}`}>{t('notFound.title')}</h1>
+          <p className={s.say} style={{ margin: '8px 0 0', maxWidth: '44ch' }}>
             {t('notFound.hint')}
           </p>
           <Link href={home} className={s.rcCta} style={{ marginTop: 20, display: 'inline-flex' }}>

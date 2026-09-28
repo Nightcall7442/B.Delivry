@@ -1,7 +1,7 @@
 /**
  * The catalogue as a plan of the bazaar drawn on kraft: you come in at the
  * top and walk down the aisle, counters on both sides. Each counter is a row
- * (a category) with its cardboard sign, the faces selling there and how much
+ * (a category) with its kraft label, the faces selling there and how much
  * is on the counter today. Open a row — or search — and it is the counters
  * themselves: photo cards grouped by the stall the courier picks up at.
  */
@@ -10,6 +10,7 @@
 import { createT } from '@bazar/i18n';
 import {
   closesToday,
+  isEvening,
   photo,
   shopfronts,
   stallGoods,
@@ -24,7 +25,7 @@ import { useMemo } from 'react';
 import { ArrowLeft } from '@/components/go/icons';
 import { useAddress } from '@/features/address';
 
-import { BasketBar, ProductCard, isEvening } from './index';
+import { BasketBar, ProductCard } from './index';
 import s from './bazar.module.css';
 
 export function BazaarCatalog({
@@ -99,7 +100,7 @@ export function BazaarCatalog({
     .filter((g) => g.items.length > 0);
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={s.body}>
         <div className={s.top}>
           <Link href={walking ? base : home} className={s.round} aria-label={t('common.back')}>
@@ -108,8 +109,8 @@ export function BazaarCatalog({
           <span className={s.tag}>{t('map.title')}</span>
         </div>
 
-        <div className={s.greeting} style={{ minHeight: 0, padding: '12px 0 22px' }}>
-          <h1 className={s.display} style={{ fontSize: 'clamp(36px, 5vw, 56px)' }}>
+        <div className={s.greeting} style={{ padding: '12px 0 22px' }}>
+          <h1 className={`${s.display} ${s.displayPage}`}>
             {current ? tr(current.name, locale) : query ? `«${query}»` : t('map.title')}
           </h1>
           <form
@@ -156,7 +157,7 @@ export function BazaarCatalog({
                 ))}
             </div>
             {groups.length === 0 ? (
-              <section className={`${s.receipt} ${s.narrowSlip}`}>
+              <section className={`${s.receipt} ${s.sheet} ${s.narrowSlip}`}>
                 <p className={s.rcEmpty}>{t('map.empty')}</p>
                 <p className={s.rcHint}>{t('search.empty')}</p>
               </section>
@@ -195,7 +196,7 @@ export function BazaarCatalog({
               <span className={s.gateText}>{t('map.entrance')}</span>
               <span />
             </div>
-            <div className={s.hall}>
+            <div className={s.aisle}>
               {pairs.map(([left, right]) => (
                 <div key={left.category.id} className={s.pair}>
                   {counter(left, -0.6)}
@@ -249,14 +250,8 @@ export function BazaarCatalog({
       >
         <span
           className={s.rowSign}
-          style={{
-            transform: `rotate(${tilt}deg)`,
-            marginTop: -22,
-            fontSize: 17,
-            alignSelf: 'flex-start',
-          }}
+          style={{ transform: `rotate(${tilt}deg)`, marginTop: -22, alignSelf: 'flex-start' }}
         >
-          <span className={s.pin} />
           {tr(cat.name, locale)}
         </span>
         {empty ? (
@@ -269,7 +264,7 @@ export function BazaarCatalog({
                 return (
                   <span
                     key={store.id}
-                    className={s.face}
+                    className={`${s.face} ${face ? 'photo-grade' : ''}`}
                     style={face ? { backgroundImage: `url(${photo(face, 250)})` } : undefined}
                   >
                     {face ? '' : names[i]?.slice(0, 1)}

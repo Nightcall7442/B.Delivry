@@ -45,7 +45,9 @@ export default function StorePage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-extrabold">{store ? tr(store.name, 'ru') : '…'}</h1>
+      <h1 className="font-display text-headline font-extrabold">
+        {store ? tr(store.name, 'ru') : '…'}
+      </h1>
       <p className="mt-1 text-sm text-ink-muted">{store?.address}</p>
 
       {store ? <CounterPhoto store={store} onChange={load} say={say} /> : null}
@@ -75,7 +77,8 @@ export default function StorePage() {
           </button>
         ))}
       </div>
-      {note ? <p className="mt-2 text-sm text-brand-700">{note}</p> : null}
+      {/* On the ground, not on paper: ochre as text, the one accent that reads there. */}
+      {note ? <p className="mt-2 text-sm text-[var(--ochre-light)]">{note}</p> : null}
 
       {tab === 'products' ? <Products products={products} onChange={load} say={say} /> : null}
       {tab === 'import' ? <ImportCsv storeId={storeId} onChange={load} say={say} /> : null}
@@ -358,7 +361,7 @@ function Promotion({
     <div className="card mt-3 flex flex-wrap items-center gap-3 p-4">
       <div className="flex-1">
         <div className="font-medium">Реклама: первое место на главной</div>
-        <div className="text-xs text-ink-muted">
+        <div className="text-xs tabular-nums text-ink-muted">
           {live
             ? `Поднята до ${new Date(store.promotedUntil!).toLocaleDateString('ru-RU')} · пометка «Реклама» у покупателя`
             : `${PROMOTION.DAYS} дней первым в списке точек за ${formatMoney(PROMOTION.PRICE_MINOR)}`}
@@ -480,10 +483,13 @@ function Owner({
     <div className="card mt-3 p-4">
       <div className="flex items-center gap-4">
         {store.ownerPhotoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={store.ownerPhotoUrl} alt="" className="h-16 w-16 rounded-full object-cover" />
+          // The one camera's grade sits on the frame: an <img> has no ::after of its own.
+          <span className="photo-grade relative block h-16 w-16 shrink-0 overflow-hidden rounded-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={store.ownerPhotoUrl} alt="" className="h-full w-full object-cover" />
+          </span>
         ) : (
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 text-lg font-bold text-brand-700">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 text-lead font-bold text-brand-700">
             {(name || '?').slice(0, 1)}
           </div>
         )}
@@ -571,8 +577,10 @@ function CounterPhoto({
   return (
     <div className="card mt-4 flex items-center gap-4 p-4">
       {store.counterPhotoUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={store.counterPhotoUrl} alt="" className="h-20 w-28 rounded-lg object-cover" />
+        <span className="photo-grade relative block h-20 w-28 shrink-0 overflow-hidden rounded-lg">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={store.counterPhotoUrl} alt="" className="h-full w-full object-cover" />
+        </span>
       ) : (
         <div className="flex h-20 w-28 items-center justify-center rounded-lg bg-sand-100 text-xs text-ink-muted">
           нет фото
@@ -655,7 +663,7 @@ function Products({
   return (
     <div className="card mt-4 overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="text-left text-xs uppercase tracking-wider text-ink-muted">
+        <thead className="text-left">
           <tr>
             <th className="px-4 py-3">Товар</th>
             <th className="px-4 py-3">Цена, сум</th>
@@ -670,15 +678,18 @@ function Products({
               <td className="px-4 py-2">
                 <div className="flex items-center gap-3">
                   <label className="cursor-pointer" title="Сменить фото">
+                    {/* A product is framed 4:5, like everywhere else. */}
                     {product.images[0] ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={product.images[0].url}
-                        alt=""
-                        className="h-10 w-10 rounded-lg object-cover"
-                      />
+                      <span className="photo-grade relative block h-10 w-8 overflow-hidden rounded-lg">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={product.images[0].url}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      </span>
                     ) : (
-                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-sand-100 text-xs text-ink-muted">
+                      <span className="flex h-10 w-8 items-center justify-center rounded-lg bg-sand-100 text-xs text-ink-muted">
                         фото
                       </span>
                     )}
@@ -859,18 +870,18 @@ function Revenue({ storeId }: { storeId: string }) {
           ['Скидки', formatMoney(report.discounts.amount)],
         ].map(([label, value]) => (
           <div key={label} className="card p-4">
-            <div className="text-xs uppercase tracking-wider text-ink-muted">{label}</div>
-            <div className="mt-1 font-display text-xl font-extrabold tabular-nums">{value}</div>
+            <div className="eyebrow">{label}</div>
+            <div className="mt-1 text-title font-extrabold tabular-nums">{value}</div>
           </div>
         ))}
       </div>
       <div className="card mt-3 p-4">
-        <div className="text-xs uppercase tracking-wider text-ink-muted">По дням</div>
+        <div className="eyebrow">По дням</div>
         <div className="mt-3 flex h-32 items-end gap-1">
           {report.series.map((point) => (
             <div
               key={point.at}
-              className="flex-1 rounded-t bg-brand-500"
+              className="flex-1 rounded-t bg-saffron-500"
               style={{ height: `${Math.max(2, (point.value / max) * 100)}%` }}
               title={`${new Date(point.at).toLocaleDateString('ru-RU')}: ${formatMoney(point.value)}`}
             />
@@ -936,7 +947,7 @@ function Haggle({ storeId, say }: { storeId: string; say: (text: string) => void
           <div key={row.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
             <div className="min-w-[200px] flex-1">
               <div className="font-medium">{tr(row.productName, 'ru')}</div>
-              <div className="text-xs text-ink-muted">
+              <div className="text-xs tabular-nums text-ink-muted">
                 просят {soum(row.askedPrice.amount)} вместо {soum(row.listPrice.amount)}
                 {row.message ? ` · «${row.message}»` : ''}
               </div>
@@ -961,7 +972,7 @@ function Haggle({ storeId, say }: { storeId: string; say: (text: string) => void
           {done.slice(0, 20).map((row) => (
             <div key={row.id} className="flex items-center gap-3 px-4 py-2 text-sm">
               <span className="flex-1">{tr(row.productName, 'ru')}</span>
-              <span className="text-xs text-ink-muted">
+              <span className="text-xs tabular-nums text-ink-muted">
                 {row.status === 'ACCEPTED' && row.offeredPrice
                   ? `договорились: ${soum(row.offeredPrice.amount)}`
                   : row.status === 'DECLINED'

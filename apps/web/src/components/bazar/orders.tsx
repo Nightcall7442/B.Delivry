@@ -1,6 +1,6 @@
 /**
- * Past orders as a stack of receipts on the evening counter: the stall on
- * each, the status in handwriting, the sum, the day. Open ones on top.
+ * Past orders as a stack of receipts on the counter: the stall on each, the
+ * status, the sum, the day. Open ones on top.
  */
 'use client';
 
@@ -30,7 +30,7 @@ export function BazaarOrders({ locale }: { locale: string }) {
   });
 
   return (
-    <main className={s.scene}>
+    <main className={`hall ${s.scene}`}>
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
           <Link href={home} className={s.round} aria-label={t('common.back')}>
@@ -38,14 +38,12 @@ export function BazaarOrders({ locale }: { locale: string }) {
           </Link>
           <span className={s.tag}>{t('receipt.title')}</span>
         </div>
-        <div className={s.greeting} style={{ minHeight: 0, padding: '12px 0 26px' }}>
-          <h1 className={s.display} style={{ fontSize: 'clamp(36px, 5vw, 56px)' }}>
-            {t('orders.title')}
-          </h1>
+        <div className={s.greeting} style={{ padding: '12px 0 26px' }}>
+          <h1 className={`${s.display} ${s.displayPage}`}>{t('orders.title')}</h1>
         </div>
 
         {!authReady || !ready ? null : !user ? (
-          <section className={s.receipt}>
+          <section className={`${s.receipt} ${s.sheet}`}>
             <p className={s.rcEmpty}>{t('orders.signIn')}</p>
             <Link
               href={`${home}/login?next=${encodeURIComponent(`${home}/orders`)}`}
@@ -56,7 +54,7 @@ export function BazaarOrders({ locale }: { locale: string }) {
             </Link>
           </section>
         ) : orders.length === 0 ? (
-          <section className={s.receipt}>
+          <section className={`${s.receipt} ${s.sheet}`}>
             <p className={s.rcEmpty}>{t('orders.empty')}</p>
             <p className={s.rcHint}>{t('receipt.emptyLine')}</p>
             <Link href={home} className={s.rcCta} style={{ marginTop: 18 }}>
@@ -77,7 +75,7 @@ export function BazaarOrders({ locale }: { locale: string }) {
                   <span className={s.rcTitle}>
                     {t('order.number', { number: order.number ?? order.id.slice(0, 6) })}
                   </span>
-                  <span className={s.rcDate}>{day.format(new Date(order.placedAt))}</span>
+                  <span>{day.format(new Date(order.placedAt))}</span>
                 </div>
                 <div className={s.slipBody}>
                   <span style={{ minWidth: 0, flex: 1 }}>

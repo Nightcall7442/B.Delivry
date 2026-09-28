@@ -8,6 +8,7 @@ import {
   Text,
   api,
   color,
+  radius,
   useAuth,
   useLocale,
   Receipt,
@@ -60,7 +61,7 @@ export default function BusinessRoute() {
       back="history"
       expanded
       header={
-        <Text role="display" style={{ color: '#FBF1DE' }}>
+        <Text role="display" style={{ color: scene.cream }}>
           {t('business.title')}
         </Text>
       }
@@ -69,7 +70,7 @@ export default function BusinessRoute() {
         {t('business.intro')}
       </Text>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-        {/* Three kraft tags, the same slip as the receipts — no pastel on paper. */}
+        {/* Three kraft tags lying flat on the sheet, in the theme's kraft (their type is theme ink). */}
         {(
           [
             [Receipt, t('business.perkInvoice')],
@@ -81,15 +82,15 @@ export default function BusinessRoute() {
             key={label}
             style={{
               flex: 1,
-              borderRadius: 6,
+              borderRadius: radius.paper,
               padding: 10,
               gap: 8,
-              backgroundColor: scene.kraft,
+              backgroundColor: color.field,
               borderWidth: 1,
-              borderColor: scene.paperEdge,
+              borderColor: color.lineStrong,
             }}
           >
-            <Glyph icon={icon} size={34} tint="#FBF5E6" stroke={scene.pomegranate} />
+            <Glyph icon={icon} size={34} tint={color.tile} stroke={color.brand500} />
             <Text role="caption" numberOfLines={2} style={{ color: color.ink, fontWeight: '600' }}>
               {label}
             </Text>

@@ -1,5 +1,6 @@
 'use client';
 
+import { HALL } from '@bazar/storefront';
 import type { TenantDto } from '@bazar/types';
 import { useEffect, useState } from 'react';
 
@@ -27,8 +28,8 @@ export default function BrandPage() {
           appName: row.branding?.appName ?? 'bazar',
           city: row.branding?.city ?? '',
           logoUrl: row.branding?.logoUrl ?? '',
-          primary: row.branding?.primary ?? '#9E2A2B',
-          accent: row.branding?.accent ?? '#E39B2F',
+          primary: row.branding?.primary ?? HALL.pomegranate,
+          accent: row.branding?.accent ?? HALL.ochre,
         });
       })
       .catch(() => undefined);
@@ -62,7 +63,7 @@ export default function BrandPage() {
     placeholder?: string;
   }) => (
     <label className="block">
-      <span className="text-xs uppercase tracking-wider text-ink-muted">{label}</span>
+      <span className="eyebrow">{label}</span>
       <input
         className="field mt-1 w-full"
         value={form[k]}
@@ -74,7 +75,7 @@ export default function BrandPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-extrabold">Бренд</h1>
+      <h1 className="font-display text-headline font-extrabold">Бренд</h1>
       <p className="mt-1 text-sm text-ink-muted">
         White-label: домен арендатора ({tenant?.domain ?? 'не задан'}) открывает тот же сайт под
         своим именем и цветами. Мобильные приложения берут имя и город отсюда, цвета — при сборке.

@@ -3,7 +3,7 @@
  * a line and a photo if there is something to say, and a tip for the courier.
  */
 import { isApiError } from '@bazar/api-client';
-import { Button, Chip, Field, Panel, Text, api, color, useLocale } from '@bazar/mobile';
+import { Button, Chip, Field, Panel, Text, api, color, scale, useLocale } from '@bazar/mobile';
 import { ONLINE_PROVIDERS } from '@bazar/storefront';
 import type { OrderDto, PaymentDto, ReviewDto } from '@bazar/types';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,8 +16,8 @@ function Stars({ value, onChange }: { value: number; onChange: (n: number) => vo
   return (
     <View style={{ flexDirection: 'row', gap: 4 }}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <Pressable key={n} onPress={() => onChange(n)} hitSlop={4}>
-          <Text style={{ fontSize: 26, color: n <= value ? color.saffron500 : color.sand300 }}>
+        <Pressable key={n} onPress={() => onChange(n)} hitSlop={5}>
+          <Text style={{ ...scale.headline, color: n <= value ? color.saffron500 : color.sand300 }}>
             ★
           </Text>
         </Pressable>
@@ -167,7 +167,7 @@ export function AfterDelivery({ order }: { order: OrderDto }) {
             <Button
               label={t('review.send')}
               disabled={busy || (courierStars === 0 && storeStars === 0)}
-              style={{ flex: 1, height: 40 }}
+              style={{ flex: 1, height: 44 }}
               onPress={() => void send()}
             />
           </View>

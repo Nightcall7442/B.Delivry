@@ -22,10 +22,10 @@ export default function CouriersPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-extrabold">Курьеры</h1>
+      <h1 className="font-display text-headline font-extrabold">Курьеры</h1>
       <div className="card mt-4 overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wider text-ink-muted">
+          <thead className="text-left">
             <tr>
               <th className="px-4 py-3">Курьер</th>
               <th className="px-4 py-3">Статус</th>

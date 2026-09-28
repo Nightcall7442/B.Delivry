@@ -95,14 +95,7 @@ export function ListScreen({ products, locale }: { products: ProductDto[]; local
   };
 
   return (
-    <GoShell
-      locale={locale}
-      back="history"
-      expanded
-      header={
-        <h1 className="font-display text-[22px] font-extrabold leading-7">{t('list.title')}</h1>
-      }
-    >
+    <GoShell locale={locale} back="history" expanded header={<h1>{t('list.title')}</h1>}>
       <p className="mt-1 text-sm text-ink-muted">{t('list.intro')}</p>
       <textarea
         value={text}
@@ -145,10 +138,10 @@ export function ListScreen({ products, locale }: { products: ProductDto[]; local
       {resolved.length > 0 ? (
         <div className="mt-4 flex flex-col gap-2">
           {resolved.map((line, index) => (
-            <div key={`${index}-${line.raw}`} className="rounded-2xl bg-sand-50 p-3">
+            <div key={`${index}-${line.raw}`} className="rounded-paper bg-sand-50 p-3">
               <p className="text-xs text-ink-muted">{line.raw}</p>
               {line.product ? (
-                <p className="font-display text-sm font-bold">
+                <p className="text-sm font-bold tabular-nums">
                   {tr(line.product.name, locale)} · {line.quantity} {units[line.product.unit]} ·{' '}
                   {t.money(line.product.price.amount * line.quantity)}
                 </p>

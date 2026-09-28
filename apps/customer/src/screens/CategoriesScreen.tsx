@@ -6,22 +6,16 @@
  */
 import type { CategoryDto, StoreDto } from '@bazar/types';
 import { closesToday, shopfronts, stallGoods, tr } from '@bazar/storefront';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text as RNText, View } from 'react-native';
 
-import { ShopSign, sceneFont } from '@/components/bazar';
+import { Display, SHADOW_REACH, ShopSign, caps, sceneFont } from '@/components/bazar';
 import { Bone, Page } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 import { EMPTY, useData } from '@/lib/use-data';
-import { color, isDark, press, useLocale } from '@bazar/mobile';
-
-const KRAFT = isDark ? '#1C2438' : '#EAD8B2';
-const PAPER = isDark ? '#151C2E' : '#F4EFE4';
-const SIGN = isDark ? '#232C45' : '#FBF5E6';
-const SIGN_EDGE = isDark ? '#3C4767' : '#C9B99A';
+import { Photo, color, press, radius, scale, shadow, useLocale } from '@bazar/mobile';
 
 export function CategoriesScreen() {
   const router = useRouter();
@@ -61,7 +55,7 @@ export function CategoriesScreen() {
   return (
     <Page tabs title={t('map.title')} cart>
       {loading ? (
-        <Bone style={{ height: 560, borderRadius: 6, marginTop: 8 }} />
+        <Bone style={{ height: 560, marginTop: 8 }} />
       ) : (
         <View style={s.sheet}>
           <RNText style={s.eyebrow}>
@@ -90,12 +84,14 @@ export function CategoriesScreen() {
       )}
       {shops.length > 0 ? (
         <>
-          <RNText style={s.shopsHead}>{t('shop.nearby')}</RNText>
+          <Display step="title" style={s.shopsHead}>
+            {t('shop.nearby')}
+          </Display>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={s.shops}
-            style={{ marginHorizontal: -16 }}
+            style={{ marginHorizontal: -16, marginBottom: -SHADOW_REACH }}
           >
             {shops.map((store) => {
               const closes = closesToday(store);
@@ -136,7 +132,6 @@ export function CategoriesScreen() {
         ]}
       >
         <View style={[s.sign, { transform: [{ rotate: `${tilt}deg` }] }]}>
-          <View style={s.pin} />
           <RNText style={s.signText} numberOfLines={2}>
             {tr(category.name, locale)}
           </RNText>
@@ -151,14 +146,7 @@ export function CategoriesScreen() {
                 return (
                   <View key={store.id} style={[s.face, i > 0 && { marginLeft: -8 }]}>
                     <RNText style={s.faceInitial}>{names[i]?.slice(0, 1)}</RNText>
-                    {photo ? (
-                      <Image
-                        source={{ uri: photo }}
-                        style={StyleSheet.absoluteFill}
-                        contentFit="cover"
-                        cachePolicy="memory-disk"
-                      />
-                    ) : null}
+                    {photo ? <Photo uri={photo} style={s.facePhoto} /> : null}
                   </View>
                 );
               })}
@@ -174,29 +162,20 @@ export function CategoriesScreen() {
   }
 }
 
+// The plan is kraft, the counters on it paper, the row labels kraft again — all in the theme's own
+// tones (lapis in the dark theme), because the type on them is theme-coloured.
 const s = StyleSheet.create({
   sheet: {
     marginTop: 8,
     marginBottom: 8,
-    backgroundColor: KRAFT,
-    borderRadius: 6,
+    backgroundColor: color.field,
+    borderRadius: radius.paper,
     padding: 14,
     paddingTop: 12,
     transform: [{ rotate: '-0.4deg' }],
-    shadowColor: '#3A2A1A',
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
+    ...shadow.paper,
   },
-  eyebrow: {
-    fontFamily: sceneFont.uiHeavy,
-    fontSize: 10,
-    letterSpacing: 1.2,
-    color: color.inkMuted,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-  },
+  eyebrow: { ...caps, color: color.inkMuted, textAlign: 'center' },
   gate: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, marginBottom: 6 },
   gateLine: {
     flex: 1,
@@ -206,7 +185,7 @@ const s = StyleSheet.create({
     borderColor: color.ink,
     opacity: 0.35,
   },
-  gateText: { fontFamily: sceneFont.hand, fontSize: 20, color: color.ink },
+  gateText: { ...caps, color: color.ink },
   hall: { gap: 12, paddingVertical: 6 },
   pair: { flexDirection: 'row', alignItems: 'stretch', gap: 6 },
   aisleLine: {
@@ -222,62 +201,41 @@ const s = StyleSheet.create({
   },
   step: {
     alignSelf: 'center',
-    fontFamily: sceneFont.hand,
-    fontSize: 16,
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.caption,
     color: color.ink,
     opacity: 0.45,
-    backgroundColor: KRAFT,
+    backgroundColor: color.field,
     paddingVertical: 2,
   },
   counterGhost: { flex: 1 },
   counter: {
     flex: 1,
     minWidth: 0,
-    backgroundColor: PAPER,
+    backgroundColor: color.surface,
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: color.ink,
-    borderRadius: 4,
+    borderRadius: radius.paper,
     padding: 10,
     paddingTop: 14,
     gap: 8,
     minHeight: 112,
   },
+  // The row's label: kraft on the counter's paper, flat, no pin — pins are for price signs.
   sign: {
     alignSelf: 'flex-start',
     flexShrink: 1,
-    backgroundColor: SIGN,
+    backgroundColor: color.field,
     borderWidth: 1,
-    borderColor: SIGN_EDGE,
+    borderColor: color.lineStrong,
+    borderRadius: radius.paper,
     paddingVertical: 3,
     paddingHorizontal: 9,
     marginTop: -20,
     maxWidth: '100%',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
   },
-  pin: {
-    position: 'absolute',
-    top: -5,
-    left: '50%',
-    marginLeft: -4,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: '#B42A31',
-    borderWidth: 1,
-    borderColor: '#8E1F26',
-  },
-  signText: {
-    fontFamily: sceneFont.hand,
-    fontSize: 16,
-    lineHeight: 18,
-    color: color.ink,
-    textTransform: 'uppercase',
-  },
+  signText: { ...caps, color: color.ink },
   faces: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
   face: {
     width: 26,
@@ -290,23 +248,19 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  faceInitial: { fontFamily: sceneFont.display, fontSize: 13, color: color.ink },
-  names: { flex: 1, fontFamily: sceneFont.uiText, fontSize: 11, color: color.inkMuted },
-  count: { marginTop: 'auto', fontFamily: sceneFont.uiHeavy, fontSize: 11, color: color.brand500 },
-  empty: { fontFamily: sceneFont.hand, fontSize: 17, color: color.inkMuted },
-  dome: {
-    fontFamily: sceneFont.hand,
-    fontSize: 18,
-    color: color.inkMuted,
-    textAlign: 'center',
-    marginTop: 10,
+  facePhoto: { ...StyleSheet.absoluteFill, borderRadius: 0 },
+  faceInitial: { fontFamily: sceneFont.display, ...scale.caption, color: color.ink },
+  names: { flex: 1, fontFamily: sceneFont.uiText, ...scale.caption, color: color.inkMuted },
+  count: {
+    marginTop: 'auto',
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.caption,
+    color: color.brand500,
+    fontVariant: ['tabular-nums'],
   },
-  shopsHead: {
-    fontFamily: sceneFont.display,
-    fontSize: 22,
-    color: color.ink,
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  shops: { paddingHorizontal: 16, paddingBottom: 16, gap: 10 },
+  empty: { fontFamily: sceneFont.uiText, ...scale.body, color: color.inkMuted },
+  dome: { ...caps, color: color.inkMuted, textAlign: 'center', marginTop: 10 },
+  shopsHead: { marginTop: 12, marginBottom: 8 },
+  // Room for the boards' shadow, handed back by the rail's negative margin.
+  shops: { paddingHorizontal: 16, paddingBottom: 16 + SHADOW_REACH, gap: 10 },
 });

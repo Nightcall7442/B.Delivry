@@ -7,7 +7,16 @@
  * the goods as photo cards, page by page as you scroll. Two shortcuts a
  * grocery run actually needs: «Как в прошлый раз» and «Собрать по списку».
  */
-import { branchesOf, closesToday, tr, unitLabel, type MapStoreDto } from '@bazar/storefront';
+import {
+  HALL,
+  TONE,
+  alpha,
+  branchesOf,
+  closesToday,
+  tr,
+  unitLabel,
+  type MapStoreDto,
+} from '@bazar/storefront';
 import type { CategoryDto, OrderDto, ProductDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -28,10 +37,11 @@ import {
   BasketGlyph,
   Eyebrow,
   Glass,
-  Hand,
   ProductCard,
+  Say,
   Scene,
   SceneButton,
+  ground,
   scene,
   sceneFont,
   useSceneTop,
@@ -41,7 +51,19 @@ import { useAddress } from '@/features/address/store';
 import { useCart, useCartActions } from '@/features/cart/store';
 import { listStores } from '@/lib/catalog';
 import { useData, useList } from '@/lib/use-data';
-import { ArrowLeft, Clock, Mic, Search, api, useAuth, useLocale } from '@bazar/mobile';
+import {
+  ArrowLeft,
+  Clock,
+  Mic,
+  Search,
+  api,
+  noOutline,
+  radius,
+  scale,
+  shadow,
+  useAuth,
+  useLocale,
+} from '@bazar/mobile';
 
 const PAGE = 24;
 
@@ -177,11 +199,11 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
           <Pressable
             onPress={refill}
             disabled={refilled}
-            style={({ pressed }) => [s.shortcut, pressed && { opacity: 0.9 }]}
+            style={({ pressed }) => [s.shortcut, s.shortcutKraft, pressed && { opacity: 0.9 }]}
           >
-            <Hand size={22} color={scene.ink}>
+            <Text style={s.shortcutTitle}>
               {refilled ? t('shop.lastTimeAdded') : t('shop.lastTime')}
-            </Hand>
+            </Text>
             <Text style={s.shortcutHint} numberOfLines={1}>
               {t('shop.lastTimeHint', {
                 items: t.n('cart.items', last.items.length),
@@ -195,43 +217,45 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
           style={({ pressed }) => [s.shortcut, s.shortcutList, pressed && { opacity: 0.9 }]}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Mic size={18} color={scene.saffron} />
-            <Hand size={22} color={scene.cream}>
-              {t('shop.byList')}
-            </Hand>
+            <Mic size={18} color={scene.ochreLight} />
+            <Text style={[s.shortcutTitle, { color: scene.cream }]}>{t('shop.byList')}</Text>
           </View>
-          <Text style={[s.shortcutHint, { color: scene.creamDim }]} numberOfLines={1}>
+          <Text style={[s.shortcutHint, { color: scene.creamMuted }]} numberOfLines={1}>
             {t('shop.byListHint')}
           </Text>
         </Pressable>
       </View>
 
-      <View style={s.searchLine}>
-        <Search size={18} color={scene.creamDim} />
+      <Glass style={s.searchLine}>
+        <Search size={18} color={scene.creamMuted} />
         <TextInput
           value={typed}
           onChangeText={setTyped}
           placeholder={t('shop.search')}
-          placeholderTextColor={scene.creamDim}
+          placeholderTextColor={scene.creamMuted}
           returnKeyType="search"
           style={s.searchInput}
         />
         {typed ? (
-          <Pressable onPress={() => setTyped('')} hitSlop={8}>
+          <Pressable onPress={() => setTyped('')} hitSlop={12}>
             <Text style={s.clear}>×</Text>
           </Pressable>
         ) : null}
-      </View>
+      </Glass>
 
       <Eyebrow style={{ paddingHorizontal: 20, marginTop: 18 }}>{t('shop.shelves')}</Eyebrow>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips}>
-        <Pressable onPress={() => setCategory(null)}>
+        <Pressable onPress={() => setCategory(null)} hitSlop={6}>
           <Glass style={[s.chip, category === null && s.chipOn]}>
             <Text style={[s.chipText, category === null && s.chipTextOn]}>{t('common.all')}</Text>
           </Glass>
         </Pressable>
         {(shelves ?? []).map((c: CategoryDto) => (
-          <Pressable key={c.id} onPress={() => setCategory(category === c.id ? null : c.id)}>
+          <Pressable
+            key={c.id}
+            onPress={() => setCategory(category === c.id ? null : c.id)}
+            hitSlop={6}
+          >
             <Glass style={[s.chip, category === c.id && s.chipOn]}>
               <Text style={[s.chipText, category === c.id && s.chipTextOn]}>
                 {tr(c.name, locale)}
@@ -244,9 +268,9 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: scene.night }}>
+    <View style={{ flex: 1 }}>
       <Scene source={hero} style={StyleSheet.absoluteFill}>
-        <View />
+        {null}
       </Scene>
       <FlatList
         data={items}
@@ -292,19 +316,19 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
               <LoadError onRetry={() => void load(1, true)} />
             </View>
           ) : (
-            <Hand size={22} color={scene.creamDim} style={{ paddingHorizontal: 20, paddingTop: 8 }}>
+            <Say color={scene.creamMuted} style={{ paddingHorizontal: 20, paddingTop: 8 }}>
               {search ? t('shop.notFound') : t('shop.empty')}
-            </Hand>
+            </Say>
           )
         }
         ListFooterComponent={
           loading && items.length > 0 ? (
             <View style={s.footer}>
-              <ActivityIndicator color={scene.saffron} />
+              <ActivityIndicator color={scene.ochreLight} />
               <Text style={s.footerText}>{t('shop.loading')}</Text>
             </View>
           ) : loading ? (
-            <ActivityIndicator color={scene.saffron} style={{ marginTop: 24 }} />
+            <ActivityIndicator color={scene.ochreLight} style={{ marginTop: 24 }} />
           ) : null
         }
       />
@@ -342,82 +366,78 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
 
 const s = StyleSheet.create({
   top: { position: 'absolute', left: 20, right: 20, flexDirection: 'row' },
-  // The painted board over the door: ink with a saffron rule under the name.
+  // The painted board over the door: lapis with an ochre rule under the name — paper's corners.
   board: {
     marginHorizontal: 20,
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 20,
     gap: 6,
-    borderRadius: 14,
+    borderRadius: radius.paper,
     backgroundColor: scene.board,
     borderWidth: 1,
-    borderColor: 'rgba(227,155,47,0.35)',
-    shadowColor: '#000',
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
+    borderColor: alpha(HALL.ochre, 0.35),
+    ...shadow.paper,
   },
-  boardOnPhoto: { backgroundColor: 'rgba(16,21,36,0.9)' },
+  // Over the shop's photograph the paint lets a little of it through.
+  boardOnPhoto: { backgroundColor: alpha(TONE.board, 0.9) },
   boardName: {
     fontFamily: sceneFont.display,
-    fontSize: 34,
-    lineHeight: 37,
+    ...scale.headline,
     letterSpacing: 0.5,
-    color: scene.saffronLight,
+    color: scene.ochreLight,
   },
-  boardLine: { fontFamily: sceneFont.uiText, fontSize: 13, color: scene.creamDim },
+  boardLine: { fontFamily: sceneFont.uiText, ...scale.body, color: scene.creamMuted },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
   pill: {
     height: 32,
-    borderRadius: 16,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  pillText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
-  closed: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.saffronLight, marginTop: 2 },
+  // Sums and minutes in the pills and hints: tabular figures.
+  pillText: {
+    fontFamily: sceneFont.ui,
+    ...scale.caption,
+    color: scene.cream,
+    fontVariant: ['tabular-nums'],
+  },
+  closed: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.ochreLight, marginTop: 2 },
   shortcuts: { paddingHorizontal: 20, paddingTop: 16, gap: 10 },
-  shortcut: {
-    backgroundColor: scene.kraft,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 2,
+  shortcut: { borderRadius: radius.paper, paddingHorizontal: 16, paddingVertical: 12, gap: 2 },
+  // «Как в прошлый раз» is kraft lifting off the ground; «Собрать по списку» is glass.
+  shortcutKraft: { backgroundColor: scene.kraft, ...shadow.paper },
+  shortcutList: { backgroundColor: scene.glass, borderWidth: 1, borderColor: scene.glassEdge },
+  shortcutTitle: { fontFamily: sceneFont.display, ...scale.lead, color: scene.ink },
+  shortcutHint: {
+    fontFamily: sceneFont.uiText,
+    ...scale.caption,
+    color: scene.inkSoft,
+    fontVariant: ['tabular-nums'],
   },
-  shortcutList: {
-    backgroundColor: 'rgba(251,241,222,0.08)',
-    borderWidth: 1,
-    borderColor: scene.glassEdge,
-  },
-  shortcutHint: { fontFamily: sceneFont.uiText, fontSize: 12, color: scene.inkSoft },
   searchLine: {
     marginHorizontal: 20,
     marginTop: 16,
     height: 48,
-    borderRadius: 24,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: 'rgba(16,21,36,0.42)',
-    borderWidth: 1,
-    borderColor: scene.glassEdge,
   },
   searchInput: {
     flex: 1,
     fontFamily: sceneFont.uiText,
-    fontSize: 15,
+    ...scale.body,
     color: scene.cream,
     paddingVertical: 0,
+    ...(noOutline as object),
   },
-  clear: { fontFamily: sceneFont.display, fontSize: 22, color: scene.creamDim },
+  clear: { fontFamily: sceneFont.uiText, ...scale.title, color: scene.creamMuted },
   chips: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 14, gap: 6 },
-  chip: { height: 32, borderRadius: 16, paddingHorizontal: 12, justifyContent: 'center' },
+  chip: { height: 32, paddingHorizontal: 12, justifyContent: 'center' },
   chipOn: { backgroundColor: scene.cream, borderColor: scene.cream },
-  chipText: { fontFamily: sceneFont.ui, fontSize: 12, color: scene.cream },
+  chipText: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.cream },
   chipTextOn: { color: scene.ink },
   row: { paddingHorizontal: 20, gap: 12, marginBottom: 18 },
   card: { flex: 1, maxWidth: '50%' },
@@ -428,25 +448,38 @@ const s = StyleSheet.create({
     gap: 10,
     padding: 16,
   },
-  footerText: { fontFamily: sceneFont.uiText, fontSize: 12, color: scene.creamDim },
+  footerText: {
+    fontFamily: sceneFont.uiText,
+    ...scale.caption,
+    color: scene.creamMuted,
+    textShadowColor: ground(0.6),
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
   cartBar: {
     position: 'absolute',
     left: 20,
     right: 20,
     height: 56,
-    borderRadius: 18,
+    borderRadius: radius.pill,
     backgroundColor: scene.pomegranate,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 18,
-    shadowColor: scene.pomegranate,
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    ...shadow.paper,
   },
-  cartTitle: { fontFamily: sceneFont.uiHeavy, fontSize: 13, color: scene.cream },
-  cartSub: { fontFamily: sceneFont.uiText, fontSize: 10.5, color: '#D9C7A6' },
-  cartTotal: { fontFamily: sceneFont.display, fontSize: 18, color: scene.cream },
+  cartTitle: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.body,
+    color: scene.cream,
+    fontVariant: ['tabular-nums'],
+  },
+  cartSub: { fontFamily: sceneFont.uiText, ...scale.caption, color: scene.creamMuted },
+  cartTotal: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.lead,
+    color: scene.cream,
+    fontVariant: ['tabular-nums'],
+  },
 });
