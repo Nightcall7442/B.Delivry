@@ -15,7 +15,8 @@ export interface DeliverySlot {
   id: string;
   /** ISO start of the window. */
   startsAt: string;
-  day: 'today' | 'tomorrow';
+  /** `later`: the first day after tomorrow that has a window, when today and tomorrow have none. */
+  day: 'today' | 'tomorrow' | 'later';
   label: string;
 }
 
@@ -64,7 +65,14 @@ export function isOpenAt(store: Scheduled, at: Date = new Date()): boolean {
   return minute >= today.opensAt && minute < today.closesAt;
 }
 
-/** The windows still ahead with enough notice, today and tomorrow, that every store of the trip can serve. */
+/** Noon of a Tashkent calendar day: the same date on any phone from UTC−11 to UTC+11 (for `t.date`). */
+const noonOf = (day: ReturnType<typeof tashkent>, days = 0) =>
+  new Date(Date.UTC(day.year, day.month, day.date + days, 12));
+
+/**
+ * The windows still ahead with enough notice that every store of the trip can serve: today's and
+ * tomorrow's, or — when a stall is shut both days — the first working day of the coming week.
+ */
 export function deliverySlots(
   now: Date = new Date(),
   locale = 'ru',
@@ -72,19 +80,22 @@ export function deliverySlots(
 ): DeliverySlot[] {
   const t = createT(locale);
   const slots: DeliverySlot[] = [];
-  for (const [offset, day] of [
-    [0, 'today'],
-    [1, 'tomorrow'],
-  ] as const) {
+  for (let offset = 0; offset < 7; offset++) {
+    if (offset >= 2 && slots.length > 0) break;
+    const day = offset === 0 ? 'today' : offset === 1 ? 'tomorrow' : 'later';
+    const name =
+      day === 'later'
+        ? t.date(noonOf(tashkent(now), offset))
+        : t(day === 'today' ? 'slots.today' : 'slots.tomorrow');
     for (const [from, to] of WINDOWS) {
       const startsAt = tashkentHourOn(now, offset, from);
       if (startsAt.getTime() - now.getTime() < NOTICE_MINUTES * 60_000) continue;
       if (!stores.every((store) => isOpenAt(store, startsAt))) continue;
       slots.push({
-        id: `${day}-${from}`,
+        id: `${offset}-${from}`,
         startsAt: startsAt.toISOString(),
         day,
-        label: `${t(day === 'today' ? 'slots.today' : 'slots.tomorrow')} ${two(from)}:00–${two(to)}:00`,
+        label: `${name} ${two(from)}:00–${two(to)}:00`,
       });
     }
   }
@@ -107,6 +118,6 @@ export function slotLabel(scheduledFor: string, locale = 'ru', now: Date = new D
     ? t('slots.today')
     : same(at, tomorrow)
       ? t('slots.tomorrow')
-      : t.date(new Date(scheduledFor));
+      : t.date(noonOf(at));
   return `${day} ${time}`;
 }

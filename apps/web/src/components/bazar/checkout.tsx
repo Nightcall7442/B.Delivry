@@ -143,11 +143,26 @@ export function BazaarCheckout({
   // A window is offered only when every store of the trip is open at its start — as the API decides.
   const tripStores = useMemo(() => [store, ...followers.map((f) => f.store)], [store, followers]);
   // No stores yet, no windows: an unfiltered row would flash windows the stores cannot serve.
+  // The windows follow the clock: every minute and when the tab is looked at again, so a screen left open
+  // never keeps a window that has already started (the API refuses one anyway).
+  const [clock, setClock] = useState(() => Date.now());
+  useEffect(() => {
+    const tick = setInterval(() => setClock(Date.now()), 60_000);
+    const wake = () => {
+      if (document.visibilityState === 'visible') setClock(Date.now());
+    };
+    document.addEventListener('visibilitychange', wake);
+    return () => {
+      clearInterval(tick);
+      document.removeEventListener('visibilitychange', wake);
+    };
+  }, []);
   const slots = useMemo(
-    () => (tripStores.length > 0 ? deliverySlots(new Date(), locale, tripStores) : []),
-    [locale, tripStores],
+    () => (tripStores.length > 0 ? deliverySlots(new Date(clock), locale, tripStores) : []),
+    [clock, locale, tripStores],
   );
-  const openNow = tripStores.length > 0 && tripStores.every((row) => isOpenAt(row));
+  const openNow =
+    tripStores.length > 0 && tripStores.every((row) => isOpenAt(row, new Date(clock)));
   // «As soon as possible» exists only while the stores are open; at night the first window they
   // can serve is chosen instead, so the button is never dead when there is a way to order.
   useEffect(() => {

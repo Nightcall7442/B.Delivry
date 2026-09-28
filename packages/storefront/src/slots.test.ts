@@ -69,6 +69,24 @@ describe('deliverySlots', () => {
   });
 });
 
+describe('deliverySlots beyond tomorrow', () => {
+  it('offers the first working day of the week when the stall is shut today and tomorrow', () => {
+    // Sunday 27 September, 18:30; the stall does not trade on Mondays.
+    const noMondays = {
+      ...stall,
+      schedule: stall.schedule.map((row) => (row.weekday === 1 ? { ...row, closed: true } : row)),
+    };
+    const slots = deliverySlots(tashkent('2026-09-27T18:30'), 'ru', [noMondays]);
+    expect(hours(slots)).toEqual(['later 8', 'later 12']);
+    expect(slots[0]!.label).toBe('29 сентября 08:00–10:00');
+  });
+
+  it('gives up after a week', () => {
+    const never = { ...stall, schedule: stall.schedule.map((row) => ({ ...row, closed: true })) };
+    expect(deliverySlots(tashkent('2026-09-29T03:27'), 'ru', [never])).toEqual([]);
+  });
+});
+
 describe('slotLabel', () => {
   it('names the window in Tashkent time, today or tomorrow', () => {
     const now = tashkent('2026-09-29T03:27');

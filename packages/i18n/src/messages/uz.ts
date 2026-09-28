@@ -119,8 +119,9 @@ export const uz: Catalogue = {
   'checkout.reason.outOfZone': 'Bu yerga hali olib bormaymiz — boshqa manzilni sinang',
   'checkout.closedPickSlot': 'Rastalar hozir yopiq — tanlangan oynada yigʻib, yetkazib beramiz.',
   'checkout.noWindows':
-    'Bugun va ertaga bu yerda ishlamaydi — yetkazish oynasi yoʻq. Keyinroq kiring yoki boshqa rastadan oling.',
+    'Bir hafta davomida bu yerda ishlamaydi — yetkazish oynasi yoʻq. Boshqa rastadan oling.',
   'checkout.reason.storeClosed': 'Nuqta hozir yopiq',
+  'checkout.reason.windowStarted': 'Bu oyna allaqachon boshlangan — keyingisini tanlang',
 
   'order.title': 'Buyurtma',
   'order.signIn': 'Buyurtmani koʻrish uchun kiring',

@@ -16,6 +16,7 @@ const ORDER_REASON_KEY: Record<string, MessageKey> = {
   'Order is below the minimum for this zone': 'checkout.reason.minOrder',
   'Address is outside every delivery zone': 'checkout.reason.outOfZone',
   'Store is closed': 'checkout.reason.storeClosed',
+  'The delivery window has already started': 'checkout.reason.windowStarted',
 };
 
 export function orderReasonText(reason: string | null | undefined, locale = 'ru'): string | null {

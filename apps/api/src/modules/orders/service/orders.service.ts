@@ -106,6 +106,15 @@ export class OrdersService extends BaseService {
     // A job placing a subscription's order names the customer; a request is the customer.
     const customerId = asCustomerId ?? this.callerCustomerId();
 
+    // A window that has already started cannot be promised: a checkout left open overnight has to
+    // choose again. The subscription job (asCustomerId) keeps its own schedule.
+    if (
+      asCustomerId === undefined &&
+      input.scheduledFor !== undefined &&
+      input.scheduledFor.getTime() <= Date.now()
+    ) {
+      throw new ConflictError(WINDOW_STARTED);
+    }
     const store = await this.stores.getOpenStore(input.storeId, input.scheduledFor);
     const address = await this.addresses.getFrozen(input.addressId, customerId);
 
@@ -377,11 +386,15 @@ export class OrdersService extends BaseService {
         : await this.promotions.evaluate(input.couponCode, input.storeId, subtotal, customerId);
 
     const plus = await this.isPlus(customerId);
+    // The slot the customer picked, or this minute for «as soon as possible».
+    const openAt = input.scheduledFor === undefined ? new Date() : new Date(input.scheduledFor);
     const quote = await this.pricing.quote({
       from: { lat: Number(store.lat), lng: Number(store.lng) },
       to,
       subtotal,
       cityId,
+      // Surge at the window, as create charges it.
+      ...(input.scheduledFor !== undefined ? { at: openAt } : {}),
       weightGrams: items.reduce(
         (sum, item) => sum + (item.weightGrams ?? 0) * Number(item.quantity),
         0,
@@ -399,15 +412,17 @@ export class OrdersService extends BaseService {
         : {}),
     });
 
-    // The slot the customer picked, or this minute for «as soon as possible».
-    const openAt = input.scheduledFor === undefined ? new Date() : new Date(input.scheduledFor);
+    const started = input.scheduledFor !== undefined && openAt.getTime() <= Date.now();
+    const open = this.stores.isOpen(store, openAt);
     return {
-      deliverable: quote.deliverable && this.stores.isOpen(store, openAt),
-      reason: quote.deliverable
-        ? this.stores.isOpen(store, openAt)
-          ? null
-          : 'Store is closed'
-        : quote.reason,
+      deliverable: quote.deliverable && !started && open,
+      reason: !quote.deliverable
+        ? quote.reason
+        : started
+          ? WINDOW_STARTED
+          : open
+            ? null
+            : 'Store is closed',
       distanceMeters: quote.distanceMeters,
       etaMinutes: this.etaMinutesFor(store, quote.distanceMeters),
       totals: {
@@ -875,6 +890,9 @@ type CreateGroupInput = Omit<
 type QuoteGroupInput = Omit<QuoteOrderInput, 'storeId' | 'items' | 'groupFollower'> & {
   stores: GroupEntry[];
 };
+
+/** The refusal for a delivery window that is already under way (the clients translate it). */
+const WINDOW_STARTED = 'The delivery window has already started';
 
 function unquotable(reason: string, none: Money): OrderQuote {
   return {
