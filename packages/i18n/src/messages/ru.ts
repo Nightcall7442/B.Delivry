@@ -125,7 +125,7 @@ export const ru = {
   'checkout.weighNote':
     'Весовые товары курьер взвешивает у продавца — итог может отличаться на несколько процентов.',
   'checkout.reason.minOrder': 'Сумма ниже минимальной для этого района',
-  'checkout.reason.outOfZone': 'Сюда пока не возим — попробуйте другой адрес',
+  'checkout.reason.outOfZone': 'Пока возим только по Ташкенту — выберите адрес в городе',
   'checkout.reason.storeClosed': 'Точка сейчас закрыта',
   'checkout.reason.windowStarted': 'Это окно уже началось — выберите следующее',
   'checkout.closedPickSlot': 'Ряды сейчас закрыты — соберём и привезём в выбранное окно.',
@@ -175,6 +175,10 @@ export const ru = {
   'address.title': 'Куда привезти',
   'address.street': 'Улица, дом',
   'address.myLocation': 'Моё местоположение',
+  'address.locateDenied': 'Нет доступа к геопозиции — нажмите, чтобы разрешить в настройках.',
+  'address.locateOff': 'Геолокация выключена — включите её, чтобы найти вас на карте.',
+  'address.locateTimeout':
+    'Телефон не поймал спутники — подойдите к окну или передвиньте карту к своему дому.',
   'address.pin': 'Точка на карте · {coords}',
   'address.apt': 'кв. {value}',
   'address.entrance': 'подъезд {value}',

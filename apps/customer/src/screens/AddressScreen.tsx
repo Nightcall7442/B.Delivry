@@ -3,11 +3,12 @@
  * Geolocation through expo-location; reverse geocoding through the same API
  * (no Yandex key needed for that part).
  */
+import type { MessageKey } from '@bazar/i18n';
 import type { LatLngDto } from '@bazar/types';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { caps, scene, sceneFont } from '@/components/bazar';
 import { Shell } from '@/components/ui/Shell';
@@ -66,6 +67,8 @@ export function AddressScreen() {
   // Typed text is the user's; geocoded text is replaced on the next move.
   const [typed, setTyped] = useState(Boolean(address?.text));
   const [locating, setLocating] = useState(false);
+  // Why the target could not find the phone, and whether the settings can fix it.
+  const [locateError, setLocateError] = useState<{ text: string; settings: boolean } | null>(null);
   const { user } = useAuth();
   const [saved, setSaved] = useState<DeliveryAddress[]>([]);
 
@@ -97,20 +100,67 @@ export function AddressScreen() {
     [typed, t],
   );
 
-  const locate = async () => {
-    setLocating(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      const { coords } = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
+  // A located pin always describes itself anew: the text the customer typed was for another spot.
+  const land = useCallback(
+    async (position: { latitude: number; longitude: number }) => {
+      const center = { lat: position.latitude, lng: position.longitude };
+      setPoint(center);
       setTyped(false);
-      await onMoveEnd({ lat: coords.latitude, lng: coords.longitude });
-    } finally {
-      setLocating(false);
-    }
-  };
+      setText((await describe(center)) ?? t('address.pin', { coords: coords(center) }));
+    },
+    [t],
+  );
+
+  /**
+   * Finds the phone. `auto` is the first visit without an address: a refusal there stays quiet;
+   * from the target it explains itself. The last known fix lands the pin at once, then GPS at high
+   * accuracy refines it — «balanced» let Android answer with a cell-tower guess kilometres off.
+   */
+  const locate = useCallback(
+    async (auto = false) => {
+      setLocating(true);
+      setLocateError(null);
+      const fail = (key: MessageKey, settings = false) => {
+        if (!auto) setLocateError({ text: t(key), settings });
+      };
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return fail('address.locateDenied', true);
+        if (!(await Location.hasServicesEnabledAsync())) {
+          // Android offers its own «turn on location» dialog; elsewhere the settings do it.
+          if (Platform.OS !== 'android') return fail('address.locateOff', true);
+          try {
+            await Location.enableNetworkProviderAsync();
+          } catch {
+            return fail('address.locateOff');
+          }
+        }
+        const last = await Location.getLastKnownPositionAsync({
+          maxAge: 5 * 60_000,
+          requiredAccuracy: 300,
+        });
+        if (last) await land(last.coords);
+        const fresh = await Promise.race([
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 12_000)),
+        ]);
+        if (fresh) await land(fresh.coords);
+        else if (!last) fail('address.locateTimeout');
+      } catch {
+        fail('address.locateTimeout');
+      } finally {
+        setLocating(false);
+      }
+    },
+    [land, t],
+  );
+
+  // First visit, nothing saved yet: find the phone without being asked.
+  useEffect(() => {
+    if (!address) void locate(true);
+    // Once, on arrival — a later address change is the customer's own doing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const save = () => {
     setAddress({ ...address, text: text.trim() || fmt(point), point });
@@ -149,7 +199,7 @@ export function AddressScreen() {
           autoComplete="street-address"
         />
         <Pressable
-          onPress={locate}
+          onPress={() => void locate()}
           disabled={locating}
           hitSlop={4}
           style={[s.locate, locating && { opacity: 0.5 }]}
@@ -158,6 +208,14 @@ export function AddressScreen() {
           <Target size={20} color={scene.pomegranate} />
         </Pressable>
       </View>
+      {locateError ? (
+        <Text
+          style={s.locateError}
+          onPress={locateError.settings ? () => void Linking.openSettings() : undefined}
+        >
+          {locateError.text}
+        </Text>
+      ) : null}
       {saved.map((row) => (
         <Pressable
           key={row.serverId}
@@ -300,6 +358,12 @@ const s = StyleSheet.create({
   rowMeta: { fontFamily: sceneFont.uiText, ...scale.caption, color: scene.inkSoft },
   arrow: { fontFamily: sceneFont.display, ...scale.title, color: scene.pomegranate },
   hint: { marginTop: 10, fontFamily: sceneFont.uiText, ...scale.body, color: scene.inkSoft },
+  locateError: {
+    marginTop: 8,
+    fontFamily: sceneFont.uiText,
+    ...scale.body,
+    color: scene.pomegranate,
+  },
   section: {
     marginTop: 18,
     paddingTop: 12,

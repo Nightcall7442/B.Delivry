@@ -116,7 +116,8 @@ export const uz: Catalogue = {
   'checkout.weighNote':
     'Tortiladigan mahsulotlarni kuryer sotuvchida tortadi — yakuniy summa bir necha foizga farq qilishi mumkin.',
   'checkout.reason.minOrder': 'Summa bu hudud uchun minimaldan kam',
-  'checkout.reason.outOfZone': 'Bu yerga hali olib bormaymiz — boshqa manzilni sinang',
+  'checkout.reason.outOfZone':
+    'Hozircha faqat Toshkent boʻyicha yetkazamiz — shahar ichidagi manzilni tanlang',
   'checkout.closedPickSlot': 'Rastalar hozir yopiq — tanlangan oynada yigʻib, yetkazib beramiz.',
   'checkout.noWindows':
     'Bir hafta davomida bu yerda ishlamaydi — yetkazish oynasi yoʻq. Boshqa rastadan oling.',
@@ -174,6 +175,10 @@ export const uz: Catalogue = {
   'address.trip': '{km} km · ~{min} daq',
   'address.nearest': 'eng yaqini',
   'address.far': 'rastalardan uzoqroq',
+  'address.locateDenied': 'Joylashuvga ruxsat yoʻq — sozlamalarda ruxsat berish uchun bosing.',
+  'address.locateOff': 'Joylashuv oʻchirilgan — sizni xaritada topish uchun uni yoqing.',
+  'address.locateTimeout':
+    'Telefon sunʻiy yoʻldoshlarni topmadi — derazaga yaqinlashing yoki xaritani uyingizga suring.',
   'address.fromHint':
     'Xaritadagi nuqtadan hisoblaymiz, rastalar 6:30–18:00 ishlaydi. {threshold} dan boshlab yetkazish bepul.',
   'address.legend': 'Xaritadagi belgilar',
