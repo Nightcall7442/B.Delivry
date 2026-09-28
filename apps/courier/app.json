@@ -12,7 +12,11 @@
       "bundleIdentifier": "uz.bazardelivery.courier"
     },
     "android": {
-      "package": "uz.bazardelivery.courier"
+      "package": "uz.bazardelivery.courier",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -28,7 +32,8 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Bazar Courier фотографирует весы у продавца, чтобы клиент видел точный вес."
+          "cameraPermission": "Bazar Courier фотографирует весы у продавца, чтобы клиент видел точный вес.",
+          "microphonePermission": false
         }
       ]
     ],
@@ -38,7 +43,11 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "22412d5a-f003-47c1-ad93-88b8c6363387"
       }
-    }
+    },
+    "owner": "yaqubov1405"
   }
 }
