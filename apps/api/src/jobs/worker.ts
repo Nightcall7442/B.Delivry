@@ -2,12 +2,13 @@
  * Worker bootstrap (can run as separate process: node dist/jobs/worker.js).
  */
 import { Worker, type Job } from 'bullmq';
-import { buildContainer } from '../app/container.js';
+import { buildContainer, type Container } from '../app/container.js';
 import { registerShutdown } from '../app/shutdown.js';
-import { loadConfig } from '../config/index.js';
+import { loadConfig, type Config } from '../config/index.js';
 import { createRedis } from '../infrastructure/redis/redis.client.js';
 import { jobDuration } from '../infrastructure/telemetry/metrics.js';
 import { buildJobHandlers, registerSchedulers } from './index.js';
+import { requeueStalledSearches } from './recover.js';
 import { QUEUE, type JobName, type QueueName } from './queues.js';
 
 /**
@@ -26,9 +27,16 @@ const CONCURRENCY: Record<QueueName, number> = {
   [QUEUE.ANALYTICS]: 2,
 };
 
-export async function startWorkers(): Promise<void> {
-  const config = loadConfig();
-  const container = buildContainer(config);
+export interface RunningWorkers {
+  close(): Promise<void>;
+}
+
+/**
+ * The BullMQ workers and the cron schedules over an existing container. The API process calls
+ * this itself when Redis is on (nothing else consumes the queues unless a dedicated worker
+ * service is deployed); `startWorkers` below is the standalone process.
+ */
+export async function runWorkers(container: Container, config: Config): Promise<RunningWorkers> {
   const handlers = buildJobHandlers(container);
   const connection = createRedis(config.redis, container.logger, 'queue');
 
@@ -79,15 +87,30 @@ export async function startWorkers(): Promise<void> {
     await registerSchedulers(container.queue, tenant.id, container.logger);
   }
 
+  // Workers are up, so a search queued now will actually run.
+  await requeueStalledSearches(container).catch((error: unknown) =>
+    container.logger.error({ err: error }, 'could not re-queue stalled courier searches'),
+  );
+
   container.logger.info({ queues: Object.values(QUEUE) }, 'workers started');
+
+  return {
+    close: async () => {
+      await Promise.all(workers.map((worker) => worker.close()));
+      await connection.quit().catch(() => undefined);
+    },
+  };
+}
+
+export async function startWorkers(): Promise<void> {
+  const config = loadConfig();
+  const container = buildContainer(config);
+  const workers = await runWorkers(container, config);
 
   registerShutdown({
     logger: container.logger,
     targets: [
-      {
-        name: 'workers',
-        target: { close: async () => void (await Promise.all(workers.map((w) => w.close()))) },
-      },
+      { name: 'workers', target: workers },
       { name: 'container', target: container },
     ],
   });

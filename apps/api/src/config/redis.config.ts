@@ -10,6 +10,8 @@ export interface RedisConfig {
   db: number;
   /** Prefixes every key so several environments can share one Redis. */
   keyPrefix: string;
+  /** The API process runs the BullMQ workers (and cron schedules) itself. */
+  workersInProcess: boolean;
 }
 
 export function buildRedisConfig(env: Env): RedisConfig {
@@ -18,5 +20,6 @@ export function buildRedisConfig(env: Env): RedisConfig {
     ...(env.REDIS_PASSWORD !== undefined ? { password: env.REDIS_PASSWORD } : {}),
     db: env.REDIS_DB,
     keyPrefix: env.REDIS_KEY_PREFIX,
+    workersInProcess: env.WORKERS_IN_PROCESS,
   };
 }

@@ -6,6 +6,7 @@ import { loadConfig } from './config/index.js';
 import { connectPrisma } from './infrastructure/database/prisma.client.js';
 import { initTracing } from './infrastructure/telemetry/tracing.js';
 import { registerSchedulers } from './jobs/index.js';
+import { runWorkers, type RunningWorkers } from './jobs/worker.js';
 
 /**
  * Boot order, and why:
@@ -33,6 +34,17 @@ async function main(): Promise<void> {
     const app = await createApp(container);
     const server = await startServer(app, config.app);
     await container.services.telegramBot.registerWebhook(config.app.baseUrl);
+    // With Redis the queues are BullMQ's, and somebody has to run them: this process does, unless a
+    // dedicated worker service is deployed (WORKERS_IN_PROCESS=false).
+    let workers: RunningWorkers | null = null;
+    if (container.redis !== null && config.redis.workersInProcess) {
+      // The API must keep serving even if the queues cannot be run: better orders that wait for
+      // a courier search than an API that will not boot.
+      workers = await runWorkers(container, config).catch((error: unknown) => {
+        logger.error({ err: error }, 'workers failed to start; the API keeps serving');
+        return null;
+      });
+    }
     // Without Redis there is no worker process: the cron schedules run in here.
     if (container.redis === null) {
       const tenant = await container.prisma.tenant.findFirst({
@@ -48,6 +60,7 @@ async function main(): Promise<void> {
       targets: [
         // HTTP first: stop taking work before closing what serves it.
         { name: 'http', target: server },
+        ...(workers === null ? [] : [{ name: 'workers', target: workers }]),
         { name: 'container', target: container },
         // Tracing flushes its exporter on shutdown, so it closes last.
         { name: 'tracing', target: { close: () => tracing.shutdown() } },
