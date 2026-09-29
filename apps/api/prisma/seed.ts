@@ -563,24 +563,34 @@ async function seedAdmin(tenantId: string): Promise<void> {
 
 /** Two demo couriers, offline until the courier app puts them on shift. */
 async function seedCouriers(tenantId: string): Promise<number> {
-  const city = await prisma.geoPlace.findUniqueOrThrow({
-    where: { level_code: { level: 'CITY', code: 'UZ-TK-C' } },
-  });
+  const cityOf = async (code: string) =>
+    prisma.geoPlace.findUniqueOrThrow({ where: { level_code: { level: 'CITY', code } } });
   const couriers = [
     {
       phone: '+998710000002',
       firstName: 'Bekzod',
       lastName: 'Karimov',
       vehicleType: 'SCOOTER' as const,
+      city: 'UZ-TK-C',
     },
     {
       phone: '+998710000003',
       firstName: 'Sardor',
       lastName: 'Rashidov',
       vehicleType: 'BICYCLE' as const,
+      city: 'UZ-TK-C',
+    },
+    // Urgench's own courier, for the test stall there: dispatch matches couriers by the city.
+    {
+      phone: '+998710000004',
+      firstName: 'Ulugbek',
+      lastName: 'Matyakubov',
+      vehicleType: 'SCOOTER' as const,
+      city: 'UZ-XO-C',
     },
   ];
   for (const courier of couriers) {
+    const city = await cityOf(courier.city);
     const user = await prisma.user.upsert({
       where: { tenantId_phone: { tenantId, phone: courier.phone } },
       create: {
