@@ -11,7 +11,7 @@ const withPoint = (stores: StoreDto[]): MapStoreDto[] =>
   stores.filter((store): store is MapStoreDto => store.point !== null);
 
 /** A city and its outskirts: the stores an address can be delivered from. */
-const REACH_METERS = 50_000;
+export const REACH_METERS = 50_000;
 
 /**
  * Every store, or — with `near` — the stores within reach of that point: the discovery screens

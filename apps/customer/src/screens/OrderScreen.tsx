@@ -82,6 +82,7 @@ const WEB_URL = process.env['EXPO_PUBLIC_WEB_URL'] ?? 'http://localhost:3000';
 /** The order slip lives on the theme's kraft, the map under it gets a warm wash of the same. */
 const KRAFT = color.field;
 const KRAFT_TINT = alpha(color.field, isDark ? 0.55 : 0.42);
+const pct = (value: number) => `${value}%` as const;
 
 export function OrderScreen({ orderId }: { orderId: string }) {
   const router = useRouter();
@@ -286,6 +287,19 @@ function OrderSheet({
 
           {failed ? null : (
             <View style={s.steps}>
+              {/* One thread from the first stop's centre to the last, the walked part in
+                  pomegranate, under the stops (rotated bordered tiles split into crescents on
+                  Android). */}
+              <View
+                style={[s.thread, { left: pct(50 / steps.length), right: pct(50 / steps.length) }]}
+              >
+                <View
+                  style={[
+                    s.walked,
+                    { width: pct((Math.max(stepIndex, 0) / (steps.length - 1)) * 100) },
+                  ]}
+                />
+              </View>
               {steps.map((step, index) => {
                 const state =
                   index < stepIndex || (index === stepIndex && terminal)
@@ -295,24 +309,15 @@ function OrderSheet({
                       : 'todo';
                 return (
                   <View key={step.label} style={s.step}>
-                    {index > 0 ? (
+                    <View style={s.stopRow}>
                       <View
-                        style={[s.thread, state !== 'todo' && { backgroundColor: color.brand500 }]}
+                        style={[
+                          s.stop,
+                          state === 'done' && s.stopDone,
+                          state === 'active' && s.stopActive,
+                        ]}
                       />
-                    ) : null}
-                    <View
-                      style={[
-                        s.tile,
-                        state === 'done' && {
-                          backgroundColor: color.brand500,
-                          borderColor: color.brand500,
-                        },
-                        state === 'active' && {
-                          backgroundColor: color.saffron400,
-                          borderColor: color.saffron500,
-                        },
-                      ]}
-                    />
+                    </View>
                     <Text
                       role="caption"
                       style={
@@ -739,22 +744,31 @@ const s = StyleSheet.create({
   etaSlot: scale.body,
   steps: { flexDirection: 'row', marginTop: 20 },
   step: { flex: 1, alignItems: 'center', gap: 8 },
+  // The stops sit in a 14-tall row, so the thread's 2 px run through their middle at 6.
   thread: {
     position: 'absolute',
-    top: 7,
-    right: '50%',
-    width: '100%',
+    top: 6,
     height: 2,
+    borderRadius: 1,
     backgroundColor: color.sand300,
   },
-  tile: {
-    width: 16,
-    height: 16,
-    borderRadius: radius.paper,
+  walked: { height: 2, borderRadius: 1, backgroundColor: color.brand500 },
+  stopRow: { height: 14, justifyContent: 'center' },
+  stop: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     borderWidth: 2,
     borderColor: color.sand300,
     backgroundColor: color.raise,
-    transform: [{ rotate: '45deg' }],
+  },
+  stopDone: { backgroundColor: color.brand500, borderColor: color.brand500 },
+  stopActive: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: color.saffron400,
+    borderColor: color.saffron500,
   },
   courier: { marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
   avatar: {

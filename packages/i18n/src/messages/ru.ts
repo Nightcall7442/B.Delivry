@@ -606,6 +606,8 @@ export const ru = {
   'scene.morningLine': 'ряды с 6:30',
   'scene.eveningLine': 'зажгли фонари',
   'scene.vendorsHere': 'Продавцы на месте',
+  'scene.whereAreYou': 'Укажите адрес — покажем ряды рядом с вами',
+  'scene.awayFromAddress': 'Вы далеко от адреса доставки — показать ряды рядом',
   'scene.vendorsAll': 'все {count} →',
   'scene.walkRow': 'Пройтись по ряду',
   'scene.rowsAll': 'ряды →',
