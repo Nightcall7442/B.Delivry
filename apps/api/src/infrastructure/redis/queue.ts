@@ -21,6 +21,13 @@ export interface JobQueue {
   close(): Promise<void>;
 }
 
+/**
+ * BullMQ refuses a custom job id with a colon (it is Redis' key separator), and every id here is
+ * written as `name:orderId:...`. A refused id means the job is never queued — in production a
+ * confirmed order never got its courier search.
+ */
+export const bullJobId = (id: string): string => id.replaceAll(':', '-');
+
 const DEFAULT_JOB_OPTIONS: JobsOptions = {
   attempts: 5,
   // Exponential backoff: a provider that is down stays down for a minute, and
@@ -59,7 +66,7 @@ export class BullQueue implements JobQueue {
     options: EnqueueOptions = {},
   ): Promise<void> {
     await this.queue(queueName).add(name, payload, {
-      ...(options.jobId !== undefined ? { jobId: options.jobId } : {}),
+      ...(options.jobId !== undefined ? { jobId: bullJobId(options.jobId) } : {}),
       ...(options.delayMs !== undefined ? { delay: options.delayMs } : {}),
       ...(options.attempts !== undefined ? { attempts: options.attempts } : {}),
       ...(options.priority !== undefined ? { priority: options.priority } : {}),
@@ -72,7 +79,7 @@ export class BullQueue implements JobQueue {
       repeat: { pattern: cron, tz: 'Asia/Tashkent' },
       // Repeatable jobs are re-registered on every boot; a stable id keeps
       // restarts from stacking up duplicate schedules.
-      jobId: `repeat:${name}`,
+      jobId: bullJobId(`repeat:${name}`),
     });
   }
 
