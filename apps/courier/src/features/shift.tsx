@@ -70,6 +70,8 @@ async function groupSiblings(deliveries: DeliveryDto[]): Promise<DeliveryDto[]> 
 
 /** Seconds between position reports while online. */
 const PING_SECONDS = 4;
+/** A parked phone sends nothing on its own; the server drops a courier silent for two minutes. */
+const HEARTBEAT_SECONDS = 30;
 
 export function ShiftProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -317,27 +319,50 @@ function useLocationStream(
     };
 
     if (Platform.OS !== 'web') {
+      let alive = true;
+      let sentAt = 0;
       let subscription: Location.LocationSubscription | null = null;
+      const send = (fix: Fix) => {
+        sentAt = Date.now();
+        report(fix);
+      };
+      const fromLocation = (location: Location.LocationObject): Fix => ({
+        lat: location.coords.latitude,
+        lng: location.coords.longitude,
+        ...(location.coords.heading !== null && location.coords.heading >= 0
+          ? { heading: location.coords.heading }
+          : {}),
+      });
       Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
           timeInterval: PING_SECONDS * 1000,
           distanceInterval: 10,
         },
-        (location) =>
-          report({
-            lat: location.coords.latitude,
-            lng: location.coords.longitude,
-            ...(location.coords.heading !== null && location.coords.heading >= 0
-              ? { heading: location.coords.heading }
-              : {}),
-          }),
+        (location) => send(fromLocation(location)),
       )
         .then((sub) => {
-          subscription = sub;
+          if (alive) subscription = sub;
+          else sub.remove();
         })
         .catch(() => undefined);
-      return () => subscription?.remove();
+      // On shift at once: a courier who has just gone online must not wait for the phone to move
+      // before the first offer can reach them.
+      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
+        .then((location) => {
+          if (alive) send(fromLocation(location));
+        })
+        .catch(() => undefined);
+      // Standing still is still a fix: `distanceInterval` keeps a parked phone silent, and a
+      // courier silent for two minutes gets no offers.
+      const heartbeat = setInterval(() => {
+        if (last.current && Date.now() - sentAt > HEARTBEAT_SECONDS * 1000) send(last.current);
+      }, 10_000);
+      return () => {
+        alive = false;
+        clearInterval(heartbeat);
+        subscription?.remove();
+      };
     }
 
     // ponytail: straight-line ride at ~25 km/h; real routing lives on the server.
