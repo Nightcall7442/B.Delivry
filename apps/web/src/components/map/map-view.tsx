@@ -177,7 +177,10 @@ function LibreMap({
       fail.current();
       return;
     }
-    instance.on('moveend', () => {
+    // Only a hand moves the pin: our own easeTo ends in a moveend too, and one cut short by the
+    // next reports its mid-flight centre.
+    instance.on('moveend', (event) => {
+      if ((event as { programmatic?: boolean }).programmatic) return;
       const c = instance.getCenter();
       moveEnd.current?.({ lat: c.lat, lng: c.lng });
     });
@@ -200,7 +203,7 @@ function LibreMap({
   }, []);
 
   useEffect(() => {
-    map.current?.easeTo({ center: toLngLat(center), zoom, duration: 400 });
+    map.current?.easeTo({ center: toLngLat(center), zoom, duration: 400 }, { programmatic: true });
   }, [center.lat, center.lng, zoom]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {

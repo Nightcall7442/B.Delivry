@@ -98,7 +98,9 @@ ${
       container: 'map', style: '${FREE_STYLE}', center: [init.center.lng, init.center.lat], zoom: init.zoom,
       interactive: init.interactive, attributionControl: { compact: true }, maxZoom: 18
     });
-    m.on('moveend', function () { var c = m.getCenter(); send({ type: 'moveEnd', lat: c.lat, lng: c.lng }); });
+    // Only a hand moves the pin: our own easeTo ends in a moveend too, and one cut short by the
+    // next reports its mid-flight centre (Tashkent → Urgench landed the pin in Shardara).
+    m.on('moveend', function (e) { if (e.programmatic) return; var c = m.getCenter(); send({ type: 'moveEnd', lat: c.lat, lng: c.lng }); });
     m.on('error', function (e) { if (String(e && e.error && e.error.message || '').indexOf('styles/') >= 0) send({ type: 'error' }); });
     // Same API surface as the Yandex branch, so apply() does not care which engine runs.
     api = {
@@ -109,7 +111,7 @@ ${
       }
     };
     map = {
-      setLocation: function (l) { m.easeTo({ center: l.center, zoom: l.zoom, duration: l.duration || 0 }); },
+      setLocation: function (l) { m.easeTo({ center: l.center, zoom: l.zoom, duration: l.duration || 0 }, { programmatic: true }); },
       addChild: function (p) { p._mk.addTo(m); },
       removeChild: function (p) { p._mk.remove(); }
     };
