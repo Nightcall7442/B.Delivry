@@ -46,11 +46,13 @@ export interface MapViewProps {
 }
 
 const API_KEY = process.env['EXPO_PUBLIC_YANDEX_MAPS_API_KEY'] ?? '';
+/** One empty list for every render: a fresh `[]` re-sent the map on its way on each re-render. */
+const NO_MARKERS: readonly MapMarker[] = [];
 
 export function MapView({
   center,
   zoom = 14,
-  markers = [],
+  markers = NO_MARKERS,
   pin = false,
   onMoveEnd,
   inset = 0,
