@@ -59,7 +59,8 @@ export function AddressScreen() {
   const router = useRouter();
   const { t, locale } = useLocale();
   const fmt = (p: LatLngDto) => t('address.pin', { coords: coords(p) });
-  const { next } = useLocalSearchParams<{ next?: string }>();
+  // `locate`: sent from the home screen's «you are far from the address» — find the phone at once.
+  const { next, locate: locateNow } = useLocalSearchParams<{ next?: string; locate?: string }>();
   const { address, setAddress } = useAddress();
 
   const [point, setPoint] = useState<LatLngDto>(address?.point ?? DEFAULT_POINT);
@@ -155,9 +156,11 @@ export function AddressScreen() {
     [land, t],
   );
 
-  // First visit, nothing saved yet: find the phone without being asked.
+  // First visit, nothing saved yet, or sent here to move the address: find the phone.
   useEffect(() => {
-    if (!address) void locate(true);
+    // From the nudge a refusal explains itself; on a first visit it stays quiet.
+    if (locateNow) void locate();
+    else if (!address) void locate(true);
     // Once, on arrival — a later address change is the customer's own doing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

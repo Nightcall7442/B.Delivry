@@ -579,6 +579,8 @@ export const uz: Catalogue = {
   'scene.morningLine': 'rastalar 6:30 dan',
   'scene.eveningLine': 'chiroqlar yondi',
   'scene.vendorsHere': 'Sotuvchilar joyida',
+  'scene.whereAreYou': 'Manzilni kiriting — yaqiningizdagi rastalarni koʻrsatamiz',
+  'scene.awayFromAddress': 'Yetkazish manzilidan uzoqdasiz — yaqindagi rastalarni koʻrsatish',
   'scene.vendorsAll': 'barchasi {count} →',
   'scene.walkRow': 'Rasta boʻylab yurish',
   'scene.rowsAll': 'rastalar →',

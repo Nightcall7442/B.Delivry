@@ -18,7 +18,9 @@ import {
   tr,
   unitLabel,
 } from '@bazar/storefront';
-import type { CategoryDto, ProductDto } from '@bazar/types';
+import { haversineMeters } from '@bazar/maps';
+import type { CategoryDto, LatLngDto, ProductDto } from '@bazar/types';
+import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -56,11 +58,38 @@ import {
 import { LoadError } from '@/components/ui/Page';
 import { DEFAULT_POINT, useAddress } from '@/features/address/store';
 import { useCart, useCartActions } from '@/features/cart/store';
-import { listCategories, listProducts, listStores } from '@/lib/catalog';
+import { REACH_METERS, listCategories, listProducts, listStores } from '@/lib/catalog';
 import { EMPTY, useLoad } from '@/lib/use-data';
 import { Bell, Mic, radius, scale, shadow, useAuth, useLocale } from '@bazar/mobile';
 
 const TILTS = [-1.5, 1, -1, 1.5, -1, 1];
+
+/**
+ * Whether the phone is out of reach of the address the counters are shown for — a pin left in
+ * Tashkent, a trip to Khorezm. Reads the fix only when location is already allowed: the home
+ * screen never asks for it.
+ */
+function useAwayFrom(here: LatLngDto): boolean {
+  const [away, setAway] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void (async () => {
+      try {
+        if (!(await Location.getForegroundPermissionsAsync()).granted) return;
+        const fix = await Location.getLastKnownPositionAsync({ maxAge: 30 * 60_000 });
+        if (!fix || !live) return;
+        const phone = { lat: fix.coords.latitude, lng: fix.coords.longitude };
+        setAway(haversineMeters(phone, here) > REACH_METERS);
+      } catch {
+        // No fix, no nudge.
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, [here.lat, here.lng]); // eslint-disable-line react-hooks/exhaustive-deps
+  return away;
+}
 
 /** The space between two rows of the counter. */
 const RowGap = () => <View style={{ height: 18 }} />;
@@ -77,6 +106,9 @@ export function SceneHomeScreen() {
   const { setQuantity } = useCartActions();
   const here = address?.point ?? DEFAULT_POINT;
   const storeLoad = useLoad(() => listStores(here), [here.lat, here.lng]);
+  // No address yet, or the phone is in another city: the counters below are someone else's.
+  const away = useAwayFrom(here);
+  const nudge = !address ? 'scene.whereAreYou' : away ? 'scene.awayFromAddress' : null;
   const categoryLoad = useLoad(() => listCategories(), []);
   const productLoad = useLoad(() => listProducts(), []);
   const evening = isEvening();
@@ -201,6 +233,14 @@ export function SceneHomeScreen() {
               </Display>
             </View>
 
+            {nudge ? (
+              <Glass
+                style={s.nudge}
+                onPress={() => router.push({ pathname: '/address', params: { locate: '1' } })}
+              >
+                <Text style={s.nudgeText}>{t(nudge)} →</Text>
+              </Glass>
+            ) : null}
             {failed ? (
               <View style={{ paddingHorizontal: 20 }}>
                 <LoadError onRetry={() => void storeLoad.reload()} />
@@ -369,6 +409,14 @@ const s = StyleSheet.create({
   },
   initial: { fontFamily: sceneFont.display, ...scale.title, color: scene.pomegranate },
   greeting: { paddingHorizontal: 20, gap: 6 },
+  nudge: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: radius.pill,
+  },
+  nudgeText: { fontFamily: sceneFont.uiText, ...scale.body, color: scene.ink },
   // The rails keep room for their cards' shadow and hand it back, so the rhythm stays.
   rail: { marginBottom: -SHADOW_REACH },
   vendors: { paddingHorizontal: 20, gap: 10, paddingBottom: 8 + SHADOW_REACH },
