@@ -30,9 +30,50 @@ export function fromAddressDto(dto: AddressDto): DeliveryAddress | null {
   };
 }
 
-/** The address as a headline: a dropped pin shows «Точка на карте», not its coordinates. */
+/**
+ * The address as a headline: a dropped pin shows «Точка на карте», not its coordinates — also when
+ * the API has appended «, kv. 5» after them.
+ */
 export const addressLabel = (text: string): string =>
-  text.replace(/\s*·\s*-?\d+\.\d+,\s*-?\d+\.\d+$/, '');
+  text.replace(/\s*·\s*-?\d+\.\d+,\s*-?\d+\.\d+/, '');
+
+/** The fields of a reverse-geocoder answer that can name a place (expo-location's shape). */
+export interface GeocodedPlace {
+  street?: string | null;
+  streetNumber?: string | null;
+  name?: string | null;
+  district?: string | null;
+  city?: string | null;
+  subregion?: string | null;
+  region?: string | null;
+  country?: string | null;
+}
+
+const UNNAMED_ROAD = /^(unnamed road|дорога без названия|nomsiz yo[ʻʼ'’`]?l)$/i;
+
+/**
+ * What to write under a pin: the street (with its number), else the place's own name, district or
+ * town — and null when the geocoder knows nothing finer than the country, so the caller can show
+ * the coordinates instead. Android answers with just «Узбекистан» (or the province, or a bare
+ * house number) for spots it has no data on, and that is not an address.
+ */
+export function placeLabel(hit: GeocodedPlace): string | null {
+  const coarse = new Set(
+    [hit.country, hit.region, hit.subregion]
+      .map((part) => (part ?? '').trim().toLowerCase())
+      .filter(Boolean),
+  );
+  const clean = (part: string | null | undefined): string | null => {
+    const value = (part ?? '').trim();
+    if (!value || coarse.has(value.toLowerCase())) return null;
+    // Digits alone are a house number or a postal code, never a name.
+    if (/^[\d\s.,/-]+$/.test(value) || UNNAMED_ROAD.test(value)) return null;
+    return value;
+  };
+  const street = clean(hit.street);
+  if (street) return [street, (hit.streetNumber ?? '').trim()].filter(Boolean).join(', ');
+  return clean(hit.name) ?? clean(hit.district) ?? clean(hit.city);
+}
 
 /** Tashkent centre: where the map opens before anyone picks a point. */
 export const DEFAULT_POINT: LatLngDto = { lat: 41.3111, lng: 69.2797 };

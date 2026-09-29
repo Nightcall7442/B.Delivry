@@ -413,9 +413,116 @@ async function seedZone(): Promise<void> {
 }
 
 /**
- * A test stall in Urgench, to check an order end to end from Khorezm: a zone over the city on the
- * default tariff and one stall at the dehkan bazaar with a few Chorsu goods (the melon is
- * Khorezm's own). The apps list stores near the delivery address, so Tashkent never sees it.
+ * One stall of Urgench's dehkan bazaar. Each is modelled on the Tashkent stall of the same trade:
+ * its photographs and the face behind the counter come from that one, the goods are its fixtures
+ * (under Khorezm's names where the trade has them), while the owner, the number and the words are
+ * Urgench's own.
+ */
+interface UrganchStall {
+  slug: string;
+  /** The Tashkent fixture store it is modelled on. */
+  from: string;
+  name: { ru: string; uz: string; en: string };
+  stand: string;
+  ownerName: string;
+  ownerSince: number;
+  ownerMotto: { ru: string; uz: string };
+  point: { lat: number; lng: number };
+  goods: [id: string, rename?: { ru: string; uz: string; en: string }][];
+}
+
+const KHOREZM_MELON = { ru: 'Дыня хорезмская', uz: 'Xorazm qovuni', en: 'Khorezm melon' };
+
+/** Around the dehkan bazaar (41.5513, 60.6317), a few hundred metres between the rows. */
+const URGANCH_STALLS: UrganchStall[] = [
+  {
+    slug: 'urganch-test',
+    from: 'chorsu-zelen',
+    name: {
+      ru: 'Тестовый прилавок, Ургенч',
+      uz: 'Sinov rastasi, Urganch',
+      en: 'Test stall, Urgench',
+    },
+    stand: 'Т-1',
+    ownerName: 'Азиз-ака · тест',
+    ownerSince: 2026,
+    ownerMotto: {
+      ru: 'Проверочный прилавок — заказы отсюда тестовые',
+      uz: 'Sinov rastasi — bu yerdan buyurtmalar sinov uchun',
+    },
+    point: { lat: 41.5513, lng: 60.6317 },
+    goods: [
+      ['p-melon', KHOREZM_MELON],
+      ['p-greens'],
+      ['p-tomato'],
+      ['p-potato'],
+      ['p-grape'],
+      ['p-pomegranate'],
+    ],
+  },
+  {
+    slug: 'urganch-fruit',
+    from: 'alay-fruits',
+    name: { ru: 'Фруктовый ряд, Ургенч', uz: 'Urganch meva rastasi', en: 'Fruit row, Urgench' },
+    stand: 'Ряд 2, место 5',
+    ownerName: 'Бахтиёр-ака',
+    ownerSince: 2015,
+    ownerMotto: {
+      ru: 'Хорезмскую дыню беру у своих — сладкая до самой корки.',
+      uz: 'Xorazm qovunini oʻzimizniklardan olaman — poʻstigacha shirin.',
+    },
+    point: { lat: 41.5518, lng: 60.6323 },
+    goods: [['p-melon', KHOREZM_MELON], ['p-grape'], ['p-pomegranate'], ['p-peach']],
+  },
+  {
+    slug: 'urganch-meat',
+    from: 'farhad-meat',
+    name: { ru: 'Мясной ряд, Ургенч', uz: 'Urganch goʻsht rastasi', en: 'Meat row, Urgench' },
+    stand: 'Мясной ряд, 3',
+    ownerName: 'Рахим-ака',
+    ownerSince: 2012,
+    ownerMotto: {
+      ru: 'Мясо привозим с утра, режем при вас.',
+      uz: 'Goʻshtni ertalab olib kelamiz, koʻz oldingizda kesamiz.',
+    },
+    point: { lat: 41.5509, lng: 60.6311 },
+    goods: [['p-beef'], ['p-lamb'], ['p-chicken']],
+  },
+  {
+    slug: 'urganch-bread',
+    from: 'non-uyi',
+    name: { ru: 'Тандыр-нон, Ургенч', uz: 'Urganch tandir noni', en: 'Tandoor bread, Urgench' },
+    stand: 'У входа, тандыр',
+    ownerName: 'Мукаррам-опа',
+    ownerSince: 2010,
+    ownerMotto: {
+      ru: 'Хлеб из тандыра — горячий, пока не остыл.',
+      uz: 'Tandir noni — sovumasdan issiq.',
+    },
+    point: { lat: 41.5521, lng: 60.6316 },
+    goods: [['p-obi-non'], ['p-patir'], ['p-samsa']],
+  },
+  {
+    slug: 'urganch-spices',
+    from: 'ziravor',
+    name: { ru: 'Лавка специй, Ургенч', uz: 'Urganch ziravor doʻkoni', en: 'Spice stall, Urgench' },
+    stand: 'Ряд специй, 9',
+    ownerName: 'Анвар-ака',
+    ownerSince: 2017,
+    ownerMotto: {
+      ru: 'Зира и изюм — с хорезмских базаров, на развес.',
+      uz: 'Zira va mayiz — Xorazm bozorlaridan, tarozida.',
+    },
+    point: { lat: 41.5505, lng: 60.6321 },
+    goods: [['p-zira'], ['p-raisin'], ['p-walnut']],
+  },
+];
+
+/**
+ * Urgench, to check an order end to end from Khorezm: a zone over the city on the default tariff
+ * and the dehkan bazaar's stalls. The apps list stores near the delivery address, so Tashkent
+ * never sees them, and dispatch matches couriers by the city (Urgench's own courier is seeded
+ * below).
  */
 async function seedUrganchTest(tenantId: string): Promise<void> {
   const city = await prisma.geoPlace.findUniqueOrThrow({
@@ -448,97 +555,90 @@ async function seedUrganchTest(tenantId: string): Promise<void> {
   const vendor = await prisma.vendor.findFirstOrThrow({
     where: { tenantId, phone: '+998710000001' },
   });
-  const chorsu = (await listStores()).find((store) => store.slug === 'chorsu-zelen');
-  if (chorsu === undefined) throw new Error('seedUrganchTest: the Chorsu greens stall is missing');
-  const profile = {
-    name: {
-      ru: 'Тестовый прилавок, Ургенч',
-      uz: 'Sinov rastasi, Urganch',
-      en: 'Test stall, Urgench',
-    },
-    address: 'Ургенч, дехканский базар',
-    standNumber: 'Т-1',
-    ownerName: 'Азиз-ака · тест',
-    ownerSince: 2026,
-    ownerMotto: {
-      ru: 'Проверочный прилавок — заказы отсюда тестовые',
-      uz: 'Sinov rastasi — bu yerdan buyurtmalar sinov uchun',
-    },
-    ownerPhotoUrl: chorsu.ownerPhotoUrl,
-    counterPhotoUrl: chorsu.counterPhotoUrl,
-    coverUrl: chorsu.coverUrl,
-    lat: 41.5513,
-    lng: 60.6317,
-  };
-  const store = await prisma.store.upsert({
-    where: { tenantId_slug: { tenantId, slug: 'urganch-test' } },
-    create: {
-      tenantId,
-      vendorId: vendor.id,
-      cityId: city.id,
-      type: 'BAZAAR_STALL',
-      status: 'ACTIVE',
-      slug: 'urganch-test',
-      preparationMinutes: chorsu.preparationMinutes,
-      ...profile,
-    },
-    update: profile,
-  });
-  for (let weekday = 0; weekday < 7; weekday += 1) {
-    await prisma.storeSchedule.upsert({
-      where: { storeId_weekday: { storeId: store.id, weekday } },
-      create: {
-        storeId: store.id,
-        weekday,
-        opensAt: HOURS.stall.opensAt,
-        closesAt: HOURS.stall.closesAt,
-      },
-      update: { opensAt: HOURS.stall.opensAt, closesAt: HOURS.stall.closesAt },
-    });
-  }
-
+  const fixtureStores = await listStores();
+  const fixtureProducts = await listProducts();
   const categories = new Map(
     (await prisma.category.findMany()).map((category) => [category.slug, category.id]),
   );
-  const fixtures = await listProducts();
-  const goods: [id: string, rename?: { ru: string; uz: string; en: string }][] = [
-    ['p-melon', { ru: 'Дыня хорезмская', uz: 'Xorazm qovuni', en: 'Khorezm melon' }],
-    ['p-greens'],
-    ['p-tomato'],
-    ['p-potato'],
-    ['p-grape'],
-    ['p-pomegranate'],
-  ];
-  for (const [id, rename] of goods) {
-    const product = fixtures.find((row) => row.id === id);
-    if (product === undefined) continue;
-    const data = {
-      categoryId: product.categoryId ? (categories.get(product.categoryId) ?? null) : null,
-      name: rename ?? product.name,
-      description: product.description ?? Prisma.JsonNull,
-      unit: product.unit,
-      price: product.price.amount,
-      currency: product.price.currency,
-      minQuantity: product.minQuantity,
-      quantityStep: product.quantityStep,
-      available: true,
-      stock: product.stock,
-      weightGrams: product.weightGrams,
+
+  for (const stall of URGANCH_STALLS) {
+    const source = fixtureStores.find((row) => row.slug === stall.from);
+    if (source === undefined)
+      throw new Error(`seedUrganchTest: the ${stall.from} store is missing`);
+    const profile = {
+      name: stall.name,
+      address: 'Ургенч, дехканский базар',
+      standNumber: stall.stand,
+      ownerName: stall.ownerName,
+      ownerSince: stall.ownerSince,
+      ownerMotto: stall.ownerMotto,
+      ownerPhotoUrl: source.ownerPhotoUrl,
+      counterPhotoUrl: source.counterPhotoUrl,
+      coverUrl: source.coverUrl,
+      lat: stall.point.lat,
+      lng: stall.point.lng,
+      ...(stall.slug === 'urganch-test'
+        ? {}
+        : { description: source.description ?? Prisma.JsonNull }),
     };
-    const slug = `urg-${id.slice(2)}`;
-    const row = await prisma.product.upsert({
-      where: { storeId_slug: { storeId: store.id, slug } },
-      create: { tenantId, storeId: store.id, slug, ...data },
-      update: data,
+    const store = await prisma.store.upsert({
+      where: { tenantId_slug: { tenantId, slug: stall.slug } },
+      create: {
+        tenantId,
+        vendorId: vendor.id,
+        cityId: city.id,
+        type: 'BAZAAR_STALL',
+        status: 'ACTIVE',
+        slug: stall.slug,
+        preparationMinutes: source.preparationMinutes,
+        ...profile,
+      },
+      update: profile,
     });
-    await prisma.productImage.deleteMany({ where: { productId: row.id } });
-    await prisma.productImage.createMany({
-      data: product.images.map((image, sortOrder) => ({
-        productId: row.id,
-        url: image.url,
-        sortOrder,
-      })),
-    });
+    for (let weekday = 0; weekday < 7; weekday += 1) {
+      await prisma.storeSchedule.upsert({
+        where: { storeId_weekday: { storeId: store.id, weekday } },
+        create: {
+          storeId: store.id,
+          weekday,
+          opensAt: HOURS.stall.opensAt,
+          closesAt: HOURS.stall.closesAt,
+        },
+        update: { opensAt: HOURS.stall.opensAt, closesAt: HOURS.stall.closesAt },
+      });
+    }
+
+    for (const [id, rename] of stall.goods) {
+      const product = fixtureProducts.find((row) => row.id === id);
+      if (product === undefined) continue;
+      const data = {
+        categoryId: product.categoryId ? (categories.get(product.categoryId) ?? null) : null,
+        name: rename ?? product.name,
+        description: product.description ?? Prisma.JsonNull,
+        unit: product.unit,
+        price: product.price.amount,
+        currency: product.price.currency,
+        minQuantity: product.minQuantity,
+        quantityStep: product.quantityStep,
+        available: true,
+        stock: product.stock,
+        weightGrams: product.weightGrams,
+      };
+      const slug = `urg-${id.slice(2)}`;
+      const row = await prisma.product.upsert({
+        where: { storeId_slug: { storeId: store.id, slug } },
+        create: { tenantId, storeId: store.id, slug, ...data },
+        update: data,
+      });
+      await prisma.productImage.deleteMany({ where: { productId: row.id } });
+      await prisma.productImage.createMany({
+        data: product.images.map((image, sortOrder) => ({
+          productId: row.id,
+          url: image.url,
+          sortOrder,
+        })),
+      });
+    }
   }
 }
 
