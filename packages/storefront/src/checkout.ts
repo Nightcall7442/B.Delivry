@@ -15,6 +15,7 @@ import type { OnlineProvider } from './labels.js';
 const ORDER_REASON_KEY: Record<string, MessageKey> = {
   'Order is below the minimum for this zone': 'checkout.reason.minOrder',
   'Address is outside every delivery zone': 'checkout.reason.outOfZone',
+  'Store is in another city than the address': 'checkout.reason.otherCity',
   'Store is closed': 'checkout.reason.storeClosed',
   'The delivery window has already started': 'checkout.reason.windowStarted',
 };

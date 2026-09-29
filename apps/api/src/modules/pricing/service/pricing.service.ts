@@ -13,6 +13,12 @@ import { TariffFeeCalculator, courierPayout } from '../domain/fee-calculator.js'
 import type { PricingRepository } from '../repository/pricing.repository.js';
 import type { Quote, Tariff } from '../types/index.js';
 
+/**
+ * The refusal for a point of sale whose city has no zone at the address, while another city's zone
+ * does cover it. The apps map it to their own words (`checkout.reason.otherCity`).
+ */
+export const OTHER_CITY_REASON = 'Store is in another city than the address';
+
 export interface QuoteRequest {
   from: LatLng;
   to: LatLng;
@@ -58,7 +64,15 @@ export class PricingService extends BaseService {
   async quote(request: QuoteRequest): Promise<Quote> {
     const resolution = await this.geo.resolveZone(request.to, request.cityId);
     if (!resolution.deliverable) {
-      throw new UndeliverableAddressError(resolution.reason ?? 'Address is not deliverable');
+      // A pin that some other city's zone covers is not «outside every zone»: the point of sale
+      // is in another city than the customer, and the customer should be told that.
+      const elsewhere =
+        request.cityId === undefined ? null : await this.geo.resolveZone(request.to);
+      throw new UndeliverableAddressError(
+        elsewhere?.deliverable === true
+          ? OTHER_CITY_REASON
+          : (resolution.reason ?? 'Address is not deliverable'),
+      );
     }
 
     const zoneTariff = await this.tariffFor(

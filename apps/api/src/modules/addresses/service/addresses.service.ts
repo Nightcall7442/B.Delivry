@@ -58,12 +58,34 @@ export class AddressesService extends BaseService {
       this.logger.debug({ customerId }, 'address saved without map location');
     }
 
-    return this.repository.create(customerId, input);
+    return this.repository.create(customerId, {
+      ...input,
+      cityId: await this.cityFor(input.point, input.cityId),
+    });
   }
 
   async update(id: string, input: Partial<AddressInput>): Promise<Address> {
-    await this.get(id);
-    return this.repository.update(id, input);
+    const current = await this.get(id);
+    // A moved pin moves the city with it: an address saved in Tashkent and dragged to Urgench
+    // must not keep pricing against Tashkent's zones.
+    if (input.point === undefined) return this.repository.update(id, input);
+    const cityId = await this.cityFor(input.point, input.cityId ?? current.cityId);
+    return this.repository.update(id, { ...input, cityId });
+  }
+
+  /**
+   * The city an address belongs to is the city of the zone its pin falls in, not whatever the app
+   * knew when the row was saved — pricing looks for the zone only inside the address's city, so a
+   * stale one reads as «Address is outside every delivery zone» for a pin that is well inside
+   * another city's zone. No pin, or a pin outside every zone: the saved city stands.
+   */
+  private async cityFor(
+    point: { lat: number; lng: number } | null | undefined,
+    saved: string,
+  ): Promise<string> {
+    if (point === undefined || point === null) return saved;
+    const resolution = await this.geo.resolveZone(point);
+    return resolution.deliverable ? (resolution.cityId ?? saved) : saved;
   }
 
   async setDefault(id: string): Promise<void> {
@@ -85,8 +107,15 @@ export class AddressesService extends BaseService {
     const address = await this.repository.findById(id, customerId);
     if (address === null) throw new NotFoundError('Address', id);
 
+    const point =
+      address.lat === null || address.lng === null
+        ? null
+        : { lat: Number(address.lat), lng: Number(address.lng) };
+
     return {
-      cityId: address.cityId,
+      // Rows saved before the city followed the pin heal here, so the order (and the courier
+      // search that matches on its city) lands where the pin is.
+      cityId: await this.cityFor(point, address.cityId),
       formatted: formatAddress(address),
       street: address.street,
       house: address.house,
@@ -95,8 +124,8 @@ export class AddressesService extends BaseService {
       floor: address.floor,
       landmark: address.landmark,
       instructions: address.instructions,
-      lat: address.lat === null ? null : Number(address.lat),
-      lng: address.lng === null ? null : Number(address.lng),
+      lat: point?.lat ?? null,
+      lng: point?.lng ?? null,
     };
   }
 
@@ -110,10 +139,10 @@ export class AddressesService extends BaseService {
   async isDeliverable(id: string): Promise<boolean> {
     const address = await this.get(id);
     if (address.lat === null || address.lng === null) return false;
-    const resolution = await this.geo.resolveZone(
-      { lat: Number(address.lat), lng: Number(address.lng) },
-      address.cityId,
-    );
+    const resolution = await this.geo.resolveZone({
+      lat: Number(address.lat),
+      lng: Number(address.lng),
+    });
     return resolution.deliverable;
   }
 }
