@@ -12,7 +12,7 @@ import { Pressable, ScrollView, StyleSheet, Text as RNText, View } from 'react-n
 
 import { Display, SHADOW_REACH, ShopSign, caps, sceneFont } from '@/components/bazar';
 import { Bone, Page } from '@/components/ui/Page';
-import { useAddress } from '@/features/address/store';
+import { DEFAULT_POINT, useAddress } from '@/features/address/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 import { EMPTY, useData } from '@/lib/use-data';
 import { Photo, color, press, radius, scale, shadow, useLocale } from '@bazar/mobile';
@@ -22,7 +22,8 @@ export function CategoriesScreen() {
   const { locale, t } = useLocale();
   const { address } = useAddress();
   const categories = useData(() => listCategories(), []);
-  const stores = useData(() => listStores(), []);
+  const here = address?.point ?? DEFAULT_POINT;
+  const stores = useData(() => listStores(here), [here.lat, here.lng]);
   const products = useData(() => listProducts(), []);
   // The shops stand outside the gate: one board per chain, nearest branch first.
   const shops = useMemo(

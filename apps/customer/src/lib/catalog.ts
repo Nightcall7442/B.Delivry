@@ -5,13 +5,24 @@
  */
 import { api } from '@bazar/mobile';
 import type { MapStoreDto } from '@bazar/storefront';
-import type { CategoryDto, ProductDto, StoreDto } from '@bazar/types';
+import type { CategoryDto, LatLngDto, ProductDto, StoreDto } from '@bazar/types';
 
 const withPoint = (stores: StoreDto[]): MapStoreDto[] =>
   stores.filter((store): store is MapStoreDto => store.point !== null);
 
-export async function listStores(): Promise<MapStoreDto[]> {
-  const page = await api().stores.list({ pageSize: 100 });
+/** A city and its outskirts: the stores an address can be delivered from. */
+const REACH_METERS = 50_000;
+
+/**
+ * Every store, or — with `near` — the stores within reach of that point: the discovery screens
+ * (home, rows, search) show the customer's own city, never a bazaar a thousand km away. Screens
+ * that name stores from old orders and baskets ask for all of them.
+ */
+export async function listStores(near?: LatLngDto): Promise<MapStoreDto[]> {
+  const page = await api().stores.list({
+    pageSize: 100,
+    ...(near ? { lat: near.lat, lng: near.lng, radiusMeters: REACH_METERS } : {}),
+  });
   return withPoint(page.items);
 }
 

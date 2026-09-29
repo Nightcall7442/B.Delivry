@@ -10,6 +10,8 @@ export default function TabsLayout() {
         headerShown: false,
         animation: 'fade',
         sceneStyle: { backgroundColor: 'transparent' },
+        // Tabs out of sight stop re-rendering too.
+        freezeOnBlur: true,
       }}
       tabBar={(props) => <TabBar {...props} />}
     >

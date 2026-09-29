@@ -4,15 +4,22 @@
  * because nothing here can show or price them.
  */
 import type { MapStoreDto } from '@bazar/storefront';
-import type { CategoryDto, ProductDto, StoreDto } from '@bazar/types';
+import type { CategoryDto, LatLngDto, ProductDto, StoreDto } from '@bazar/types';
 
 import { serverApi } from '@/lib/api';
 
 const withPoint = (stores: StoreDto[]): MapStoreDto[] =>
   stores.filter((store): store is MapStoreDto => store.point !== null);
 
-export async function listStores(locale: string): Promise<MapStoreDto[]> {
-  const page = await serverApi(locale).stores.list({ pageSize: 100 });
+/** A city and its outskirts: the stores an address can be delivered from. */
+const REACH_METERS = 50_000;
+
+/** Every store, or — with `near` — those within reach of it (the home and the rows show one city). */
+export async function listStores(locale: string, near?: LatLngDto): Promise<MapStoreDto[]> {
+  const page = await serverApi(locale).stores.list({
+    pageSize: 100,
+    ...(near ? { lat: near.lat, lng: near.lng, radiusMeters: REACH_METERS } : {}),
+  });
   return withPoint(page.items);
 }
 

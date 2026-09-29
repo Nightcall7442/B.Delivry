@@ -29,7 +29,7 @@ import {
 } from '@bazar/mobile';
 import type { MessageKey } from '@bazar/i18n';
 
-import { scene } from '@/components/bazar';
+import { FROSTED, scene } from '@/components/bazar';
 import { useCartCount } from '@/features/cart/store';
 
 import { ui } from './Page';
@@ -121,13 +121,15 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <View style={s.wrap} pointerEvents="box-none">
       <View style={[s.bar, { paddingBottom: insets.bottom, height: 64 + insets.bottom }]}>
-        <BlurView
-          intensity={30}
-          tint="dark"
-          blurMethod="dimezisBlurView"
-          style={s.barFill}
-          pointerEvents="none"
-        />
+        {FROSTED ? (
+          <BlurView
+            intensity={30}
+            tint="dark"
+            blurMethod="dimezisBlurView"
+            style={s.barFill}
+            pointerEvents="none"
+          />
+        ) : null}
         <Animated.View
           pointerEvents="none"
           style={[s.pill, { transform: [{ translateX: pill.x }] }]}

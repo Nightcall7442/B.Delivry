@@ -30,6 +30,12 @@ import { DomeGround, PhotoGrade, press, radius, scale, shadow, useLocale } from 
 export { isEvening, tashkentHour } from '@bazar/storefront';
 
 /** The scene's colours: the six and their tones — never a literal of the scene's own. */
+/**
+ * Frosted glass is iOS's and the web's. Android's live blur redraws the page under it on every
+ * scroll frame and on many phones does not blur at all; there the same glass is nearly opaque.
+ */
+export const FROSTED = Platform.OS !== 'android';
+
 export const scene = {
   /** Text and discs on the ground. */
   cream: TONE.creamLight,
@@ -47,7 +53,7 @@ export const scene = {
   paperEdge: TONE.paperEdge,
   kraft: TONE.kraft,
   /** Glass: the ground through a pane — what floats over it (pills, search, the voice line). */
-  glass: alpha(GROUND[hallLight()].base, 0.55),
+  glass: alpha(GROUND[hallLight()].base, FROSTED ? 0.55 : 0.94),
   glassEdge: alpha(TONE.creamLight, 0.22),
 } as const;
 

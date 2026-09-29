@@ -63,6 +63,9 @@ export default function RootLayout() {
                     // What shows between two screens while they cross-fade: the hall's deep.
                     contentStyle: { backgroundColor: ground(1) },
                     animation: 'fade',
+                    // A screen under the top one stops re-rendering (a tap on «+» used to re-render
+                    // every mounted screen); it catches up when it comes back.
+                    freezeOnBlur: true,
                   }}
                 />
               </CartProvider>

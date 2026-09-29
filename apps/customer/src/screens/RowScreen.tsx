@@ -38,6 +38,7 @@ import {
 } from '@/components/bazar';
 import { Bone, LoadError } from '@/components/ui/Page';
 import { useCart, useCartActions, useCartCount } from '@/features/cart/store';
+import { DEFAULT_POINT, useAddress } from '@/features/address/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 import { EMPTY, useLoad } from '@/lib/use-data';
 import { ArrowLeft, Chevron, Photo, Search, radius, scale, shadow, useLocale } from '@bazar/mobile';
@@ -52,7 +53,9 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
   const top = useSceneTop();
   const count = useCartCount();
   const categoryLoad = useLoad(() => listCategories(), []);
-  const storeLoad = useLoad(() => listStores(), []);
+  const { address } = useAddress();
+  const here = address?.point ?? DEFAULT_POINT;
+  const storeLoad = useLoad(() => listStores(here), [here.lat, here.lng]);
   const productLoad = useLoad(() => listProducts({ categoryId }), [categoryId]);
   const [page, setPage] = useState(0);
   const list = useRef<FlatList<Stall>>(null);
@@ -123,6 +126,10 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
           scrollEventThrottle={32}
           keyExtractor={(stall) => stall.store.id}
           getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+          // A pager needs the page and its neighbours, not ten full-screen stalls at once.
+          initialNumToRender={1}
+          maxToRenderPerBatch={1}
+          windowSize={3}
           renderItem={({ item, index }) => (
             <StallPage
               stall={item}

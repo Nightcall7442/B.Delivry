@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { BazaarCatalog } from '@/components/bazar/catalog';
+import { DEFAULT_POINT } from '@bazar/storefront';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 
 export const metadata: Metadata = { title: 'Карта рядов — Bazar Delivery' };
@@ -20,7 +21,8 @@ export default async function CatalogPage({
 
   const [categories, stores, products] = await Promise.all([
     listCategories(locale),
-    listStores(locale),
+    // Tashkent's own stores: a test stall in another city never shows on the site.
+    listStores(locale, DEFAULT_POINT),
     listProducts(locale, {
       ...(category ? { categoryId: category } : {}),
       ...(q ? { search: q } : {}),

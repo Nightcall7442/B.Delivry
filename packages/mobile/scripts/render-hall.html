@@ -1,0 +1,77 @@
+<!-- The layers of the web hall (apps/web/src/styles/globals.css, «Свет купола»), rendered for the apps by render-hall.mjs. Keep them in step. -->
+<!doctype html>
+<meta charset="utf-8" />
+<style>
+  html,
+  body {
+    margin: 0;
+    width: 400px;
+    height: 900px;
+    overflow: hidden;
+    background: transparent;
+  }
+  :root {
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .morning {
+    --ground-top: #1b4a48;
+    --ground: #123a3a;
+    --ground-deep: #0a2424;
+    --ground-deep-rgb: 10 36 36;
+    --light-rgb: 255 226 176;
+    --hall-tile: url('http://127.0.0.1:3000/dome/morning.svg');
+  }
+  .evening {
+    --ground-top: #17264a;
+    --ground: #0e1a33;
+    --ground-deep: #070e1e;
+    --ground-deep-rgb: 7 14 30;
+    --light-rgb: 255 184 102;
+    --hall-tile: url('http://127.0.0.1:3000/dome/evening.svg');
+  }
+  .layer {
+    position: fixed;
+    inset: 0;
+  }
+  .ground {
+    background:
+      var(--grain),
+      radial-gradient(130% 90% at 50% 32%, transparent 45%, rgb(var(--ground-deep-rgb) / 0.62) 100%),
+      linear-gradient(rgb(var(--ground-deep-rgb) / 0) 0%, rgb(var(--ground-deep-rgb) / 0.3) 42%, rgb(var(--ground-deep-rgb) / 0.84) 100%),
+      var(--hall-tile) 50% 0 / 672px 672px repeat,
+      linear-gradient(var(--ground-top), var(--ground) 42%, var(--ground-deep));
+  }
+  .morning.light {
+    background:
+      linear-gradient(104deg, transparent 6%, rgb(var(--light-rgb) / 0.11) 12%, rgb(var(--light-rgb) / 0.16) 15%, rgb(var(--light-rgb) / 0.11) 18%, transparent 25%),
+      linear-gradient(104deg, transparent 38%, rgb(var(--light-rgb) / 0.085) 45%, rgb(var(--light-rgb) / 0.125) 49%, rgb(var(--light-rgb) / 0.085) 53%, transparent 61%),
+      linear-gradient(104deg, transparent 70%, rgb(var(--light-rgb) / 0.1) 77%, rgb(var(--light-rgb) / 0.14) 80%, rgb(var(--light-rgb) / 0.1) 83%, transparent 90%);
+    -webkit-mask-image: linear-gradient(#000, rgba(0, 0, 0, 0.4) 55%, transparent 92%);
+    mask-image: linear-gradient(#000, rgba(0, 0, 0, 0.4) 55%, transparent 92%);
+  }
+  /* The one camera (web .photo-grade::after): warm light from the upper left, a soft vignette. */
+  .grade {
+    background:
+      radial-gradient(95% 85% at 50% 42%, transparent 55%, rgba(8, 22, 28, 0.34) 100%),
+      linear-gradient(155deg, rgba(255, 214, 150, 0.16), rgba(255, 214, 150, 0) 46%);
+  }
+  .evening.light {
+    background:
+      radial-gradient(circle at 10% 81px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
+      radial-gradient(circle at 20% 89px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
+      radial-gradient(circle at 30% 94px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
+      radial-gradient(circle at 40% 97px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
+      radial-gradient(circle at 50% 98px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
+      radial-gradient(circle at 60% 97px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
+      radial-gradient(circle at 70% 94px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
+      radial-gradient(circle at 80% 89px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
+      radial-gradient(circle at 90% 81px, rgba(255, 236, 196, 0.95) 0 2.5px, rgba(255, 190, 110, 0.3) 4px, rgba(255, 160, 70, 0.1) 22px, transparent 56px),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120' preserveAspectRatio='none'%3E%3Cpath d='M-2 62 Q50 118 102 62' fill='none' stroke='%23040810' stroke-opacity='.7' stroke-width='1.2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0 / 100% 120px no-repeat,
+      radial-gradient(90% 34% at 50% 0, rgba(255, 170, 80, 0.12), transparent 70%);
+  }
+</style>
+<div id="layer" class="layer"></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  document.getElementById('layer').className = `layer ${q.get('light')} ${q.get('kind')}`;
+</script>
