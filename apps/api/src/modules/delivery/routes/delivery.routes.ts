@@ -25,6 +25,7 @@ export function deliveryRoutes(controller: DeliveryController) {
 
     // Everything below is the courier app driving a trip forward.
     app.get('/active', { preHandler: requireCourier }, controller.active);
+    app.get('/offers', { preHandler: requireCourier }, controller.offers);
     app.get('/:id', { preHandler: validate({ params: deliveryIdParamsSchema }) }, controller.get);
 
     const courierAction = (bodySchema?: Parameters<typeof validate>[0]['body']) => [

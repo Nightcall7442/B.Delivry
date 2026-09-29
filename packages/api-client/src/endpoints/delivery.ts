@@ -4,6 +4,7 @@ import type {
   CompleteDeliveryDto,
   DeliveryDto,
   DeliveryListQuery,
+  DeliveryOfferDto,
   FailDeliveryDto,
 } from '@bazar/types';
 
@@ -14,6 +15,8 @@ export const deliveryApi = (http: Http) => ({
   list: (query: DeliveryListQuery & { page?: number; pageSize?: number } = {}) =>
     http.paginated<DeliveryDto>('/delivery', { ...query }),
   active: () => http.request<DeliveryDto[]>('GET', '/delivery/active'),
+  /** Offers still open to this courier: what the socket pushes, for an app that missed the push. */
+  offers: () => http.request<DeliveryOfferDto[]>('GET', '/delivery/offers'),
   get: (id: string) => http.request<DeliveryDto>('GET', `/delivery/${id}`),
   accept: (id: string, body: AcceptDeliveryDto = {}) =>
     http.request<DeliveryDto>('POST', `/delivery/${id}/accept`, { body }),

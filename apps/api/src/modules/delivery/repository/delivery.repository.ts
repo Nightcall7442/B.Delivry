@@ -53,7 +53,14 @@ export class DeliveryRepository extends BaseRepository {
 
     return this.page(
       filters,
-      (page) => this.prisma.delivery.findMany({ where, orderBy: { createdAt: 'desc' }, ...page }),
+      (page) =>
+        this.prisma.delivery.findMany({
+          where,
+          // The trip list names the order and the stall, so a courier's history reads as history.
+          include: { order: { select: { number: true, store: { select: { name: true } } } } },
+          orderBy: { createdAt: 'desc' },
+          ...page,
+        }),
       () => this.prisma.delivery.count({ where }),
     );
   }
@@ -144,6 +151,32 @@ export class DeliveryRepository extends BaseRepository {
   /** Forget who was asked: a restarted search may knock on the same doors. */
   async clearOffers(deliveryId: string): Promise<void> {
     await this.prisma.deliveryOffer.deleteMany({ where: { deliveryId, acceptedAt: null } });
+  }
+
+  /**
+   * The offers this courier can still answer: unexpired, not declined, on a delivery nobody has taken.
+   * The socket pushes them as they are made; this is what a courier whose socket was not listening reads.
+   */
+  async pendingOffersFor(
+    courierId: string,
+    now: Date,
+  ): Promise<{ expiresAt: Date; delivery: Delivery }[]> {
+    const offers = await this.prisma.deliveryOffer.findMany({
+      where: {
+        courierId,
+        acceptedAt: null,
+        declinedAt: null,
+        expiresAt: { gt: now },
+        delivery: {
+          ...this.tenantScope(),
+          courierId: null,
+          status: { in: ['PENDING', 'SEARCHING'] },
+        },
+      },
+      include: { delivery: true },
+      orderBy: { offeredAt: 'asc' },
+    });
+    return offers.map((offer) => ({ expiresAt: offer.expiresAt, delivery: offer.delivery }));
   }
 
   async offeredCourierIds(deliveryId: string): Promise<string[]> {

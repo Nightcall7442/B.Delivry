@@ -40,6 +40,11 @@ export type SubscriptionWithNames = CartSubscription & {
 };
 
 const LEAD_MS = SUBSCRIPTION_LEAD_MINUTES * 60_000;
+/**
+ * A window that opened longer ago than this and was never served is a missed one (the scheduler was
+ * not running), not a late one: placing it now would be an order for a slot that has already passed.
+ */
+const MISSED_AFTER_MS = 30 * 60_000;
 
 export class SubscriptionsService extends BaseService {
   private readonly repository: SubscriptionsRepository;
@@ -145,11 +150,26 @@ export class SubscriptionsService extends BaseService {
     const due = await this.repository.due(now, LEAD_MS);
     let placed = 0;
     for (const subscription of due) {
+      const missed = now.getTime() - subscription.nextRunAt.getTime() > MISSED_AFTER_MS;
+      // Counted from now for a missed one, so a stale row catches up in one step instead of firing
+      // once per week it missed, every tick, until it reaches the present.
       const nextRunAt = nextLocalOccurrence(
         subscription.weekday,
         subscription.hour,
-        subscription.nextRunAt,
+        missed ? now : subscription.nextRunAt,
       );
+      if (missed) {
+        await this.repository.markRun(subscription.id, {
+          nextRunAt,
+          lastOrderId: null,
+          lastError: 'Missed: the window passed while the scheduler was not running',
+        });
+        this.logger.warn(
+          { subscriptionId: subscription.id, missedWindow: subscription.nextRunAt },
+          'subscription window missed, skipped',
+        );
+        continue;
+      }
       try {
         const order = await this.place(subscription);
         await this.repository.markRun(subscription.id, {

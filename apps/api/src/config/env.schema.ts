@@ -75,7 +75,7 @@ export const envSchema = z
     REDIS_DB: z.coerce.number().int().min(0).default(0),
     REDIS_KEY_PREFIX: z.string().default('bazar:'),
     // With Redis the queues need someone to run them: the API process does it itself unless a
-    // dedicated worker service (node dist/jobs/worker.js) is deployed, then set this to false.
+    // dedicated worker service (tsx src/jobs/worker.ts) is deployed, then set this to false.
     WORKERS_IN_PROCESS: bool(true),
 
     // ---------------------------------------------------------------- AUTH

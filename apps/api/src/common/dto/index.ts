@@ -314,13 +314,17 @@ export function toOrderDto(row: OrderRow): OrderDto {
 }
 
 /** The courier's trip. The courier profile is a tracking concern, not sent here. */
-export function toDeliveryDto(row: Delivery): DeliveryDto {
+export function toDeliveryDto(
+  row: Delivery & { order?: { number: string; store: { name: Prisma.JsonValue } } },
+): DeliveryDto {
   return {
     id: row.id,
     tenantId: row.tenantId,
     createdAt: iso(row.createdAt),
     updatedAt: iso(row.updatedAt),
     orderId: row.orderId,
+    orderNumber: row.order?.number ?? null,
+    storeName: row.order ? translated(row.order.store.name) : null,
     courierId: row.courierId,
     courier: null,
     status: row.status,

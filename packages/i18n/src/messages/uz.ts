@@ -163,6 +163,12 @@ export const uz: Catalogue = {
   'orders.title': 'Buyurtmalarim',
   'orders.signIn': 'Buyurtmalarni koʻrish uchun kiring',
   'orders.empty': 'Hali buyurtmalar yoʻq',
+  'orders.segment.active': 'Faol',
+  'orders.segment.delivered': 'Yetkazilgan',
+  'orders.segment.cancelled': 'Bekor qilingan',
+  'orders.emptyActive': 'Hozir faol buyurtmalar yoʻq',
+  'orders.emptyDelivered': 'Yetkazilgan buyurtmalar hali yoʻq',
+  'orders.emptyCancelled': 'Bekor qilingan buyurtmalar yoʻq',
 
   'address.title': 'Qayerga olib kelamiz',
   'address.street': 'Koʻcha, uy',

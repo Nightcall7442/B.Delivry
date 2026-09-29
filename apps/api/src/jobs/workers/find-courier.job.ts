@@ -71,7 +71,7 @@ export function findCourierJob(container: Container) {
 
       await queue.enqueue(QUEUE.DELIVERY, JOB.FIND_COURIER, next, {
         delayMs: DELIVERY_TIMEOUTS.OFFER_TTL_SECONDS * 1000,
-        jobId: `find-courier:${payload.orderId}:${next.attempt}`,
+        jobId: `find-courier:${payload.orderId}:${payload.run ?? 'first'}:${next.attempt}`,
       });
     });
   };

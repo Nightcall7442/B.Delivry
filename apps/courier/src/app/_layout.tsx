@@ -1,6 +1,6 @@
 /**
  * Root layout: fonts, the signed-in courier and their shift, a header-less
- * stack. The courier app has two screens and no navigation chrome.
+ * stack. The courier app has three screens (login, shift, history) and no navigation chrome.
  */
 import {
   Alegreya_500Medium_Italic,

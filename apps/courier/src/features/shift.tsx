@@ -7,6 +7,7 @@
  * server answers with `delivery.offer` / `delivery.offer_expired` events.
  */
 import { api, useAuth } from '@bazar/mobile';
+import { mergeOffers } from '@bazar/storefront';
 import {
   WS_EVENT,
   type CourierDto,
@@ -72,6 +73,11 @@ async function groupSiblings(deliveries: DeliveryDto[]): Promise<DeliveryDto[]> 
 const PING_SECONDS = 4;
 /** A parked phone sends nothing on its own; the server drops a courier silent for two minutes. */
 const HEARTBEAT_SECONDS = 30;
+/**
+ * The socket pushes offers, but one that is reconnecting when an offer goes out loses it for good
+ * (an offer lives thirty seconds), so a courier on shift also asks the server for the open ones.
+ */
+const OFFER_POLL_SECONDS = 4;
 
 export function ShiftProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -82,6 +88,8 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
   const [position, setPosition] = useState<Fix | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Offers turned down: a poll already in flight may still list them.
+  const dismissed = useRef(new Set<string>());
 
   const online = courier?.status === 'ONLINE' || courier?.status === 'BUSY';
 
@@ -113,7 +121,7 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
     const realtime = api().realtime;
     void realtime.connect();
     const offOffer = realtime.on(WS_EVENT.DELIVERY_OFFER, (offer) => {
-      setOffers((current) => [...current.filter((o) => o.deliveryId !== offer.deliveryId), offer]);
+      setOffers((current) => mergeOffers(current, [offer], dismissed.current));
     });
     const offExpired = realtime.on(WS_EVENT.DELIVERY_OFFER_EXPIRED, ({ deliveryId }) => {
       setOffers((current) => current.filter((o) => o.deliveryId !== deliveryId));
@@ -130,6 +138,30 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
       realtime.close();
     };
   }, [courier?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The socket's safety net: ask the server for the open offers every few seconds while on shift
+  // with nothing in hand, and the moment the app comes back to the front.
+  useEffect(() => {
+    if (!online || active) return;
+    let alive = true;
+    const poll = () =>
+      api()
+        .delivery.offers()
+        .then((open) => {
+          if (alive) setOffers((current) => mergeOffers(current, open, dismissed.current));
+        })
+        .catch(() => undefined);
+    void poll();
+    const timer = setInterval(() => void poll(), OFFER_POLL_SECONDS * 1000);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void poll();
+    });
+    return () => {
+      alive = false;
+      clearInterval(timer);
+      sub.remove();
+    };
+  }, [online, active]);
 
   // Offers die on their own clock; drop them a second early so a tap never lands on a corpse.
   useEffect(() => {
@@ -191,6 +223,7 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
   const decline = useCallback(
     (offer: DeliveryOfferDto) =>
       run(async () => {
+        dismissed.current.add(offer.deliveryId);
         setOffers((current) => current.filter((o) => o.deliveryId !== offer.deliveryId));
         await api().delivery.decline(offer.deliveryId);
       }),

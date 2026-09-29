@@ -66,12 +66,15 @@ function recovery(orders: { id: string; tenantId: string; scheduledFor: Date | n
 }
 
 describe('requeueStalledSearches', () => {
-  it('asks for recent confirmed orders that have no delivery', async () => {
+  it('asks for confirmed orders with no delivery: recent ones, and slots still ahead', async () => {
     const { container, asked } = recovery([]);
     await requeueStalledSearches(container);
     const where = (asked[0] as { where: Record<string, unknown> }).where;
     expect(where).toMatchObject({ status: 'CONFIRMED', delivery: null });
-    expect(where.confirmedAt).toHaveProperty('gte');
+    expect(where.OR).toEqual([
+      { confirmedAt: { gte: expect.any(Date) } },
+      { scheduledFor: { gte: expect.any(Date) } },
+    ]);
   });
 
   it('queues the search from the first radius under the confirm handler’s own job id', async () => {

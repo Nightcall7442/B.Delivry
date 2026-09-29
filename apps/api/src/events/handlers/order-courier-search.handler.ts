@@ -86,6 +86,8 @@ export function registerCourierSearchHandlers(events: EventBus, deps: CourierSea
       orderId: event.payload.orderId,
       radiusMeters: SEARCH_RADIUS.COURIER_INITIAL_METERS,
       attempt: 1,
+      // Its own run: its retries must not collide with the retries of the search before it.
+      run: event.id,
     };
 
     await deps.queue.enqueue(QUEUE.DELIVERY, JOB.FIND_COURIER, payload, {

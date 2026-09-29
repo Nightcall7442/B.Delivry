@@ -7,9 +7,11 @@
 import {
   Button,
   MapView,
+  Receipt,
   Text,
   api,
   color,
+  press,
   radius,
   scale,
   shadow,
@@ -125,6 +127,19 @@ export function ShiftScreen() {
             thumbColor={TONE.creamLight}
           />
         </View>
+        {/* Under the shift card, over the map: clear of the sheet with the offers and the big button. */}
+        {courier ? (
+          <Pressable
+            onPress={() => router.push('/history')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="История доставок и заработок"
+            style={({ pressed }) => [s.historyLink, press.base, pressed && press.down]}
+          >
+            <Receipt size={18} color={HALL.ink} />
+            <RNText style={s.historyText}>История</RNText>
+          </Pressable>
+        ) : null}
       </View>
 
       <View style={[s.sheet, { paddingBottom: insets.bottom + 16 }]}>
@@ -403,7 +418,8 @@ const secondsLeft = (iso: string) => Math.max(0, Math.ceil((Date.parse(iso) - Da
 const s = StyleSheet.create({
   // Under the map while its tiles load: the hall's own dark.
   root: { flex: 1, backgroundColor: GROUND[hallLight()].deep },
-  top: { position: 'absolute', left: 12, right: 12, top: 0 },
+  // Box-none: the strip beside the history pill is still the map's to pan.
+  top: { position: 'absolute', left: 12, right: 12, top: 0, pointerEvents: 'box-none' },
   // Kraft lifted over the map: the courier's name in serif, the day's numbers in Manrope.
   shiftCard: {
     flexDirection: 'row',
@@ -424,6 +440,22 @@ const s = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     marginTop: 1,
   },
+  // A paper pill lifted over the map, a full thumb tall, at the right edge under the shift card.
+  historyLink: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+    height: 44,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: radius.pill,
+    backgroundColor: HALL.cream,
+    borderWidth: 1,
+    borderColor: TONE.paperEdge,
+    ...shadow.paper,
+  },
+  historyText: { fontFamily: sceneFont.uiHeavy, ...scale.body, color: HALL.ink },
   // A sheet of paper over the map, with a plain edge: the perforated one belongs to receipts.
   sheet: {
     position: 'absolute',

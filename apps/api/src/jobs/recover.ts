@@ -1,7 +1,7 @@
 /**
  * Start-up recovery for courier searches that never began.
  */
-import { SEARCH_RADIUS } from '@bazar/constants';
+import { SEARCH_RADIUS, isTerminalOrderStatus } from '@bazar/constants';
 import type { Container } from '../app/container.js';
 import { JOB, QUEUE, type FindCourierJob } from './queues.js';
 
@@ -19,14 +19,36 @@ const SLOT_LEAD_MINUTES = 45;
  */
 export async function requeueStalledSearches(container: Container): Promise<number> {
   const now = Date.now();
-  const stalled = await container.prisma.order.findMany({
+  const candidates = await container.prisma.order.findMany({
     where: {
       status: 'CONFIRMED',
       delivery: null,
-      confirmedAt: { gte: new Date(now - RECENT_HOURS * 3600_000) },
+      OR: [
+        { confirmedAt: { gte: new Date(now - RECENT_HOURS * 3600_000) } },
+        // A slot confirmed the evening before waits for its window, not for a recent confirm.
+        { scheduledFor: { gte: new Date(now) } },
+      ],
     },
-    select: { id: true, tenantId: true, scheduledFor: true },
+    select: { id: true, tenantId: true, scheduledFor: true, groupId: true },
   });
+
+  // A follower of a cross-bazaar trip joins its leader's courier; it never searches on its own
+  // (the confirm handler makes the same call).
+  const stalled: typeof candidates = [];
+  for (const order of candidates) {
+    if (order.groupId !== null) {
+      const [leader] = await container.prisma.order.findMany({
+        where: { groupId: order.groupId },
+        orderBy: { placedAt: 'asc' },
+        take: 1,
+        select: { id: true, status: true },
+      });
+      if (leader !== undefined && leader.id !== order.id && !isTerminalOrderStatus(leader.status)) {
+        continue;
+      }
+    }
+    stalled.push(order);
+  }
 
   for (const order of stalled) {
     const payload: FindCourierJob = {
