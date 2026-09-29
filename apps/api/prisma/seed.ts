@@ -412,6 +412,136 @@ async function seedZone(): Promise<void> {
   });
 }
 
+/**
+ * A test stall in Urgench, to check an order end to end from Khorezm: a zone over the city on the
+ * default tariff and one stall at the dehkan bazaar with a few Chorsu goods (the melon is
+ * Khorezm's own). The apps list stores near the delivery address, so Tashkent never sees it.
+ */
+async function seedUrganchTest(tenantId: string): Promise<void> {
+  const city = await prisma.geoPlace.findUniqueOrThrow({
+    where: { level_code: { level: 'CITY', code: 'UZ-XO-C' } },
+  });
+  const tariff = await prisma.tariff.findFirstOrThrow({ where: { cityId: null } });
+  const zone = await prisma.deliveryZone.findFirst({ where: { cityId: city.id, name: 'Urganch' } });
+  if (zone === null) {
+    await prisma.deliveryZone.create({
+      data: {
+        name: 'Urganch',
+        cityId: city.id,
+        tariffId: tariff.id,
+        // GeoJSON ring, [lng, lat]: the city and its edges.
+        polygon: [
+          [
+            [60.54, 41.5],
+            [60.72, 41.5],
+            [60.72, 41.62],
+            [60.54, 41.62],
+            [60.54, 41.5],
+          ],
+        ],
+        priority: 0,
+        active: true,
+      },
+    });
+  }
+
+  const vendor = await prisma.vendor.findFirstOrThrow({
+    where: { tenantId, phone: '+998710000001' },
+  });
+  const chorsu = (await listStores()).find((store) => store.slug === 'chorsu-zelen');
+  if (chorsu === undefined) throw new Error('seedUrganchTest: the Chorsu greens stall is missing');
+  const profile = {
+    name: {
+      ru: 'Тестовый прилавок, Ургенч',
+      uz: 'Sinov rastasi, Urganch',
+      en: 'Test stall, Urgench',
+    },
+    address: 'Ургенч, дехканский базар',
+    standNumber: 'Т-1',
+    ownerName: 'Азиз-ака · тест',
+    ownerSince: 2026,
+    ownerMotto: {
+      ru: 'Проверочный прилавок — заказы отсюда тестовые',
+      uz: 'Sinov rastasi — bu yerdan buyurtmalar sinov uchun',
+    },
+    ownerPhotoUrl: chorsu.ownerPhotoUrl,
+    counterPhotoUrl: chorsu.counterPhotoUrl,
+    coverUrl: chorsu.coverUrl,
+    lat: 41.5513,
+    lng: 60.6317,
+  };
+  const store = await prisma.store.upsert({
+    where: { tenantId_slug: { tenantId, slug: 'urganch-test' } },
+    create: {
+      tenantId,
+      vendorId: vendor.id,
+      cityId: city.id,
+      type: 'BAZAAR_STALL',
+      status: 'ACTIVE',
+      slug: 'urganch-test',
+      preparationMinutes: chorsu.preparationMinutes,
+      ...profile,
+    },
+    update: profile,
+  });
+  for (let weekday = 0; weekday < 7; weekday += 1) {
+    await prisma.storeSchedule.upsert({
+      where: { storeId_weekday: { storeId: store.id, weekday } },
+      create: {
+        storeId: store.id,
+        weekday,
+        opensAt: HOURS.stall.opensAt,
+        closesAt: HOURS.stall.closesAt,
+      },
+      update: { opensAt: HOURS.stall.opensAt, closesAt: HOURS.stall.closesAt },
+    });
+  }
+
+  const categories = new Map(
+    (await prisma.category.findMany()).map((category) => [category.slug, category.id]),
+  );
+  const fixtures = await listProducts();
+  const goods: [id: string, rename?: { ru: string; uz: string; en: string }][] = [
+    ['p-melon', { ru: 'Дыня хорезмская', uz: 'Xorazm qovuni', en: 'Khorezm melon' }],
+    ['p-greens'],
+    ['p-tomato'],
+    ['p-potato'],
+    ['p-grape'],
+    ['p-pomegranate'],
+  ];
+  for (const [id, rename] of goods) {
+    const product = fixtures.find((row) => row.id === id);
+    if (product === undefined) continue;
+    const data = {
+      categoryId: product.categoryId ? (categories.get(product.categoryId) ?? null) : null,
+      name: rename ?? product.name,
+      description: product.description ?? Prisma.JsonNull,
+      unit: product.unit,
+      price: product.price.amount,
+      currency: product.price.currency,
+      minQuantity: product.minQuantity,
+      quantityStep: product.quantityStep,
+      available: true,
+      stock: product.stock,
+      weightGrams: product.weightGrams,
+    };
+    const slug = `urg-${id.slice(2)}`;
+    const row = await prisma.product.upsert({
+      where: { storeId_slug: { storeId: store.id, slug } },
+      create: { tenantId, storeId: store.id, slug, ...data },
+      update: data,
+    });
+    await prisma.productImage.deleteMany({ where: { productId: row.id } });
+    await prisma.productImage.createMany({
+      data: product.images.map((image, sortOrder) => ({
+        productId: row.id,
+        url: image.url,
+        sortOrder,
+      })),
+    });
+  }
+}
+
 /** The dispatcher login for the admin panel. */
 async function seedAdmin(tenantId: string): Promise<void> {
   const phone = '+998710000000';
@@ -489,6 +619,7 @@ async function main(): Promise<void> {
   await seedTariff();
   await seedZone();
   const storefront = await seedStorefront(tenantId);
+  await seedUrganchTest(tenantId);
   const couriers = await seedCouriers(tenantId);
   await seedAdmin(tenantId);
 

@@ -54,7 +54,7 @@ import {
   useSceneTop,
 } from '@/components/bazar';
 import { LoadError } from '@/components/ui/Page';
-import { useAddress } from '@/features/address/store';
+import { DEFAULT_POINT, useAddress } from '@/features/address/store';
 import { useCart, useCartActions } from '@/features/cart/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 import { EMPTY, useLoad } from '@/lib/use-data';
@@ -75,7 +75,8 @@ export function SceneHomeScreen() {
   const top = useSceneTop();
   const { quantities } = useCart();
   const { setQuantity } = useCartActions();
-  const storeLoad = useLoad(() => listStores(), []);
+  const here = address?.point ?? DEFAULT_POINT;
+  const storeLoad = useLoad(() => listStores(here), [here.lat, here.lng]);
   const categoryLoad = useLoad(() => listCategories(), []);
   const productLoad = useLoad(() => listProducts(), []);
   const evening = isEvening();

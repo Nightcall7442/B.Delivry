@@ -31,6 +31,7 @@ import {
 } from '@/components/bazar';
 import { Bone, LoadError } from '@/components/ui/Page';
 import { useCart, useCartActions, useCartCount } from '@/features/cart/store';
+import { DEFAULT_POINT, useAddress } from '@/features/address/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
 import { useData, useList, useLoad } from '@/lib/use-data';
 import { ArrowLeft, Photo, Search, noOutline, scale, useLocale } from '@bazar/mobile';
@@ -47,7 +48,9 @@ export function SearchScreen() {
   const [draft, setDraft] = useState(q);
   const [sort, setSort] = useState<SortKey>('default');
 
-  const stores = useData(() => listStores(), []);
+  const { address } = useAddress();
+  const here = address?.point ?? DEFAULT_POINT;
+  const stores = useData(() => listStores(here), [here.lat, here.lng]);
   const categories = useList(() => listCategories(), []);
   const productLoad = useLoad(
     () =>
