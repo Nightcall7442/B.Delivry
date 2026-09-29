@@ -172,6 +172,12 @@ export const ru = {
   'orders.title': 'Мои заказы',
   'orders.signIn': 'Войдите, чтобы увидеть заказы',
   'orders.empty': 'Заказов ещё нет',
+  'orders.segment.active': 'Активные',
+  'orders.segment.delivered': 'Доставленные',
+  'orders.segment.cancelled': 'Отменённые',
+  'orders.emptyActive': 'Сейчас нет активных заказов',
+  'orders.emptyDelivered': 'Доставленных заказов пока нет',
+  'orders.emptyCancelled': 'Отменённых заказов нет',
 
   // ---------------------------------------------------------------- address
   'address.title': 'Куда привезти',

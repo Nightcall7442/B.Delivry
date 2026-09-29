@@ -27,6 +27,9 @@ export class DeliveryController extends BaseController {
   active = async (_request: FastifyRequest, reply: FastifyReply) =>
     this.ok(reply, (await this.service.activeForCourier()).map(toDeliveryDto));
 
+  offers = async (_request: FastifyRequest, reply: FastifyReply) =>
+    this.ok(reply, await this.service.pendingOffers());
+
   get = async (request: FastifyRequest, reply: FastifyReply) => {
     const { id } = params<{ id: string }>(request);
     return this.ok(reply, toDeliveryDto(await this.service.get(id)));

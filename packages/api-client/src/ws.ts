@@ -12,6 +12,18 @@ import type { TokenStore, Tokens } from './types.js';
 
 type Listener<K extends WsEventName> = (data: ServerEvents[K]) => void;
 
+/** How often a live socket is asked to prove it (the server answers `ping` with `pong`). */
+const PING_MS = 20_000;
+/**
+ * Pings in a row that got no answer (no pong, no event) before the socket is called half-open: the
+ * phone still says OPEN (the server was redeployed, the network changed) but nobody is there, and
+ * every push is lost. Counted in pings, not seconds: a hidden browser tab runs its timers once a
+ * minute, and wall-clock silence would make it reconnect on every tick.
+ */
+const MAX_UNANSWERED = 2;
+/** Reconnect delay cap: a courier waiting for an offer cannot afford half a minute of deafness. */
+const MAX_BACKOFF_MS = 10_000;
+
 export interface RealtimeOptions {
   /** e.g. ws://localhost:4000/ws */
   url: string;
@@ -27,6 +39,8 @@ export class RealtimeClient {
   private readonly listeners = new Map<WsEventName, Set<Listener<WsEventName>>>();
   private attempt = 0;
   private timer: ReturnType<typeof setTimeout> | null = null;
+  private watchdog: ReturnType<typeof setInterval> | null = null;
+  private unanswered = 0;
   private closed = true;
 
   constructor(private readonly options: RealtimeOptions) {}
@@ -44,9 +58,12 @@ export class RealtimeClient {
 
     socket.onopen = () => {
       this.attempt = 0;
+      this.unanswered = 0;
+      this.watch(socket);
       for (const room of this.rooms) socket.send(JSON.stringify({ action: 'join', room }));
     };
     socket.onmessage = (message: MessageEvent) => {
+      this.unanswered = 0;
       let parsed: { event?: WsEventName; data?: unknown } | null = null;
       try {
         parsed = JSON.parse(String(message.data)) as { event?: WsEventName; data?: unknown };
@@ -60,25 +77,58 @@ export class RealtimeClient {
     };
     // Typed structurally: `CloseEvent` is a DOM name and the API server compiles this file too.
     socket.onclose = (event: { code: number }) => {
+      // A socket already given up on (see `watch`) may still report its close much later.
+      if (this.socket !== socket) return;
       this.socket = null;
-      if (this.closed) return;
-      // 1s, 2s, 4s … capped at 30s. A dead network costs nothing; a flapping one is not hammered.
-      const delay = Math.min(30_000, 1000 * 2 ** this.attempt++);
-      this.timer = setTimeout(() => {
-        // 4401: the server refused the token. Renew it first, or every retry
-        // would knock with the same expired key until the app makes an HTTP call.
-        const ready =
-          event.code === 4401 && this.options.renew ? this.options.renew() : Promise.resolve(null);
-        void ready.then(() => this.connect());
-      }, delay);
+      this.unwatch();
+      if (!this.closed) this.reconnect(event.code);
     };
     socket.onerror = () => socket.close();
+  }
+
+  /** 1s, 2s, 4s … capped at 10s. A dead network costs nothing; a flapping one is not hammered. */
+  private reconnect(code: number): void {
+    const delay = Math.min(MAX_BACKOFF_MS, 1000 * 2 ** this.attempt++);
+    this.timer = setTimeout(() => {
+      // 4401: the server refused the token. Renew it first, or every retry
+      // would knock with the same expired key until the app makes an HTTP call.
+      const ready =
+        code === 4401 && this.options.renew ? this.options.renew() : Promise.resolve(null);
+      void ready.then(() => this.connect());
+    }, delay);
+  }
+
+  /** Pings a live socket; one that stays silent is dropped now, not when the OS finally notices. */
+  private watch(socket: WebSocket): void {
+    this.unwatch();
+    this.watchdog = setInterval(() => {
+      if (this.socket !== socket || socket.readyState !== WebSocket.OPEN) return;
+      if (this.unanswered >= MAX_UNANSWERED) {
+        this.socket = null;
+        this.unwatch();
+        try {
+          socket.close();
+        } catch {
+          // Already gone.
+        }
+        if (!this.closed) this.reconnect(0);
+        return;
+      }
+      this.unanswered += 1;
+      socket.send(JSON.stringify({ action: 'ping' }));
+    }, PING_MS);
+  }
+
+  private unwatch(): void {
+    if (this.watchdog) clearInterval(this.watchdog);
+    this.watchdog = null;
   }
 
   close(): void {
     this.closed = true;
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
+    this.unwatch();
     this.socket?.close();
     this.socket = null;
   }

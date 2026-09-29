@@ -41,6 +41,12 @@ export interface FindCourierJob extends TenantJob {
   /** Widens on each attempt until COURIER_MAX_METERS. */
   radiusMeters: number;
   attempt: number;
+  /**
+   * Names one search run. The retry ids carry it, because BullMQ keeps finished jobs and drops an
+   * add whose id it still holds: two runs for one order would otherwise share `…-2`, `…-3`, and the
+   * second run's retries would vanish after its first round.
+   */
+  run?: string;
 }
 
 export type RunSubscriptionsJob = TenantJob;

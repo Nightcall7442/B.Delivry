@@ -7,14 +7,24 @@ import { CUSTOMER_CANCELLABLE_STATUSES, isTerminalOrderStatus } from '@bazar/con
 import { api, useAuth } from '@bazar/mobile';
 import type { CourierPublicDto, LatLngDto, OrderDto, OrderTrackingDto } from '@bazar/types';
 import { WS_EVENT } from '@bazar/types';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
-export function useOrderList(): { orders: OrderDto[]; ready: boolean; reload: () => void } {
+/** The history view reads up to this many pages of 100; the home banner only needs the newest 50. */
+const HISTORY_PAGES = 3;
+
+export function useOrderList(options: { history?: boolean } = {}): {
+  orders: OrderDto[];
+  ready: boolean;
+  /** Resolves when the fresh list is in, so a pull-to-refresh spinner lasts as long as the fetch. */
+  reload: () => Promise<void>;
+} {
+  const history = options.history === true;
   const { user, ready: authReady } = useAuth();
   const [orders, setOrders] = useState<OrderDto[]>([]);
   const [ready, setReady] = useState(false);
   const [tick, setTick] = useState(0);
+  const waiting = useRef<(() => void)[]>([]);
 
   useEffect(() => {
     if (!authReady) return;
@@ -24,17 +34,42 @@ export function useOrderList(): { orders: OrderDto[]; ready: boolean; reload: ()
       return;
     }
     let alive = true;
+    const pageSize = history ? 100 : 50;
     api()
-      .orders.list({ pageSize: 50 })
-      .then((page) => alive && setOrders(page.items))
+      .orders.list({ pageSize })
+      .then(async (first) => {
+        // Newest first: the extra pages are older history, fetched together.
+        const more = history
+          ? await Promise.all(
+              Array.from(
+                { length: Math.min(first.pagination.totalPages, HISTORY_PAGES) - 1 },
+                (_, index) => api().orders.list({ pageSize, page: index + 2 }),
+              ),
+            )
+          : [];
+        return [first, ...more].flatMap((page) => page.items);
+      })
+      .then((items) => alive && setOrders(items))
       .catch(() => alive && setOrders([]))
-      .finally(() => alive && setReady(true));
+      .finally(() => {
+        if (alive) setReady(true);
+        for (const done of waiting.current.splice(0)) done();
+      });
     return () => {
       alive = false;
     };
-  }, [user, authReady, tick]);
+  }, [user, authReady, tick, history]);
 
-  return { orders, ready, reload: useCallback(() => setTick((t) => t + 1), []) };
+  const reload = useCallback(
+    () =>
+      new Promise<void>((resolve) => {
+        waiting.current.push(resolve);
+        setTick((t) => t + 1);
+      }),
+    [],
+  );
+
+  return { orders, ready, reload };
 }
 
 /** The newest order still in flight — what the home banner shows. */

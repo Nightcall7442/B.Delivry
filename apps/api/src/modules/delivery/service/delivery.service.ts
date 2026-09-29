@@ -13,10 +13,13 @@ import {
 import { haversineMeters } from '@bazar/maps';
 import { money } from '@bazar/payments';
 import { tr } from '@bazar/storefront';
-import type { Translated } from '@bazar/types';
+import type { DeliveryOfferDto, Translated } from '@bazar/types';
 import { randomDigits } from '@bazar/utils';
 import type { Delivery } from '@prisma/client';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
+import { money as moneyDto } from '../../../common/dto/index.js';
+import { runWithContext } from '../../../common/tenant/tenant-context.js';
+import { systemContext } from '../../../common/types/request-context.js';
 import { ERROR_CODE } from '../../../common/errors/error-codes.js';
 import {
   AppError,
@@ -41,6 +44,12 @@ import {
 import { DELIVERY_EVENT } from '../domain/delivery.events.js';
 import type { DeliveryRepository } from '../repository/delivery.repository.js';
 import type { CompleteInput, DeliveryListFilters, ScoredCandidate } from '../types/index.js';
+
+/**
+ * The courier app speaks Russian only, so an offer names the stall in Russian whether the socket
+ * pushed it (from a job that runs in Uzbek) or the app asked for it (in the courier's own locale).
+ */
+const COURIER_LOCALE = 'ru';
 
 export interface DeliveryServiceDeps extends ServiceDeps {
   repository: DeliveryRepository;
@@ -180,7 +189,7 @@ export class DeliveryService extends BaseService {
           courierId: candidate.courierId,
           expiresAt: expiresAt.toISOString(),
           orderNumber: order.number,
-          storeName: tr(order.store.name as Translated, this.context().locale),
+          storeName: tr(order.store.name as Translated, COURIER_LOCALE),
           pickupAddress: delivery.pickupAddress,
           dropoffAddress: delivery.dropoffAddress,
           distanceMeters: delivery.distanceMeters,
@@ -537,6 +546,37 @@ export class DeliveryService extends BaseService {
 
   async activeForCourier(): Promise<Delivery[]> {
     return this.repository.activeForCourier(this.requireCourierId());
+  }
+
+  /**
+   * The offer cards this courier can still answer, as the socket would have pushed them. A socket
+   * that was reconnecting when an offer went out loses it for good; the app also asks here.
+   */
+  async pendingOffers(): Promise<DeliveryOfferDto[]> {
+    const courierId = this.requireCourierId();
+    const locale = this.context().locale;
+    const rows = await this.repository.pendingOffersFor(courierId, new Date());
+    // The order is not the courier's yet, so it is read as the platform, as the search job does.
+    const platform = systemContext(this.tenantId(), `offers:${courierId}`, locale);
+
+    return Promise.all(
+      rows.map(async ({ delivery, expiresAt }) => {
+        const order = await runWithContext(platform, () => this.orders.get(delivery.orderId));
+        return {
+          deliveryId: delivery.id,
+          orderId: delivery.orderId,
+          orderNumber: order.number,
+          storeName: tr(order.store.name as Translated, COURIER_LOCALE),
+          pickupAddress: delivery.pickupAddress,
+          dropoffAddress: delivery.dropoffAddress,
+          distanceMeters: delivery.distanceMeters,
+          payout: moneyDto(delivery.payout, delivery.currency),
+          itemCount: order.items.length,
+          weightGrams: this.orders.weightOf(order),
+          expiresAt: expiresAt.toISOString(),
+        };
+      }),
+    );
   }
 
   async get(deliveryId: string): Promise<Delivery> {

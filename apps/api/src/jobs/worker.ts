@@ -67,6 +67,11 @@ export async function runWorkers(container: Container, config: Config): Promise<
       },
     );
 
+    // Without a listener BullMQ prints a worker's errors raw to stderr, out of the structured logs.
+    worker.on('error', (error) => {
+      container.logger.error({ queue: queueName, err: error }, 'worker error');
+    });
+
     worker.on('failed', (job, error) => {
       container.logger.error(
         { queue: queueName, job: job?.name, attempt: job?.attemptsMade, err: error },
@@ -77,29 +82,37 @@ export async function runWorkers(container: Container, config: Config): Promise<
     return worker;
   });
 
-  const tenant = await container.prisma.tenant.findFirst({
-    where: { active: true },
-    orderBy: { createdAt: 'asc' },
-    select: { id: true },
-  });
-
-  if (tenant !== null) {
-    await registerSchedulers(container.queue, tenant.id, container.logger);
-  }
-
-  // Workers are up, so a search queued now will actually run.
-  await requeueStalledSearches(container).catch((error: unknown) =>
-    container.logger.error({ err: error }, 'could not re-queue stalled courier searches'),
-  );
-
-  container.logger.info({ queues: Object.values(QUEUE) }, 'workers started');
-
-  return {
+  const running: RunningWorkers = {
     close: async () => {
       await Promise.all(workers.map((worker) => worker.close()));
       await connection.quit().catch(() => undefined);
     },
   };
+
+  try {
+    const tenant = await container.prisma.tenant.findFirst({
+      where: { active: true },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true },
+    });
+
+    if (tenant !== null) {
+      await registerSchedulers(container.queue, tenant.id, container.logger);
+    }
+
+    // Workers are up, so a search queued now will actually run.
+    await requeueStalledSearches(container).catch((error: unknown) =>
+      container.logger.error({ err: error }, 'could not re-queue stalled courier searches'),
+    );
+  } catch (error) {
+    // The workers are already consuming: a caller told "failed to start" must not be left with a
+    // pool nobody owns.
+    await running.close().catch(() => undefined);
+    throw error;
+  }
+
+  container.logger.info({ queues: Object.values(QUEUE) }, 'workers started');
+  return running;
 }
 
 export async function startWorkers(): Promise<void> {

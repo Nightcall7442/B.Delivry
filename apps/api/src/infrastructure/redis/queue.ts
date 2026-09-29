@@ -78,7 +78,8 @@ export class BullQueue implements JobQueue {
     await this.queue(queueName).add(name, payload, {
       repeat: { pattern: cron, tz: 'Asia/Tashkent' },
       // Repeatable jobs are re-registered on every boot; a stable id keeps
-      // restarts from stacking up duplicate schedules.
+      // restarts from stacking up duplicate schedules. Production already holds the schedules
+      // under this id: changing it would leave the old ones running beside the new.
       jobId: bullJobId(`repeat:${name}`),
     });
   }

@@ -1,17 +1,29 @@
 /**
  * Order history as a stack of receipts on the hall: one paper slip per order,
- * printed out as it appears, the live ones on top, the vendor's face and the
- * status said as a line. Tap a slip to open the order.
+ * printed out as it appears, the vendor's face and the status said as a line.
+ * Three chips sort the stack — live, delivered, cancelled — newest on top. Tap
+ * a slip to open the order.
  */
-import { isTerminalOrderStatus, ORDER_STATUS } from '@bazar/constants';
-import { orderStatusText, tr } from '@bazar/storefront';
-import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text as RNText, View } from 'react-native';
+import type { MessageKey } from '@bazar/i18n';
+import {
+  ORDER_SEGMENTS,
+  orderStatusText,
+  pickSegment,
+  shownSegment,
+  splitOrders,
+  tr,
+  type OrderSegment,
+  type SegmentPick,
+} from '@bazar/storefront';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text as RNText, View } from 'react-native';
 
 import { Printed, caps, sceneFont } from '@/components/bazar';
 import { Bone, Card, Page, Glyph } from '@/components/ui/Page';
 import {
   Button,
+  Chip,
   Photo,
   Text,
   color,
@@ -28,19 +40,36 @@ import { useOrderList } from '@/features/orders/store';
 import { listStores } from '@/lib/catalog';
 import { useList } from '@/lib/use-data';
 
+const EMPTY: Record<OrderSegment, MessageKey> = {
+  active: 'orders.emptyActive',
+  delivered: 'orders.emptyDelivered',
+  cancelled: 'orders.emptyCancelled',
+};
+
 export function OrdersScreen() {
   const router = useRouter();
   const { locale, t } = useLocale();
   const { user, ready: authReady } = useAuth();
-  const { orders, ready, reload } = useOrderList();
+  const { orders, ready, reload } = useOrderList({ history: true });
+  // The tab stays mounted while another is open: come back to fresh statuses, a live order that
+  // was just delivered belongs under «Доставленные», not under «Активные».
+  const seen = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (seen.current) void reload();
+      seen.current = true;
+    }, [reload]),
+  );
   const stores = useList(() => listStores(), []);
   const storeOf = (id: string) => stores.find((store) => store.id === id) ?? null;
-  const sorted = [...orders].sort(
-    (a, b) => Number(isTerminalOrderStatus(a.status)) - Number(isTerminalOrderStatus(b.status)),
-  );
+  const split = useMemo(() => splitOrders(orders), [orders]);
+  const [pick, setPick] = useState<SegmentPick | null>(null);
+  const segment = shownSegment(pick, split);
+  const shown = split[segment];
+  const thisYear = new Date().getFullYear();
 
   return (
-    <Page tabs title={t('orders.title')} cart onRefresh={() => Promise.resolve(reload())}>
+    <Page tabs title={t('orders.title')} cart onRefresh={reload}>
       {!authReady || !ready ? (
         <View style={{ gap: 14, marginTop: 6 }}>
           {Array.from({ length: 4 }, (_, i) => (
@@ -70,24 +99,55 @@ export function OrdersScreen() {
         </Card>
       ) : (
         <View style={{ gap: 16, marginTop: 8, paddingBottom: 8 }}>
-          {sorted.map((order, i) => {
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={s.segments}
+            contentContainerStyle={s.segmentsRow}
+          >
+            {ORDER_SEGMENTS.map((name) => (
+              <Chip
+                key={name}
+                label={`${t(`orders.segment.${name}`)} · ${split[name].length}`}
+                active={name === segment}
+                onPress={() => setPick(pickSegment(name, split))}
+              />
+            ))}
+          </ScrollView>
+
+          {shown.length === 0 ? (
+            <Card style={[s.empty, { marginTop: 0 }]}>
+              <Glyph icon={Receipt} size={72} />
+              <Text role="title" style={{ marginTop: 12, textAlign: 'center' }}>
+                {t(EMPTY[segment])}
+              </Text>
+              {segment === 'active' ? (
+                <Button
+                  label={t('scene.walkRow')}
+                  style={{ marginTop: 24, alignSelf: 'stretch' }}
+                  onPress={() => router.replace('/')}
+                />
+              ) : null}
+            </Card>
+          ) : null}
+          {shown.map((order, i) => {
             const { status } = order;
-            const done = isTerminalOrderStatus(status);
-            const failed = status === ORDER_STATUS.CANCELLED || status === ORDER_STATUS.FAILED;
+            const done = segment !== 'active';
+            const failed = segment === 'cancelled';
             const store = storeOf(order.store.id);
             const photo = store?.ownerPhotoUrl ?? store?.coverUrl ?? null;
             const person = photo ?? order.store.logoUrl ?? null;
-            const when = new Date(order.placedAt).toLocaleString(
-              locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU',
-              {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: 'Asia/Tashkent',
-              },
-            );
+            const placed = new Date(order.placedAt);
+            const when = placed.toLocaleString(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+              // The history reaches back past New Year: an old slip says which year it is from.
+              year: placed.getFullYear() === thisYear ? undefined : 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              timeZone: 'Asia/Tashkent',
+            });
             const statusText = orderStatusText(locale)[status];
             return (
               <Printed key={order.id}>
@@ -156,6 +216,9 @@ export function OrdersScreen() {
 
 const s = StyleSheet.create({
   empty: { alignItems: 'center', padding: 24, paddingVertical: 40, marginTop: 8 },
+  // The chips run to the screen's edges, so a narrow phone can slide to the third one.
+  segments: { marginHorizontal: -16, flexGrow: 0 },
+  segmentsRow: { gap: 8, paddingHorizontal: 16 },
   // A receipt on the hall: the theme's slip (the type on it is theme-coloured), the one shadow.
   slip: {
     backgroundColor: color.tile,

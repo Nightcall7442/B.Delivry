@@ -2,7 +2,7 @@
  * delivery types / DTOs.
  */
 import type { DeliveryStatus, ProofType } from '@bazar/constants';
-import type { Id, LatLngDto, MoneyDto, TenantEntity } from './common.js';
+import type { Id, LatLngDto, MoneyDto, TenantEntity, Translated } from './common.js';
 import type { CourierPublicDto } from './courier.js';
 
 /**
@@ -11,6 +11,9 @@ import type { CourierPublicDto } from './courier.js';
  */
 export interface DeliveryDto extends TenantEntity {
   orderId: Id;
+  /** The order's number and the stall's name, for lists (history); null where the row was read without the order. */
+  orderNumber: string | null;
+  storeName: Translated | null;
   courierId: Id | null;
   courier: CourierPublicDto | null;
   status: DeliveryStatus;
