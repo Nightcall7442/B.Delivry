@@ -116,8 +116,9 @@ export const uz: Catalogue = {
   'checkout.weighNote':
     'Tortiladigan mahsulotlarni kuryer sotuvchida tortadi — yakuniy summa bir necha foizga farq qilishi mumkin.',
   'checkout.reason.minOrder': 'Summa bu hudud uchun minimaldan kam',
+  'checkout.reason.otherCity': 'Bu nuqta boshqa shaharda — oʻzingizga eng yaqinini tanlang',
   'checkout.reason.outOfZone':
-    'Hozircha faqat Toshkent boʻyicha yetkazamiz — shahar ichidagi manzilni tanlang',
+    'Bu manzilga hozircha yetkazmaymiz — yetkazish hududidagi manzilni tanlang',
   'checkout.closedPickSlot': 'Rastalar hozir yopiq — tanlangan oynada yigʻib, yetkazib beramiz.',
   'checkout.noWindows':
     'Bir hafta davomida bu yerda ishlamaydi — yetkazish oynasi yoʻq. Boshqa rastadan oling.',

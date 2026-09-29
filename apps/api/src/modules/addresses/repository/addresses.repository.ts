@@ -66,6 +66,7 @@ export class AddressesRepository extends BaseRepository {
     const data: Prisma.AddressUpdateInput = {
       ...(input.label !== undefined ? { label: input.label } : {}),
       ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.cityId !== undefined ? { city: { connect: { id: input.cityId } } } : {}),
       ...(input.street !== undefined ? { street: input.street } : {}),
       ...(input.house !== undefined ? { house: input.house } : {}),
       ...(input.apartment !== undefined ? { apartment: input.apartment } : {}),

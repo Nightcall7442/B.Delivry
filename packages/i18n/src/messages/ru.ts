@@ -125,7 +125,8 @@ export const ru = {
   'checkout.weighNote':
     'Весовые товары курьер взвешивает у продавца — итог может отличаться на несколько процентов.',
   'checkout.reason.minOrder': 'Сумма ниже минимальной для этого района',
-  'checkout.reason.outOfZone': 'Пока возим только по Ташкенту — выберите адрес в городе',
+  'checkout.reason.otherCity': 'Эта точка в другом городе — выберите ближайшую к вам',
+  'checkout.reason.outOfZone': 'Сюда пока не возим — выберите адрес в зоне доставки',
   'checkout.reason.storeClosed': 'Точка сейчас закрыта',
   'checkout.reason.windowStarted': 'Это окно уже началось — выберите следующее',
   'checkout.closedPickSlot': 'Ряды сейчас закрыты — соберём и привезём в выбранное окно.',
