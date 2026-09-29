@@ -3,6 +3,7 @@
  * «outside every delivery zone» — the point of sale is in the wrong city for them (a Tashkent
  * stall left in the basket of someone standing in Urgench).
  */
+import { OTHER_CITY_REASON as STOREFRONT_OTHER_CITY_REASON } from '@bazar/storefront';
 import { describe, expect, it } from 'vitest';
 import { UndeliverableAddressError } from '../../src/common/errors/domain.errors.js';
 import type { GeoService } from '../../src/modules/geo/service/geo.service.js';
@@ -56,6 +57,10 @@ const refusal = async (req: QuoteRequest): Promise<string> => {
 };
 
 describe('quote refusals', () => {
+  it('uses the exact words the apps match to offer the way out of the basket', () => {
+    expect(OTHER_CITY_REASON).toBe(STOREFRONT_OTHER_CITY_REASON);
+  });
+
   it('says the point of sale is in another city when the pin is in a different city zone', async () => {
     expect(await refusal(request(URGENCH_PIN, TASHKENT))).toBe(OTHER_CITY_REASON);
   });

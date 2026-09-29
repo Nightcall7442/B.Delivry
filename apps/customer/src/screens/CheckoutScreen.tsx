@@ -19,6 +19,7 @@ import {
   forgottenProducts,
   haggleFor,
   isOpenAt,
+  isOtherCityRefusal,
   orderReasonText,
   paymentMethodText,
   plusActive,
@@ -61,7 +62,7 @@ import { Shell } from '@/components/ui/Shell';
 import { useAddress } from '@/features/address/store';
 import { groupByStore, useCartActions, useCartQuantities } from '@/features/cart/store';
 import { useOrderList } from '@/features/orders/store';
-import { getStore, listProducts } from '@/lib/catalog';
+import { getStore, listProducts, listProductsByIds } from '@/lib/catalog';
 import { useData, useList } from '@/lib/use-data';
 
 const SUBSTITUTION_OPTIONS = [
@@ -222,6 +223,9 @@ export function CheckoutScreen({
   const [quoting, setQuoting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The basket is from a stall in another city than the address: the only way on is out of it.
+  const [otherCity, setOtherCity] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const here = `/checkout?store=${storeId}${extraKey ? `&stores=${extraKey}` : ''}`;
 
@@ -233,7 +237,11 @@ export function CheckoutScreen({
   // Re-quote whenever the basket or the address changes; the API owns the numbers.
   useEffect(() => {
     if (!user || !store || !address || items.length === 0) {
+      // Nothing to quote: an earlier refusal must not outlive the basket it was about.
       setQuote(null);
+      setError(null);
+      setOtherCity(false);
+      setQuoting(false);
       return;
     }
     let alive = true;
@@ -258,12 +266,14 @@ export function CheckoutScreen({
         if (!alive) return;
         setQuote(result);
         setError(null);
+        setOtherCity(false);
       })
       .catch((e) => {
         if (!alive) return;
         // A refused re-quote must not leave the last deliverable quote enabling the button.
         setQuote(null);
         setError(describeOrderError(e, locale));
+        setOtherCity(isOtherCityRefusal(e));
       })
       .finally(() => alive && setQuoting(false));
     return () => {
@@ -284,6 +294,23 @@ export function CheckoutScreen({
   const ready = Boolean(
     user && store && group && address && items.length > 0 && deliverable && !submitting && !quoting,
   );
+
+  // Out of the basket and back to the counters near the address — the home screen lists only those.
+  const leaveBasket = async () => {
+    if (leaving) return;
+    setLeaving(true);
+    // The basket may hold goods of these stalls that checkout never loaded (sold out, past the
+    // first page): they go too, or the stall would come back into the cart.
+    const trip = new Set([storeId, ...extraStoreIds]);
+    const known = orderLines.map((line) => line.product.id);
+    const rest = await listProductsByIds(
+      Object.keys(quantities).filter((id) => !known.includes(id)),
+    )
+      .then((rows) => rows.filter((row) => trip.has(row.storeId)).map((row) => row.id))
+      .catch(() => []);
+    clear([...known, ...rest]);
+    router.replace('/');
+  };
 
   const submit = async () => {
     if (!store || !group || !address) return;
@@ -333,7 +360,7 @@ export function CheckoutScreen({
             address
               ? quoting
                 ? t('checkout.calculating')
-                : (blocker ?? t('checkout.order'))
+                : (blocker ?? (otherCity && error ? error : t('checkout.order')))
               : t('checkout.needAddress')
           }
           trailing={t.money(total)}
@@ -347,6 +374,15 @@ export function CheckoutScreen({
         <Text role="muted" style={{ color: color.danger, marginBottom: 8 }}>
           {error}
         </Text>
+      ) : null}
+      {otherCity && orderLines.length > 0 ? (
+        <Button
+          variant="secondary"
+          label={t('checkout.otherCityAction')}
+          disabled={leaving}
+          onPress={() => void leaveBasket()}
+          style={{ marginBottom: 12 }}
+        />
       ) : null}
       {quote && !quote.deliverable ? (
         <Text role="muted" style={{ color: color.danger, marginBottom: 8 }}>

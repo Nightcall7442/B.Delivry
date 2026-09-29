@@ -4,6 +4,7 @@
  * (no Yandex key needed for that part).
  */
 import type { MessageKey } from '@bazar/i18n';
+import { haversineMeters } from '@bazar/maps';
 import type { LatLngDto } from '@bazar/types';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
@@ -34,6 +35,7 @@ import {
   addressLabel,
   alpha,
   fromAddressDto,
+  placeLabel,
   tripsTo,
   type DeliveryAddress,
 } from '@bazar/storefront';
@@ -43,13 +45,13 @@ import { DEFAULT_POINT, useAddress } from '@/features/address/store';
 const coords = (p: LatLngDto) => `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`;
 /** Past this the pin is out among the fields, and the board says so. */
 const FAR_METERS = 20_000;
+/** The text saved for a spot describes it while the pin is still about there; beyond, another place. */
+const KEEP_TEXT_METERS = 300;
 
 async function describe(point: LatLngDto): Promise<string | null> {
   try {
     const [hit] = await Location.reverseGeocodeAsync({ latitude: point.lat, longitude: point.lng });
-    if (!hit) return null;
-    const street = [hit.street, hit.streetNumber].filter(Boolean).join(', ');
-    return street || hit.name || hit.district || null;
+    return hit ? placeLabel(hit) : null;
   } catch {
     return null;
   }
@@ -65,8 +67,10 @@ export function AddressScreen() {
 
   const [point, setPoint] = useState<LatLngDto>(address?.point ?? DEFAULT_POINT);
   const [text, setText] = useState(address?.text ?? '');
-  // Typed text is the user's; geocoded text is replaced on the next move.
+  // Saved text belongs to the spot it was saved at; geocoded text is replaced when the pin moves
+  // away from there. What was typed in this session stays wherever the pin goes.
   const [typed, setTyped] = useState(Boolean(address?.text));
+  const [edited, setEdited] = useState(false);
   const [locating, setLocating] = useState(false);
   // Why the target could not find the phone, and whether the settings can fix it.
   const [locateError, setLocateError] = useState<{ text: string; settings: boolean } | null>(null);
@@ -95,10 +99,14 @@ export function AddressScreen() {
   const onMoveEnd = useCallback(
     async (center: LatLngDto) => {
       setPoint(center);
-      if (typed) return;
+      const stillThere = address
+        ? haversineMeters(center, address.point) < KEEP_TEXT_METERS
+        : false;
+      if (edited || (typed && stillThere)) return;
+      setTyped(false);
       setText((await describe(center)) ?? t('address.pin', { coords: coords(center) }));
     },
-    [typed, t],
+    [typed, edited, address, t],
   );
 
   // A located pin always describes itself anew: the text the customer typed was for another spot.
@@ -107,6 +115,7 @@ export function AddressScreen() {
       const center = { lat: position.latitude, lng: position.longitude };
       setPoint(center);
       setTyped(false);
+      setEdited(false);
       setText((await describe(center)) ?? t('address.pin', { coords: coords(center) }));
     },
     [t],
@@ -196,7 +205,9 @@ export function AddressScreen() {
           onChangeText={(value) => {
             setText(value);
             setTyped(true);
+            setEdited(true);
           }}
+          maxLength={120}
           placeholder={t('address.street')}
           placeholderTextColor={scene.inkSoft}
           autoComplete="street-address"

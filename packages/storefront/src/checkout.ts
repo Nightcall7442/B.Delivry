@@ -11,11 +11,21 @@ import { createT, type MessageKey } from '@bazar/i18n';
 import type { DeliveryAddress } from './address.js';
 import type { OnlineProvider } from './labels.js';
 
+/** The API's refusal for a point of sale in another city than the address (`OTHER_CITY_REASON`). */
+export const OTHER_CITY_REASON = 'Store is in another city than the address';
+
+/**
+ * A basket from a stall the address is too far from: the customer cannot fix it at checkout, only
+ * by taking those goods out and choosing a point of sale near the address.
+ */
+export const isOtherCityRefusal = (error: unknown): boolean =>
+  isApiError(error) && error.message === OTHER_CITY_REASON;
+
 /** The API's quote/create refusals → catalogue keys, so the customer reads them in their language. */
 const ORDER_REASON_KEY: Record<string, MessageKey> = {
   'Order is below the minimum for this zone': 'checkout.reason.minOrder',
   'Address is outside every delivery zone': 'checkout.reason.outOfZone',
-  'Store is in another city than the address': 'checkout.reason.otherCity',
+  [OTHER_CITY_REASON]: 'checkout.reason.otherCity',
   'Store is closed': 'checkout.reason.storeClosed',
   'The delivery window has already started': 'checkout.reason.windowStarted',
 };
