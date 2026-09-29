@@ -14,6 +14,7 @@ const NAV = [
   { href: '/invoices', label: 'Счета' },
   { href: '/demand', label: 'Спрос' },
   { href: '/brand', label: 'Бренд' },
+  { href: '/settings', label: 'Настройки' },
 ];
 /** The vendor cabinet: their orders and their stalls, nothing about couriers. */
 const VENDOR_NAV = [
