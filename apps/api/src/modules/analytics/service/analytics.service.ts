@@ -3,6 +3,7 @@
  */
 import { PERMISSION } from '@bazar/constants';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
+import { ForbiddenError, NotFoundError } from '../../../common/errors/domain.errors.js';
 import { cached, type CacheStore } from '../../../infrastructure/redis/cache.js';
 import type { AnalyticsRepository } from '../repository/analytics.repository.js';
 import type { AnalyticsQuery, DashboardStats, Granularity, SalesReport } from '../types/index.js';
@@ -47,6 +48,12 @@ export class AnalyticsService extends BaseService {
   /** Top queries and the ones the catalogue could not answer, last `days` days. */
   async demand(input: { days: number; storeId?: string | undefined }) {
     this.authorize(PERMISSION.ANALYTICS_READ);
+    // Across the bazaar it is for every vendor; what was searched inside one stall is that stall's.
+    if (input.storeId !== undefined && !this.isStaff()) {
+      const store = await this.repository.storeOwner(input.storeId);
+      if (store === null) throw new NotFoundError('Store', input.storeId);
+      this.authorize(PERMISSION.ANALYTICS_READ, store);
+    }
     const since = new Date(Date.now() - input.days * 86_400_000);
     return this.repository.demand(this.tenantId(), since, input.storeId);
   }
@@ -60,8 +67,20 @@ export class AnalyticsService extends BaseService {
     this.cache = deps.cache;
   }
 
-  async dashboard(cityId?: string): Promise<DashboardStats> {
+  /** The desk (operators, admins) is whoever may read every order; a token without a vendorId is not that. */
+  private isStaff(): boolean {
+    if (this.context().system === true) return true;
+    return this.currentUser().permissions.includes(PERMISSION.ORDER_READ_ANY);
+  }
+
+  /** Numbers across every stall and courier of the bazaar: the desk's. A vendor reads their own through sales(). */
+  private authorizeDesk(): void {
     this.authorize(PERMISSION.ANALYTICS_READ);
+    this.authorize(PERMISSION.ORDER_READ_ANY);
+  }
+
+  async dashboard(cityId?: string): Promise<DashboardStats> {
+    this.authorizeDesk();
 
     return cached(
       this.cache,
@@ -89,9 +108,14 @@ export class AnalyticsService extends BaseService {
 
   async sales(input: AnalyticsQuery): Promise<SalesReport> {
     this.authorize(PERMISSION.ANALYTICS_READ);
-    // A vendor's report is their own stalls, whatever the query says.
-    const vendorId = this.currentUser().vendorId;
-    const query: AnalyticsQuery = vendorId !== undefined ? { ...input, vendorId } : input;
+    // A vendor's report is their own stalls, whatever the query says; without a vendor on the
+    // token they are nobody's, never the desk.
+    let query = input;
+    if (!this.isStaff()) {
+      const vendorId = this.currentUser().vendorId;
+      if (vendorId === undefined) throw new ForbiddenError('Vendor profile required');
+      query = { ...input, vendorId };
+    }
 
     const granularity: Granularity = query.granularity ?? 'day';
     const from = query.from ?? new Date(Date.now() - 30 * 86400 * 1000);
@@ -128,12 +152,12 @@ export class AnalyticsService extends BaseService {
   }
 
   async topStores(query: AnalyticsQuery, limit?: number) {
-    this.authorize(PERMISSION.ANALYTICS_READ);
+    this.authorizeDesk();
     return this.repository.topStores(query, limit);
   }
 
   async courierPerformance(query: AnalyticsQuery, limit?: number) {
-    this.authorize(PERMISSION.ANALYTICS_READ);
+    this.authorizeDesk();
     return this.repository.courierPerformance(query, limit);
   }
 

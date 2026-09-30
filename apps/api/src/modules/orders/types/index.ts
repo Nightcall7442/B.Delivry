@@ -58,6 +58,8 @@ export interface OrderTotals {
 }
 
 export interface OrderListFilters {
+  /** The caller's own stalls' orders, whatever else the account is (see OrderListQuery.as). */
+  as?: 'store' | undefined;
   status?: OrderStatus | OrderStatus[] | undefined;
   customerId?: string | undefined;
   courierId?: string | undefined;

@@ -30,6 +30,7 @@ export interface GatewayDeps {
   pubsub: PubSub;
   logger: Logger;
   ownsOrder: (orderId: string, user: AuthenticatedUser) => Promise<boolean>;
+  ownsStore: (storeId: string, user: AuthenticatedUser) => Promise<boolean>;
 }
 
 /** Sockets that stop answering pings are dropped rather than leaked. */
@@ -108,7 +109,7 @@ export class WebsocketGateway {
     // ownsOrder reads the order through the service layer, which needs the
     // tenant context a socket message does not carry by itself.
     const allowed = await this.runAs(connection, () =>
-      canJoinRoom(connection.user, name, this.deps.ownsOrder),
+      canJoinRoom(connection.user, name, this.deps.ownsOrder, this.deps.ownsStore),
     );
     if (!allowed) return false;
     this.join(connection, name);

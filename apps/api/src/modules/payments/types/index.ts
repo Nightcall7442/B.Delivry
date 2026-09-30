@@ -19,6 +19,8 @@ export interface Payable {
   purpose: PaymentPurpose;
   orderId: string | null;
   customerId: string;
+  /** A promo only: the vendor of the stall, the one party who may pay for it. */
+  vendorId?: string;
   amount: Money;
   description: string;
   /** Already captured: a provider must not charge again. */

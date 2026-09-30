@@ -11,26 +11,27 @@ import { analyticsQuerySchema, dashboardQuerySchema, demandQuerySchema } from '.
 
 export function analyticsRoutes(controller: AnalyticsController) {
   return async (app: FastifyInstance): Promise<void> => {
-    // Vendors get their own store's numbers through the same permission,
-    // scoped by the storeId filter the service applies.
+    // Vendors hold analytics:read too, but only /sales (their own stalls, forced by the service)
+    // and /demand are theirs; what spans every stall and courier is the desk's.
     app.addHook('preHandler', requireAuth);
     app.addHook('preHandler', requirePermission(PERMISSION.ANALYTICS_READ));
+    const desk = requirePermission(PERMISSION.ORDER_READ_ANY);
 
     app.get(
       '/dashboard',
-      { preHandler: validate({ query: dashboardQuerySchema }) },
+      { preHandler: [desk, validate({ query: dashboardQuerySchema })] },
       controller.dashboard,
     );
     app.get('/sales', { preHandler: validate({ query: analyticsQuerySchema }) }, controller.sales);
     app.get('/demand', { preHandler: validate({ query: demandQuerySchema }) }, controller.demand);
     app.get(
       '/top-stores',
-      { preHandler: validate({ query: analyticsQuerySchema }) },
+      { preHandler: [desk, validate({ query: analyticsQuerySchema })] },
       controller.topStores,
     );
     app.get(
       '/couriers',
-      { preHandler: validate({ query: analyticsQuerySchema }) },
+      { preHandler: [desk, validate({ query: analyticsQuerySchema })] },
       controller.couriers,
     );
   };

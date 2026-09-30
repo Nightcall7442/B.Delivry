@@ -3,7 +3,7 @@
  */
 import { STORE_STATUS, STORE_TAG, STORE_TYPE } from '@bazar/constants';
 import { z } from 'zod';
-import { idSchema, optionalText, translatedSchema } from './common.schema.js';
+import { idSchema, optionalText, queryBoolean, translatedSchema } from './common.schema.js';
 import { latLngSchema } from './geo.schema.js';
 import { phoneSchema } from './phone.schema.js';
 
@@ -68,9 +68,9 @@ export const storeListQuerySchema = z.object({
   lat: z.coerce.number().min(-90).max(90).optional(),
   lng: z.coerce.number().min(-180).max(180).optional(),
   radiusMeters: z.coerce.number().int().min(100).max(50_000).optional(),
-  openNow: z.coerce.boolean().optional(),
+  openNow: queryBoolean.optional(),
   /** Vendor cabinet: only the caller's own stalls, whatever their status. */
-  mine: z.coerce.boolean().optional(),
+  mine: queryBoolean.optional(),
 });
 
 export type CreateStoreInput = z.infer<typeof createStoreSchema>;

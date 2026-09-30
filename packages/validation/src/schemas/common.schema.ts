@@ -48,3 +48,25 @@ export const optionalText = (max: number) =>
     .max(max)
     .transform((value) => (value.length === 0 ? undefined : value))
     .optional();
+
+/**
+ * A boolean read from a query string. `z.coerce.boolean()` is `Boolean(value)`, and every
+ * non-empty string is truthy: `?availableOnly=false` arrived as true. The words are read as
+ * words, and anything else is refused rather than guessed.
+ */
+export const queryBoolean = z.preprocess(
+  (value) => {
+    if (typeof value !== 'string') return value;
+    switch (value.trim().toLowerCase()) {
+      case 'true':
+      case '1':
+        return true;
+      case 'false':
+      case '0':
+        return false;
+      default:
+        return value;
+    }
+  },
+  z.boolean({ invalid_type_error: 'Expected true or false' }),
+);

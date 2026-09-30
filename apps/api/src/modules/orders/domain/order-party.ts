@@ -14,6 +14,20 @@ export interface OrderStanding {
 }
 
 /**
+ * True when the caller reaches this order only as the stall it was placed with: not the desk, not
+ * the customer, not the courier carrying it. That view is for gathering the goods — it must not
+ * carry the customer's phone, door or route (see toOrderDto and the tracking view).
+ */
+export function isStallOnlyView(
+  user: AuthenticatedUser,
+  order: { customerId: string; courierId: string | null; store: { vendorId: string } },
+): boolean {
+  const standing = standingOn(user, order);
+  const ownCourier = user.courierId !== undefined && user.courierId === order.courierId;
+  return standing.store && !standing.staff && !standing.customer && !ownCourier;
+}
+
+/**
  * The permission checks say what a role may do; this says to which orders. Without it a route that
  * only asks for `order:update` lets any vendor confirm, move or cancel the orders of every other
  * stall, because the vendor role holds that permission for all of them.

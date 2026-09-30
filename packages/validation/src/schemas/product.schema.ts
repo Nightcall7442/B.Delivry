@@ -3,7 +3,13 @@
  */
 import { LIMITS, PRODUCT_UNIT, STORE_TAG } from '@bazar/constants';
 import { z } from 'zod';
-import { idSchema, imageSchema, positiveMoneySchema, translatedSchema } from './common.schema.js';
+import {
+  idSchema,
+  imageSchema,
+  positiveMoneySchema,
+  queryBoolean,
+  translatedSchema,
+} from './common.schema.js';
 
 export const productUnitSchema = z.nativeEnum(PRODUCT_UNIT);
 
@@ -52,7 +58,7 @@ export const productListQuerySchema = z.object({
   categoryId: idSchema.optional(),
   minPrice: z.coerce.number().int().nonnegative().optional(),
   maxPrice: z.coerce.number().int().nonnegative().optional(),
-  availableOnly: z.coerce.boolean().optional(),
+  availableOnly: queryBoolean.optional(),
 });
 
 export const createCategorySchema = z.object({

@@ -1,6 +1,7 @@
 /**
  * Payments business logic. Payments, transactions, refunds via PaymentProvider abstraction, wallet/balance.
  */
+import type { AuthenticatedUser } from '@bazar/auth';
 import {
   CASHBACK,
   OFFLINE_PAYMENT_METHODS,
@@ -29,6 +30,7 @@ import { ERROR_CODE } from '../../../common/errors/error-codes.js';
 import {
   AppError,
   ConflictError,
+  ForbiddenError,
   NotFoundError,
   PaymentFailedError,
 } from '../../../common/errors/index.js';
@@ -62,6 +64,10 @@ const NO_PROVIDER_METHODS: readonly PaymentMethod[] = [
   PAYMENT_METHOD.BALANCE,
   PAYMENT_METHOD.INVOICE,
 ];
+
+/** Staff (operators, admins) are told apart by the one unscoped permission: order:read_any. */
+const isStaff = (user: AuthenticatedUser): boolean =>
+  user.permissions.includes(PERMISSION.ORDER_READ_ANY);
 
 export class PaymentsService extends BaseService {
   private readonly prisma: PrismaClient;
@@ -108,17 +114,31 @@ export class PaymentsService extends BaseService {
     // user, given a customer profile on the spot so the wallet and provider paths work.
     if (kind === 'promo' && rest.length === 2) {
       const [storeId, period] = rest as [string, string];
-      const store = await this.prisma.store.findUnique({
-        where: { id: storeId },
-        select: { tenantId: true, vendor: { select: { userId: true } } },
+      const store = await this.prisma.store.findFirst({
+        where: { id: storeId, tenantId: this.tenantId() },
+        select: { tenantId: true, vendorId: true, vendor: { select: { userId: true } } },
       });
       if (store === null) throw new NotFoundError('Store', storeId);
-      const customer = await this.prisma.customer.upsert({
-        where: { userId: store.vendor.userId },
-        update: {},
-        create: { tenantId: store.tenantId, userId: store.vendor.userId },
-        select: { id: true },
-      });
+      // A lookup makes profiles for nobody but the vendor who is paying: a provider callback or the
+      // desk only finds the one that purchase already created.
+      const caller = this.payer();
+      const vendorPays =
+        caller !== null &&
+        caller.vendorId !== undefined &&
+        caller.vendorId === store.vendorId &&
+        caller.id === store.vendor.userId;
+      const customer = vendorPays
+        ? await this.prisma.customer.upsert({
+            where: { userId: caller.id },
+            update: {},
+            create: { tenantId: store.tenantId, userId: caller.id },
+            select: { id: true },
+          })
+        : await this.prisma.customer.findUnique({
+            where: { userId: store.vendor.userId },
+            select: { id: true },
+          });
+      if (customer === null) throw new NotFoundError('Customer');
       const paid = (await this.repository.findBySubject(subject)).some(
         (payment) => payment.status === PAYMENT_STATUS.CAPTURED,
       );
@@ -127,6 +147,7 @@ export class PaymentsService extends BaseService {
         purpose: PAYMENT_PURPOSE.PROMO,
         orderId: null,
         customerId: customer.id,
+        vendorId: store.vendorId,
         amount: money(PROMOTION.PRICE_MINOR, 'UZS'),
         description: `Promotion ${period}`,
         paid,
@@ -152,6 +173,7 @@ export class PaymentsService extends BaseService {
         amount: money(amount, order.currency as Currency),
         description: `Tip for order ${order.number}`,
         paid,
+        // A tip thanks for a delivery: it stays closed until there is one.
         closed: order.status !== 'DELIVERED',
         refundable: true,
       };
@@ -181,6 +203,10 @@ export class PaymentsService extends BaseService {
       throw new AppError(ERROR_CODE.VALIDATION, 422, 'orderId or subject is required');
     }
     const payable = await this.resolvePayable(subject);
+    this.assertPayer(payable);
+    if (payable.purpose === PAYMENT_PURPOSE.TIP && payable.closed) {
+      throw new ConflictError('A tip can be left once the order is delivered');
+    }
     if (payable.paid) {
       throw new ConflictError('Already paid');
     }
@@ -193,6 +219,7 @@ export class PaymentsService extends BaseService {
     if (live !== undefined) return live;
 
     const providerId = this.providerIdFor(input.method, input.provider);
+    if (input.method === PAYMENT_METHOD.BALANCE) await this.assertOwnWallet(payable.customerId);
     const payment = await this.repository.create({
       orderId: payable.orderId,
       purpose: payable.purpose,
@@ -499,20 +526,24 @@ export class PaymentsService extends BaseService {
     const user = this.currentUser();
     this.authorize(PERMISSION.PAYMENT_READ);
 
-    const scoped =
-      user.customerId !== undefined && !user.permissions.includes(PERMISSION.ORDER_READ_ANY)
-        ? { ...filters, customerId: user.customerId }
-        : filters;
-
-    return this.repository.list(scoped);
+    // The desk reads what it filters for, a customer only their own. Nobody else has payments to
+    // read: a token without a customer profile must not mean "no scope", so it means no access.
+    if (isStaff(user)) return this.repository.list(filters);
+    if (user.customerId === undefined) throw new ForbiddenError('Payments are read by their payer');
+    return this.repository.list({ ...filters, customerId: user.customerId });
   }
 
   async get(paymentId: string): Promise<Payment> {
     const payment = await this.getOrThrow(paymentId);
-    this.authorize(PERMISSION.PAYMENT_READ, {
-      tenantId: payment.tenantId,
-      customerId: payment.customerId,
-    });
+    const user = this.context().user;
+    // The desk reads any payment of its tenant (the repository already scoped it); there is no
+    // payment:read_any for can() to find, so asking it would refuse the desk.
+    this.authorize(
+      PERMISSION.PAYMENT_READ,
+      user !== null && isStaff(user)
+        ? undefined
+        : { tenantId: payment.tenantId, customerId: payment.customerId },
+    );
     return payment;
   }
 
@@ -564,6 +595,38 @@ export class PaymentsService extends BaseService {
   /** Courier earns their share once the trip is done. */
   async payoutCourier(userId: string, amount: Money, orderId: string): Promise<void> {
     await this.creditWallet({ userId, type: 'ORDER_PAYOUT', amount, orderId });
+  }
+
+  /** The signed-in user behind this request; null for callbacks and jobs, which act as the platform. */
+  private payer(): AuthenticatedUser | null {
+    const context = this.context();
+    return context.system === true ? null : context.user;
+  }
+
+  /**
+   * Everything `resolvePayable` can name is reachable from POST /payments, and the order's vendor and
+   * courier may read an order — being a party to a thing is not being its payer. The platform itself
+   * (callbacks, jobs) and the desk settle for other people; everyone else pays only their own, and
+   * a missing id on the token is never the desk's.
+   */
+  private assertPayer(payable: Payable): void {
+    if (this.context().system === true) return;
+    const user = this.currentUser();
+    if (isStaff(user)) return;
+    const own =
+      payable.purpose === PAYMENT_PURPOSE.PROMO
+        ? payable.vendorId !== undefined && payable.vendorId === user.vendorId
+        : user.customerId !== undefined && user.customerId === payable.customerId;
+    if (!own) throw new ForbiddenError('Only the payer can pay for this');
+  }
+
+  /** A wallet is spent on its owner's own word: never by a callback, the desk or another account. */
+  private async assertOwnWallet(customerId: string): Promise<void> {
+    const owner = await this.repository.customerUserId(customerId);
+    const caller = this.payer();
+    if (caller === null || owner !== caller.id) {
+      throw new ForbiddenError('A wallet is paid from by its owner only');
+    }
   }
 
   private providerIdFor(method: PaymentMethod, requested?: string): string {

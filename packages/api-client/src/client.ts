@@ -11,6 +11,9 @@ import type { ApiClientOptions, Paginated, Query, RequestOptions, Tokens } from 
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
+/** A success envelope, with the HTTP status it came in. */
+type Sent<T> = Extract<ApiResponse<T>, { ok: true }> & { status: number };
+
 export class Http {
   private refreshing: Promise<Tokens | null> | null = null;
 
@@ -28,6 +31,8 @@ export class Http {
   /** List endpoints answer `{ data: T[], meta: { pagination } }`. */
   async paginated<T>(path: string, query?: Query): Promise<Paginated<T>> {
     const envelope = await this.send<T[]>('GET', path, query ? { query } : {});
+    // A list that answered with no body is a broken reply, not an empty list.
+    if (!Array.isArray(envelope.data)) throw ApiError.malformed(envelope.status);
     return {
       items: envelope.data,
       pagination: envelope.meta?.pagination ?? {
@@ -45,7 +50,7 @@ export class Http {
     path: string,
     options: RequestOptions,
     retried = false,
-  ): Promise<Extract<ApiResponse<T>, { ok: true }>> {
+  ): Promise<Sent<T>> {
     const tokens = options.auth === 'none' ? null : await this.options.tokens.get();
     const headers: Record<string, string> = { accept: 'application/json' };
     if (options.raw !== undefined)
@@ -73,15 +78,26 @@ export class Http {
       throw ApiError.network(cause);
     }
 
+    let body: string | null;
+    try {
+      body = await response.text();
+    } catch {
+      body = null;
+    }
+    // 204, or any 2xx with nothing in it: the write went through and there is nothing to say
+    // (the API's noContent()). A body that is there but is not ours is still malformed.
+    if (response.ok && body !== null && body.trim() === '')
+      return { ok: true, data: undefined as T, status: response.status };
+
     let parsed: ApiResponse<T> | null = null;
     try {
-      parsed = (await response.json()) as ApiResponse<T>;
+      parsed = JSON.parse(body ?? '') as ApiResponse<T>;
     } catch {
       parsed = null;
     }
     if (!parsed || typeof parsed !== 'object' || !('ok' in parsed))
       throw ApiError.malformed(response.status);
-    if (parsed.ok) return parsed;
+    if (parsed.ok) return { ...parsed, status: response.status };
 
     // One refresh per expired access token, shared by every request that hit the wall at once.
     if (response.status === 401 && tokens && !retried && options.auth !== 'none') {
