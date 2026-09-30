@@ -501,7 +501,17 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     paymentSync: { orders, payments },
     guarantee: { orders, payments, queue },
     perks: { customers, couriers, orders, payments, stores, queue },
-    recipient: { orders, notifications },
+    recipient: {
+      orders,
+      notifications,
+      vendorUserOf: async (storeId) =>
+        (
+          await prisma.store.findUnique({
+            where: { id: storeId },
+            select: { vendor: { select: { userId: true } } },
+          })
+        )?.vendor.userId ?? null,
+    },
     delivery,
   });
 

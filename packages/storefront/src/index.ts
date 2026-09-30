@@ -32,3 +32,6 @@ export * from './weather.js';
 export * from './courier-history.js';
 export * from './orders-split.js';
 export * from './courier-offers.js';
+export * from './vendor-orders.js';
+export * from './vendor-goods.js';
+export * from './vendor-stall.js';
