@@ -81,6 +81,12 @@ export const CUSTOMER_CANCELLABLE_STATUSES: readonly OrderStatus[] = [
   ORDER_STATUS.COURIER_ARRIVED_PICKUP,
 ];
 
+/**
+ * Until the goods are in the courier's hands a stall that cannot gather them may decline the order.
+ * The same window the customer has: after pickup it is support's to decide.
+ */
+export const STORE_CANCELLABLE_STATUSES: readonly OrderStatus[] = CUSTOMER_CANCELLABLE_STATUSES;
+
 /** Statuses a courier owns: they are the actor that moves the order forward. */
 export const COURIER_DRIVEN_STATUSES: readonly OrderStatus[] = [
   ORDER_STATUS.COURIER_ASSIGNED,

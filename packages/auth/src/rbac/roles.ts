@@ -24,6 +24,8 @@ const COURIER: readonly Permission[] = [
 const VENDOR: readonly Permission[] = [
   PERMISSION.ORDER_READ,
   PERMISSION.ORDER_UPDATE,
+  // To decline an order of their own stall before the courier has the goods (see standingOn).
+  PERMISSION.ORDER_CANCEL,
   PERMISSION.PRODUCT_READ,
   PERMISSION.PRODUCT_WRITE,
   PERMISSION.STORE_READ,

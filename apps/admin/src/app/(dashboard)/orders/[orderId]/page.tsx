@@ -28,6 +28,7 @@ import {
   ago,
   when,
 } from '@/features/labels';
+import { useAuth } from '@/features/auth';
 import { api } from '@/lib/api';
 
 /** Moves the desk may make by hand; courier steps stay with the courier app. */
@@ -40,6 +41,7 @@ const MANUAL: readonly OrderStatus[] = [
 
 export default function OrderPage() {
   const { orderId } = useParams<{ orderId: string }>();
+  const { isVendor } = useAuth();
   const [order, setOrder] = useState<OrderDto | null>(null);
   const [tracking, setTracking] = useState<OrderTrackingDto | null>(null);
   const [couriers, setCouriers] = useState<CourierDto[]>([]);
@@ -111,7 +113,10 @@ export default function OrderPage() {
   const label = ORDER_LABEL[order.status];
   const terminal = isTerminalOrderStatus(order.status);
   const delivery = order.delivery;
-  const legal = ORDER_STATUS_TRANSITIONS[order.status].filter((status) => MANUAL.includes(status));
+  // A vendor may only decline an order of their own stall; moving it to any status is the desk's.
+  const legal = ORDER_STATUS_TRANSITIONS[order.status].filter(
+    (status) => MANUAL.includes(status) && (!isVendor || status === ORDER_STATUS.CANCELLED),
+  );
   const courier = tracking?.courier ?? null;
   const online = couriers.filter((c) => c.status === 'ONLINE' || c.status === 'BUSY');
 

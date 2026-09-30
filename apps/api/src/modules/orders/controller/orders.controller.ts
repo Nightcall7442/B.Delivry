@@ -118,7 +118,7 @@ export class OrdersController extends BaseController {
     );
     return this.ok(
       reply,
-      toOrderDto(await this.service.changeStatus(id, input.status, 'staff', input.comment)),
+      toOrderDto(await this.service.changeStatusAsStaff(id, input.status, input.comment)),
     );
   };
 
