@@ -51,8 +51,8 @@ export interface OrderEventPayloads {
   };
   'order.cancelled': OrderRef & {
     reason: string;
-    /** Who pulled the plug: the customer, an operator, or a timeout. */
-    cancelledBy: 'customer' | 'staff' | 'system';
+    /** Who pulled the plug: the customer, the stall, an operator, or a timeout. */
+    cancelledBy: 'customer' | 'store' | 'staff' | 'system';
     refundable: boolean;
   };
   'order.delivered': OrderRef & { courierId: string | null; deliverySeconds: number };

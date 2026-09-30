@@ -5,6 +5,7 @@ import {
   ACTIVE_ORDER_STATUSES,
   COURIER_DRIVEN_STATUSES,
   CUSTOMER_CANCELLABLE_STATUSES,
+  STORE_CANCELLABLE_STATUSES,
   ORDER_STATUS,
   ORDER_STATUS_TRANSITIONS,
   TERMINAL_ORDER_STATUSES,
@@ -59,8 +60,13 @@ export function canActorTransition(actor: Actor, from: OrderStatus, to: OrderSta
         to === ORDER_STATUS.FAILED
       );
     case 'store':
-      // The stall confirms it can gather the goods, or reports it cannot.
-      return to === ORDER_STATUS.CONFIRMED || to === ORDER_STATUS.FAILED;
+      // The stall confirms it can gather the goods, or reports it cannot — declining the order
+      // while the goods are still the stall's.
+      return (
+        to === ORDER_STATUS.CONFIRMED ||
+        to === ORDER_STATUS.FAILED ||
+        (to === ORDER_STATUS.CANCELLED && STORE_CANCELLABLE_STATUSES.includes(from))
+      );
     default:
       return false;
   }

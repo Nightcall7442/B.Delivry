@@ -46,6 +46,7 @@ import type { OpenStore } from '../../stores/types/index.js';
 import type { HaggleService } from '../../haggle/service/haggle.service.js';
 import { assertActorTransition, isTerminal, type Actor } from '../domain/order-state-machine.js';
 import { ORDER_EVENT } from '../domain/order.events.js';
+import { standingOn } from '../domain/order-party.js';
 import type { OrdersRepository, OrderWithRelations } from '../repository/orders.repository.js';
 import type {
   ActualQuantity,
@@ -495,7 +496,7 @@ export class OrdersService extends BaseService {
     const order = await this.changeStatus(
       orderId,
       ORDER_STATUS.CONFIRMED,
-      automatic ? 'system' : 'staff',
+      automatic ? 'system' : await this.actorFor(orderId),
     );
 
     await this.publish(
@@ -512,6 +513,32 @@ export class OrdersService extends BaseService {
     );
 
     return order;
+  }
+
+  /**
+   * Who is asking to move this order, as the state machine knows them: the desk, or the vendor of
+   * the stall it was placed with. Anybody else — another stall's vendor included — is refused, so
+   * holding `order:update` is never enough on its own.
+   */
+  private async actorFor(orderId: string): Promise<'staff' | 'store'> {
+    const order = await this.getOrThrow(orderId);
+    const standing = standingOn(this.currentUser(), order);
+    if (standing.staff) return 'staff';
+    if (standing.store) return 'store';
+    throw new ForbiddenError('Not an order of your stall');
+  }
+
+  /** The operator override behind `PATCH /orders/:id/status`: any legal move, the desk only. */
+  async changeStatusAsStaff(
+    orderId: string,
+    to: OrderStatus,
+    comment?: string,
+  ): Promise<OrderWithRelations> {
+    const order = await this.getOrThrow(orderId);
+    if (!standingOn(this.currentUser(), order).staff) {
+      throw new ForbiddenError('Only the desk may move an order to any status');
+    }
+    return this.changeStatus(orderId, to, 'staff', comment);
   }
 
   /**
@@ -579,15 +606,20 @@ export class OrdersService extends BaseService {
    */
   async cancel(orderId: string, reason: string): Promise<OrderWithRelations> {
     const order = await this.getOrThrow(orderId);
-    const user = this.currentUser();
-    const isOwner = order.customerId === user.customerId;
+    const standing = standingOn(this.currentUser(), order);
 
-    this.authorize(PERMISSION.ORDER_CANCEL, {
-      tenantId: order.tenantId,
-      customerId: order.customerId,
-    });
+    // The permission says the role may cancel; the standing says this order is theirs to cancel —
+    // its customer, its stall's vendor, or the desk.
+    this.authorize(PERMISSION.ORDER_CANCEL);
+    const actor: Actor = standing.customer
+      ? 'customer'
+      : standing.staff
+        ? 'staff'
+        : standing.store
+          ? 'store'
+          : 'system';
+    if (actor === 'system') throw new ForbiddenError('Not your order');
 
-    const actor: Actor = isOwner ? 'customer' : 'staff';
     const updated = await this.changeStatus(orderId, ORDER_STATUS.CANCELLED, actor, reason);
 
     await this.publish(
@@ -598,7 +630,7 @@ export class OrdersService extends BaseService {
         storeId: order.storeId,
         cityId: order.addressCityId,
         reason,
-        cancelledBy: actor === 'customer' ? 'customer' : 'staff',
+        cancelledBy: actor === 'customer' ? 'customer' : actor === 'store' ? 'store' : 'staff',
         // Anything already paid online has to come back.
         refundable: order.paymentStatus === 'CAPTURED' || order.paymentStatus === 'AUTHORIZED',
       }),
