@@ -3,7 +3,7 @@
  */
 import { LIMITS } from '@bazar/constants';
 import { z } from 'zod';
-import { idSchema, optionalText } from './common.schema.js';
+import { idSchema, optionalText, queryBoolean } from './common.schema.js';
 
 export const reviewTargetSchema = z.enum(['STORE', 'PRODUCT', 'COURIER']);
 
@@ -28,7 +28,7 @@ export const reviewListQuerySchema = z.object({
   target: reviewTargetSchema.optional(),
   targetId: idSchema.optional(),
   minRating: ratingSchema.optional(),
-  published: z.coerce.boolean().optional(),
+  published: queryBoolean.optional(),
 });
 
 export type CreateReviewInput = z.infer<typeof createReviewSchema>;

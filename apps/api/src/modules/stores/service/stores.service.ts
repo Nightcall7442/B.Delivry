@@ -38,6 +38,41 @@ export class StoresService extends BaseService {
     this.queue = deps.queue;
   }
 
+  /** The desk (operators, admins) is whoever may read every order; a token without a vendorId is not that. */
+  private isStaff(): boolean {
+    if (this.context().system === true) return true;
+    return this.currentUser().permissions.includes(PERMISSION.ORDER_READ_ANY);
+  }
+
+  /** A vendor only for their own stall; the desk (which owns no stall) for any. */
+  private authorizeStore(store: StoreWithSchedule): void {
+    this.authorize(
+      PERMISSION.STORE_WRITE,
+      this.isStaff() ? undefined : { vendorId: store.vendorId, tenantId: store.tenantId },
+    );
+  }
+
+  /**
+   * The owner edits their stall, not their standing: approval (status) and the chain the stall
+   * belongs to are the desk's, or a stall could approve itself, lift a suspension or call itself
+   * Makro. All an owner has for their standing is opening and closing a live stall; the badges on
+   * their own counter are theirs to declare. Sending back what is already there (the cabinet posts
+   * the whole card) is not a change.
+   */
+  private assertOwnerMayEdit(store: StoreWithSchedule, input: Record<string, unknown>): void {
+    const refuse = (field: string): never => {
+      throw new ForbiddenError(`Only staff may change ${field}`, {
+        meta: { storeId: store.id, field },
+      });
+    };
+    const live = (status: unknown) => status === 'ACTIVE' || status === 'CLOSED';
+
+    if (input.status !== undefined && input.status !== store.status) {
+      if (!live(store.status) || !live(input.status)) refuse('status');
+    }
+    if (input.chainSlug !== undefined && input.chainSlug !== store.chainSlug) refuse('chainSlug');
+  }
+
   /**
    * "Сегодня привезли": the vendor ticks what came in this morning; with
    * `announce`, everyone who ordered from the stall this season hears about
@@ -48,13 +83,7 @@ export class StoresService extends BaseService {
     input: { productIds: string[]; announce: boolean; photoUrl?: string | undefined },
   ): Promise<{ marked: number; notified: number }> {
     const store = await this.get(storeId);
-    // A vendor only for their own stall; the desk (which owns no stall) for any.
-    this.authorize(
-      PERMISSION.STORE_WRITE,
-      this.currentUser().vendorId !== undefined
-        ? { vendorId: store.vendorId, tenantId: store.tenantId }
-        : undefined,
-    );
+    this.authorizeStore(store);
     const now = new Date();
     const products = await this.prisma.product.findMany({
       where: { id: { in: input.productIds }, storeId },
@@ -158,12 +187,7 @@ export class StoresService extends BaseService {
   /** Delivered orders of one store in a window, as CSV — the vendor's own store or the desk's any. */
   async report(storeId: string, from?: string, to?: string): Promise<string> {
     const store = await this.get(storeId);
-    this.authorize(
-      PERMISSION.STORE_WRITE,
-      this.currentUser().vendorId !== undefined
-        ? { vendorId: store.vendorId, tenantId: store.tenantId }
-        : undefined,
-    );
+    this.authorizeStore(store);
     const now = new Date();
     const start = from ? new Date(from) : new Date(now.getFullYear(), now.getMonth(), 1);
     const end = to ? new Date(`${to}T23:59:59.999Z`) : now;
@@ -307,7 +331,8 @@ export class StoresService extends BaseService {
 
   async update(id: string, input: Record<string, unknown>): Promise<StoreWithSchedule> {
     const store = await this.get(id);
-    this.authorize(PERMISSION.STORE_WRITE, { vendorId: store.vendorId, tenantId: store.tenantId });
+    this.authorizeStore(store);
+    if (!this.isStaff()) this.assertOwnerMayEdit(store, input);
 
     const data: Prisma.StoreUpdateInput = {
       ...(input.name !== undefined ? { name: input.name as Prisma.InputJsonValue } : {}),

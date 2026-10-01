@@ -768,6 +768,10 @@ export class OrdersService extends BaseService {
   async markInvoicePaid(orderId: string): Promise<OrderWithRelations> {
     this.authorize(PERMISSION.ORDER_UPDATE);
     const order = await this.get(orderId);
+    // `order:update` is every vendor's: the stall must not be able to mark its own invoice paid.
+    if (!standingOn(this.currentUser(), order).staff) {
+      throw new ForbiddenError('Only the desk marks an invoice paid');
+    }
     if (order.paymentMethod !== PAYMENT_METHOD.INVOICE) {
       throw new ConflictError('Only invoice orders are marked paid by hand');
     }
@@ -812,7 +816,12 @@ export class OrdersService extends BaseService {
 
     const scoped: OrderListFilters = { ...filters };
     if (!user.permissions.includes(PERMISSION.ORDER_READ_ANY)) {
-      if (user.customerId !== undefined) scoped.customerId = user.customerId;
+      // The seller app asks for its stalls' orders: an account that is also somebody's customer
+      // (the owner ordering for themselves) still sees the stall's orders there. Everyone else —
+      // the customer app included, even with a storeId — gets what their own identity owns.
+      if (filters.as === 'store' && user.vendorId !== undefined) {
+        scoped.vendorId = user.vendorId;
+      } else if (user.customerId !== undefined) scoped.customerId = user.customerId;
       else if (user.courierId !== undefined) scoped.courierId = user.courierId;
       else if (user.vendorId !== undefined) scoped.vendorId = user.vendorId;
       else throw new ForbiddenError('No orders visible to this account');

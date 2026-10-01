@@ -38,6 +38,7 @@ export async function canJoinRoom(
   user: AuthenticatedUser,
   room: string,
   ownsOrder: (orderId: string, user: AuthenticatedUser) => Promise<boolean>,
+  ownsStore: (storeId: string, user: AuthenticatedUser) => Promise<boolean>,
 ): Promise<boolean> {
   const parsed = parseRoom(room);
   if (parsed === null) return false;
@@ -52,9 +53,9 @@ export async function canJoinRoom(
     case 'order':
       return ownsOrder(parsed.id, user);
     case 'store':
-      // Vendors watch their own stores; the store-to-vendor check happens in
-      // the gateway, which can query.
-      return user.vendorId !== undefined || can(user, PERMISSION.ORDER_READ_ANY);
+      // A stall hears the new orders of its own store only; the desk hears every store.
+      if (can(user, PERMISSION.ORDER_READ_ANY)) return true;
+      return user.vendorId !== undefined && ownsStore(parsed.id, user);
     case 'operator':
       return can(user, PERMISSION.ORDER_READ_ANY);
     default:

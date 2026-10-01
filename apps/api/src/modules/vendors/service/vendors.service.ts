@@ -55,7 +55,12 @@ export class VendorsService extends BaseService {
    * new records start PENDING and their stores stay invisible until then.
    */
   async register(input: CreateVendorInput): Promise<VendorWithCounts> {
-    const existing = await this.repository.findByUserId(input.userId);
+    // Anyone signed in may apply, but for themselves: a vendor record (legal name, phone, bank
+    // account) bound to another user is the desk's to create, whatever the body says.
+    const user = this.currentUser();
+    const userId = user.permissions.includes(PERMISSION.VENDOR_WRITE) ? input.userId : user.id;
+
+    const existing = await this.repository.findByUserId(userId);
     if (existing !== null) throw new ConflictError('This user is already a vendor');
 
     // Registered businesses must supply a tax id; bazaar sellers trading as
@@ -64,7 +69,7 @@ export class VendorsService extends BaseService {
       throw new ConflictError('A tax id (STIR) is required for registered businesses');
     }
 
-    return this.repository.create(input);
+    return this.repository.create({ ...input, userId });
   }
 
   async update(id: string, data: Record<string, unknown>): Promise<VendorWithCounts> {

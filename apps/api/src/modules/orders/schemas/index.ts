@@ -24,6 +24,7 @@ export const orderNumberParamsSchema = z.object({
 });
 
 export const ordersListQuerySchema = listQuerySchema.extend({
+  as: z.literal('store').optional(),
   status: z.union([orderStatusSchema, z.array(orderStatusSchema)]).optional(),
   customerId: idSchema.optional(),
   courierId: idSchema.optional(),

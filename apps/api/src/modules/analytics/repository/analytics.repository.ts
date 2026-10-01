@@ -3,7 +3,7 @@
  */
 import { ACTIVE_ORDER_STATUSES, DELIVERY_TIMEOUTS } from '@bazar/constants';
 import { startOfLocalDay } from '@bazar/utils';
-import type { OrderStatus, Prisma } from '@prisma/client';
+import { Prisma, type OrderStatus } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
 import type { AnalyticsQuery, Granularity, TimeSeriesPoint, TopEntity } from '../types/index.js';
 
@@ -45,6 +45,14 @@ export class AnalyticsRepository extends BaseRepository {
       // Nothing in the catalogue answered these: what to bring tomorrow.
       unmet: rows.filter((row) => row.results === 0).slice(0, 20),
     };
+  }
+
+  /** Whose stall this is, as the ids `can()` compares; null when the tenant has no such store. */
+  async storeOwner(storeId: string): Promise<{ vendorId: string; tenantId: string } | null> {
+    return this.prisma.store.findFirst({
+      where: { id: storeId, ...this.tenantScope() },
+      select: { vendorId: true, tenantId: true },
+    });
   }
 
   private orderWhere(query: AnalyticsQuery): Prisma.OrderWhereInput {
@@ -156,16 +164,28 @@ export class AnalyticsRepository extends BaseRepository {
     const to = query.to ?? new Date();
     const tenantId = this.tenantScope().tenantId;
 
-    const rows = await this.prisma.$queryRaw<{ bucket: Date; value: bigint }[]>`
+    // The same narrowing as orderWhere: a vendor's chart is their stalls', not the bazaar's.
+    const conditions = [
+      Prisma.sql`"tenantId" = ${tenantId}`,
+      Prisma.sql`"placedAt" BETWEEN ${from} AND ${to}`,
+      Prisma.sql`"status" = 'DELIVERED'`,
+      ...(query.cityId !== undefined ? [Prisma.sql`"addressCityId" = ${query.cityId}`] : []),
+      ...(query.storeId !== undefined ? [Prisma.sql`"storeId" = ${query.storeId}`] : []),
+      ...(query.vendorId !== undefined
+        ? [
+            Prisma.sql`"storeId" IN (SELECT "id" FROM "stores" WHERE "vendorId" = ${query.vendorId})`,
+          ]
+        : []),
+    ];
+
+    const rows = await this.prisma.$queryRaw<{ bucket: Date; value: bigint }[]>(Prisma.sql`
       SELECT date_trunc(${granularity}, "placedAt" AT TIME ZONE 'Asia/Tashkent') AS bucket,
              COALESCE(SUM("total"), 0)::bigint AS value
       FROM "orders"
-      WHERE "tenantId" = ${tenantId}
-        AND "placedAt" BETWEEN ${from} AND ${to}
-        AND "status" = 'DELIVERED'
+      WHERE ${Prisma.join(conditions, ' AND ')}
       GROUP BY bucket
       ORDER BY bucket ASC
-    `;
+    `);
 
     return rows.map((row) => ({ at: row.bucket.toISOString(), value: Number(row.value) }));
   }

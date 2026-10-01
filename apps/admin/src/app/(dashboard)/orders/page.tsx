@@ -7,6 +7,7 @@ import { formatMoney } from '@bazar/utils/money';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
+import { useAuth } from '@/features/auth';
 import { ORDER_LABEL, when } from '@/features/labels';
 import { api } from '@/lib/api';
 
@@ -16,6 +17,7 @@ type Filter = 'active' | 'attention' | 'all';
 const ATTENTION: readonly OrderStatus[] = ['PENDING', 'SEARCHING_COURIER', 'FAILED'];
 
 export default function OrdersPage() {
+  const { isVendor } = useAuth();
   const [orders, setOrders] = useState<OrderDto[]>([]);
   const [filter, setFilter] = useState<Filter>('active');
   const [search, setSearch] = useState('');
@@ -24,12 +26,14 @@ export default function OrdersPage() {
   const load = useCallback(async () => {
     const page = await api().orders.list({
       pageSize: 100,
+      // A vendor's cabinet lists their stalls' orders, even if the same account also orders as a customer.
+      ...(isVendor ? { as: 'store' as const } : {}),
       ...(filter === 'all' ? {} : { activeOnly: true }),
       ...(search.trim() ? { search: search.trim() } : {}),
     });
     setOrders(page.items);
     setLoading(false);
-  }, [filter, search]);
+  }, [filter, search, isVendor]);
 
   useEffect(() => {
     load().catch(() => setLoading(false));

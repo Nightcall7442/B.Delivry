@@ -163,6 +163,11 @@ export interface ChangeOrderStatusDto {
 }
 
 export interface OrderListQuery {
+  /**
+   * `store`: the orders of the caller's own stalls, even when the account is also somebody's
+   * customer (the seller app sends it). Without it a customer's list stays their own purchases.
+   */
+  as?: 'store';
   status?: OrderStatus | OrderStatus[];
   customerId?: Id;
   courierId?: Id;

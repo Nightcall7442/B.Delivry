@@ -50,6 +50,8 @@ import type {
   Translated,
   UserDto,
 } from '@bazar/types';
+import { isStallOnlyView } from '../../modules/orders/domain/order-party.js';
+import { getContext } from '../tenant/tenant-context.js';
 import type { HaggleRow } from '../../modules/haggle/index.js';
 import type { SubscriptionWithNames } from '../../modules/subscriptions/index.js';
 
@@ -237,7 +239,19 @@ export type OrderRow = Order & {
   >;
 };
 
+/**
+ * The stall's view of an order: what to gather and hand to the courier. Who the customer is and
+ * where they live is the courier's and the desk's business — a stall that only owns the order's
+ * store gets the first name and nothing to call or find. The customer, the desk and the order's own
+ * courier keep the full order.
+ */
+function shownToStallOnly(row: OrderRow): boolean {
+  const user = getContext()?.user;
+  return user !== null && user !== undefined && isStallOnlyView(user, row);
+}
+
 export function toOrderDto(row: OrderRow): OrderDto {
+  const stallOnly = shownToStallOnly(row);
   return {
     id: row.id,
     tenantId: row.tenantId,
@@ -266,25 +280,39 @@ export function toOrderDto(row: OrderRow): OrderDto {
       discount: money(row.discount, row.currency),
       total: money(row.total, row.currency),
     },
-    address: {
-      cityId: row.addressCityId,
-      formatted: row.addressFormatted,
-      street: row.addressStreet,
-      house: row.addressHouse,
-      apartment: row.addressApartment,
-      entrance: row.addressEntrance,
-      floor: row.addressFloor,
-      landmark: row.addressLandmark,
-      instructions: row.addressInstructions,
-      point: point(row.addressLat, row.addressLng),
-    },
+    address: stallOnly
+      ? {
+          cityId: row.addressCityId,
+          formatted: '',
+          street: null,
+          house: null,
+          apartment: null,
+          entrance: null,
+          floor: null,
+          landmark: null,
+          instructions: null,
+          point: null,
+        }
+      : {
+          cityId: row.addressCityId,
+          formatted: row.addressFormatted,
+          street: row.addressStreet,
+          house: row.addressHouse,
+          apartment: row.addressApartment,
+          entrance: row.addressEntrance,
+          floor: row.addressFloor,
+          landmark: row.addressLandmark,
+          instructions: row.addressInstructions,
+          point: point(row.addressLat, row.addressLng),
+        },
     paymentMethod: row.paymentMethod,
     paymentStatus: row.paymentStatus,
-    comment: row.comment,
+    // The customer's note is for the courier at the door (intercom code, landmark).
+    comment: stallOnly ? null : row.comment,
     vendorComment: row.vendorComment,
     substitutionPolicy: row.substitutionPolicy,
-    recipientName: row.recipientName,
-    recipientPhone: row.recipientPhone,
+    recipientName: stallOnly ? null : row.recipientName,
+    recipientPhone: stallOnly ? null : row.recipientPhone,
     groupId: row.groupId,
     dueAt: row.dueAt === null ? null : iso(row.dueAt),
     scheduledFor: row.scheduledFor === null ? null : iso(row.scheduledFor),
@@ -298,7 +326,7 @@ export function toOrderDto(row: OrderRow): OrderDto {
       ? {
           id: row.customer.id,
           firstName: row.customer.user.firstName,
-          phone: row.customer.user.phone,
+          phone: stallOnly ? '' : row.customer.user.phone,
         }
       : null,
     delivery: row.delivery
@@ -309,7 +337,9 @@ export function toOrderDto(row: OrderRow): OrderDto {
           etaAt: row.delivery.etaAt === null ? null : iso(row.delivery.etaAt),
         }
       : null,
-    statusHistory: row.statusHistory.map(toStatusHistoryDto),
+    statusHistory: row.statusHistory.map((entry) =>
+      stallOnly ? { ...toStatusHistoryDto(entry), actorId: null } : toStatusHistoryDto(entry),
+    ),
   };
 }
 

@@ -23,6 +23,15 @@ export async function registerWebsocket(app: FastifyInstance, container: Contain
     logger: container.logger,
     // Ownership of an order cannot be read from a token, so the gateway asks
     // the orders service, inside the socket's own request context.
+    // A vendor listens to the rooms of their own stalls only.
+    ownsStore: async (storeId, user) => {
+      if (user.vendorId === undefined) return false;
+      const store = await container.prisma.store.findFirst({
+        where: { id: storeId, tenantId: user.tenantId, vendorId: user.vendorId },
+        select: { id: true },
+      });
+      return store !== null;
+    },
     ownsOrder: async (orderId, user) => {
       try {
         const order = await container.services.orders.get(orderId);

@@ -10,7 +10,7 @@ import {
 } from '@bazar/constants';
 import { z } from 'zod';
 import { latLngSchema } from './geo.schema.js';
-import { idSchema, isoDateSchema, optionalText } from './common.schema.js';
+import { idSchema, isoDateSchema, optionalText, queryBoolean } from './common.schema.js';
 import { phoneSchema } from './phone.schema.js';
 import { quantitySchema } from './product.schema.js';
 
@@ -109,7 +109,7 @@ export const orderListQuerySchema = z.object({
   cityId: idSchema.optional(),
   from: isoDateSchema.optional(),
   to: isoDateSchema.optional(),
-  activeOnly: z.coerce.boolean().optional(),
+  activeOnly: queryBoolean.optional(),
 });
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;

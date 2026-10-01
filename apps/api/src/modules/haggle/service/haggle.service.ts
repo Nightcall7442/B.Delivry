@@ -214,11 +214,11 @@ export class HaggleService extends BaseService {
       select: { vendorId: true, tenantId: true },
     });
     if (store === null) throw new NotFoundError('Store', storeId);
+    // The desk is whoever may read every order; a token without a vendorId is not that.
+    const staff = this.currentUser().permissions.includes(PERMISSION.ORDER_READ_ANY);
     this.authorize(
       PERMISSION.STORE_WRITE,
-      this.currentUser().vendorId !== undefined
-        ? { vendorId: store.vendorId, tenantId: store.tenantId }
-        : undefined,
+      staff ? undefined : { vendorId: store.vendorId, tenantId: store.tenantId },
     );
   }
 

@@ -1,13 +1,20 @@
 /**
  * Tracking business logic. Live courier location ingestion, ETA, order tracking feed.
  */
-import { DELIVERY_TIMEOUTS, PERMISSION, type VehicleType } from '@bazar/constants';
+import {
+  DELIVERY_TIMEOUTS,
+  ORDER_STATUS,
+  PERMISSION,
+  type OrderStatus,
+  type VehicleType,
+} from '@bazar/constants';
 import { WS_EVENT } from '@bazar/types';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
 import { ForbiddenError, NotFoundError } from '../../../common/errors/domain.errors.js';
 import type { RealtimePublisher } from '../../../infrastructure/redis/realtime-events.js';
 import { room } from '../../../websocket/rooms.js';
 import type { DeliveryService } from '../../delivery/service/delivery.service.js';
+import { isStallOnlyView } from '../../orders/domain/order-party.js';
 import type { OrdersService } from '../../orders/service/orders.service.js';
 import { RouteEtaCalculator, type EtaCalculator } from '../domain/eta.calculator.js';
 import type { TrackingRepository } from '../repository/tracking.repository.js';
@@ -72,8 +79,17 @@ export class TrackingService extends BaseService {
   /** The live screen a customer watches while waiting. */
   async trackOrder(orderId: string): Promise<TrackingView> {
     const order = await this.orders.get(orderId);
-    const delivery = await this.delivery.findByOrder(orderId);
+    const view = await this.fullView(order, await this.delivery.findByOrder(orderId));
+    // The stall sees the courier come to its counter; where the customer lives, and the road
+    // there, are not its business (and the courier's dot past the counter would give them away).
+    return isStallOnlyView(this.currentUser(), order) ? stallView(view) : view;
+  }
 
+  private async fullView(
+    order: Awaited<ReturnType<OrdersService['get']>>,
+    delivery: Awaited<ReturnType<DeliveryService['findByOrder']>>,
+  ): Promise<TrackingView> {
+    const orderId = order.id;
     const [courierLocation, courier] =
       order.courierId === null
         ? [null, null]
@@ -187,6 +203,31 @@ export class TrackingService extends BaseService {
     if (courierId === undefined) throw new ForbiddenError('Courier profile required');
     return courierId;
   }
+}
+
+/** While the courier is on the way to, or at, the counter: the stall may watch them arrive. */
+const STALL_WATCHES_COURIER: ReadonlySet<OrderStatus> = new Set([
+  ORDER_STATUS.COURIER_ASSIGNED,
+  ORDER_STATUS.COURIER_ARRIVED_PICKUP,
+  ORDER_STATUS.PICKING_UP,
+]);
+
+/**
+ * The tracking screen as the stall may see it: the courier and where the goods are collected, but
+ * not the customer's door, the road to it, or the clock of the drive there.
+ */
+export function stallView(view: TrackingView): TrackingView {
+  const watching = STALL_WATCHES_COURIER.has(view.status);
+  return {
+    ...view,
+    courierPoint: watching ? view.courierPoint : null,
+    courierUpdatedAt: watching ? view.courierUpdatedAt : null,
+    dropoffPoint: null,
+    etaAt: null,
+    etaSeconds: null,
+    distanceMeters: null,
+    routeGeometry: null,
+  };
 }
 
 /**
