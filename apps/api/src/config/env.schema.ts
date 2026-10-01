@@ -38,6 +38,15 @@ const list = z.string().transform((raw) =>
  */
 const secret = z.string().min(32, 'Secret must be at least 32 characters');
 
+/**
+ * A credential left blank (`PAYME_SECRET_KEY=`) is no credential: read as unset, the provider stays
+ * off. Read as an empty string it would switch the provider on and sign its webhooks with nothing.
+ */
+const blankIsUnset = z
+  .string()
+  .optional()
+  .transform((value) => (value === undefined || value.trim() === '' ? undefined : value));
+
 export const envSchema = z
   .object({
     // ---------------------------------------------------------------- APP
@@ -110,16 +119,16 @@ export const envSchema = z
     PAYMENTS_DEFAULT_PROVIDER: z
       .enum(['cash', 'payme', 'click', 'uzum', 'balance'])
       .default('cash'),
-    PAYME_MERCHANT_ID: z.string().optional(),
-    PAYME_SECRET_KEY: z.string().optional(),
+    PAYME_MERCHANT_ID: blankIsUnset,
+    PAYME_SECRET_KEY: blankIsUnset,
     PAYME_CALLBACK_URL: z.string().url().optional(),
     /** https://checkout.test.paycom.uz while on the sandbox. */
     PAYME_CHECKOUT_URL: z.string().url().optional(),
-    CLICK_MERCHANT_ID: z.string().optional(),
-    CLICK_SERVICE_ID: z.string().optional(),
-    CLICK_SECRET_KEY: z.string().optional(),
-    UZUM_MERCHANT_ID: z.string().optional(),
-    UZUM_SECRET_KEY: z.string().optional(),
+    CLICK_MERCHANT_ID: blankIsUnset,
+    CLICK_SERVICE_ID: blankIsUnset,
+    CLICK_SECRET_KEY: blankIsUnset,
+    UZUM_MERCHANT_ID: blankIsUnset,
+    UZUM_SECRET_KEY: blankIsUnset,
 
     // ---------------------------------------------------------------- SMS
     SMS_PROVIDER: z.enum(['eskiz', 'playmobile', 'console']).default('console'),
@@ -133,7 +142,7 @@ export const envSchema = z
     TELEGRAM_BOT_TOKEN: z.string().optional(),
     // Without the @username the app cannot build the t.me deep link.
     TELEGRAM_BOT_USERNAME: z.string().optional(),
-    TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
+    TELEGRAM_WEBHOOK_SECRET: blankIsUnset,
     TELEGRAM_SUPPORT_CHAT_ID: z.string().optional(),
 
     // ---------------------------------------------------------------- PUSH

@@ -10,7 +10,7 @@ import {
 } from '@bazar/constants';
 import { z } from 'zod';
 import { latLngSchema } from './geo.schema.js';
-import { idSchema, isoDateSchema, optionalText, queryBoolean } from './common.schema.js';
+import { httpUrl, idSchema, isoDateSchema, optionalText, queryBoolean } from './common.schema.js';
 import { phoneSchema } from './phone.schema.js';
 import { quantitySchema } from './product.schema.js';
 
@@ -94,7 +94,7 @@ export const actualQuantitiesSchema = z.object({
         orderItemId: idSchema,
         actualQuantity: quantitySchema,
         /** The scale, photographed: what the customer sees next to the weight. */
-        photoUrl: z.string().url().max(500).optional(),
+        photoUrl: httpUrl.optional(),
       }),
     )
     .min(1)

@@ -4,6 +4,7 @@
 import { LIMITS, PRODUCT_UNIT, STORE_TAG } from '@bazar/constants';
 import { z } from 'zod';
 import {
+  httpUrl,
   idSchema,
   imageSchema,
   positiveMoneySchema,
@@ -64,8 +65,8 @@ export const productListQuerySchema = z.object({
 export const createCategorySchema = z.object({
   name: translatedSchema,
   parentId: idSchema.nullable().optional(),
-  iconUrl: z.string().url().max(500).optional(),
-  imageUrl: z.string().url().max(500).optional(),
+  iconUrl: httpUrl.optional(),
+  imageUrl: httpUrl.optional(),
   sortOrder: z.coerce.number().int().default(0),
 });
 

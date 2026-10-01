@@ -3,7 +3,7 @@
  */
 import { LIMITS } from '@bazar/constants';
 import { z } from 'zod';
-import { idSchema } from './common.schema.js';
+import { httpUrl, idSchema } from './common.schema.js';
 
 export const ticketTopicSchema = z.enum([
   'ORDER_ISSUE',
@@ -18,7 +18,7 @@ export const ticketStatusSchema = z.enum(['OPEN', 'PENDING', 'RESOLVED', 'CLOSED
 
 export const ticketPrioritySchema = z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']);
 
-const attachments = z.array(z.string().url().max(500)).max(5).optional();
+const attachments = z.array(httpUrl).max(5).optional();
 
 export const createTicketSchema = z.object({
   topic: ticketTopicSchema,

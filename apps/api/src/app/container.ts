@@ -336,8 +336,8 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
   const cart = new CartService({ ...deps, repository: repositories.cart, catalog });
   const addresses = new AddressesService({ ...deps, repository: repositories.addresses, geo });
   const promotions = new PromotionsService({ ...deps, repository: repositories.promotions });
-  const customers = new CustomersService({ ...deps, repository: repositories.customers });
-  const vendors = new VendorsService({ ...deps, repository: repositories.vendors });
+  const customers = new CustomersService({ ...deps, repository: repositories.customers, auth });
+  const vendors = new VendorsService({ ...deps, repository: repositories.vendors, auth });
   const users = new UsersService({ ...deps, repository: repositories.users, auth });
 
   const haggle = new HaggleService({ ...deps, prisma, queue, realtime });
@@ -393,6 +393,7 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     repository: repositories.couriers,
     delivery,
     payments,
+    auth,
   });
 
   const reviews = new ReviewsService({
