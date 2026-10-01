@@ -13,10 +13,15 @@ import type { OrdersService } from '../../modules/orders/service/orders.service.
 import { PAYMENT_EVENT } from '../../modules/payments/domain/payment.events.js';
 import type { EventBus } from '../event-bus.js';
 
-/** For the one message that goes to a phone without an account: the order's recipient. */
+/**
+ * For the one message that goes to a phone without an account (the order's recipient), and the one
+ * that goes to the stall's vendor.
+ */
 export interface RecipientDeps {
   orders: OrdersService;
   notifications: NotificationsService;
+  /** The user behind the vendor that owns this stall; null when the stall is unknown. */
+  vendorUserOf: (storeId: string) => Promise<string | null>;
 }
 
 /**
@@ -45,6 +50,23 @@ export function registerOrderNotificationHandlers(
       ...(job.idempotencyKey !== undefined ? { jobId: job.idempotencyKey } : {}),
     });
   };
+
+  // The stall hears of a new order in the seller app while it is open; this is what reaches the
+  // phone when it is not (Telegram once the vendor has linked the bot, the in-app list always).
+  events.on(ORDER_EVENT.CREATED, async (event) => {
+    const { orderId, number, storeId, itemCount } = event.payload;
+    const userId = await recipient.vendorUserOf(storeId);
+    if (userId === null) return;
+    await send({
+      tenantId: event.tenantId,
+      userId,
+      template: TEMPLATE.STORE_NEW_ORDER,
+      params: { orderNumber: number, itemCount },
+      orderId,
+      deepLink: `/order/${orderId}`,
+      idempotencyKey: `notify:${orderId}:store-new`,
+    });
+  });
 
   events.on(ORDER_EVENT.STATUS_CHANGED, async (event) => {
     const template = STATUS_TEMPLATES[event.payload.to];

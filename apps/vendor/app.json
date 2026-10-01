@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Bazar Seller",
+    "slug": "bazar-vendor",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "scheme": "bazar-vendor",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "uz.bazardelivery.vendor"
+    },
+    "android": {
+      "package": "uz.bazardelivery.vendor"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Bazar Seller фотографирует ваш прилавок, чтобы покупатели видели, что на нём сейчас.",
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    },
+    "owner": "yaqubov1405"
+  }
+}
