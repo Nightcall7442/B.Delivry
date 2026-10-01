@@ -17,6 +17,8 @@ import type { PaymentsService } from './payments.service.js';
 /** Payme's transaction states. */
 const STATE = { CREATED: 1, PERFORMED: 2, CANCELLED: -1, CANCELLED_AFTER_PERFORM: -2 } as const;
 
+const PROVIDER = 'payme';
+
 /** Twelve hours: a created transaction Payme never performed is dead. */
 const TRANSACTION_TIMEOUT_MS = 12 * 60 * 60 * 1000;
 
@@ -163,7 +165,7 @@ export class PaymeMerchantApi {
       throw new PaymeError(PAYME_ERROR.INVALID_REQUEST, MESSAGES.request);
     }
 
-    const existing = await this.deps.repository.findByExternalId(transactionId);
+    const existing = await this.deps.repository.findByExternalId(transactionId, PROVIDER);
     if (existing !== null) {
       // Payme retries CreateTransaction; the same id must get the same answer.
       if (stateOf(existing) !== STATE.CREATED) {
@@ -217,8 +219,11 @@ export class PaymeMerchantApi {
       idempotencyKey: `payme:${transactionId}:create`,
       raw: { time, params },
     });
+    // The amount Payme just agreed to charge, which `payable` has already checked against the order:
+    // a checkout row opened before a reprice must not capture at its old figure.
     const created = await this.deps.repository.updateStatus(pending.id, PAYMENT_STATUS.AUTHORIZED, {
       externalId: transactionId,
+      amount,
     });
 
     return { create_time: time, transaction: created.id, state: STATE.CREATED };
@@ -353,8 +358,11 @@ export class PaymeMerchantApi {
 
   private async transaction(params: Record<string, unknown>): Promise<Payment> {
     const transactionId = str(params['id']);
+    // Payme's own transactions only: a Click id that happens to read the same is not Payme's.
     const payment =
-      transactionId === null ? null : await this.deps.repository.findByExternalId(transactionId);
+      transactionId === null
+        ? null
+        : await this.deps.repository.findByExternalId(transactionId, PROVIDER);
     if (payment === null) throw new PaymeError(PAYME_ERROR.TRANSACTION_NOT_FOUND, MESSAGES.missing);
     return payment;
   }

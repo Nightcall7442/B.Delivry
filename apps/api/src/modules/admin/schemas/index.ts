@@ -26,7 +26,15 @@ export const updateBrandingSchema = z.object({
   branding: z.object({
     appName: z.string().trim().min(1).max(40),
     city: z.string().trim().max(60).nullable().default(null),
-    logoUrl: z.string().url().max(500).nullable().default(null),
+    // z.string().url() accepts any scheme, javascript: and data: included, and this value is
+    // served unauthenticated by GET /tenants/current to every storefront.
+    logoUrl: z
+      .string()
+      .url()
+      .max(500)
+      .refine((value) => /^https?:\/\//i.test(value), 'logo must be an http(s) URL')
+      .nullable()
+      .default(null),
     primary: hexColour.nullable().default(null),
     accent: hexColour.nullable().default(null),
   }),

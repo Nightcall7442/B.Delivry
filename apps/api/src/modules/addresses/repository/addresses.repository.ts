@@ -77,20 +77,23 @@ export class AddressesRepository extends BaseRepository {
       ...(input.instructions !== undefined ? { instructions: input.instructions } : {}),
       ...(input.point !== undefined ? { lat: input.point.lat, lng: input.point.lng } : {}),
     };
-    return this.prisma.address.update({ where: { id }, data });
+    return this.prisma.address.update({ where: { id, ...this.tenantScope() }, data });
   }
 
   async setDefault(customerId: string, id: string): Promise<void> {
     await this.prisma.$transaction([
       this.prisma.address.updateMany({ where: { customerId }, data: { isDefault: false } }),
-      this.prisma.address.update({ where: { id }, data: { isDefault: true } }),
+      this.prisma.address.update({
+        where: { id, ...this.tenantScope() },
+        data: { isDefault: true },
+      }),
     ]);
   }
 
   /** Soft delete: past orders keep their frozen copy, but the list stays clean. */
   async softDelete(id: string): Promise<void> {
     await this.prisma.address.update({
-      where: { id },
+      where: { id, ...this.tenantScope() },
       data: { deletedAt: new Date(), isDefault: false },
     });
   }

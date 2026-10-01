@@ -23,13 +23,19 @@ export class PaymentsRepository extends BaseRepository {
     });
   }
 
-  async findById(id: string): Promise<Payment | null> {
-    return this.prisma.payment.findFirst({ where: this.scoped({ id }) });
+  async findById(id: string, tx?: PrismaTransaction): Promise<Payment | null> {
+    return this.client(tx).payment.findFirst({ where: this.scoped({ id }) });
   }
 
-  /** Webhooks arrive with the provider id, not ours. */
-  async findByExternalId(externalId: string): Promise<Payment | null> {
-    return this.prisma.payment.findFirst({ where: { externalId } });
+  /**
+   * Webhooks arrive with the provider's id, not ours. Another provider's transaction can carry the
+   * same string and another tenant's payment the same id, so the lookup is bound to both: the
+   * tenant of the callback and the provider that is calling.
+   */
+  async findByExternalId(externalId: string, provider?: string): Promise<Payment | null> {
+    return this.prisma.payment.findFirst({
+      where: this.scoped({ externalId, ...(provider !== undefined ? { provider } : {}) }),
+    });
   }
 
   /** Every charge for one subject: an order id, or a "plus:…" / "tip:…" key. */
@@ -42,8 +48,8 @@ export class PaymentsRepository extends BaseRepository {
 
   /** Wallets are keyed by user; a payment names the customer. */
   async customerUserId(customerId: string): Promise<string | null> {
-    const row = await this.prisma.customer.findUnique({
-      where: { id: customerId },
+    const row = await this.prisma.customer.findFirst({
+      where: this.scoped({ id: customerId }),
       select: { userId: true },
     });
     return row?.userId ?? null;
@@ -77,8 +83,14 @@ export class PaymentsRepository extends BaseRepository {
     id: string,
     status: PaymentStatus,
     extra: Prisma.PaymentUpdateInput = {},
+    tx?: PrismaTransaction,
   ): Promise<Payment> {
-    return this.prisma.payment.update({ where: { id }, data: { status, ...extra } });
+    // The tenant rides along even though every caller looked the row up scoped first: a write by id
+    // alone is one forgotten lookup away from touching another tenant's money.
+    return this.client(tx).payment.update({
+      where: { id, ...this.tenantScope() },
+      data: { status, ...extra },
+    });
   }
 
   /**
@@ -132,10 +144,27 @@ export class PaymentsRepository extends BaseRepository {
     });
   }
 
-  async addRefunded(id: string, amount: number): Promise<Payment> {
-    return this.prisma.payment.update({
-      where: { id },
+  /**
+   * Claims part of the refundable amount before any money moves. The check and the increment are
+   * one statement, so two refunds racing for the same payment cannot both get the last of it.
+   */
+  async reserveRefund(id: string, amount: number, total: number): Promise<boolean> {
+    const result = await this.prisma.payment.updateMany({
+      where: {
+        ...this.scoped({ id }),
+        status: { in: ['CAPTURED', 'PARTIALLY_REFUNDED'] },
+        refundedAmount: { lte: total - amount },
+      },
       data: { refundedAmount: { increment: amount } },
+    });
+    return result.count === 1;
+  }
+
+  /** The provider or the wallet refused after the amount was claimed: give it back. */
+  async releaseRefund(id: string, amount: number): Promise<void> {
+    await this.prisma.payment.updateMany({
+      where: this.scoped({ id }),
+      data: { refundedAmount: { decrement: amount } },
     });
   }
 

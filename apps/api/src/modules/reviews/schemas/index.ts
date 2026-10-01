@@ -3,7 +3,13 @@
  */
 export { createReviewSchema, replyReviewSchema } from '@bazar/validation';
 
-import { idSchema, listQuerySchema, ratingSchema, reviewTargetSchema } from '@bazar/validation';
+import {
+  idSchema,
+  listQuerySchema,
+  queryBoolean,
+  ratingSchema,
+  reviewTargetSchema,
+} from '@bazar/validation';
 import { z } from 'zod';
 
 export const reviewIdParamsSchema = z.object({ id: idSchema });
@@ -12,7 +18,7 @@ export const reviewsListQuerySchema = listQuerySchema.extend({
   target: reviewTargetSchema.optional(),
   targetId: idSchema.optional(),
   minRating: ratingSchema.optional(),
-  published: z.coerce.boolean().optional(),
+  published: queryBoolean.optional(),
 });
 
 export const summaryQuerySchema = z.object({

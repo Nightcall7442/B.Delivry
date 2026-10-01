@@ -8,11 +8,11 @@ export {
   updatePromotionSchema,
 } from '@bazar/validation';
 
-import { idSchema, listQuerySchema } from '@bazar/validation';
+import { idSchema, listQuerySchema, queryBoolean } from '@bazar/validation';
 import { z } from 'zod';
 
 export const promotionListQuerySchema = listQuerySchema.extend({
-  activeOnly: z.coerce.boolean().optional(),
+  activeOnly: queryBoolean.optional(),
 });
 
 export const promotionIdParamsSchema = z.object({ id: idSchema });

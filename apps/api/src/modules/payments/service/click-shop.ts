@@ -72,7 +72,9 @@ export class ClickShopApi {
     });
 
     if (!this.signed(body)) return fail(CLICK_ERROR.SIGN_CHECK_FAILED, 'SIGN CHECK FAILED');
-    if (body.service_id !== this.deps.settings.serviceId) {
+    // Both of these are `CLICK_*` env values that may be present and blank; a blank service id
+    // would match a request that simply leaves it out.
+    if (this.deps.settings.serviceId === '' || body.service_id !== this.deps.settings.serviceId) {
       return fail(CLICK_ERROR.BAD_REQUEST, 'Unknown service');
     }
 
@@ -136,8 +138,10 @@ export class ClickShopApi {
       idempotencyKey: `click:${base.click_trans_id}:prepare`,
       raw: { prepareId, body },
     });
+    // The amount Click was just told to charge, already checked against the order in `handle`.
     await this.deps.repository.updateStatus(payment.id, PAYMENT_STATUS.AUTHORIZED, {
       externalId: base.click_trans_id,
+      amount: payable.amount.amount,
     });
 
     return {
@@ -153,7 +157,8 @@ export class ClickShopApi {
     base: { click_trans_id: string; merchant_trans_id: string },
     payable: Payable,
   ): Promise<ClickResponse> {
-    const payment = await this.deps.repository.findByExternalId(base.click_trans_id);
+    // Click's own transactions only, inside this tenant: another provider's id is not ours to settle.
+    const payment = await this.deps.repository.findByExternalId(base.click_trans_id, 'click');
     if (payment === null || payment.subject !== payable.subject) {
       return {
         ...base,
@@ -191,6 +196,15 @@ export class ClickShopApi {
         error_note: 'Transaction cancelled',
       };
     }
+    // What Click reports it took has to be what this payment was opened for, not only what the
+    // order costs today (a reprice between Prepare and Complete changes one and not the other).
+    if (Math.round(Number(body.amount) * 100) !== payment.amount) {
+      return {
+        ...base,
+        error: CLICK_ERROR.INCORRECT_AMOUNT,
+        error_note: 'Incorrect parameter amount',
+      };
+    }
     if (payment.status !== PAYMENT_STATUS.CAPTURED) await this.deps.payments.capture(payment.id);
 
     return {
@@ -203,6 +217,8 @@ export class ClickShopApi {
 
   /** md5(click_trans_id + service_id + secret + merchant_trans_id [+ prepare_id] + amount + action + sign_time). */
   private signed(body: ClickRequest): boolean {
+    // No secret, no signature to check against: an empty key would let anyone compute a valid one.
+    if (this.deps.settings.secretKey === '') return false;
     const parts = [
       body.click_trans_id ?? '',
       body.service_id ?? '',
