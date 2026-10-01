@@ -3,7 +3,13 @@
  */
 import { STORE_STATUS, STORE_TAG, STORE_TYPE } from '@bazar/constants';
 import { z } from 'zod';
-import { idSchema, optionalText, queryBoolean, translatedSchema } from './common.schema.js';
+import {
+  httpUrl,
+  idSchema,
+  optionalText,
+  queryBoolean,
+  translatedSchema,
+} from './common.schema.js';
 import { latLngSchema } from './geo.schema.js';
 import { phoneSchema } from './phone.schema.js';
 
@@ -42,14 +48,14 @@ export const updateStoreSchema = createStoreSchema
   .omit({ vendorId: true })
   .extend({
     status: z.nativeEnum(STORE_STATUS).optional(),
-    logoUrl: z.string().url().max(500).nullable().optional(),
-    coverUrl: z.string().url().max(500).nullable().optional(),
+    logoUrl: httpUrl.nullable().optional(),
+    coverUrl: httpUrl.nullable().optional(),
     /** Today's photo of the counter; the date is stamped by the server. */
-    counterPhotoUrl: z.string().url().max(500).nullable().optional(),
+    counterPhotoUrl: httpUrl.nullable().optional(),
     tags: z.array(z.nativeEnum(STORE_TAG)).max(6).optional(),
     ownerName: z.string().trim().min(1).max(80).nullable().optional(),
     ownerSince: z.coerce.number().int().min(1950).max(2100).nullable().optional(),
-    ownerPhotoUrl: z.string().url().max(500).nullable().optional(),
+    ownerPhotoUrl: httpUrl.nullable().optional(),
     ownerMotto: translatedSchema.nullable().optional(),
     chainSlug: z
       .string()

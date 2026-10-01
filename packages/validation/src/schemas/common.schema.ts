@@ -27,8 +27,18 @@ export const translatedSchema = z
   .record(z.string(), z.string().trim().min(1).max(500))
   .refine((value) => Object.keys(value).length > 0, 'At least one locale is required');
 
+/**
+ * A link a person (or another person's phone) will open or load: a web address only.
+ * `z.string().url()` also accepts javascript:, data: and file: ones.
+ */
+export const httpUrl = z
+  .string()
+  .url()
+  .max(500)
+  .regex(/^https?:\/\//i, 'Must be an http(s) link');
+
 export const imageSchema = z.object({
-  url: z.string().url(),
+  url: httpUrl,
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
   alt: z.string().max(200).optional(),

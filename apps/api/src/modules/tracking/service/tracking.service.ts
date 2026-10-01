@@ -5,6 +5,7 @@ import {
   DELIVERY_TIMEOUTS,
   ORDER_STATUS,
   PERMISSION,
+  isTerminalOrderStatus,
   type OrderStatus,
   type VehicleType,
 } from '@bazar/constants';
@@ -14,7 +15,7 @@ import { ForbiddenError, NotFoundError } from '../../../common/errors/domain.err
 import type { RealtimePublisher } from '../../../infrastructure/redis/realtime-events.js';
 import { room } from '../../../websocket/rooms.js';
 import type { DeliveryService } from '../../delivery/service/delivery.service.js';
-import { isStallOnlyView } from '../../orders/domain/order-party.js';
+import { isStallOnlyView, standingOn } from '../../orders/domain/order-party.js';
 import type { OrdersService } from '../../orders/service/orders.service.js';
 import { RouteEtaCalculator, type EtaCalculator } from '../domain/eta.calculator.js';
 import type { TrackingRepository } from '../repository/tracking.repository.js';
@@ -51,16 +52,39 @@ export class TrackingService extends BaseService {
    * latency, and the history table is for disputes later. Pings closer together
    * than the minimum interval are dropped, because a phone reporting every
    * second would write millions of rows a day for no extra accuracy.
+   *
+   * Nothing in a ping is believed. The courier is who the token says; the position and the clock
+   * are bounded; and the order id is only a claim: the position goes into an order's room (the
+   * customer's map) only if that order is carried by THIS courier and is still open. Otherwise it
+   * reaches the courier's own room alone, as if no order had been named.
    */
   async push(pings: LocationPing[]): Promise<void> {
     const courierId = this.requireCourierId();
-    if (pings.length === 0) return;
+    const now = new Date();
 
-    const filtered = thinOut(pings, DELIVERY_TIMEOUTS.LOCATION_MIN_INTERVAL_SECONDS);
+    const usable = pings
+      .slice(-MAX_PINGS_PER_PUSH)
+      .map((ping) => normalizePing(ping, now))
+      .filter((ping): ping is LocationPing => ping !== null);
+    const filtered = thinOut(usable, DELIVERY_TIMEOUTS.LOCATION_MIN_INTERVAL_SECONDS);
     const latest = filtered[filtered.length - 1];
     if (latest === undefined) return;
 
-    const orderId = latest.orderId ?? null;
+    const claimed = [...new Set(filtered.flatMap((ping) => (ping.orderId ? [ping.orderId] : [])))];
+    const carried = await this.repository.ordersOfCourier(courierId, claimed);
+
+    // A backlog uploaded after the drop-off still belongs to that order's trace, so the history
+    // keeps the tag of any order this courier carried; the live room wants an order still open.
+    const rows = filtered.map((ping) => ({
+      ...ping,
+      orderId: ping.orderId !== undefined && carried.has(ping.orderId) ? ping.orderId : undefined,
+    }));
+    const status = latest.orderId === undefined ? undefined : carried.get(latest.orderId);
+    const orderId =
+      latest.orderId !== undefined && status !== undefined && !isTerminalOrderStatus(status)
+        ? latest.orderId
+        : null;
+
     await this.realtime.emitToRooms(
       orderId === null ? [room.courier(courierId)] : [room.order(orderId), room.courier(courierId)],
       WS_EVENT.COURIER_LOCATION,
@@ -73,7 +97,7 @@ export class TrackingService extends BaseService {
       },
     );
 
-    await this.repository.savePings(courierId, filtered);
+    await this.repository.savePings(courierId, rows);
   }
 
   /** The live screen a customer watches while waiting. */
@@ -90,11 +114,14 @@ export class TrackingService extends BaseService {
     delivery: Awaited<ReturnType<DeliveryService['findByOrder']>>,
   ): Promise<TrackingView> {
     const orderId = order.id;
+    // A closed order has no live courier: the courier's latest fix belongs to whatever trip they are on
+    // now, and the order's owner (or an ex-customer, weeks later) must not follow it.
+    const live = !isTerminalOrderStatus(order.status);
     const [courierLocation, courier] =
       order.courierId === null
         ? [null, null]
         : await Promise.all([
-            this.repository.lastLocation(order.courierId),
+            live ? this.repository.lastLocation(order.courierId) : Promise.resolve(null),
             this.repository.courierProfile(order.courierId),
           ]);
 
@@ -178,16 +205,48 @@ export class TrackingService extends BaseService {
     return estimate.arrivesAt;
   }
 
-  /** Replay of a trip, for support and for disputed deliveries. */
+  /**
+   * Replay of a trip, for support and for disputed deliveries. A GPS trace is where a person went,
+   * so `delivery:read` (every courier holds it) is only the door: the desk may read its tenant's
+   * traces, a courier only its own, and a trace of an order only by someone who may read that
+   * order. The stall gets none: the trace ends at the customer's door.
+   */
   async history(filters: HistoryFilters) {
     this.authorize(PERMISSION.DELIVERY_READ);
     if (filters.orderId === undefined && filters.courierId === undefined) {
       throw new NotFoundError('Tracking history');
     }
-    return this.repository.history(filters);
+
+    const user = this.currentUser();
+    const staff = user.permissions.includes(PERMISSION.ORDER_READ_ANY);
+    let courierId = filters.courierId;
+
+    if (filters.orderId !== undefined) {
+      // The orders service refuses an order that is not the caller's (and another tenant's).
+      const order = await this.orders.get(filters.orderId);
+      if (isStallOnlyView(user, order)) {
+        throw new ForbiddenError('No trace of this order for the stall');
+      }
+      // The carrying courier sees its own trace of the order, not a previous courier's.
+      const standing = standingOn(user, order);
+      if (!standing.staff && !standing.customer) {
+        courierId = user.courierId;
+        if (courierId === undefined) throw new ForbiddenError('Courier profile required');
+      }
+    } else if (!staff && (user.courierId === undefined || user.courierId !== courierId)) {
+      throw new ForbiddenError('Only your own trace');
+    }
+
+    return this.repository.history({
+      ...filters,
+      ...(courierId !== undefined ? { courierId } : {}),
+    });
   }
 
-  /** Everything moving in a city right now, for the operator wall. */
+  /**
+   * Everything moving in a city right now, for the operator wall. `courier:read` is held by the
+   * desk alone, and the query is tenant-scoped: a city id names a place, not a tenant's couriers.
+   */
   async liveMap(cityId: string) {
     this.authorize(PERMISSION.COURIER_READ);
     const staleBefore = new Date(Date.now() - DELIVERY_TIMEOUTS.LOCATION_STALE_SECONDS * 1000);
@@ -203,6 +262,54 @@ export class TrackingService extends BaseService {
     if (courierId === undefined) throw new ForbiddenError('Courier profile required');
     return courierId;
   }
+}
+
+/** Most pings one call may carry (REST allows 200; the job and socket paths are held to it here). */
+const MAX_PINGS_PER_PUSH = 200;
+/** A device clock further ahead than this is wrong, not early: the ping counts as received now. */
+const MAX_CLOCK_SKEW_MS = 60_000;
+/** A backlog older than a shift is not a trace anyone will replay, and would only fill the table. */
+const MAX_PING_AGE_MS = 6 * 60 * 60 * 1000;
+const MAX_SPEED_KMH = 300;
+const MAX_ACCURACY_METERS = 10_000;
+
+const isNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const bounded = (value: unknown, max: number): number | undefined =>
+  isNumber(value) ? Math.min(Math.max(value, 0), max) : undefined;
+
+/**
+ * One ping as the service will believe it, or null when it is not a position at all. Callers
+ * (REST, the socket, a job) validate what they can, but this is the choke point: whatever gets
+ * here is broadcast to another person's screen and written to the history table, so every field
+ * is checked for its type as well as its range.
+ */
+export function normalizePing(ping: LocationPing, now: Date): LocationPing | null {
+  const { lat, lng } = ping;
+  if (!isNumber(lat) || !isNumber(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+
+  const claimedAt = ping.recordedAt instanceof Date ? ping.recordedAt.getTime() : Number.NaN;
+  // No readable clock, or one that is ahead of the server: the ping arrived now.
+  const at =
+    Number.isNaN(claimedAt) || claimedAt > now.getTime() + MAX_CLOCK_SKEW_MS
+      ? now.getTime()
+      : claimedAt;
+  if (now.getTime() - at > MAX_PING_AGE_MS) return null;
+
+  return {
+    lat,
+    lng,
+    // A compass heading wraps; it does not run off the scale.
+    heading: isNumber(ping.heading) ? ((ping.heading % 360) + 360) % 360 : undefined,
+    speedKmh: bounded(ping.speedKmh, MAX_SPEED_KMH),
+    accuracyMeters: bounded(ping.accuracyMeters, MAX_ACCURACY_METERS),
+    recordedAt: new Date(at),
+    orderId:
+      typeof ping.orderId === 'string' && ping.orderId.length > 0 && ping.orderId.length <= 64
+        ? ping.orderId
+        : undefined,
+  };
 }
 
 /** While the courier is on the way to, or at, the counter: the stall may watch them arrive. */

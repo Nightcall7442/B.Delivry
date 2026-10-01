@@ -6,6 +6,7 @@
  * REST actions (accept, picked up, …) and the `location` socket command; the
  * server answers with `delivery.offer` / `delivery.offer_expired` events.
  */
+import { isApiError } from '@bazar/api-client';
 import { api, useAuth } from '@bazar/mobile';
 import { mergeOffers } from '@bazar/storefront';
 import {
@@ -99,7 +100,16 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
       setActive(null);
       return;
     }
-    const [me, deliveries] = await Promise.all([api().couriers.me(), api().delivery.active()]);
+    let me: CourierDto;
+    try {
+      me = await api().couriers.me();
+    } catch (cause) {
+      // A neighbour the desk has just verified still holds the token from before: it names no courier
+      // yet. Take a fresh pair (it carries the profile now) and ask again, instead of waiting it out.
+      if (!isApiError(cause) || cause.status !== 403 || !(await api().http.renew())) throw cause;
+      me = await api().couriers.me();
+    }
+    const deliveries = await api().delivery.active();
     setCourier(me);
     setActive(deliveries[0] ?? null);
     setSiblings(await groupSiblings(deliveries));
@@ -182,17 +192,27 @@ export function ShiftProvider({ children }: { children: ReactNode }) {
   }, [active]);
   useLocationStream(online, target, active?.orderId ?? null, setPosition);
 
-  const run = useCallback(async (action: () => Promise<void>) => {
-    setBusy(true);
-    setError(null);
-    try {
-      await action();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Что-то пошло не так');
-    } finally {
-      setBusy(false);
-    }
-  }, []);
+  const run = useCallback(
+    async (action: () => Promise<void>) => {
+      setBusy(true);
+      setError(null);
+      try {
+        await action();
+      } catch (cause) {
+        if (isApiError(cause) && cause.status === 409) {
+          // The order moved under the courier (cancelled by the customer or the stall, closed by the
+          // desk): the card is dead. Read the trip again so it clears instead of staying on screen.
+          setError('Заказ уже изменился — обновили смену');
+          reload().catch(() => undefined);
+        } else {
+          setError(cause instanceof Error ? cause.message : 'Что-то пошло не так');
+        }
+      } finally {
+        setBusy(false);
+      }
+    },
+    [reload],
+  );
 
   const setOnline = useCallback(
     (next: boolean) =>

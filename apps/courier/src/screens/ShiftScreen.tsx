@@ -116,7 +116,7 @@ export function ShiftScreen() {
             <RNText style={s.meta}>
               {courier
                 ? `★ ${courier.rating.toFixed(1)} · ${courier.completedOrders} ${plural(courier.completedOrders, 'доставка', 'доставки', 'доставок')} · ${online ? 'на смене' : 'не на смене'}`
-                : 'Аккаунт не курьерский'}
+                : 'Аккаунт ждёт подтверждения оператором'}
             </RNText>
           </View>
           <Switch

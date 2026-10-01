@@ -4,6 +4,7 @@
  * sees the weight, the photo and the new total before paying.
  */
 import { WEIGHTED_UNITS } from '@bazar/constants';
+import { isApiError } from '@bazar/api-client';
 import { Button, Text, api, color, font, radius, scale } from '@bazar/mobile';
 import { UNIT_LABEL, tr } from '@bazar/storefront';
 import type { OrderDto, OrderItemDto } from '@bazar/types';
@@ -94,8 +95,12 @@ export function WeighingSheet({
       }
       if (items.length > 0) await api().orders.actualQuantities(orderId, items);
       onDone();
-    } catch {
-      setError('Не удалось сохранить взвешивание');
+    } catch (cause) {
+      setError(
+        isApiError(cause) && cause.status === 409
+          ? 'Вес сильно отличается от заказанного или заказ уже изменился — проверьте весы, при необходимости позвоните оператору'
+          : 'Не удалось сохранить взвешивание',
+      );
     } finally {
       setSaving(false);
     }

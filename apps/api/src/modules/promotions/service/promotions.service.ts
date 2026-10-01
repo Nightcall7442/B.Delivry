@@ -6,7 +6,12 @@ import { compare, money, percentage, zero, type Money } from '@bazar/payments';
 import type { Coupon, Prisma, Promotion } from '@prisma/client';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
 import { ERROR_CODE } from '../../../common/errors/error-codes.js';
-import { CouponError } from '../../../common/errors/domain.errors.js';
+import {
+  CouponError,
+  NotFoundError,
+  RateLimitedError,
+  ValidationError,
+} from '../../../common/errors/domain.errors.js';
 import type { PrismaTransaction } from '../../../common/base/base.repository.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import type {
@@ -17,14 +22,53 @@ import type { AppliedCoupon, CouponPreview, PromotionListFilters } from '../type
 
 export interface PromotionsServiceDeps extends ServiceDeps {
   repository: PromotionsRepository;
+  /** Injectable for tests; the wall clock otherwise. */
+  now?: () => number;
 }
+
+/**
+ * Codes that match nothing, per customer, in a sliding window. A code is the only secret between a
+ * customer and a compensation coupon, and `preview` answers instantly: without a budget on the
+ * misses it is an oracle that can be asked a few thousand times a minute from one account.
+ * In memory, so the budget is per process; a shared one belongs in the route's rate limiter.
+ */
+const MAX_CODE_MISSES = 10;
+const CODE_MISS_WINDOW_MS = 10 * 60_000;
+const MAX_TRACKED_CUSTOMERS = 10_000;
 
 export class PromotionsService extends BaseService {
   private readonly repository: PromotionsRepository;
+  private readonly now: () => number;
+  private readonly misses = new Map<string, number[]>();
 
   constructor(deps: PromotionsServiceDeps) {
     super(deps);
     this.repository = deps.repository;
+    this.now = deps.now ?? Date.now;
+  }
+
+  private recentMisses(customerId: string): number[] {
+    const since = this.now() - CODE_MISS_WINDOW_MS;
+    const recent = (this.misses.get(customerId) ?? []).filter((at) => at > since);
+    if (recent.length === 0) this.misses.delete(customerId);
+    else this.misses.set(customerId, recent);
+    return recent;
+  }
+
+  private assertCodeBudget(customerId: string): void {
+    const recent = this.recentMisses(customerId);
+    if (recent.length >= MAX_CODE_MISSES) {
+      const retryAfter = Math.ceil(((recent[0] ?? 0) + CODE_MISS_WINDOW_MS - this.now()) / 1000);
+      throw new RateLimitedError(Math.max(retryAfter, 1), 'Too many coupon attempts, try later');
+    }
+  }
+
+  private recordMiss(customerId: string): void {
+    // Customers who miss once and never return would otherwise stay in the map for good.
+    if (this.misses.size >= MAX_TRACKED_CUSTOMERS) {
+      for (const tracked of [...this.misses.keys()]) this.recentMisses(tracked);
+    }
+    this.misses.set(customerId, [...this.recentMisses(customerId), this.now()]);
   }
 
   /**
@@ -37,8 +81,13 @@ export class PromotionsService extends BaseService {
     subtotal: Money,
     customerId: string,
   ): Promise<AppliedCoupon> {
+    this.assertCodeBudget(customerId);
+
     const coupon = await this.repository.findCoupon(code.toUpperCase());
-    if (coupon === null) {
+    // Someone else's personal coupon is answered exactly like a code that does not exist: telling
+    // them apart would confirm to a guesser that the guess was a real code.
+    if (coupon === null || (coupon.customerId !== null && coupon.customerId !== customerId)) {
+      this.recordMiss(customerId);
       throw new CouponError(ERROR_CODE.COUPON_INVALID, 'Coupon not found');
     }
 
@@ -72,6 +121,9 @@ export class PromotionsService extends BaseService {
         reason: null,
       };
     } catch (error) {
+      // A spent attempt budget is the caller's to be told about (429 and Retry-After), not a reason
+      // to show beside the coupon field.
+      if (error instanceof RateLimitedError) throw error;
       return {
         valid: false,
         discount: zero(subtotal.currency),
@@ -108,11 +160,8 @@ export class PromotionsService extends BaseService {
       return new CouponError(ERROR_CODE.COUPON_EXHAUSTED, 'Coupon has been fully used');
     }
 
-    // A personal coupon issued as compensation belongs to one customer only.
-    if (coupon.customerId !== null && coupon.customerId !== customerId) {
-      return new CouponError(ERROR_CODE.COUPON_INVALID, 'Coupon is not valid for this account');
-    }
-
+    // A personal coupon issued as compensation belongs to one customer only; `evaluate` has already
+    // refused everyone else, before any of the reasons above could confirm it exists.
     const used = await this.repository.countRedemptions(coupon.id, customerId);
     if (used >= coupon.maxPerCustomer) {
       return new CouponError(ERROR_CODE.COUPON_EXHAUSTED, 'You have already used this coupon');
@@ -146,7 +195,10 @@ export class PromotionsService extends BaseService {
 
     switch (promotion.discountType) {
       case 'PERCENT': {
-        const raw = percentage(subtotal, promotion.value);
+        // Never more than the goods cost, whatever the stored percentage says: the update schema
+        // does not carry the "at most 100" rule the create one has.
+        const whole = percentage(subtotal, promotion.value);
+        const raw = compare(whole, subtotal) > 0 ? subtotal : whole;
         if (promotion.maxDiscount === null) return raw;
         const cap = money(promotion.maxDiscount, currency);
         return compare(raw, cap) > 0 ? cap : raw;
@@ -182,7 +234,14 @@ export class PromotionsService extends BaseService {
   // ------------------------------------------------------------------ admin
 
   async listPromotions(filters: PromotionListFilters): Promise<PaginatedResult<Promotion>> {
-    return this.repository.listPromotions(filters);
+    // The storefront shows what is running. Drafts, ended campaigns and the ones scheduled for later
+    // are the desk's: an anonymous caller (this route is public) gets the running ones whatever
+    // they ask for.
+    const context = this.context();
+    const desk =
+      context.system === true ||
+      (context.user !== null && context.user.permissions.includes(PERMISSION.PROMOTION_WRITE));
+    return this.repository.listPromotions(desk ? filters : { ...filters, activeOnly: true });
   }
 
   async createPromotion(data: Prisma.PromotionUncheckedCreateInput): Promise<Promotion> {
@@ -192,15 +251,61 @@ export class PromotionsService extends BaseService {
 
   async updatePromotion(id: string, data: Prisma.PromotionUpdateInput): Promise<Promotion> {
     this.authorize(PERMISSION.PROMOTION_WRITE);
-    return this.repository.updatePromotion(id, data);
+    const current = await this.repository.findPromotion(id);
+    if (current === null) throw new NotFoundError('Promotion', id);
+
+    // Whose a row is, and which row it is, are not up for editing whatever else the body carried.
+    const {
+      tenantId: _tenantId,
+      id: _id,
+      ...patch
+    } = data as Prisma.PromotionUpdateInput & { tenantId?: unknown; id?: unknown };
+    this.assertConsistent(current, patch);
+    return this.repository.updatePromotion(id, patch);
+  }
+
+  /**
+   * The create schema refuses a percentage over 100 and an end before the start; the update one is
+   * that schema made partial, so it refuses neither. What the promotion would be after the patch is
+   * what has to hold.
+   */
+  private assertConsistent(current: Promotion, patch: Prisma.PromotionUpdateInput): void {
+    const discountType =
+      typeof patch.discountType === 'string' ? patch.discountType : current.discountType;
+    const value = typeof patch.value === 'number' ? patch.value : current.value;
+    const startsAt = patch.startsAt instanceof Date ? patch.startsAt : current.startsAt;
+    const endsAt = patch.endsAt === undefined ? current.endsAt : patch.endsAt;
+
+    if (discountType === 'PERCENT' && value > 100) {
+      throw new ValidationError({ value: ['Percent discount cannot exceed 100'] });
+    }
+    if (endsAt instanceof Date && endsAt <= startsAt) {
+      throw new ValidationError({ endsAt: ['endsAt must be after startsAt'] });
+    }
   }
 
   async createCoupon(data: Prisma.CouponUncheckedCreateInput): Promise<Coupon> {
     this.authorize(PERMISSION.PROMOTION_WRITE);
+    // The promotion carries the discount, so a coupon must hang off one of this tenant's, and a
+    // personal one must name one of its customers: a bare id from another tenant is not a reference.
+    if ((await this.repository.findPromotion(data.promotionId)) === null) {
+      throw new NotFoundError('Promotion', data.promotionId);
+    }
+    if (
+      data.customerId !== undefined &&
+      data.customerId !== null &&
+      !(await this.repository.customerExists(data.customerId))
+    ) {
+      throw new NotFoundError('Customer', data.customerId);
+    }
     return this.repository.createCoupon({
-      ...data,
+      promotionId: data.promotionId,
       tenantId: this.tenantId(),
       code: data.code.toUpperCase(),
+      ...(data.maxRedemptions !== undefined ? { maxRedemptions: data.maxRedemptions } : {}),
+      ...(data.maxPerCustomer !== undefined ? { maxPerCustomer: data.maxPerCustomer } : {}),
+      ...(data.customerId !== undefined ? { customerId: data.customerId } : {}),
+      ...(data.expiresAt !== undefined ? { expiresAt: data.expiresAt } : {}),
     });
   }
 
@@ -211,7 +316,7 @@ export class PromotionsService extends BaseService {
 
   async deactivateCoupon(id: string): Promise<void> {
     this.authorize(PERMISSION.PROMOTION_WRITE);
-    await this.repository.deactivateCoupon(id);
+    if (!(await this.repository.deactivateCoupon(id))) throw new NotFoundError('Coupon', id);
   }
 
   moneyFor(amount: number, currency: Currency): Money {

@@ -2,11 +2,11 @@
  * Notifications request/response Zod schemas (reuse @bazar/validation where shared).
  */
 import { NOTIFICATION_CHANNEL } from '@bazar/constants';
-import { cursorPaginationSchema, idSchema } from '@bazar/validation';
+import { cursorPaginationSchema, idSchema, queryBoolean } from '@bazar/validation';
 import { z } from 'zod';
 
 export const notificationListQuerySchema = cursorPaginationSchema.extend({
-  unreadOnly: z.coerce.boolean().optional(),
+  unreadOnly: queryBoolean.optional(),
   channel: z.nativeEnum(NOTIFICATION_CHANNEL).optional(),
 });
 

@@ -1,12 +1,17 @@
 /**
  * Support business logic. Tickets, threads, assignment, escalation.
  */
-import { PERMISSION, isStaffRole } from '@bazar/constants';
+import { can } from '@bazar/auth';
+import { PERMISSION } from '@bazar/constants';
 import { TEMPLATE } from '@bazar/notifications';
 import { randomCode } from '@bazar/utils';
 import type { SupportMessage, SupportTicket } from '@prisma/client';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
-import { ConflictError, NotFoundError } from '../../../common/errors/domain.errors.js';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from '../../../common/errors/domain.errors.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import type { NotificationSender } from '../../notifications/types/index.js';
 import type { SupportRepository, TicketWithMessages } from '../repository/support.repository.js';
@@ -34,9 +39,24 @@ export class SupportService extends BaseService {
 
   async create(input: CreateTicketInput): Promise<TicketWithMessages> {
     const user = this.currentUser();
+    // A ticket "about an order" puts that order in front of the desk; only someone the order
+    // concerns (or the desk itself) may say so, and only of an order of this tenant.
+    if (input.orderId !== undefined) await this.assertOrderParty(input.orderId);
     // Short, readable over the phone, and not guessable in bulk.
     const number = `S-${randomCode(6)}`;
     return this.repository.create(input, user.id, number);
+  }
+
+  private async assertOrderParty(orderId: string): Promise<void> {
+    const order = await this.repository.findOrderParties(orderId);
+    if (order === null) throw new NotFoundError('Order', orderId);
+    const allowed = can(this.currentUser(), PERMISSION.ORDER_READ, {
+      tenantId: order.tenantId,
+      customerId: order.customerId,
+      vendorId: order.vendorId,
+      ...(order.courierId !== null ? { courierId: order.courierId } : {}),
+    });
+    if (!allowed) throw new ForbiddenError('You can only open a ticket about your own order');
   }
 
   /**
@@ -47,9 +67,7 @@ export class SupportService extends BaseService {
     const ticket = await this.getOrThrow(id);
     const user = this.currentUser();
 
-    if (ticket.userId !== user.id && !user.roles.some(isStaffRole)) {
-      this.authorize(PERMISSION.SUPPORT_HANDLE);
-    }
+    if (ticket.userId !== user.id) this.authorize(PERMISSION.SUPPORT_HANDLE);
 
     return ticket;
   }
@@ -97,6 +115,11 @@ export class SupportService extends BaseService {
   async assign(id: string, assigneeId: string | null): Promise<SupportTicket> {
     this.authorize(PERMISSION.SUPPORT_HANDLE);
     await this.getOrThrow(id);
+    // Only a member of this tenant's desk can hold a ticket: a customer's or another tenant's id
+    // would otherwise be connected as the assignee all the same.
+    if (assigneeId !== null && !(await this.repository.isStaffMember(assigneeId))) {
+      throw new NotFoundError('Support agent', assigneeId);
+    }
     return this.repository.update(id, {
       assignee: assigneeId === null ? { disconnect: true } : { connect: { id: assigneeId } },
     });
@@ -111,10 +134,11 @@ export class SupportService extends BaseService {
       throw new ConflictError('This ticket is already assigned to someone else');
     }
 
-    return this.repository.update(id, {
-      assignee: { connect: { id: this.currentUser().id } },
-      status: 'PENDING',
-    });
+    // The read above can be stale by the time of the write: the claim itself decides.
+    if (!(await this.repository.claim(id, this.currentUser().id))) {
+      throw new ConflictError('This ticket is already assigned to someone else');
+    }
+    return this.getOrThrow(id);
   }
 
   async setStatus(id: string, status: TicketStatus): Promise<SupportTicket> {

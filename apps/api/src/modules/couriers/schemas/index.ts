@@ -2,7 +2,7 @@
  * Couriers request/response Zod schemas (reuse @bazar/validation where shared).
  */
 import { COURIER_STATUS, UZ_PLATE_REGEX, VEHICLE_TYPE } from '@bazar/constants';
-import { idSchema, listQuerySchema } from '@bazar/validation';
+import { idSchema, listQuerySchema, queryBoolean } from '@bazar/validation';
 import { z } from 'zod';
 
 export const courierIdParamsSchema = z.object({ id: idSchema });
@@ -11,7 +11,8 @@ export const couriersListQuerySchema = listQuerySchema.extend({
   cityId: idSchema.optional(),
   status: z.nativeEnum(COURIER_STATUS).optional(),
   vehicleType: z.nativeEnum(VEHICLE_TYPE).optional(),
-  onlineOnly: z.coerce.boolean().optional(),
+  // z.coerce.boolean() read ?onlineOnly=false as true: "false" is a non-empty string.
+  onlineOnly: queryBoolean.optional(),
 });
 
 /** Couriers set their own status; SUSPENDED is a staff decision only. */

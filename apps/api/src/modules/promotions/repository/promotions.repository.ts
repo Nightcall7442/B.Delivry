@@ -3,6 +3,8 @@
  */
 import type { Coupon, Prisma, Promotion } from '@prisma/client';
 import { BaseRepository, type PrismaTransaction } from '../../../common/base/base.repository.js';
+import { ConflictError, CouponError } from '../../../common/errors/domain.errors.js';
+import { ERROR_CODE } from '../../../common/errors/error-codes.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import type { PromotionListFilters } from '../types/index.js';
 
@@ -25,6 +27,11 @@ export class PromotionsRepository extends BaseRepository {
    * Records the use and bumps the counter in one transaction. The unique
    * constraint on orderId is what makes a retried order creation idempotent
    * instead of burning two redemptions.
+   *
+   * The limits are enforced here, in the write, not only read beforehand by `evaluate`: two orders
+   * placed at the same moment both pass that check. The counter bump is conditional (and takes the
+   * coupon's row lock for the rest of the transaction), so the last redemption goes to one of them,
+   * and the per-customer count is taken only after that lock is held.
    */
   async redeem(
     couponId: string,
@@ -33,12 +40,32 @@ export class PromotionsRepository extends BaseRepository {
     discount: number,
     tx: PrismaTransaction,
   ): Promise<void> {
+    const claimed = await tx.coupon.updateMany({
+      where: {
+        ...this.scoped({ id: couponId }),
+        active: true,
+        OR: [
+          { maxRedemptions: null },
+          { redemptionCount: { lt: tx.coupon.fields.maxRedemptions } },
+        ],
+      },
+      data: { redemptionCount: { increment: 1 } },
+    });
+    if (claimed.count === 0) {
+      throw new CouponError(ERROR_CODE.COUPON_EXHAUSTED, 'Coupon has been fully used');
+    }
+
+    const coupon = await tx.coupon.findUnique({
+      where: { id: couponId },
+      select: { maxPerCustomer: true },
+    });
+    const used = await tx.couponRedemption.count({ where: { couponId, customerId } });
+    if (coupon === null || used >= coupon.maxPerCustomer) {
+      throw new CouponError(ERROR_CODE.COUPON_EXHAUSTED, 'You have already used this coupon');
+    }
+
     await tx.couponRedemption.create({
       data: { couponId, customerId, orderId, discount },
-    });
-    await tx.coupon.update({
-      where: { id: couponId },
-      data: { redemptionCount: { increment: 1 } },
     });
   }
 
@@ -79,12 +106,29 @@ export class PromotionsRepository extends BaseRepository {
     return this.prisma.promotion.create({ data });
   }
 
+  async findPromotion(id: string): Promise<Promotion | null> {
+    return this.prisma.promotion.findFirst({ where: this.scoped({ id }) });
+  }
+
   async updatePromotion(id: string, data: Prisma.PromotionUpdateInput): Promise<Promotion> {
-    return this.prisma.promotion.update({ where: { id }, data });
+    return this.prisma.promotion.update({ where: { id, ...this.tenantScope() }, data });
+  }
+
+  /** A personal coupon is issued to someone of this tenant, not to any id the admin typed. */
+  async customerExists(id: string): Promise<boolean> {
+    return (await this.prisma.customer.count({ where: this.scoped({ id }) })) > 0;
   }
 
   async createCoupon(data: Prisma.CouponUncheckedCreateInput): Promise<Coupon> {
-    return this.prisma.coupon.create({ data });
+    try {
+      return await this.prisma.coupon.create({ data });
+    } catch (error) {
+      // (tenantId, code) is unique: a taken code is the admin's to change, not a server error.
+      if ((error as { code?: string } | null)?.code === 'P2002') {
+        throw new ConflictError('A coupon with this code already exists');
+      }
+      throw error;
+    }
   }
 
   async listCoupons(promotionId: string): Promise<Coupon[]> {
@@ -94,7 +138,12 @@ export class PromotionsRepository extends BaseRepository {
     });
   }
 
-  async deactivateCoupon(id: string): Promise<void> {
-    await this.prisma.coupon.update({ where: { id }, data: { active: false } });
+  /** False when there is no such coupon in this tenant: a bare id must not reach another tenant's. */
+  async deactivateCoupon(id: string): Promise<boolean> {
+    const result = await this.prisma.coupon.updateMany({
+      where: this.scoped({ id }),
+      data: { active: false },
+    });
+    return result.count > 0;
   }
 }

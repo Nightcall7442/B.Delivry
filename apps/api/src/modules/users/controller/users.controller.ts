@@ -30,13 +30,15 @@ export class UsersController extends BaseController {
     return this.ok(reply, toUserDto(await this.service.get(id)));
   };
 
+  // Through the DTO, like get/list: the raw row carries the password hash and the Telegram link
+  // code, and the caller only needs to see who they just made or changed.
   create = async (request: FastifyRequest, reply: FastifyReply) =>
-    this.created(reply, await this.service.createStaff(body<CreateStaffInput>(request)));
+    this.created(reply, toUserDto(await this.service.createStaff(body<CreateStaffInput>(request))));
 
   setRoles = async (request: FastifyRequest, reply: FastifyReply) => {
     const { id } = params<{ id: string }>(request);
     const { roles } = body<{ roles: Role[] }>(request);
-    return this.ok(reply, await this.service.setRoles(id, roles));
+    return this.ok(reply, toUserDto(await this.service.setRoles(id, roles)));
   };
 
   block = async (request: FastifyRequest, reply: FastifyReply) => {

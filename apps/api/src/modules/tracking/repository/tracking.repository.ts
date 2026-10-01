@@ -1,6 +1,7 @@
 /**
  * Tracking persistence (Prisma). Tenant-scoped.
  */
+import type { OrderStatus } from '@bazar/constants';
 import type { CourierPublicDto } from '@bazar/types';
 import { maskPhone } from '@bazar/utils';
 import type { CourierLocation, Prisma } from '@prisma/client';
@@ -88,9 +89,24 @@ export class TrackingRepository extends BaseRepository {
     };
   }
 
+  /**
+   * Which of these orders this courier carries (or carried), with their status. The ping's order id
+   * is the courier's claim; this is what makes it a fact. Tenant-scoped like every order lookup.
+   */
+  async ordersOfCourier(courierId: string, orderIds: string[]): Promise<Map<string, OrderStatus>> {
+    if (orderIds.length === 0) return new Map();
+    const rows = await this.prisma.order.findMany({
+      where: this.scoped({ id: { in: orderIds }, courierId }),
+      select: { id: true, status: true },
+    });
+    return new Map(rows.map((row) => [row.id, row.status]));
+  }
+
   async history(filters: HistoryFilters): Promise<CourierLocation[]> {
     return this.prisma.courierLocation.findMany({
       where: {
+        // The table has no tenant of its own; a trace is in a tenant through its courier.
+        courier: { tenantId: this.tenantScope().tenantId },
         ...(filters.orderId !== undefined ? { orderId: filters.orderId } : {}),
         ...(filters.courierId !== undefined ? { courierId: filters.courierId } : {}),
         ...(filters.from !== undefined || filters.to !== undefined

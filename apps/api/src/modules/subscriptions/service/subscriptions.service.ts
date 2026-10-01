@@ -40,6 +40,7 @@ export type SubscriptionWithNames = CartSubscription & {
 };
 
 const LEAD_MS = SUBSCRIPTION_LEAD_MINUTES * 60_000;
+const MAX_SUBSCRIPTIONS_PER_CUSTOMER = 10;
 /**
  * A window that opened longer ago than this and was never served is a missed one (the scheduler was
  * not running), not a late one: placing it now would be an order for a slot that has already passed.
@@ -73,6 +74,11 @@ export class SubscriptionsService extends BaseService {
     const customerId = this.callerCustomerId();
     const order = await this.orders.get(input.orderId);
     if (order.customerId !== customerId) throw new ForbiddenError('Not your order');
+    // Each row places a real order every week on the platform's own initiative, so how many one
+    // account can start is bounded, not left to however many requests it sends.
+    if ((await this.repository.countForCustomer(customerId)) >= MAX_SUBSCRIPTIONS_PER_CUSTOMER) {
+      throw new ConflictError(`At most ${MAX_SUBSCRIPTIONS_PER_CUSTOMER} cart subscriptions`);
+    }
     // Orders placed before addresses were remembered fall back to the default one.
     const addressId =
       order.addressId ??

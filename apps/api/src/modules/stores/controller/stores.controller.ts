@@ -1,13 +1,33 @@
 /**
  * Stores HTTP controller — thin: validate → call service → map response.
  */
+import type { StoreDto } from '@bazar/types';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { BaseController } from '../../../common/base/base.controller.js';
 import { toStoreDto } from '../../../common/dto/index.js';
 import { body, params, query } from '../../../middleware/validation.middleware.js';
+import { currentViewer, type Viewer } from '../../catalog/domain/visibility.js';
 import type { ProductsService } from '../../products/service/products.service.js';
+import type { StoreWithSchedule } from '../repository/stores.repository.js';
 import type { StoresService } from '../service/stores.service.js';
 import type { StoresListQuery } from '../schemas/index.js';
+
+/** The stall as shown to someone who does not own it: without the id of the vendor behind it. */
+export type StoreView = StoreDto | Omit<StoreDto, 'vendorId'>;
+
+/**
+ * Who owns a stall is the desk's and the owner's business; the shop window shows the stall, and
+ * no client reads `vendorId` off it. A vendor's id is what the ownership checks compare, so it is
+ * not handed out with every card.
+ */
+export function toStoreView(store: StoreWithSchedule, isOpen: boolean, viewer: Viewer): StoreView {
+  const dto = toStoreDto(store, isOpen);
+  if (viewer.staff || (viewer.vendorId !== undefined && viewer.vendorId === store.vendorId)) {
+    return dto;
+  }
+  const { vendorId: _vendorId, ...shown } = dto;
+  return shown;
+}
 
 export class StoresController extends BaseController {
   constructor(
@@ -20,17 +40,18 @@ export class StoresController extends BaseController {
   list = async (request: FastifyRequest, reply: FastifyReply) => {
     const filters = query<StoresListQuery>(request);
     const result = await this.service.list(filters);
+    const viewer = currentViewer();
     // isOpen is computed, not stored: it depends on the clock.
     return this.paginated(reply, {
       ...result,
-      items: result.items.map((store) => toStoreDto(store, this.service.isOpen(store))),
+      items: result.items.map((store) => toStoreView(store, this.service.isOpen(store), viewer)),
     });
   };
 
   get = async (request: FastifyRequest, reply: FastifyReply) => {
     const { id } = params<{ id: string }>(request);
-    const store = await this.service.get(id);
-    return this.ok(reply, toStoreDto(store, this.service.isOpen(store)));
+    const store = await this.service.getVisible(id);
+    return this.ok(reply, toStoreView(store, this.service.isOpen(store), currentViewer()));
   };
 
   create = async (request: FastifyRequest, reply: FastifyReply) => {

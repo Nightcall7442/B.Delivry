@@ -107,7 +107,9 @@ export class ReviewsService extends BaseService {
     if (!owns) this.authorize(PERMISSION.SUPPORT_HANDLE);
     if (review.reply !== null) throw new ConflictError('This review already has a reply');
 
-    return this.repository.reply(id, reply);
+    const answered = await this.repository.reply(id, reply);
+    if (answered === null) throw new ConflictError('This review already has a reply');
+    return answered;
   }
 
   /** Moderation: hide abusive or off-topic content without deleting evidence. */

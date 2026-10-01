@@ -24,6 +24,10 @@ export async function handleMessage(
   raw: string,
   deps: HandlerDeps,
 ): Promise<void> {
+  // Budget first, parse second: a flood must not get to cost a JSON.parse per frame. A frame over
+  // budget is dropped without an answer, because an answer to a flood is more flood.
+  if (!deps.gateway.allowCommand(connection)) return;
+
   const command = parseCommand(raw);
 
   if (command === null) {

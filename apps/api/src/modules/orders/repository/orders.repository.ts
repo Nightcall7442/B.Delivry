@@ -9,6 +9,7 @@ import {
 } from '@bazar/constants';
 import type { Order, Prisma } from '@prisma/client';
 import { BaseRepository, type PrismaTransaction } from '../../../common/base/base.repository.js';
+import { ConflictError, NotFoundError } from '../../../common/errors/index.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import type { FrozenAddress, OrderListFilters, OrderTotals, PricedItem } from '../types/index.js';
 
@@ -156,7 +157,7 @@ export class OrdersRepository extends BaseRepository {
     const client = this.client(tx);
 
     const result = await client.order.updateMany({
-      where: { id, status: from },
+      where: this.scoped({ id, status: from }),
       data: {
         status: to,
         ...(to === 'CONFIRMED' ? { confirmedAt: new Date() } : {}),
@@ -178,6 +179,7 @@ export class OrdersRepository extends BaseRepository {
   async unpaidInvoiceTotal(customerId: string): Promise<number> {
     const result = await this.prisma.order.aggregate({
       where: {
+        ...this.tenantScope(),
         customerId,
         paymentMethod: 'INVOICE',
         paymentStatus: { not: 'CAPTURED' },
@@ -245,60 +247,79 @@ export class OrdersRepository extends BaseRepository {
     };
   }
 
+  /** The writes below name the tenant too: an id that is not this tenant's order matches nothing. */
   async assignCourier(id: string, courierId: string, tx?: PrismaTransaction): Promise<void> {
-    await this.client(tx).order.update({ where: { id }, data: { courierId } });
+    const result = await this.client(tx).order.updateMany({
+      where: this.scoped({ id }),
+      data: { courierId },
+    });
+    if (result.count === 0) throw new NotFoundError('Order', id);
   }
 
   async releaseCourier(id: string, tx?: PrismaTransaction): Promise<void> {
-    await this.client(tx).order.update({ where: { id }, data: { courierId: null } });
+    const result = await this.client(tx).order.updateMany({
+      where: this.scoped({ id }),
+      data: { courierId: null },
+    });
+    if (result.count === 0) throw new NotFoundError('Order', id);
   }
 
   async setEta(id: string, etaAt: Date | null): Promise<void> {
-    await this.prisma.order.update({ where: { id }, data: { etaAt } });
+    await this.prisma.order.updateMany({ where: this.scoped({ id }), data: { etaAt } });
   }
 
   async setPaymentStatus(
     id: string,
     paymentStatus: NonNullable<Prisma.OrderUpdateInput['paymentStatus']>,
   ): Promise<void> {
-    await this.prisma.order.update({ where: { id }, data: { paymentStatus } });
+    await this.prisma.order.updateMany({ where: this.scoped({ id }), data: { paymentStatus } });
   }
 
   /**
    * Reprices weighed items against what the courier actually bought, and
    * rewrites the order totals in the same transaction.
+   *
+   * `guard` is the state the caller checked a moment ago, re-asserted in the write itself: an order
+   * that was cancelled, handed over or taken from this courier in between matches nothing, and the
+   * whole transaction rolls back instead of repricing a bill that is no longer the courier's to change.
    */
   async applyActualQuantities(
     orderId: string,
     actuals: { orderItemId: string; actualQuantity: number; photoUrl?: string | undefined }[],
     tx: PrismaTransaction,
+    guard: { courierId: string; statuses: readonly OrderStatus[] },
   ): Promise<{ previousTotal: number; total: number }> {
-    const order = await tx.order.findUniqueOrThrow({
-      where: { id: orderId },
-      include: { items: true },
+    const where = this.scoped({
+      id: orderId,
+      courierId: guard.courierId,
+      status: { in: [...guard.statuses] },
     });
+    const order = await tx.order.findFirst({ where, include: { items: true } });
+    if (order === null) throw new ConflictError('The order is no longer being bought');
 
-    let subtotal = 0;
-    for (const item of order.items) {
+    const lines = order.items.map((item) => {
       const actual = actuals.find((entry) => entry.orderItemId === item.id);
       const quantity = actual === undefined ? Number(item.quantity) : actual.actualQuantity;
-      const lineTotal = Math.round(item.unitPrice * quantity);
-
-      if (actual !== undefined) {
-        await tx.orderItem.update({
-          where: { id: item.id },
-          data: {
-            actualQuantity: actual.actualQuantity,
-            actualTotal: lineTotal,
-            ...(actual.photoUrl !== undefined ? { weighingPhotoUrl: actual.photoUrl } : {}),
-          },
-        });
-      }
-      subtotal += lineTotal;
-    }
-
+      return { item, actual, lineTotal: Math.round(item.unitPrice * quantity) };
+    });
+    const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);
     const total = Math.max(0, subtotal + order.deliveryFee + order.serviceFee - order.discount);
-    await tx.order.update({ where: { id: orderId }, data: { subtotal, total } });
+
+    // First, so a lost race writes no line at all.
+    const moved = await tx.order.updateMany({ where, data: { subtotal, total } });
+    if (moved.count === 0) throw new ConflictError('The order is no longer being bought');
+
+    for (const { item, actual, lineTotal } of lines) {
+      if (actual === undefined) continue;
+      await tx.orderItem.update({
+        where: { id: item.id },
+        data: {
+          actualQuantity: actual.actualQuantity,
+          actualTotal: lineTotal,
+          ...(actual.photoUrl !== undefined ? { weighingPhotoUrl: actual.photoUrl } : {}),
+        },
+      });
+    }
 
     return { previousTotal: order.total, total };
   }

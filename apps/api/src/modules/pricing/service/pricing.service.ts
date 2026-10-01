@@ -177,7 +177,9 @@ export class PricingService extends BaseService {
     await this.repository.deleteSurgeRule(id);
   }
 
+  /** Tariffs are the platform's price list: the route guards it, and so does the service. */
   async getTariff(id: string): Promise<Tariff> {
+    this.authorize(PERMISSION.PRICING_WRITE);
     const tariff = await this.repository.findTariff(id);
     if (tariff === null) throw new NotFoundError('Tariff', id);
     return tariff;

@@ -14,6 +14,7 @@ import {
   isTerminalOrderStatus,
   type Currency,
   type PaymentMethod,
+  type PaymentStatus,
 } from '@bazar/constants';
 import {
   compare,
@@ -26,6 +27,8 @@ import {
 import type { Payment, PrismaClient } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
+import { runWithContext } from '../../../common/tenant/tenant-context.js';
+import { systemContext } from '../../../common/types/request-context.js';
 import { ERROR_CODE } from '../../../common/errors/error-codes.js';
 import {
   AppError,
@@ -68,6 +71,21 @@ const NO_PROVIDER_METHODS: readonly PaymentMethod[] = [
 /** Staff (operators, admins) are told apart by the one unscoped permission: order:read_any. */
 const isStaff = (user: AuthenticatedUser): boolean =>
   user.permissions.includes(PERMISSION.ORDER_READ_ANY);
+
+/** The only states a payment can still be captured from; every other one is over, one way or another. */
+const CAPTURABLE: readonly PaymentStatus[] = [PAYMENT_STATUS.PENDING, PAYMENT_STATUS.AUTHORIZED];
+
+/**
+ * What a provider's word may change, and from where. A callback is evidence of what happened on the
+ * provider's side, not an instruction: a replayed or reordered one must never walk a payment
+ * backwards (a captured one to authorized, a refunded one to failed). Capture has its own door.
+ */
+const WEBHOOK_MOVES: Partial<Record<PaymentStatus, readonly PaymentStatus[]>> = {
+  [PAYMENT_STATUS.AUTHORIZED]: [PAYMENT_STATUS.PENDING],
+  [PAYMENT_STATUS.FAILED]: [PAYMENT_STATUS.PENDING, PAYMENT_STATUS.AUTHORIZED],
+  [PAYMENT_STATUS.CANCELLED]: [PAYMENT_STATUS.PENDING, PAYMENT_STATUS.AUTHORIZED],
+  [PAYMENT_STATUS.REFUNDED]: [PAYMENT_STATUS.CAPTURED, PAYMENT_STATUS.PARTIALLY_REFUNDED],
+};
 
 export class PaymentsService extends BaseService {
   private readonly prisma: PrismaClient;
@@ -343,17 +361,27 @@ export class PaymentsService extends BaseService {
   /**
    * Takes the money. For cash this is the courier confirming they collected it,
    * which also puts that cash on the courier's balance as a debt to settle.
+   *
+   * Settling is not something a customer, vendor or courier asks for: the provider callbacks, the
+   * jobs and the delivery handler act as the platform, and the desk marks a bank transfer paid.
    */
   async capture(paymentId: string, collectedBy?: string): Promise<Payment> {
+    this.assertSettler();
     const payment = await this.getOrThrow(paymentId);
 
     if (payment.status === PAYMENT_STATUS.CAPTURED) return payment;
+    this.assertCapturable(payment);
 
     const amount = money(payment.amount, payment.currency as Currency);
 
     if (!NO_PROVIDER_METHODS.includes(payment.method)) {
+      // A gateway payment with no transaction on the provider's side was never charged: there is
+      // nothing to capture, and the provider's own capture would still answer "captured".
+      if (payment.externalId === null) {
+        throw new ConflictError('This payment has no provider transaction to capture');
+      }
       const provider = this.provider(payment.provider);
-      const result = await provider.capture(payment.externalId ?? '', amount);
+      const result = await provider.capture(payment.externalId, amount);
 
       const fresh = await this.repository.recordTransaction({
         paymentId,
@@ -372,20 +400,12 @@ export class PaymentsService extends BaseService {
       if (result.status !== PAYMENT_STATUS.CAPTURED) {
         throw new PaymentFailedError(result.failureReason ?? 'Capture failed');
       }
-    } else if (collectedBy !== undefined) {
-      // Cash the courier is now holding on the platform's behalf.
-      await this.creditWallet({
-        userId: collectedBy,
-        type: 'CASH_COLLECTED',
-        amount: money(-amount.amount, amount.currency),
-        orderId: payment.orderId,
-        comment: 'Cash collected on delivery',
-      });
     }
 
-    const captured = await this.repository.updateStatus(paymentId, PAYMENT_STATUS.CAPTURED, {
-      paidAt: new Date(),
-    });
+    const { payment: captured, settled } = await this.settle(paymentId, collectedBy);
+    // Somebody else got there between the read above and the write: their capture is the one that
+    // counts, and a second CAPTURED event (or a second cash debt on the courier) is not.
+    if (!settled) return captured;
 
     paymentsTotal.labels(payment.provider, payment.method, PAYMENT_STATUS.CAPTURED).inc();
 
@@ -398,6 +418,45 @@ export class PaymentsService extends BaseService {
     );
 
     return captured;
+  }
+
+  /**
+   * The flip to CAPTURED, and the courier's cash debt that goes with it, as one serializable unit:
+   * the status is read again inside it, so two captures racing for one payment cannot both see
+   * "not yet" and both write — one commits, the other retries and finds it done.
+   */
+  private async settle(
+    paymentId: string,
+    collectedBy: string | undefined,
+  ): Promise<{ payment: Payment; settled: boolean }> {
+    return runSerializableWithRetry(this.prisma, async (tx) => {
+      const current = await this.repository.findById(paymentId, tx);
+      if (current === null) throw new NotFoundError('Payment', paymentId);
+      if (current.status === PAYMENT_STATUS.CAPTURED) return { payment: current, settled: false };
+      this.assertCapturable(current);
+
+      if (collectedBy !== undefined && NO_PROVIDER_METHODS.includes(current.method)) {
+        // Cash the courier is now holding on the platform's behalf.
+        await this.repository.appendWalletEntry(
+          {
+            userId: collectedBy,
+            type: 'CASH_COLLECTED',
+            amount: money(-current.amount, current.currency as Currency),
+            orderId: current.orderId,
+            comment: 'Cash collected on delivery',
+          },
+          tx,
+        );
+      }
+
+      const payment = await this.repository.updateStatus(
+        paymentId,
+        PAYMENT_STATUS.CAPTURED,
+        { paidAt: new Date() },
+        tx,
+      );
+      return { payment, settled: true };
+    });
   }
 
   /**
@@ -426,43 +485,71 @@ export class PaymentsService extends BaseService {
     );
     const amount = input.amount ?? refundable;
 
-    if (compare(amount, refundable) > 0) {
+    if (compare(amount, refundable) > 0 || amount.amount <= 0) {
       throw new ConflictError('Refund exceeds the remaining refundable amount');
     }
 
+    // The amount is claimed in one statement before anything moves: two refunds of the same payment
+    // (a double click, a retried job) must not each be told "there is still enough left" and each
+    // pay it out, to the provider or as store credit.
+    if (!(await this.repository.reserveRefund(paymentId, amount.amount, payment.amount))) {
+      throw new ConflictError('Refund exceeds the remaining refundable amount');
+    }
+
+    // Only a failure before the money moved gives the claim back; once the provider or the ledger
+    // has paid, the amount stays spent whatever the bookkeeping after it does.
+    const unclaimed = async <T>(step: () => Promise<T>): Promise<T> => {
+      try {
+        return await step();
+      } catch (error) {
+        await this.repository.releaseRefund(paymentId, amount.amount);
+        throw error;
+      }
+    };
+
     if (!NO_PROVIDER_METHODS.includes(payment.method)) {
       const provider = this.provider(payment.provider);
-      const result = await provider.refund(payment.externalId ?? '', amount, input.reason);
+      const record = (result: { status: PaymentStatus; externalId: string | null }) =>
+        this.repository.recordTransaction({
+          paymentId,
+          type: 'REFUND',
+          status: result.status,
+          amount: amount.amount,
+          currency: amount.currency,
+          externalId: result.externalId,
+          // Keyed on the amount so two different partial refunds both go through.
+          idempotencyKey: `payment:${paymentId}:refund:${amount.amount}:${randomUUID()}`,
+        });
 
-      await this.repository.recordTransaction({
-        paymentId,
-        type: 'REFUND',
-        status: result.status,
-        amount: amount.amount,
-        currency: amount.currency,
-        externalId: result.externalId,
-        // Keyed on the amount so two different partial refunds both go through.
-        idempotencyKey: `payment:${paymentId}:refund:${amount.amount}:${randomUUID()}`,
+      const result = await unclaimed(async () => {
+        const refunded = await provider.refund(payment.externalId ?? '', amount, input.reason);
+        if (refunded.status === PAYMENT_STATUS.FAILED) {
+          await record(refunded);
+          throw new PaymentFailedError(refunded.failureReason ?? 'Refund failed');
+        }
+        return refunded;
       });
-
-      if (result.status === PAYMENT_STATUS.FAILED) {
-        throw new PaymentFailedError(result.failureReason ?? 'Refund failed');
-      }
+      await record(result);
     } else {
       // Cash cannot be sent back through a provider, so it becomes store credit.
-      const userId = await this.repository.customerUserId(payment.customerId);
-      if (userId === null) throw new NotFoundError('Customer', payment.customerId);
-      await this.creditWallet({
-        userId,
-        type: 'REFUND',
-        amount,
-        orderId: payment.orderId,
-        comment: input.reason,
+      await unclaimed(async () => {
+        const userId = await this.repository.customerUserId(payment.customerId);
+        if (userId === null) throw new NotFoundError('Customer', payment.customerId);
+        await this.creditWallet({
+          userId,
+          type: 'REFUND',
+          amount,
+          orderId: payment.orderId,
+          comment: input.reason,
+        });
       });
     }
 
-    await this.repository.addRefunded(paymentId, amount.amount);
-    const remaining = subtract(refundable, amount);
+    const refreshed = await this.getOrThrow(paymentId);
+    const remaining = subtract(
+      money(refreshed.amount, currency),
+      money(refreshed.refundedAmount, currency),
+    );
 
     const updated = await this.repository.updateStatus(
       paymentId,
@@ -484,6 +571,10 @@ export class PaymentsService extends BaseService {
   /**
    * Handles a provider callback. The signature is checked before anything in
    * the payload is believed: a webhook endpoint is public by necessity.
+   *
+   * What a verified callback may do is narrower than what it says: the payment is looked up inside
+   * the tenant and among that provider's own, the amount it reports has to be the amount we asked
+   * for before it can settle anything, and it can only move a payment forward.
    */
   async handleWebhook(providerId: string, request: WebhookRequest): Promise<void> {
     const provider = this.provider(providerId);
@@ -494,25 +585,68 @@ export class PaymentsService extends BaseService {
     }
 
     if (verification.externalId === null || verification.status === null) return;
+    const { externalId, status, amount } = verification;
 
-    const payment = await this.repository.findByExternalId(verification.externalId);
-    if (payment === null) {
-      this.logger.warn({ externalId: verification.externalId }, 'webhook for unknown payment');
+    // Past the signature the callback acts as the platform inside its tenant, like the Payme and
+    // Click endpoints do; this is the only way an anonymous request ever reaches `capture`.
+    const context = this.context();
+    await runWithContext(
+      systemContext(context.tenantId, `webhook:${providerId}:${externalId}`, context.locale),
+      () => this.applyWebhook(providerId, externalId, status, amount),
+    );
+  }
+
+  private async applyWebhook(
+    providerId: string,
+    externalId: string,
+    status: PaymentStatus,
+    reported: Money | undefined,
+  ): Promise<void> {
+    const payment = await this.repository.findByExternalId(externalId, providerId);
+    if (payment === null || payment.provider !== providerId) {
+      this.logger.warn({ externalId, providerId }, 'webhook for unknown payment');
       return;
     }
 
     // Providers resend callbacks; landing on the state we already hold is
     // normal and must not be treated as an error.
-    if (payment.status === verification.status) return;
+    if (payment.status === status) return;
 
-    if (verification.status === PAYMENT_STATUS.CAPTURED) {
+    // Money coming in is only believed at the amount we asked for. A capture that does not state
+    // its amount is refused too: "paid" without saying how much is not a confirmation.
+    const capturing = status === PAYMENT_STATUS.CAPTURED;
+    if (capturing && reported === undefined) {
+      this.logger.error({ paymentId: payment.id, providerId }, 'webhook capture without an amount');
+      throw new ConflictError('The callback does not state the amount paid');
+    }
+    if (
+      (capturing || status === PAYMENT_STATUS.AUTHORIZED) &&
+      reported !== undefined &&
+      (reported.amount !== payment.amount || reported.currency !== payment.currency)
+    ) {
+      this.logger.error(
+        { paymentId: payment.id, providerId, expected: payment.amount, reported: reported.amount },
+        'webhook amount does not match the payment',
+      );
+      throw new ConflictError('The callback amount does not match the payment');
+    }
+
+    if (capturing) {
       await this.capture(payment.id);
       return;
     }
 
-    await this.repository.updateStatus(payment.id, verification.status);
+    if (!(WEBHOOK_MOVES[status] ?? []).includes(payment.status)) {
+      this.logger.warn(
+        { paymentId: payment.id, from: payment.status, to: status },
+        'webhook would move the payment backwards or sideways: ignored',
+      );
+      return;
+    }
 
-    if (verification.status === PAYMENT_STATUS.FAILED) {
+    await this.repository.updateStatus(payment.id, status);
+
+    if (status === PAYMENT_STATUS.FAILED) {
       await this.publish(
         createEvent(PAYMENT_EVENT.FAILED, {
           ...this.eventPayload(payment),
@@ -618,6 +752,24 @@ export class PaymentsService extends BaseService {
         ? payable.vendorId !== undefined && payable.vendorId === user.vendorId
         : user.customerId !== undefined && user.customerId === payable.customerId;
     if (!own) throw new ForbiddenError('Only the payer can pay for this');
+  }
+
+  /**
+   * Who may settle a payment: the platform (provider callbacks, jobs, the delivery handler) and
+   * the desk. Having a payment of one's own does not make it the payer's to mark paid.
+   */
+  private assertSettler(): void {
+    if (this.context().system === true) return;
+    if (!isStaff(this.currentUser())) {
+      throw new ForbiddenError('Only the desk or a verified provider callback settles a payment');
+    }
+  }
+
+  /** A cancelled, failed or refunded payment is not brought back to life by a late callback. */
+  private assertCapturable(payment: Payment): void {
+    if (!CAPTURABLE.includes(payment.status)) {
+      throw new ConflictError(`A ${payment.status.toLowerCase()} payment cannot be captured`);
+    }
   }
 
   /** A wallet is spent on its owner's own word: never by a callback, the desk or another account. */

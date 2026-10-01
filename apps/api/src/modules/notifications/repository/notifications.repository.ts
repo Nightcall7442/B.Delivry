@@ -5,6 +5,7 @@ import type { NotificationChannel, NotificationStatus } from '@bazar/constants';
 import { compact } from '@bazar/utils';
 import type { Notification, Prisma } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
+import { ForbiddenError } from '../../../common/errors/domain.errors.js';
 import {
   normalizeCursor,
   paginateCursor,
@@ -40,11 +41,16 @@ const DEFAULT_PREFERENCES: Preferences = {
 };
 
 export class NotificationsRepository extends BaseRepository {
-  async findRecipient(userId: string): Promise<RecipientRow | null> {
+  async findRecipient(userId: string, tenantId?: string): Promise<RecipientRow | null> {
     // Order and payment events carry the customer id, not the user id, and a
     // recipient is either; the customer relation resolves the second form.
+    // The tenant of the message bounds the lookup: an id from another tenant is nobody's to notify.
     const user = await this.prisma.user.findFirst({
-      where: { OR: [{ id: userId }, { customer: { id: userId } }], deletedAt: null },
+      where: {
+        OR: [{ id: userId }, { customer: { id: userId } }],
+        deletedAt: null,
+        ...(tenantId !== undefined ? { tenantId } : {}),
+      },
       select: {
         id: true,
         locale: true,
@@ -255,6 +261,16 @@ export class NotificationsRepository extends BaseRepository {
   ): Promise<void> {
     // Upsert on the token itself: reinstalling the app on the same device
     // reuses the token, and it may now belong to a different account.
+    const held = await this.prisma.pushToken.findUnique({
+      where: { token },
+      select: { userId: true, user: { select: { tenantId: true } } },
+    });
+    // A device changes hands inside one tenant (a shared phone, a new login); a token held by an
+    // account of another tenant is not claimed by naming it, or one tenant could take over
+    // another's pushes.
+    if (held !== null && held.user.tenantId !== this.tenantScope().tenantId) {
+      throw new ForbiddenError('This device is registered to another account');
+    }
     await this.prisma.pushToken.upsert({
       where: { token },
       create: { userId, token, platform, deviceId: deviceId ?? null },

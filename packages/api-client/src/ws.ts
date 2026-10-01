@@ -23,13 +23,15 @@ const PING_MS = 20_000;
 const MAX_UNANSWERED = 2;
 /** Reconnect delay cap: a courier waiting for an offer cannot afford half a minute of deafness. */
 const MAX_BACKOFF_MS = 10_000;
+/** Extra wait before renewing after a refused token, so windows sharing one do not renew in lockstep. */
+const RENEW_JITTER_MS = 3_000;
 
 export interface RealtimeOptions {
   /** e.g. ws://localhost:4000/ws */
   url: string;
   tokens: TokenStore;
   /** Renews an expired access token; the handshake is the one 401 HTTP never sees. */
-  renew?: () => Promise<Tokens | null>;
+  renew?: (stale?: string) => Promise<Tokens | null>;
   WebSocket?: typeof WebSocket;
 }
 
@@ -42,6 +44,8 @@ export class RealtimeClient {
   private watchdog: ReturnType<typeof setInterval> | null = null;
   private unanswered = 0;
   private closed = true;
+  /** The access token the current socket was opened with: what a renewal has to replace. */
+  private openedWith: string | undefined;
 
   constructor(private readonly options: RealtimeOptions) {}
 
@@ -55,6 +59,7 @@ export class RealtimeClient {
     const Ctor = this.options.WebSocket ?? WebSocket;
     const socket = new Ctor(`${this.options.url}?token=${encodeURIComponent(tokens.accessToken)}`);
     this.socket = socket;
+    this.openedWith = tokens.accessToken;
 
     socket.onopen = () => {
       this.attempt = 0;
@@ -88,12 +93,17 @@ export class RealtimeClient {
 
   /** 1s, 2s, 4s … capped at 10s. A dead network costs nothing; a flapping one is not hammered. */
   private reconnect(code: number): void {
-    const delay = Math.min(MAX_BACKOFF_MS, 1000 * 2 ** this.attempt++);
+    // Two windows of one browser hold sockets on the same token and are told at the same moment;
+    // a spread keeps their renewals apart (see the store check in `renew`).
+    const jitter = code === 4401 ? Math.floor(Math.random() * RENEW_JITTER_MS) : 0;
+    const delay = Math.min(MAX_BACKOFF_MS, 1000 * 2 ** this.attempt++) + jitter;
     this.timer = setTimeout(() => {
       // 4401: the server refused the token. Renew it first, or every retry
       // would knock with the same expired key until the app makes an HTTP call.
       const ready =
-        code === 4401 && this.options.renew ? this.options.renew() : Promise.resolve(null);
+        code === 4401 && this.options.renew
+          ? this.options.renew(this.openedWith)
+          : Promise.resolve(null);
       void ready.then(() => this.connect());
     }, delay);
   }

@@ -5,6 +5,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { Tokens } from './types.js';
 import { RealtimeClient } from './ws.js';
 
 class FakeSocket {
@@ -174,5 +175,142 @@ describe('RealtimeClient watchdog', () => {
     await vi.advanceTimersByTimeAsync(120_000);
     expect(pings(socket)).toBe(0);
     expect(FakeSocket.instances).toHaveLength(1);
+  });
+});
+
+/**
+ * The server closes with 4401 when it refuses the token. Two windows of one browser hold sockets on
+ * the same token and are told in the same moment, so the renewal waits a second plus a random spread
+ * (under three seconds), and then names the token this socket was opened with: the store may hold a
+ * newer one by then, and `renew` hands that over instead of spending the refresh token twice.
+ */
+describe('RealtimeClient after the server refuses its token (4401)', () => {
+  /** The pair the token store holds; a test moves it on the way another window would. */
+  const store = { access: 'A' };
+  const renewals: (string | undefined)[] = [];
+
+  const withRenew = (renew: (stale?: string) => Promise<Tokens | null> = async () => null) =>
+    new RealtimeClient({
+      url: 'wss://api/ws',
+      tokens: {
+        get: () => ({ accessToken: store.access, refreshToken: 'R' }),
+        set: () => {},
+      },
+      renew: (stale) => {
+        renewals.push(stale);
+        return renew(stale);
+      },
+      WebSocket: FakeSocket as unknown as typeof WebSocket,
+    });
+
+  const opened = async (realtime: RealtimeClient) => {
+    void realtime.connect();
+    await settle();
+    const socket = FakeSocket.instances.at(-1)!;
+    socket.open();
+    return socket;
+  };
+
+  beforeEach(() => {
+    store.access = 'A';
+    renewals.length = 0;
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('waits a second plus a random spread of under three seconds, then renews', async () => {
+    // Math.random at 0 / 0.5 / just under 1: a spread of 0 / 1500 / 2999 ms on top of the second.
+    for (const [random, wait] of [
+      [0, 1_000],
+      [0.5, 2_500],
+      [0.9999, 3_999],
+    ] as const) {
+      renewals.length = 0;
+      FakeSocket.instances = [];
+      vi.spyOn(Math, 'random').mockReturnValue(random);
+      const realtime = withRenew();
+      const socket = await opened(realtime);
+
+      socket.drop(4401);
+      await vi.advanceTimersByTimeAsync(wait - 1);
+      expect(renewals, `${wait - 1} ms`).toEqual([]);
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(renewals, `${wait} ms`).toEqual(['A']);
+      realtime.close();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it('names the token the socket was opened with, not the one the store holds by now', async () => {
+    const realtime = withRenew();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const socket = await opened(realtime);
+
+    store.access = 'B'; // another window renewed while this socket was open
+    socket.drop(4401);
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(renewals).toEqual(['A']);
+    realtime.close();
+  });
+
+  it('reconnects only once the renewal has settled, and then with the token the store holds', async () => {
+    let settleRenewal: () => void = () => {};
+    const realtime = withRenew(
+      () =>
+        new Promise<Tokens | null>((resolve) => {
+          settleRenewal = () => resolve({ accessToken: 'B', refreshToken: 'R2' });
+        }),
+    );
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const socket = await opened(realtime);
+
+    store.access = 'B';
+    socket.drop(4401);
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(renewals).toEqual(['A']);
+    expect(FakeSocket.instances).toHaveLength(1);
+
+    settleRenewal();
+    await settle();
+    expect(FakeSocket.instances).toHaveLength(2);
+    expect(FakeSocket.instances[1]!.url).toBe('wss://api/ws?token=B');
+    realtime.close();
+  });
+
+  it('names the newer token the next time the server refuses it', async () => {
+    const realtime = withRenew();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const first = await opened(realtime);
+    first.drop(4401);
+    store.access = 'B';
+    await vi.advanceTimersByTimeAsync(1_000);
+    const second = FakeSocket.instances[1]!;
+    expect(second.url).toBe('wss://api/ws?token=B');
+    second.open();
+
+    second.drop(4401);
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(renewals).toEqual(['A', 'B']);
+    realtime.close();
+  });
+
+  it('adds no spread and asks for no renewal after any other close', async () => {
+    const random = vi.spyOn(Math, 'random');
+    const realtime = withRenew();
+    const socket = await opened(realtime);
+
+    socket.drop(1006);
+    await vi.advanceTimersByTimeAsync(999);
+    expect(FakeSocket.instances).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(FakeSocket.instances).toHaveLength(2);
+    expect(renewals).toEqual([]);
+    expect(random).not.toHaveBeenCalled();
+    realtime.close();
   });
 });

@@ -14,7 +14,7 @@ export {
 } from '@bazar/validation';
 
 import { PAYMENT_METHOD, PAYMENT_STATUS } from '@bazar/constants';
-import { idSchema, listQuerySchema, orderStatusSchema } from '@bazar/validation';
+import { idSchema, listQuerySchema, orderStatusSchema, queryBoolean } from '@bazar/validation';
 import { z } from 'zod';
 
 export const orderIdParamsSchema = z.object({ id: idSchema });
@@ -32,7 +32,8 @@ export const ordersListQuerySchema = listQuerySchema.extend({
   cityId: idSchema.optional(),
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),
-  activeOnly: z.coerce.boolean().optional(),
+  // z.coerce.boolean() reads the string "false" as true; queryBoolean reads the word.
+  activeOnly: queryBoolean.optional(),
   paymentMethod: z.nativeEnum(PAYMENT_METHOD).optional(),
   paymentStatus: z.nativeEnum(PAYMENT_STATUS).optional(),
 });

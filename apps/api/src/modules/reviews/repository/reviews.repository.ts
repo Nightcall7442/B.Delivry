@@ -3,6 +3,7 @@
  */
 import type { Prisma, Review } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
+import { ConflictError } from '../../../common/errors/domain.errors.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import type {
   CreateReviewInput,
@@ -13,18 +14,26 @@ import type {
 
 export class ReviewsRepository extends BaseRepository {
   async create(input: CreateReviewInput, customerId: string): Promise<Review> {
-    return this.prisma.review.create({
-      data: {
-        tenantId: this.tenantScope().tenantId,
-        orderId: input.orderId,
-        customerId,
-        target: input.target,
-        targetId: input.targetId,
-        rating: input.rating,
-        comment: input.comment ?? null,
-        photoUrls: input.photoUrls ?? [],
-      },
-    });
+    try {
+      return await this.prisma.review.create({
+        data: {
+          tenantId: this.tenantScope().tenantId,
+          orderId: input.orderId,
+          customerId,
+          target: input.target,
+          targetId: input.targetId,
+          rating: input.rating,
+          comment: input.comment ?? null,
+          photoUrls: input.photoUrls ?? [],
+        },
+      });
+    } catch (error) {
+      // Two taps on "send" both pass the exists() check; the unique key is what lets only one in.
+      if ((error as { code?: string } | null)?.code === 'P2002') {
+        throw new ConflictError('You have already reviewed this');
+      }
+      throw error;
+    }
   }
 
   async findById(id: string): Promise<Review | null> {
@@ -33,7 +42,9 @@ export class ReviewsRepository extends BaseRepository {
 
   /** The unique key is (orderId, target, targetId): one review per thing per order. */
   async exists(orderId: string, target: ReviewTarget, targetId: string): Promise<boolean> {
-    const count = await this.prisma.review.count({ where: { orderId, target, targetId } });
+    const count = await this.prisma.review.count({
+      where: this.scoped({ orderId, target, targetId }),
+    });
     return count > 0;
   }
 
@@ -69,15 +80,17 @@ export class ReviewsRepository extends BaseRepository {
     );
   }
 
-  async reply(id: string, reply: string): Promise<Review> {
-    return this.prisma.review.update({
-      where: { id },
+  /** Null when the review already has a reply: the first answer stands, a racing second one does not overwrite it. */
+  async reply(id: string, reply: string): Promise<Review | null> {
+    const result = await this.prisma.review.updateMany({
+      where: this.scoped({ id, reply: null }),
       data: { reply, repliedAt: new Date() },
     });
+    return result.count === 0 ? null : this.findById(id);
   }
 
   async setPublished(id: string, published: boolean): Promise<Review> {
-    return this.prisma.review.update({ where: { id }, data: { published } });
+    return this.prisma.review.update({ where: { id, ...this.tenantScope() }, data: { published } });
   }
 
   /** Average plus the star histogram, in one grouped query. */

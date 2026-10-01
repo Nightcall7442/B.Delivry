@@ -219,7 +219,7 @@ export class NotificationsService extends BaseService implements NotificationSen
    * notification exists in the app even when every push token is stale.
    */
   async send(request: SendRequest): Promise<void> {
-    const recipient = await this.repository.findRecipient(request.userId);
+    const recipient = await this.repository.findRecipient(request.userId, request.tenantId);
     if (recipient === null) {
       this.logger.warn({ userId: request.userId }, 'notification for unknown user');
       return;

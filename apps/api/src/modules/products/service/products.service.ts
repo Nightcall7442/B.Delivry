@@ -8,6 +8,7 @@ import { BaseService, type ServiceDeps } from '../../../common/base/base.service
 import { ConflictError, NotFoundError } from '../../../common/errors/domain.errors.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import type { CacheStore } from '../../../infrastructure/redis/cache.js';
+import { currentViewer } from '../../catalog/domain/visibility.js';
 import type { StoresService } from '../../stores/service/stores.service.js';
 import type { ProductsRepository, ProductWithImages } from '../repository/products.repository.js';
 import type { CreateProductInput, ProductListFilters, UpdateProductInput } from '../types/index.js';
@@ -34,8 +35,19 @@ export class ProductsService extends BaseService {
     return this.repository.list(filters);
   }
 
+  /** The loader for the owner's own writes below, which then check who owns the stall. */
   async get(id: string): Promise<ProductWithImages> {
     const product = await this.repository.findById(id);
+    if (product === null) throw new NotFoundError('Product', id);
+    return product;
+  }
+
+  /**
+   * What the read endpoint may show: the owner's product in any state, anyone else's only while it
+   * is on sale in a stall the public may see. The rest is NotFound, so an id cannot be probed.
+   */
+  async getVisible(id: string): Promise<ProductWithImages> {
+    const product = await this.repository.findVisibleById(id);
     if (product === null) throw new NotFoundError('Product', id);
     return product;
   }
@@ -77,7 +89,8 @@ export class ProductsService extends BaseService {
   private async assertAllowedCategory(categoryId: string | undefined): Promise<void> {
     if (categoryId === undefined) return;
     const slug = await this.repository.categorySlug(categoryId);
-    if (slug !== null && RESTRICTED_CATEGORY_SLUGS.includes(slug)) {
+    if (slug === null) throw new NotFoundError('Category', categoryId);
+    if (RESTRICTED_CATEGORY_SLUGS.includes(slug)) {
       throw new ConflictError('This category is not sold through the app');
     }
   }
@@ -166,19 +179,27 @@ export class ProductsService extends BaseService {
     await this.invalidate(product.storeId);
   }
 
+  /**
+   * Who changed the price, and when, is the stall's and the desk's: `product:write` is held by
+   * every vendor for the whole tenant, so it alone let any of them read any other's history.
+   */
   async priceHistory(id: string) {
     const product = await this.get(id);
-    this.authorize(PERMISSION.PRODUCT_WRITE, { tenantId: product.tenantId });
+    await this.assertOwnsStore(product.storeId);
     return this.repository.priceHistory(id);
   }
 
-  /** Writing to a store's catalogue requires owning that store, or being staff. */
+  /**
+   * Writing to a store's catalogue requires owning that store, or being staff. The desk owns no
+   * stall and edits any shelf of the tenant (it still needs `product:write`, which operators lack);
+   * a vendor — and a token with no vendorId is no vendor — only their own.
+   */
   private async assertOwnsStore(storeId: string): Promise<void> {
     const store = await this.stores.get(storeId);
-    this.authorize(PERMISSION.PRODUCT_WRITE, {
-      tenantId: store.tenantId,
-      vendorId: store.vendorId,
-    });
+    this.authorize(
+      PERMISSION.PRODUCT_WRITE,
+      currentViewer().staff ? undefined : { tenantId: store.tenantId, vendorId: store.vendorId },
+    );
   }
 
   private async invalidate(storeId: string): Promise<void> {

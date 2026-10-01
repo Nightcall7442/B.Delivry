@@ -4,6 +4,7 @@
 import { LIMITS } from '@bazar/constants';
 import type { Cart, CartItem, Prisma } from '@prisma/client';
 import { BaseRepository, type PrismaTransaction } from '../../../common/base/base.repository.js';
+import { currentViewer, visibleStoreWhere } from '../../catalog/domain/visibility.js';
 
 const CART_INCLUDE = {
   items: { orderBy: { createdAt: 'asc' } },
@@ -21,6 +22,19 @@ export class CartRepository extends BaseRepository {
       where: { customerId_storeId: { customerId, storeId } },
       include: CART_INCLUDE,
     });
+  }
+
+  /**
+   * A cart is opened for a store of this tenant and no other: the (customer, store) key accepts any
+   * id, so without this a stall of another tenant, or an id that is nobody's, gets a cart row. A stall
+   * the viewer may not see (in review, suspended) answers exactly like an id that is nobody's.
+   */
+  async storeExists(storeId: string): Promise<boolean> {
+    return (
+      (await this.prisma.store.count({
+        where: { AND: [this.scopedAlive({ id: storeId }), visibleStoreWhere(currentViewer())] },
+      })) > 0
+    );
   }
 
   /** One cart per (customer, store); the unique key makes this race-safe. */

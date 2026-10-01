@@ -3,7 +3,7 @@
  */
 import { LIMITS } from '@bazar/constants';
 import { z } from 'zod';
-import { idSchema, optionalText, queryBoolean } from './common.schema.js';
+import { httpUrl, idSchema, optionalText, queryBoolean } from './common.schema.js';
 
 export const reviewTargetSchema = z.enum(['STORE', 'PRODUCT', 'COURIER']);
 
@@ -16,7 +16,7 @@ export const createReviewSchema = z.object({
   targetId: idSchema,
   rating: ratingSchema,
   comment: optionalText(LIMITS.REVIEW_MAX_LENGTH),
-  photoUrls: z.array(z.string().url().max(500)).max(5).optional(),
+  photoUrls: z.array(httpUrl).max(5).optional(),
 });
 
 export const replyReviewSchema = z.object({

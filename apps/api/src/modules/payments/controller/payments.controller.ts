@@ -103,6 +103,8 @@ export class PaymentsController extends BaseController {
     let body: RpcRequest;
     try {
       body = JSON.parse(typeof request.body === 'string' ? request.body : '{}') as RpcRequest;
+      // `null`, a number or an array is valid JSON and still not a request.
+      if (typeof body !== 'object' || body === null || Array.isArray(body)) throw new Error();
     } catch {
       return reply.send({
         jsonrpc: '2.0',
@@ -128,7 +130,14 @@ export class PaymentsController extends BaseController {
 
   private paymeAuthorized(request: FastifyRequest): boolean {
     const header = request.headers['authorization'];
-    if (typeof header !== 'string' || !header.startsWith('Basic ') || this.paymeKey === undefined)
+    // A key that is missing or empty is a gate with no lock: `Paycom:` is a password anyone can
+    // type, so an unset PAYME_SECRET_KEY has to close the endpoint, not open it.
+    if (
+      typeof header !== 'string' ||
+      !header.startsWith('Basic ') ||
+      this.paymeKey === undefined ||
+      this.paymeKey.length === 0
+    )
       return false;
     const given = Buffer.from(header.slice(6), 'base64');
     const expected = Buffer.from(`Paycom:${this.paymeKey}`);

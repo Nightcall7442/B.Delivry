@@ -1,6 +1,7 @@
 /**
  * Customers persistence (Prisma). Tenant-scoped.
  */
+import type { Role } from '@bazar/constants';
 import type { Prisma } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
@@ -72,7 +73,7 @@ export class CustomersRepository extends BaseRepository {
     companyInn: string,
   ): Promise<CustomerWithUser> {
     return this.prisma.customer.update({
-      where: { id },
+      where: { id, ...this.tenantScope() },
       data: { companyName, companyInn, businessAppliedAt: new Date() },
       include: CUSTOMER_INCLUDE,
     });
@@ -83,7 +84,7 @@ export class CustomersRepository extends BaseRepository {
     input: { approved: boolean; creditDays: number; creditLimit: number },
   ): Promise<CustomerWithUser> {
     return this.prisma.customer.update({
-      where: { id },
+      where: { id, ...this.tenantScope() },
       data: {
         businessApprovedAt: input.approved ? new Date() : null,
         creditDays: input.creditDays,
@@ -107,9 +108,23 @@ export class CustomersRepository extends BaseRepository {
     return created.id;
   }
 
+  /** True when the address is one of this customer's own, live and in this tenant. */
+  async ownsAddress(customerId: string, addressId: string): Promise<boolean> {
+    const count = await this.prisma.address.count({
+      where: { id: addressId, customerId, ...this.tenantScope(), deletedAt: null },
+    });
+    return count > 0;
+  }
+
+  /** The roles of the user behind a profile, to keep the desk's reach inside its rank. */
+  async rolesOfUser(userId: string): Promise<Role[]> {
+    const rows = await this.prisma.userRole.findMany({ where: { userId }, select: { role: true } });
+    return rows.map((row) => row.role as Role);
+  }
+
   async update(id: string, input: UpdateCustomerInput): Promise<CustomerWithUser> {
     return this.prisma.customer.update({
-      where: { id },
+      where: { id, ...this.tenantScope() },
       data: {
         ...(input.defaultAddressId !== undefined
           ? { defaultAddressId: input.defaultAddressId }
@@ -159,9 +174,10 @@ export class CustomersRepository extends BaseRepository {
     throw new Error('Could not mint a referral code');
   }
 
+  /** Inside the tenant: the code is unique platform-wide, but a friend's code from another tenant is no friend's. */
   findByReferralCode(referralCode: string) {
-    return this.prisma.customer.findUnique({
-      where: { referralCode },
+    return this.prisma.customer.findFirst({
+      where: this.scoped({ referralCode }),
       select: { id: true, userId: true },
     });
   }
@@ -224,14 +240,14 @@ export class CustomersRepository extends BaseRepository {
 
   async setBlocked(id: string, blocked: boolean): Promise<void> {
     await this.prisma.customer.update({
-      where: { id },
+      where: { id, ...this.tenantScope() },
       data: { blockedAt: blocked ? new Date() : null },
     });
   }
 
   async adjustBalance(id: string, delta: number): Promise<void> {
     await this.prisma.customer.update({
-      where: { id },
+      where: { id, ...this.tenantScope() },
       data: { balance: { increment: delta } },
     });
   }

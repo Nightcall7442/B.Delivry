@@ -17,8 +17,11 @@ import {
 } from '../../../common/errors/domain.errors.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import { couriersOnline } from '../../../infrastructure/telemetry/metrics.js';
+import { courierMayWork } from '../../auth/guards/profile-access.js';
+import type { AuthService } from '../../auth/service/auth.service.js';
 import type { DeliveryService } from '../../delivery/service/delivery.service.js';
 import type { PaymentsService } from '../../payments/service/payments.service.js';
+import { assertMayManageAccount, isDesk } from '../../users/domain/account-rank.js';
 import type { CouriersRepository, CourierWithUser } from '../repository/couriers.repository.js';
 import type { CourierListFilters, CourierShift, RegisterCourierInput } from '../types/index.js';
 
@@ -26,18 +29,22 @@ export interface CouriersServiceDeps extends ServiceDeps {
   repository: CouriersRepository;
   delivery: DeliveryService;
   payments: PaymentsService;
+  /** A courier the desk suspends is signed out: their token must not outlive the decision. */
+  auth: Pick<AuthService, 'logoutAll'>;
 }
 
 export class CouriersService extends BaseService {
   private readonly repository: CouriersRepository;
   private readonly delivery: DeliveryService;
   private readonly payments: PaymentsService;
+  private readonly auth: CouriersServiceDeps['auth'];
 
   constructor(deps: CouriersServiceDeps) {
     super(deps);
     this.repository = deps.repository;
     this.delivery = deps.delivery;
     this.payments = deps.payments;
+    this.auth = deps.auth;
   }
 
   private ownId(): string {
@@ -46,11 +53,38 @@ export class CouriersService extends BaseService {
     return courierId;
   }
 
-  async me(): Promise<CourierWithUser> {
-    return this.get(this.ownId());
+  /**
+   * The courier's own row, if the desk lets them work. The token already leaves a suspended or
+   * unverified courier without a courierId; this makes the same decision for the token that was
+   * issued a minute before the desk acted.
+   */
+  private async activeOwn(): Promise<CourierWithUser> {
+    const courier = await this.find(this.ownId());
+    this.assertMayWork(courier);
+    return courier;
   }
 
+  private assertMayWork(courier: CourierWithUser): void {
+    if (courier.status === COURIER_STATUS.SUSPENDED) {
+      throw new ForbiddenError('This courier account is suspended');
+    }
+    if (!courierMayWork(courier)) {
+      throw new ForbiddenError('The account is waiting for verification');
+    }
+  }
+
+  async me(): Promise<CourierWithUser> {
+    return this.activeOwn();
+  }
+
+  /** A roster entry, for the desk. The courier's own row goes through me(). */
   async get(id: string): Promise<CourierWithUser> {
+    this.authorize(PERMISSION.COURIER_READ);
+    return this.find(id);
+  }
+
+  /** Tenant-scoped: another tenant's courier is a 404, whoever asks. */
+  private async find(id: string): Promise<CourierWithUser> {
     const courier = await this.repository.findById(id);
     if (courier === null) throw new NotFoundError('Courier', id);
     return courier;
@@ -67,8 +101,7 @@ export class CouriersService extends BaseService {
    * handed back first.
    */
   async setStatus(status: CourierStatus): Promise<CourierWithUser> {
-    const courierId = this.ownId();
-    const courier = await this.get(courierId);
+    const courier = await this.activeOwn();
 
     if (status === COURIER_STATUS.OFFLINE) {
       const active = await this.delivery.activeForCourier();
@@ -77,24 +110,19 @@ export class CouriersService extends BaseService {
       }
     }
 
-    if (courier.status === COURIER_STATUS.SUSPENDED) {
+    // The write itself refuses a courier the desk suspended since the read above.
+    if (!(await this.repository.setOwnStatus(courier.id, status))) {
       throw new ForbiddenError('This courier account is suspended');
     }
-    if (status === COURIER_STATUS.ONLINE && courier.verifiedAt === null) {
-      throw new ForbiddenError('The account is waiting for verification');
-    }
-
-    await this.repository.setStatus(courierId, status);
     couriersOnline.labels(courier.cityId).set(await this.repository.countOnline(courier.cityId));
 
-    return this.get(courierId);
+    return this.find(courier.id);
   }
 
   /** The courier app home screen: what today has looked like so far. */
   async shift(): Promise<CourierShift> {
-    const courierId = this.ownId();
-    const courier = await this.get(courierId);
-    const stats = await this.repository.todayStats(courierId, startOfLocalDay());
+    const courier = await this.activeOwn();
+    const stats = await this.repository.todayStats(courier.id, startOfLocalDay());
 
     return {
       status: courier.status,
@@ -112,19 +140,28 @@ export class CouriersService extends BaseService {
 
   /**
    * "Стать курьером махалли": a customer offers to walk orders to neighbours.
-   * The profile waits for an operator's verify() before it can go online.
+   * Only the profile is created. It can neither go online nor sign in to the courier app until an
+   * operator's verify(), which is also what grants the COURIER role.
    */
   async applyNeighbour(addressId: string): Promise<CourierWithUser> {
     const user = this.currentUser();
     if (user.customerId === undefined) throw new ForbiddenError('Customer profile required');
     const existing = await this.repository.findByUserId(user.id);
     if (existing !== null) return existing;
-    return this.repository.createNeighbour({
-      userId: user.id,
-      customerId: user.customerId,
-      addressId,
-      radiusMeters: NEIGHBOUR_COURIER.HOME_RADIUS_METERS,
-    });
+    try {
+      return await this.repository.createNeighbour({
+        userId: user.id,
+        customerId: user.customerId,
+        addressId,
+        radiusMeters: NEIGHBOUR_COURIER.HOME_RADIUS_METERS,
+      });
+    } catch (error) {
+      // A double tap: the first request made the profile (one per user), this one is the same ask.
+      if ((error as { code?: string }).code !== 'P2002') throw error;
+      const created = await this.repository.findByUserId(user.id);
+      if (created === null) throw error;
+      return created;
+    }
   }
 
   async register(input: RegisterCourierInput): Promise<CourierWithUser> {
@@ -136,12 +173,33 @@ export class CouriersService extends BaseService {
     return this.repository.create(input);
   }
 
+  /**
+   * A courier edits their own vehicle details and nothing operational: how many orders they carry at
+   * once is the desk's call, or anyone could raise it for themselves. Everyone else's record is the
+   * desk's (courier:write), and only inside this tenant: the row is looked up scoped first.
+   */
   async update(id: string, data: Record<string, unknown>): Promise<CourierWithUser> {
-    const courier = await this.get(id);
-    // A courier may edit their own vehicle details; changing anyone else's,
-    // or verifying an account, needs the staff permission.
-    if (courier.id !== this.currentUser().courierId) {
-      this.authorize(PERMISSION.COURIER_WRITE, { courierId: id });
+    const courier = await this.find(id);
+    const user = this.currentUser();
+
+    if (isDesk(user)) {
+      this.authorize(PERMISSION.COURIER_WRITE);
+    } else {
+      if (courier.id !== user.courierId) {
+        throw new ForbiddenError('Only the desk may change another courier', {
+          meta: { courierId: id, userId: user.id },
+        });
+      }
+      this.assertMayWork(courier);
+      // A form posts the whole card: sending back what is already there is not a change.
+      if (
+        data.maxConcurrentOrders !== undefined &&
+        data.maxConcurrentOrders !== courier.maxConcurrentOrders
+      ) {
+        throw new ForbiddenError('Only the desk may change how many orders a courier carries', {
+          meta: { courierId: id, userId: user.id },
+        });
+      }
     }
 
     return this.repository.update(id, {
@@ -153,14 +211,36 @@ export class CouriersService extends BaseService {
     });
   }
 
+  /** The desk's yes: the account may go online, and gets the COURIER role to sign in with. */
   async verify(id: string): Promise<CourierWithUser> {
     this.authorize(PERMISSION.COURIER_WRITE);
-    return this.repository.update(id, { verifiedAt: new Date() });
+    const courier = await this.find(id);
+    await this.assertMayManage(courier.userId);
+    return this.repository.verify(
+      id,
+      courier.userId,
+      courier.verifiedAt ?? new Date(),
+      this.context().user?.id ?? null,
+    );
   }
 
+  /**
+   * The desk's no. The courier stops being able to act at once: their sessions end (they can sign in
+   * again, but a suspended courier gets no courierId on the token), and going online is refused by
+   * status. Deliveries already assigned are not touched here; the desk reassigns them.
+   */
   async suspend(id: string): Promise<void> {
     this.authorize(PERMISSION.COURIER_WRITE);
+    const courier = await this.find(id);
+    await this.assertMayManage(courier.userId);
     await this.repository.setStatus(id, COURIER_STATUS.SUSPENDED);
+    await this.auth.logoutAll(courier.userId);
+    couriersOnline.labels(courier.cityId).set(await this.repository.countOnline(courier.cityId));
+  }
+
+  /** The desk acts on couriers, not on whoever their account happens to be (an admin's, say). */
+  private async assertMayManage(userId: string): Promise<void> {
+    assertMayManageAccount(this.context(), userId, await this.repository.rolesOfUser(userId));
   }
 
   async refreshRating(courierId: string): Promise<void> {

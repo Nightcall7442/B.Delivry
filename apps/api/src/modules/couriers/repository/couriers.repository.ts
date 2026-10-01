@@ -1,9 +1,9 @@
 /**
  * Couriers persistence (Prisma). Tenant-scoped.
  */
-import { DELIVERY_TIMEOUTS, type CourierStatus } from '@bazar/constants';
+import { DELIVERY_TIMEOUTS, type CourierStatus, type Role } from '@bazar/constants';
 import type { Courier, Prisma } from '@prisma/client';
-import { NotFoundError } from '../../../common/errors/domain.errors.js';
+import { ForbiddenError, NotFoundError } from '../../../common/errors/domain.errors.js';
 import { BaseRepository } from '../../../common/base/base.repository.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import type { CourierListFilters, RegisterCourierInput } from '../types/index.js';
@@ -68,6 +68,16 @@ export class CouriersRepository extends BaseRepository {
   }
 
   async create(input: RegisterCourierInput): Promise<CourierWithUser> {
+    // The profile is bound to a user by id: that user has to be someone of this tenant, or the desk
+    // of one tenant could attach a courier row to a person of another.
+    this.found(
+      await this.prisma.user.findFirst({
+        where: this.scopedAlive({ id: input.userId }),
+        select: { id: true },
+      }),
+      'User',
+      input.userId,
+    );
     return this.prisma.courier.create({
       data: {
         tenantId: this.tenantScope().tenantId,
@@ -82,8 +92,10 @@ export class CouriersRepository extends BaseRepository {
   }
 
   /**
-   * Mahalla courier: a customer who will walk orders to neighbours. Home is
-   * their delivery address; the COURIER role lets the courier app sign them in.
+   * Mahalla courier: a customer who will walk orders to neighbours. Home is their delivery address.
+   * Only the profile is made here, and it cannot work yet: the COURIER role and the right to go online
+   * come with verify(), once the desk has looked at the person. (The role used to be granted here, so
+   * an applicant held courier rights before anyone had checked them.)
    */
   async createNeighbour(input: {
     userId: string;
@@ -91,19 +103,21 @@ export class CouriersRepository extends BaseRepository {
     addressId: string;
     radiusMeters: number;
   }): Promise<CourierWithUser> {
+    const tenantId = this.tenantScope().tenantId;
+    const customer = await this.prisma.customer.findFirst({
+      where: { id: input.customerId, userId: input.userId, tenantId },
+      select: { blockedAt: true },
+    });
+    if (customer === null || customer.blockedAt !== null) {
+      throw new ForbiddenError('Customer profile required');
+    }
     const address = await this.prisma.address.findFirst({
-      where: { id: input.addressId, customerId: input.customerId },
+      where: { id: input.addressId, customerId: input.customerId, tenantId, deletedAt: null },
       select: { cityId: true, lat: true, lng: true },
     });
     if (address === null || address.lat === null || address.lng === null) {
       throw new NotFoundError('Address with a map point', input.addressId);
     }
-    const tenantId = this.tenantScope().tenantId;
-    await this.prisma.userRole.upsert({
-      where: { userId_role: { userId: input.userId, role: 'COURIER' } },
-      update: {},
-      create: { userId: input.userId, role: 'COURIER' },
-    });
     return this.prisma.courier.create({
       data: {
         tenantId,
@@ -119,12 +133,66 @@ export class CouriersRepository extends BaseRepository {
     });
   }
 
+  /**
+   * The desk's yes: the account may go online, and the user gets the COURIER role the courier app
+   * signs them in with (granted here and only here; a repeat changes nothing). One transaction, so
+   * there is never a verified courier without the role or the role without the verification.
+   */
+  async verify(
+    id: string,
+    userId: string,
+    verifiedAt: Date,
+    grantedBy: string | null,
+  ): Promise<CourierWithUser> {
+    const [courier] = await this.prisma.$transaction([
+      this.prisma.courier.update({
+        where: { id, ...this.tenantScope() },
+        data: { verifiedAt },
+        include: COURIER_INCLUDE,
+      }),
+      this.prisma.userRole.upsert({
+        where: { userId_role: { userId, role: 'COURIER' } },
+        update: {},
+        create: { userId, role: 'COURIER', grantedBy },
+      }),
+    ]);
+    return courier;
+  }
+
+  /** The roles a courier's user holds, to keep the desk's reach inside its rank. */
+  async rolesOfUser(userId: string): Promise<Role[]> {
+    const rows = await this.prisma.userRole.findMany({ where: { userId }, select: { role: true } });
+    return rows.map((row) => row.role as Role);
+  }
+
   async setStatus(id: string, status: CourierStatus): Promise<Courier> {
-    return this.prisma.courier.update({ where: { id }, data: { status } });
+    return this.prisma.courier.update({ where: { id, ...this.tenantScope() }, data: { status } });
+  }
+
+  /**
+   * The courier going on or off shift. The write itself refuses a suspended courier, and an
+   * unverified one anything but OFFLINE: a check made earlier in the request is not enough, because
+   * the desk can suspend in between and this would write ONLINE over SUSPENDED. False when refused.
+   */
+  async setOwnStatus(id: string, status: CourierStatus): Promise<boolean> {
+    const { count } = await this.prisma.courier.updateMany({
+      where: {
+        id,
+        ...this.tenantScope(),
+        status: { not: 'SUSPENDED' },
+        ...(status === 'OFFLINE' ? {} : { verifiedAt: { not: null } }),
+      },
+      data: { status },
+    });
+    return count === 1;
   }
 
   async update(id: string, data: Prisma.CourierUpdateInput): Promise<CourierWithUser> {
-    return this.prisma.courier.update({ where: { id }, data, include: COURIER_INCLUDE });
+    return this.prisma.courier.update({
+      where: { id, ...this.tenantScope() },
+      data,
+      include: COURIER_INCLUDE,
+    });
   }
 
   /** Recomputed from reviews, so it cannot drift out of step with them. */

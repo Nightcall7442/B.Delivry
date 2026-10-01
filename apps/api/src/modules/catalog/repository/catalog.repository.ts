@@ -4,6 +4,7 @@
 import type { Prisma, Product, ProductImage } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
+import { currentViewer, purchasableStoreWhere, visibleProductWhere } from '../domain/visibility.js';
 import type { CatalogSearchFilters, PurchasableProduct } from '../types/index.js';
 
 const PRODUCT_INCLUDE = {
@@ -21,13 +22,34 @@ export class CatalogRepository extends BaseRepository {
   }
 
   /**
+   * One product as the viewer may see it. A sold-out good still has its page (a basket line, a
+   * link someone sent), but a stall in review, suspended or a draft has no goods the public can
+   * open — and neither has a store that is gone.
+   */
+  async findVisibleById(id: string): Promise<ProductWithImages | null> {
+    return this.prisma.product.findFirst({
+      where: {
+        ...this.scopedAlive({ id }),
+        AND: [visibleProductWhere(currentViewer(), { soldOutToo: true })],
+      },
+      include: PRODUCT_INCLUDE,
+    });
+  }
+
+  /**
    * Loads exactly the products an order is about to be built from, in one
    * query, filtered to the store and to what is actually sellable. Anything
-   * missing from the result is unavailable, and the caller says which.
+   * missing from the result is unavailable, and the caller says which. A stall the public cannot
+   * see sells nothing: its prices and names must not reach a stranger through a basket line.
    */
   async findPurchasable(storeId: string, ids: string[]): Promise<Map<string, PurchasableProduct>> {
     const rows = await this.prisma.product.findMany({
-      where: this.scopedAlive({ storeId, id: { in: ids }, available: true }),
+      where: this.scopedAlive({
+        storeId,
+        id: { in: ids },
+        available: true,
+        store: purchasableStoreWhere(),
+      }),
       select: {
         id: true,
         storeId: true,
@@ -82,6 +104,13 @@ export class CatalogRepository extends BaseRepository {
     return {
       ...this.tenantScope(),
       deletedAt: null,
+      // The stalls this viewer may see are the floor. Switched-off goods are listed for the public
+      // only when asked for by id — the basket's lines, sold out ones too — never browsed.
+      AND: [
+        visibleProductWhere(currentViewer(), {
+          soldOutToo: filters.availableOnly === false && filters.ids !== undefined,
+        }),
+      ],
       ...(filters.availableOnly !== false ? { available: true } : {}),
       ...(filters.ids !== undefined ? { id: { in: filters.ids } } : {}),
       ...(filters.storeId !== undefined ? { storeId: filters.storeId } : {}),
@@ -118,10 +147,14 @@ export class CatalogRepository extends BaseRepository {
   /** Decrements tracked stock without letting it go negative. */
   async decrementStock(productId: string, quantity: number): Promise<boolean> {
     const result = await this.prisma.product.updateMany({
-      where: { id: productId, stock: { gte: quantity } },
+      where: this.scoped({ id: productId, stock: { gte: quantity } }),
       data: { stock: { decrement: quantity } },
     });
     return result.count === 1;
+  }
+
+  async categoryExists(id: string): Promise<boolean> {
+    return (await this.prisma.category.count({ where: { id, active: true } })) > 0;
   }
 
   async listCategories(parentId?: string | null) {

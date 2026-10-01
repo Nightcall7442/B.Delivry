@@ -18,7 +18,9 @@ import {
 export function productsRoutes(controller: ProductsController) {
   return async (app: FastifyInstance): Promise<void> => {
     // Vendor-side catalogue management. Customer browsing lives in the catalog
-    // module, which is public; everything here writes and needs an account.
+    // module, which is public; everything here writes and needs an account. The two reads are the
+    // seller's own shelf: every good of their own stalls, and for anyone else only what the shop
+    // window shows (see catalog/domain/visibility).
     app.addHook('preHandler', requireAuth);
 
     const canWrite = requirePermission(PERMISSION.PRODUCT_WRITE);

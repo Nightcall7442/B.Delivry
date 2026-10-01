@@ -19,6 +19,7 @@ import { JOB, QUEUE } from '../../../jobs/queues.js';
 import { room } from '../../../websocket/rooms.js';
 import { WS_EVENT } from '@bazar/types';
 import { toHaggleDto } from '../../../common/dto/index.js';
+import { purchasableStoreWhere } from '../../catalog/domain/visibility.js';
 
 export interface HaggleServiceDeps extends ServiceDeps {
   prisma: PrismaClient;
@@ -51,7 +52,14 @@ export class HaggleService extends BaseService {
   }): Promise<HaggleRow> {
     const customerId = this.callerCustomerId();
     const product = await this.prisma.product.findFirst({
-      where: { id: input.productId, deletedAt: null, available: true },
+      // Goods of this tenant, in a stall the public may buy from: the same window the shelf shows.
+      where: {
+        id: input.productId,
+        tenantId: this.tenantId(),
+        deletedAt: null,
+        available: true,
+        store: purchasableStoreWhere(),
+      },
       select: {
         id: true,
         storeId: true,

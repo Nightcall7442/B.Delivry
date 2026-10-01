@@ -11,11 +11,13 @@ import type { JobQueue } from '../../../infrastructure/redis/queue.js';
 import { JOB, QUEUE } from '../../../jobs/queues.js';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
 import {
+  ConflictError,
   ForbiddenError,
   NotFoundError,
   StoreClosedError,
 } from '../../../common/errors/domain.errors.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
+import { canSeeStore, currentViewer } from '../../catalog/domain/visibility.js';
 import type { StoresRepository, StoreWithSchedule } from '../repository/stores.repository.js';
 import type { OpenStore, ScheduleEntry, StoreListFilters } from '../types/index.js';
 
@@ -148,9 +150,33 @@ export class StoresService extends BaseService {
     return minute >= today.opensAt && minute < today.closesAt;
   }
 
+  /**
+   * The loader for the platform's own work (orders, reviews, the owner's edits): whatever the
+   * status, so those flows can say "closed" or "forbidden" in their own words. What a caller may
+   * be shown goes through `getVisible`.
+   */
   async get(id: string): Promise<StoreWithSchedule> {
     const store = await this.repository.findById(id);
     if (store === null) throw new NotFoundError('Store', id);
+    return store;
+  }
+
+  /**
+   * The stall as one viewer may see it: a stall in review, suspended or a draft is NotFound to
+   * everyone but the desk and its own vendor, so its id cannot even be confirmed.
+   */
+  async getVisible(id: string): Promise<StoreWithSchedule> {
+    const store = await this.get(id);
+    const viewer = currentViewer();
+    if (!canSeeStore(store, viewer)) throw new NotFoundError('Store', id);
+    // A suspended vendor's stalls are shut to the public, but still theirs and the desk's to see.
+    if (
+      !viewer.staff &&
+      viewer.vendorId !== store.vendorId &&
+      (await this.repository.vendorIsShut(store.vendorId))
+    ) {
+      throw new NotFoundError('Store', id);
+    }
     return store;
   }
 
@@ -168,6 +194,8 @@ export class StoresService extends BaseService {
     if (store.lat === null || store.lng === null) {
       throw new StoreClosedError(id);
     }
+    // The platform shut this vendor: no new orders, even while the stall's own status says ACTIVE.
+    if (await this.repository.vendorIsShut(store.vendorId)) throw new StoreClosedError(id);
 
     return {
       id: store.id,
@@ -244,6 +272,12 @@ export class StoresService extends BaseService {
       const vendorId = this.currentUser().vendorId;
       if (vendorId === undefined) throw new ForbiddenError('Vendor profile required');
       filters = { ...input, vendorId };
+    } else if (input.vendorId !== undefined) {
+      // Whose stalls these are is the desk's to ask; a vendor's own are `mine`.
+      const viewer = currentViewer();
+      if (!viewer.staff && viewer.vendorId !== input.vendorId) {
+        throw new ForbiddenError('Only staff may list the stalls of a vendor');
+      }
     }
     if (filters.lat !== undefined && filters.lng !== undefined) {
       const radius = filters.radiusMeters ?? SEARCH_RADIUS.STORE_DEFAULT_METERS;
@@ -383,7 +417,13 @@ export class StoresService extends BaseService {
       data.lng = point.lng;
     }
 
-    const updated = await this.repository.update(id, data);
+    // An owner's change of status is checked against the status read above; the write must not land
+    // after the desk has changed it (a suspension would be lifted by an edit that raced it).
+    const updated =
+      !this.isStaff() && input.status !== undefined
+        ? await this.repository.updateWhileIn(id, store.status, data)
+        : await this.repository.update(id, data);
+    if (updated === null) throw new ConflictError('The stall changed meanwhile, refresh and retry');
 
     if (Array.isArray(input.schedule)) {
       await this.repository.replaceSchedule(id, input.schedule as ScheduleEntry[]);

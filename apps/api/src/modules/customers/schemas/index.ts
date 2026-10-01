@@ -1,14 +1,21 @@
 /**
  * Customers request/response Zod schemas (reuse @bazar/validation where shared).
  */
-import { idSchema, listQuerySchema, optionalText, positiveMoneySchema } from '@bazar/validation';
+import {
+  idSchema,
+  listQuerySchema,
+  optionalText,
+  positiveMoneySchema,
+  queryBoolean,
+} from '@bazar/validation';
 import { z } from 'zod';
 
 export const customerIdParamsSchema = z.object({ id: idSchema });
 
 export const customersListQuerySchema = listQuerySchema.extend({
   cityId: idSchema.optional(),
-  blocked: z.coerce.boolean().optional(),
+  // z.coerce.boolean() read ?blocked=false as true: "false" is a non-empty string.
+  blocked: queryBoolean.optional(),
   minOrders: z.coerce.number().int().min(0).optional(),
   business: z.enum(['pending', 'approved']).optional(),
 });

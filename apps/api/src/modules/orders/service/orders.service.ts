@@ -44,9 +44,16 @@ import type { PromotionsService } from '../../promotions/service/promotions.serv
 import type { StoresService } from '../../stores/service/stores.service.js';
 import type { OpenStore } from '../../stores/types/index.js';
 import type { HaggleService } from '../../haggle/service/haggle.service.js';
-import { assertActorTransition, isTerminal, type Actor } from '../domain/order-state-machine.js';
+import {
+  assertActorTransition,
+  COURIER_ACTION_STATUS,
+  isTerminal,
+  type Actor,
+  type CourierAction,
+} from '../domain/order-state-machine.js';
 import { ORDER_EVENT } from '../domain/order.events.js';
 import { standingOn } from '../domain/order-party.js';
+import { maxActualQuantity, WEIGHING_STATUSES } from '../domain/order-weighing.js';
 import type { OrdersRepository, OrderWithRelations } from '../repository/orders.repository.js';
 import type {
   ActualQuantity,
@@ -104,16 +111,13 @@ export class OrdersService extends BaseService {
    * this customer agreed to pay.
    */
   async create(input: CreateOrderInput, asCustomerId?: string): Promise<OrderWithRelations> {
-    // A job placing a subscription's order names the customer; a request is the customer.
-    const customerId = asCustomerId ?? this.callerCustomerId();
+    const customerId = this.orderingCustomerId(asCustomerId);
+    const byJob = asCustomerId !== undefined && this.context().system === true;
+    await this.assertMayOrder(customerId);
 
     // A window that has already started cannot be promised: a checkout left open overnight has to
-    // choose again. The subscription job (asCustomerId) keeps its own schedule.
-    if (
-      asCustomerId === undefined &&
-      input.scheduledFor !== undefined &&
-      input.scheduledFor.getTime() <= Date.now()
-    ) {
+    // choose again. The subscription job keeps its own schedule.
+    if (!byJob && input.scheduledFor !== undefined && input.scheduledFor.getTime() <= Date.now()) {
       throw new ConflictError(WINDOW_STARTED);
     }
     const store = await this.stores.getOpenStore(input.storeId, input.scheduledFor);
@@ -332,6 +336,10 @@ export class OrdersService extends BaseService {
   /** Stalls farther apart than a bazaar's rows are two trips, not one. */
   private async assertSameBazaar(storeIds: string[], at?: Date): Promise<void> {
     if (new Set(storeIds).size < 2) throw new ConflictError('A group needs two different stalls');
+    // Followers ride free on the leader's trip: a stall listed twice would split its goods into a free second order.
+    if (new Set(storeIds).size !== storeIds.length) {
+      throw new ConflictError('Each stall may appear in a group once');
+    }
     const stores = await Promise.all(storeIds.map((id) => this.stores.getOpenStore(id, at)));
     // One courier walks one bazaar; a supermarket is a separate trip however close it is.
     if (stores.some((store) => !STALL_TYPES.includes(store.type))) {
@@ -355,6 +363,7 @@ export class OrdersService extends BaseService {
     const user = this.currentUser();
     const customerId = user.customerId;
     if (customerId === undefined) throw new ForbiddenError('Customer profile required');
+    await this.assertMayOrder(customerId);
 
     const store = await this.stores.get(input.storeId);
     if (store.lat === null || store.lng === null) {
@@ -555,6 +564,8 @@ export class OrdersService extends BaseService {
     const order = await this.getOrThrow(orderId);
     const from = order.status;
 
+    // Before the transition table, so the 409 below never tells a stranger what state the order is in.
+    if (actor === 'courier') this.assertCarriedByCaller(order);
     assertActorTransition(actor, from, to);
 
     const actorId = actor === 'system' ? null : (this.context().user?.id ?? null);
@@ -597,6 +608,34 @@ export class OrdersService extends BaseService {
     }
 
     return this.getOrThrow(orderId);
+  }
+
+  /**
+   * A courier's verb on the order they carry. Finishing or failing the trip is not one of them: it
+   * has to go through the delivery, which is where the handover is checked, the payout is booked
+   * and the cash the courier collected becomes the courier's debt.
+   */
+  async courierAction(
+    orderId: string,
+    action: CourierAction,
+    comment?: string,
+  ): Promise<OrderWithRelations> {
+    if (action === 'delivered' || action === 'failed') {
+      throw new ConflictError('Finish or fail the trip from the delivery, not from the order');
+    }
+    return this.changeStatus(orderId, COURIER_ACTION_STATUS[action], 'courier', comment);
+  }
+
+  /**
+   * The courier on the token must be the one the order is assigned to. A courier role alone is
+   * every courier's, so on its own it would let any of them move or reprice any order.
+   */
+  private assertCarriedByCaller(order: OrderWithRelations): void {
+    if (this.context().system === true) return;
+    const courierId = this.currentUser().courierId;
+    if (courierId === undefined || order.courierId === null || order.courierId !== courierId) {
+      throw new ForbiddenError('This order is assigned to another courier');
+    }
   }
 
   /**
@@ -643,20 +682,46 @@ export class OrdersService extends BaseService {
    * Weighed goods: 2 kg of tomatoes is never exactly 2 kg. The courier reports
    * what was actually bought and the order is repriced before handover, so the
    * customer pays for what they receive.
+   *
+   * It changes what the customer owes, so it is the courier carrying this order, at the stall,
+   * on weighed lines of this order, with numbers a scale could show.
    */
   async reprice(orderId: string, actuals: ActualQuantity[]): Promise<OrderWithRelations> {
     const order = await this.getOrThrow(orderId);
+    this.assertCarriedByCaller(order);
+    if (!WEIGHING_STATUSES.includes(order.status)) {
+      throw new ConflictError('The bill can only change while the courier is buying at the stall');
+    }
 
-    const weighable = new Set(
-      order.items.filter((item) => WEIGHTED_UNITS.includes(item.unit)).map((item) => item.id),
+    // Ids are matched against this order's own lines, never against the table: an id from another
+    // order is simply not weighable here.
+    const weighable = new Map(
+      order.items
+        .filter((item) => WEIGHTED_UNITS.includes(item.unit))
+        .map((item) => [item.id, item]),
     );
-    const invalid = actuals.filter((actual) => !weighable.has(actual.orderItemId));
-    if (invalid.length > 0) {
-      throw new ConflictError('Only weighed items can be repriced');
+    if (new Set(actuals.map((actual) => actual.orderItemId)).size !== actuals.length) {
+      throw new ConflictError('Each item may be weighed once');
+    }
+    for (const actual of actuals) {
+      const item = weighable.get(actual.orderItemId);
+      if (item === undefined) throw new ConflictError('Only weighed items can be repriced');
+      if (
+        !(actual.actualQuantity > 0) ||
+        actual.actualQuantity > maxActualQuantity(item.unit, Number(item.quantity))
+      ) {
+        throw new ConflictError('The weight is out of range for the ordered quantity');
+      }
+      if (actual.photoUrl !== undefined && !/^https?:\/\//i.test(actual.photoUrl)) {
+        throw new ConflictError('The scale photo must be a web address');
+      }
     }
 
     const { previousTotal, total } = await runInTransaction(this.prisma, (tx) =>
-      this.repository.applyActualQuantities(orderId, actuals, tx),
+      this.repository.applyActualQuantities(orderId, actuals, tx, {
+        courierId: order.courierId as string,
+        statuses: WEIGHING_STATUSES,
+      }),
     );
 
     await this.publish(
@@ -677,26 +742,39 @@ export class OrdersService extends BaseService {
 
   // ------------------------------------------------------------------ chat
 
-  /** The thread is visible to whoever may see the order. */
+  /**
+   * The thread is the customer's, the courier's carrying the order and the desk's. A stall that
+   * only gathers the goods can read the order, not the conversation at the customer's door.
+   */
+  private async chatParty(
+    orderId: string,
+  ): Promise<{ order: OrderWithRelations; role: 'CUSTOMER' | 'COURIER' | 'STAFF' }> {
+    const order = await this.get(orderId);
+    const user = this.currentUser();
+    const standing = standingOn(user, order);
+    if (standing.customer) return { order, role: 'CUSTOMER' };
+    if (user.courierId !== undefined && user.courierId === order.courierId) {
+      return { order, role: 'COURIER' };
+    }
+    if (standing.staff) return { order, role: 'STAFF' };
+    throw new ForbiddenError('The chat is between the customer, the courier and the desk');
+  }
+
+  /** The newest 200, oldest first: a long thread must not hide what was said last. */
   async listMessages(orderId: string): Promise<ChatMessage[]> {
-    await this.get(orderId);
-    return this.prisma.chatMessage.findMany({
-      where: { orderId },
-      orderBy: { createdAt: 'asc' },
+    const { order } = await this.chatParty(orderId);
+    const latest = await this.prisma.chatMessage.findMany({
+      where: { orderId, tenantId: order.tenantId },
+      orderBy: { createdAt: 'desc' },
       take: 200,
     });
+    return latest.reverse();
   }
 
   async postMessage(orderId: string, text: string): Promise<ChatMessage> {
-    const order = await this.get(orderId);
+    const { order, role: senderRole } = await this.chatParty(orderId);
     const user = this.currentUser();
     if (isTerminal(order.status)) throw new ConflictError('The order is closed');
-    const senderRole =
-      user.customerId === order.customerId
-        ? 'CUSTOMER'
-        : user.courierId !== undefined && user.courierId === order.courierId
-          ? 'COURIER'
-          : 'STAFF';
     const message = await this.prisma.chatMessage.create({
       data: { tenantId: order.tenantId, orderId, senderUserId: user.id, senderRole, text },
     });
@@ -712,7 +790,7 @@ export class OrdersService extends BaseService {
           id: message.id,
           orderId,
           senderUserId: message.senderUserId,
-          senderRole: senderRole as 'CUSTOMER' | 'COURIER' | 'STAFF',
+          senderRole,
           text: message.text,
           createdAt: message.createdAt.toISOString(),
         },
@@ -735,6 +813,29 @@ export class OrdersService extends BaseService {
     this.authorize(PERMISSION.ORDER_CREATE);
     if (user.customerId === undefined) throw new ForbiddenError('Customer profile required');
     return user.customerId;
+  }
+
+  /**
+   * Whose order this is. A job placing a subscription's order names the customer; a request orders
+   * as itself and as nobody else, whatever the caller passes in.
+   */
+  private orderingCustomerId(asCustomerId?: string): string {
+    if (asCustomerId === undefined) return this.callerCustomerId();
+    if (this.context().system === true) return asCustomerId;
+    if (asCustomerId === this.callerCustomerId()) return asCustomerId;
+    throw new ForbiddenError('Orders are placed as yourself');
+  }
+
+  /** The desk blocks a customer on the Customer row; the token they hold does not know. */
+  private async assertMayOrder(customerId: string): Promise<void> {
+    const customer = await this.prisma.customer.findFirst({
+      where: { id: customerId, tenantId: this.tenantId() },
+      select: { blockedAt: true },
+    });
+    if (customer === null) throw new ForbiddenError('Customer profile required');
+    if (customer.blockedAt !== null) {
+      throw new AppError(ERROR_CODE.ACCOUNT_BLOCKED, 403, 'This account cannot place orders');
+    }
   }
 
   /** Straight-line ride time at scooter speed plus the store's own preparation. */
@@ -833,6 +934,11 @@ export class OrdersService extends BaseService {
   /** Repeat order: same store, same items, priced fresh at today's rates. */
   async repeat(orderId: string, addressId?: string): Promise<OrderWithRelations> {
     const previous = await this.get(orderId);
+    // The stall that gathered it and the courier that carried it may read the order, not reorder it:
+    // a repeat is the customer's own basket again, at their own door.
+    if (!standingOn(this.currentUser(), previous).customer) {
+      throw new ForbiddenError('Only the customer repeats an order');
+    }
 
     return this.create({
       storeId: previous.storeId,

@@ -33,6 +33,8 @@ export class CategoriesService extends BaseService {
 
   /** The whole tree, built once from a flat list rather than N queries. */
   async tree(storeId?: string): Promise<CategoryNode[]> {
+    // Checked before the cache, whose entry is shared: a hidden stall's shelves are never in it.
+    if (storeId !== undefined && !(await this.repository.storeIsVisible(storeId))) return [];
     return cached(
       this.cache,
       `category-tree:${storeId ?? ''}`,
@@ -52,9 +54,22 @@ export class CategoriesService extends BaseService {
     return category;
   }
 
+  /** What the public read endpoints may show: a switched-off category is the admin's, NotFound to the rest. */
+  async getVisible(id: string): Promise<Category> {
+    const category = await this.get(id);
+    if (!category.active && !this.mayManage()) throw new NotFoundError('Category', id);
+    return category;
+  }
+
+  private mayManage(): boolean {
+    const context = this.context();
+    if (context.system === true) return true;
+    return context.user?.permissions.includes(PERMISSION.CATEGORY_WRITE) === true;
+  }
+
   /** Ids of a category and everything under it, for a "shop this section" filter. */
   async subtreeIds(id: string): Promise<string[]> {
-    const category = await this.get(id);
+    const category = await this.getVisible(id);
     const rows = await this.repository.subtree(category);
     return rows.map((row) => row.id);
   }
