@@ -8,7 +8,6 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { BaseController } from '../../../common/base/base.controller.js';
 import { toOrderDto, toChatMessageDto } from '../../../common/dto/index.js';
 import { body, params, query } from '../../../middleware/validation.middleware.js';
-import { COURIER_ACTION_STATUS, type CourierAction } from '../domain/order-state-machine.js';
 import type { PaymentsService } from '../../payments/service/payments.service.js';
 import type { OrdersService } from '../service/orders.service.js';
 import type { CourierActionInput, OrdersListQuery } from '../schemas/index.js';
@@ -125,10 +124,9 @@ export class OrdersController extends BaseController {
   courierAction = async (request: FastifyRequest, reply: FastifyReply) => {
     const { id } = params<{ id: string }>(request);
     const input = body<CourierActionInput>(request);
-    const status = COURIER_ACTION_STATUS[input.action as CourierAction];
     return this.ok(
       reply,
-      toOrderDto(await this.service.changeStatus(id, status, 'courier', input.comment)),
+      toOrderDto(await this.service.courierAction(id, input.action, input.comment)),
     );
   };
 

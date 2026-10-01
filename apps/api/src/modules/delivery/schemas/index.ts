@@ -14,6 +14,16 @@ export const deliveryListQuerySchema = listQuerySchema.extend({
   to: isoDateSchema.optional(),
 });
 
+/**
+ * A photo of the handover or of the empty stall: shown to the customer and the desk, so only a web
+ * address (z.string().url() also accepts javascript: and data: ones).
+ */
+const photoUrl = z
+  .string()
+  .url()
+  .max(500)
+  .refine((value) => /^https?:\/\//i.test(value), 'Must be an http(s) address');
+
 /** The courier app sends its position with the action, for the arrival check. */
 const point = { lat: latSchema.optional(), lng: lngSchema.optional() };
 
@@ -21,7 +31,7 @@ export const acceptDeliverySchema = z.object(point);
 
 export const completeDeliverySchema = z.object({
   ...point,
-  proofUrl: z.string().url().max(500).optional(),
+  proofUrl: photoUrl.optional(),
   handoverCode: z
     .string()
     .trim()
@@ -31,7 +41,7 @@ export const completeDeliverySchema = z.object({
 
 export const failDeliverySchema = z.object({
   reason: z.string().trim().min(3).max(500),
-  photoUrl: z.string().url().max(500).optional(),
+  photoUrl: photoUrl.optional(),
 });
 
 export const assignDeliverySchema = z.object({ courierId: idSchema });

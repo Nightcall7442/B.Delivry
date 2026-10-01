@@ -1,13 +1,42 @@
 /**
  * Delivery persistence (Prisma). Tenant-scoped.
  */
-import { DELIVERY_TIMEOUTS, NEIGHBOUR_COURIER } from '@bazar/constants';
+import {
+  DELIVERY_TIMEOUTS,
+  NEIGHBOUR_COURIER,
+  TERMINAL_ORDER_STATUSES,
+  type DeliveryStatus,
+} from '@bazar/constants';
 import { boundingBox, haversineMeters } from '@bazar/maps';
 import type { LatLng } from '@bazar/maps';
-import type { Delivery, Prisma } from '@prisma/client';
+import type { Delivery, DeliveryOffer, Prisma } from '@prisma/client';
 import { BaseRepository, type PrismaTransaction } from '../../../common/base/base.repository.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import type { CourierCandidate, CreateDeliveryInput, DeliveryListFilters } from '../types/index.js';
+
+/** Statuses of a trip that is still the courier's to carry. */
+export const ACTIVE_DELIVERY_STATUSES: DeliveryStatus[] = [
+  'ASSIGNED',
+  'AT_PICKUP',
+  'PICKED_UP',
+  'IN_TRANSIT',
+  'AT_DROPOFF',
+];
+
+/**
+ * A trip whose order was cancelled or failed under the courier is over, whatever the delivery row
+ * still says: it neither counts against the courier's capacity nor keeps them from going offline.
+ */
+const ORDER_STILL_OPEN = { order: { status: { notIn: [...TERMINAL_ORDER_STATUSES] } } };
+
+/** What the dispatch rules need to know about a courier. */
+export interface CourierStanding {
+  id: string;
+  userId: string;
+  status: string;
+  verifiedAt: Date | null;
+  maxConcurrentOrders: number;
+}
 
 export class DeliveryRepository extends BaseRepository {
   async create(input: CreateDeliveryInput): Promise<Delivery> {
@@ -34,6 +63,20 @@ export class DeliveryRepository extends BaseRepository {
 
   async findByOrder(orderId: string): Promise<Delivery | null> {
     return this.prisma.delivery.findFirst({ where: this.scoped({ orderId }) });
+  }
+
+  /** A courier of this tenant, or null: an id from another tenant is not a courier here. */
+  async findCourier(courierId: string): Promise<CourierStanding | null> {
+    return this.prisma.courier.findFirst({
+      where: this.scoped({ id: courierId }),
+      select: { id: true, userId: true, status: true, verifiedAt: true, maxConcurrentOrders: true },
+    });
+  }
+
+  async findOffer(deliveryId: string, courierId: string): Promise<DeliveryOffer | null> {
+    return this.prisma.deliveryOffer.findFirst({
+      where: { deliveryId, courierId, delivery: this.tenantScope() },
+    });
   }
 
   async list(filters: DeliveryListFilters): Promise<PaginatedResult<Delivery>> {
@@ -83,6 +126,8 @@ export class DeliveryRepository extends BaseRepository {
         ...this.tenantScope(),
         cityId,
         status: 'ONLINE',
+        // The desk verifies a courier before the first shift; an unverified account is never offered work.
+        verifiedAt: { not: null },
         lastLocationAt: { gte: staleBefore },
         lastLat: { gte: box.south, lte: box.north },
         lastLng: { gte: box.west, lte: box.east },
@@ -102,9 +147,7 @@ export class DeliveryRepository extends BaseRepository {
         _count: {
           select: {
             deliveries: {
-              where: {
-                status: { in: ['ASSIGNED', 'AT_PICKUP', 'PICKED_UP', 'IN_TRANSIT', 'AT_DROPOFF'] },
-              },
+              where: { status: { in: ACTIVE_DELIVERY_STATUSES }, ...ORDER_STILL_OPEN },
             },
           },
         },
@@ -150,7 +193,9 @@ export class DeliveryRepository extends BaseRepository {
 
   /** Forget who was asked: a restarted search may knock on the same doors. */
   async clearOffers(deliveryId: string): Promise<void> {
-    await this.prisma.deliveryOffer.deleteMany({ where: { deliveryId, acceptedAt: null } });
+    await this.prisma.deliveryOffer.deleteMany({
+      where: { deliveryId, acceptedAt: null, delivery: this.tenantScope() },
+    });
   }
 
   /**
@@ -194,7 +239,12 @@ export class DeliveryRepository extends BaseRepository {
    */
   async claim(deliveryId: string, courierId: string, tx?: PrismaTransaction): Promise<boolean> {
     const result = await this.client(tx).delivery.updateMany({
-      where: { id: deliveryId, courierId: null, status: { in: ['PENDING', 'SEARCHING'] } },
+      where: {
+        id: deliveryId,
+        courierId: null,
+        status: { in: ['PENDING', 'SEARCHING'] },
+        ...this.tenantScope(),
+      },
       data: { courierId, status: 'ASSIGNED', assignedAt: new Date() },
     });
 
@@ -208,16 +258,18 @@ export class DeliveryRepository extends BaseRepository {
     return result.count === 1;
   }
 
+  /** Only an offer that is still open: an accepted one is the courier's trip now, not an offer to turn down. */
   async decline(deliveryId: string, courierId: string): Promise<void> {
     await this.prisma.deliveryOffer.updateMany({
-      where: { deliveryId, courierId },
+      where: { deliveryId, courierId, acceptedAt: null, delivery: this.tenantScope() },
       data: { declinedAt: new Date() },
     });
   }
 
-  async release(deliveryId: string): Promise<void> {
-    await this.prisma.delivery.update({
-      where: { id: deliveryId },
+  /** Hands the trip back to the search; false when it is no longer this courier's, so nothing is reset. */
+  async release(deliveryId: string, courierId: string): Promise<boolean> {
+    const result = await this.prisma.delivery.updateMany({
+      where: this.scoped({ id: deliveryId, courierId, status: { in: ACTIVE_DELIVERY_STATUSES } }),
       data: {
         courierId: null,
         status: 'SEARCHING',
@@ -225,32 +277,47 @@ export class DeliveryRepository extends BaseRepository {
         attemptCount: { increment: 1 },
       },
     });
+    return result.count === 1;
   }
 
-  async setStatus(
+  /**
+   * One step of the courier's own trip. The row moves only from the statuses the caller names and
+   * only while it is still this courier's, so a repeated or late request matches nothing (false)
+   * instead of reopening a finished trip or writing a second ending over the first.
+   */
+  async transition(
     deliveryId: string,
-    status: NonNullable<Prisma.DeliveryUpdateInput['status']>,
-    extra: Prisma.DeliveryUpdateInput = {},
-  ): Promise<Delivery> {
-    return this.prisma.delivery.update({
-      where: { id: deliveryId },
-      data: { status, ...extra },
+    courierId: string,
+    from: readonly DeliveryStatus[],
+    status: DeliveryStatus,
+    extra: Prisma.DeliveryUncheckedUpdateManyInput = {},
+  ): Promise<boolean> {
+    const result = await this.prisma.delivery.updateMany({
+      where: this.scoped({ id: deliveryId, courierId, status: { in: [...from] } }),
+      data: { ...extra, status },
     });
+    return result.count === 1;
   }
 
   async setSearching(deliveryId: string): Promise<void> {
     await this.prisma.delivery.updateMany({
-      where: { id: deliveryId, status: 'PENDING' },
+      where: { id: deliveryId, status: 'PENDING', ...this.tenantScope() },
       data: { status: 'SEARCHING' },
     });
   }
 
   async setEta(deliveryId: string, etaAt: Date | null): Promise<void> {
-    await this.prisma.delivery.update({ where: { id: deliveryId }, data: { etaAt } });
+    await this.prisma.delivery.updateMany({
+      where: this.scoped({ id: deliveryId }),
+      data: { etaAt },
+    });
   }
 
   async setHandoverCode(deliveryId: string, code: string): Promise<void> {
-    await this.prisma.delivery.update({ where: { id: deliveryId }, data: { handoverCode: code } });
+    await this.prisma.delivery.updateMany({
+      where: this.scoped({ id: deliveryId }),
+      data: { handoverCode: code },
+    });
   }
 
   /** Deliveries the courier is carrying right now, for their app home screen. */
@@ -259,7 +326,8 @@ export class DeliveryRepository extends BaseRepository {
       where: {
         ...this.tenantScope(),
         courierId,
-        status: { in: ['ASSIGNED', 'AT_PICKUP', 'PICKED_UP', 'IN_TRANSIT', 'AT_DROPOFF'] },
+        status: { in: ACTIVE_DELIVERY_STATUSES },
+        ...ORDER_STILL_OPEN,
       },
       orderBy: { assignedAt: 'asc' },
     });
