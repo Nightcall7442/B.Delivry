@@ -1,6 +1,7 @@
 /**
  * Vendors persistence (Prisma). Tenant-scoped.
  */
+import type { Role } from '@bazar/constants';
 import type { Prisma, Vendor } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
@@ -60,6 +61,16 @@ export class VendorsRepository extends BaseRepository {
   }
 
   async create(input: CreateVendorInput): Promise<VendorWithCounts> {
+    // The record is bound to a user by id: that user has to be someone of this tenant, or the desk of
+    // one tenant could attach a vendor (a legal name, a bank account) to a person of another.
+    this.found(
+      await this.prisma.user.findFirst({
+        where: this.scopedAlive({ id: input.userId }),
+        select: { id: true },
+      }),
+      'User',
+      input.userId,
+    );
     return this.prisma.vendor.create({
       data: {
         tenantId: this.tenantScope().tenantId,
@@ -77,12 +88,22 @@ export class VendorsRepository extends BaseRepository {
   }
 
   async update(id: string, data: Prisma.VendorUpdateInput): Promise<VendorWithCounts> {
-    return this.prisma.vendor.update({ where: { id }, data, include: VENDOR_INCLUDE });
+    return this.prisma.vendor.update({
+      where: { id, ...this.tenantScope() },
+      data,
+      include: VENDOR_INCLUDE,
+    });
+  }
+
+  /** The roles of the user behind a vendor, to keep the desk's reach inside its rank. */
+  async rolesOfUser(userId: string): Promise<Role[]> {
+    const rows = await this.prisma.userRole.findMany({ where: { userId }, select: { role: true } });
+    return rows.map((row) => row.role as Role);
   }
 
   async setStatus(id: string, status: VendorStatus): Promise<Vendor> {
     return this.prisma.vendor.update({
-      where: { id },
+      where: { id, ...this.tenantScope() },
       data: { status, ...(status === 'ACTIVE' ? { verifiedAt: new Date() } : {}) },
     });
   }

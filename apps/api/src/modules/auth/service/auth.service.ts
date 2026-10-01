@@ -24,12 +24,13 @@ import type { SessionStore } from '../../../infrastructure/redis/session.store.j
 import type { TelegramBotService } from '../../notifications/service/telegram-bot.service.js';
 import type { NotificationsRepository } from '../../notifications/repository/notifications.repository.js';
 import type { NotificationSender } from '../../notifications/types/index.js';
-import { hashOtp, safeEqual, verifyPassword } from '../guards/index.js';
+import { hashOtp, hashPassword, safeEqual, verifyPassword } from '../guards/index.js';
 import type { AuthRepository } from '../repository/auth.repository.js';
 import type {
   AuthResult,
   DeviceInfo,
   OtpChallenge,
+  SessionRecord,
   TelegramLoginTicket,
   UserWithRoles,
 } from '../types/index.js';
@@ -143,35 +144,55 @@ export class TokenService {
     }
   }
 
-  /** Issues a fresh pair and records the session. Used by login and by refresh. */
-  async issue(user: UserWithRoles, device: DeviceInfo, sessionId?: string): Promise<AuthResult> {
+  /**
+   * Issues a fresh pair and records the session. Used by login (a new session) and by refresh, which
+   * passes the session it is rotating and the version the caller's refresh token carried.
+   */
+  async issue(
+    user: UserWithRoles,
+    device: DeviceInfo,
+    rotating?: { sessionId: string; version: number },
+  ): Promise<AuthResult> {
     const refreshExpiresAt = new Date(Date.now() + this.config.refreshTtlSeconds * 1000);
     const rawRefresh = randomToken();
 
-    const session =
-      sessionId === undefined
-        ? await this.repository.createSession({
-            userId: user.id,
-            refreshTokenHash: digest(rawRefresh),
-            expiresAt: refreshExpiresAt,
-            deviceId: device.deviceId,
-            deviceName: device.deviceName,
-            ip: device.ip ?? null,
-            userAgent: device.userAgent ?? null,
-          })
-        : {
-            id: sessionId,
-            userId: user.id,
-            version: await this.repository.rotateSession(
-              sessionId,
-              digest(rawRefresh),
-              refreshExpiresAt,
-            ),
-            expiresAt: refreshExpiresAt,
-            revokedAt: null,
-          };
+    let session: SessionRecord;
+    if (rotating === undefined) {
+      session = await this.repository.createSession({
+        userId: user.id,
+        refreshTokenHash: digest(rawRefresh),
+        expiresAt: refreshExpiresAt,
+        deviceId: device.deviceId,
+        deviceName: device.deviceName,
+        ip: device.ip ?? null,
+        userAgent: device.userAgent ?? null,
+      });
+    } else {
+      const version = await this.repository.rotateSession(
+        rotating.sessionId,
+        rotating.version,
+        digest(rawRefresh),
+        refreshExpiresAt,
+      );
+      if (version === null) {
+        // Another request spent this refresh token between our check and the rotation: a replay, so
+        // the session dies for both parties rather than handing a pair to each.
+        await this.repository.revokeSession(rotating.sessionId);
+        await this.sessions.revoke(rotating.sessionId, this.config.accessTtlSeconds);
+        throw new UnauthorizedError('Refresh token already used', ERROR_CODE.SESSION_REVOKED);
+      }
+      session = {
+        id: rotating.sessionId,
+        userId: user.id,
+        version,
+        expiresAt: refreshExpiresAt,
+        revokedAt: null,
+      };
+    }
 
-    await this.repository.trimSessions(user.id, LIMITS.MAX_SESSIONS_PER_USER);
+    // The sessions trimmed off the end are dead in the database; their live access tokens die here.
+    const trimmed = await this.repository.trimSessions(user.id, LIMITS.MAX_SESSIONS_PER_USER);
+    await Promise.all(trimmed.map((id) => this.sessions.revoke(id, this.config.accessTtlSeconds)));
 
     const [accessToken, refreshToken] = await Promise.all([
       this.signAccessToken(user, session.id),
@@ -360,13 +381,16 @@ export class AuthService extends BaseService {
       throw new UnauthorizedError('Code expired or not requested', ERROR_CODE.OTP_EXPIRED);
     }
 
-    if (otp.attempts >= LIMITS.OTP_MAX_ATTEMPTS) {
+    // Claim an attempt BEFORE looking at the code. Counting after the comparison let a burst of
+    // parallel guesses all read "0 attempts so far" and all get compared; claimed first, each request
+    // holds its own number and only the first OTP_MAX_ATTEMPTS are ever compared.
+    const attempts = await this.repository.incrementOtpAttempts(otp.id);
+    if (attempts > LIMITS.OTP_MAX_ATTEMPTS) {
       throw new UnauthorizedError('Too many attempts', ERROR_CODE.OTP_ATTEMPTS_EXCEEDED);
     }
 
     const expected = await hashOtp(code, this.config.sessionSecret);
     if (!safeEqual(expected, otp.codeHash)) {
-      const attempts = await this.repository.incrementOtpAttempts(otp.id);
       throw new UnauthorizedError(
         'Invalid code',
         attempts >= LIMITS.OTP_MAX_ATTEMPTS
@@ -375,8 +399,11 @@ export class AuthService extends BaseService {
       );
     }
 
-    // Burn the code before issuing tokens: a code must work exactly once.
-    await this.repository.consumeOtp(otp.id);
+    // Burn the code before issuing tokens: a code must work exactly once. The burn is conditional,
+    // so of two requests carrying the right code at the same moment only one gets through.
+    if (!(await this.repository.consumeOtp(otp.id))) {
+      throw new UnauthorizedError('Code expired or not requested', ERROR_CODE.OTP_EXPIRED);
+    }
 
     const existing = await this.repository.findByPhone(tenantId, phone);
     const isNewUser = existing === null;
@@ -405,9 +432,10 @@ export class AuthService extends BaseService {
   ): Promise<AuthResult> {
     const user = await this.repository.findByPhone(tenantId, phone);
 
-    // Same error and roughly the same work either way: a faster "no such user"
-    // response is itself an answer.
+    // Same error and the same work either way: a faster "no such user" response is itself an answer,
+    // so an unknown phone (or one with no password) still pays for a full derivation.
     if (user === null || user.passwordHash === null) {
+      await verifyPassword(password, await decoyHash());
       throw new UnauthorizedError('Invalid phone or password', ERROR_CODE.INVALID_CREDENTIALS);
     }
 
@@ -439,7 +467,12 @@ export class AuthService extends BaseService {
     const payload = await this.tokens.verifyRefreshToken(jwt);
 
     const session = await this.repository.findSession(payload.sessionId);
-    if (session === null || session.revokedAt !== null || session.expiresAt <= new Date()) {
+    if (
+      session === null ||
+      session.userId !== payload.sub ||
+      session.revokedAt !== null ||
+      session.expiresAt <= new Date()
+    ) {
       throw new UnauthorizedError('Session is no longer valid', ERROR_CODE.SESSION_REVOKED);
     }
 
@@ -454,7 +487,8 @@ export class AuthService extends BaseService {
     if (user === null) throw new UnauthorizedError();
     this.assertUsable(user);
 
-    return this.tokens.issue(user, device, session.id);
+    // Rotation is conditional on the version just checked: see TokenService.issue.
+    return this.tokens.issue(user, device, { sessionId: session.id, version: session.version });
   }
 
   async logout(sessionId: string): Promise<void> {
@@ -478,6 +512,11 @@ export class AuthService extends BaseService {
     }
   }
 }
+
+let decoy: Promise<string> | undefined;
+
+/** A real hash nobody holds the password to, derived once: what login verifies against for a phone it does not know. */
+const decoyHash = (): Promise<string> => (decoy ??= hashPassword(randomToken()));
 
 /** The refresh token travels as `<jwt>.<raw>`; the JWT itself has three parts. */
 function splitCompound(token: string): [string, string] {

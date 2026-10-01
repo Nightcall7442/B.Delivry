@@ -12,6 +12,7 @@ import {
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import type { AuthService } from '../../auth/service/auth.service.js';
 import { hashPassword } from '../../auth/guards/index.js';
+import { assertMayManageAccount } from '../domain/account-rank.js';
 import type { UsersRepository, UserWithProfiles } from '../repository/users.repository.js';
 import type { CreateStaffInput, UpdateProfileInput, UserListFilters } from '../types/index.js';
 
@@ -65,26 +66,38 @@ export class UsersService extends BaseService {
    */
   async createStaff(input: CreateStaffInput): Promise<UserWithProfiles> {
     this.authorize(PERMISSION.USER_WRITE);
-    this.assertCanGrant(input.roles);
+    const roles = [...new Set(input.roles)];
+    this.assertCanGrant(roles);
 
     if (await this.repository.existsByPhone(input.phone)) {
       throw new ConflictError('A user with this phone already exists');
     }
 
-    const needsPassword = input.roles.some(isStaffRole);
+    const needsPassword = roles.some(isStaffRole);
     if (needsPassword && input.password === undefined) {
       throw new ConflictError('Staff accounts require a password');
     }
 
     const passwordHash = input.password === undefined ? null : await hashPassword(input.password);
-    return this.repository.createStaff(input, passwordHash);
+    return this.repository.createStaff({ ...input, roles }, passwordHash, this.currentUser().id);
   }
 
   async setRoles(userId: string, roles: Role[]): Promise<UserWithProfiles> {
     this.authorize(PERMISSION.USER_WRITE);
-    this.assertCanGrant(roles);
+    const next = [...new Set(roles)];
+    this.assertCanGrant(next);
+    const target = await this.manageable(userId);
 
-    await this.repository.replaceRoles(userId, roles, this.currentUser().id);
+    // Replacing the set is how a role is taken away, so one may not replace one's own with fewer:
+    // a SUPER_ADMIN stripping themselves would leave the tenant without anyone who can undo it.
+    if (
+      target.id === this.currentUser().id &&
+      target.roles.some((entry) => !next.includes(entry.role as Role))
+    ) {
+      throw new ForbiddenError('You cannot take roles away from your own account');
+    }
+
+    await this.repository.replaceRoles(userId, next, this.currentUser().id);
     // Permissions are derived from the token's roles, so the old token would
     // keep the old rights until it expired. Force a re-login instead.
     await this.auth.logoutAll(userId);
@@ -94,6 +107,8 @@ export class UsersService extends BaseService {
 
   async block(userId: string): Promise<void> {
     this.authorize(PERMISSION.USER_WRITE);
+    const target = await this.manageable(userId);
+    this.refuseSelf(target, 'block');
     await this.repository.setStatus(userId, 'BLOCKED');
     // Blocking has to take effect now, not when the access token expires.
     await this.auth.logoutAll(userId);
@@ -101,19 +116,48 @@ export class UsersService extends BaseService {
 
   async unblock(userId: string): Promise<void> {
     this.authorize(PERMISSION.USER_WRITE);
+    const target = await this.manageable(userId);
+    // Only a block is lifted: this must not switch on a PENDING account nobody has verified.
+    if (target.status !== 'BLOCKED') return;
     await this.repository.setStatus(userId, 'ACTIVE');
   }
 
   async remove(userId: string): Promise<void> {
     this.authorize(PERMISSION.USER_WRITE);
+    const target = await this.manageable(userId);
+    this.refuseSelf(target, 'delete');
     await this.repository.softDelete(userId);
     await this.auth.logoutAll(userId);
   }
 
   async setPassword(userId: string, password: string): Promise<void> {
     this.authorize(PERMISSION.USER_WRITE);
+    await this.manageable(userId);
     await this.repository.setPassword(userId, await hashPassword(password));
     await this.auth.logoutAll(userId);
+  }
+
+  /**
+   * The account an action is aimed at, inside the caller's tenant (another tenant's id is a 404) and
+   * within the caller's rank: `user:write` is every ADMIN's, and without this an ADMIN could set the
+   * password of a SUPER_ADMIN, or block or demote a peer. See assertMayManageAccount.
+   */
+  private async manageable(userId: string): Promise<UserWithProfiles> {
+    const target = await this.repository.findById(userId);
+    if (target === null) throw new NotFoundError('User', userId);
+    assertMayManageAccount(
+      this.context(),
+      target.id,
+      target.roles.map((entry) => entry.role as Role),
+    );
+    return target;
+  }
+
+  /** Locking oneself out is never what the desk meant: someone else has to do it. */
+  private refuseSelf(target: UserWithProfiles, verb: string): void {
+    if (target.id === this.currentUser().id) {
+      throw new ForbiddenError(`You cannot ${verb} your own account`);
+    }
   }
 
   /**

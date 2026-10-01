@@ -9,6 +9,9 @@ import {
   NotFoundError,
 } from '../../../common/errors/domain.errors.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
+import { vendorMayTrade } from '../../auth/guards/profile-access.js';
+import type { AuthService } from '../../auth/service/auth.service.js';
+import { assertMayManageAccount, isDeskContext } from '../../users/domain/account-rank.js';
 import type { VendorsRepository, VendorWithCounts } from '../repository/vendors.repository.js';
 import type {
   CreateVendorInput,
@@ -19,14 +22,18 @@ import type {
 
 export interface VendorsServiceDeps extends ServiceDeps {
   repository: VendorsRepository;
+  /** A vendor the desk suspends or rejects is signed out: their token must not outlive the decision. */
+  auth: Pick<AuthService, 'logoutAll'>;
 }
 
 export class VendorsService extends BaseService {
   private readonly repository: VendorsRepository;
+  private readonly auth: VendorsServiceDeps['auth'];
 
   constructor(deps: VendorsServiceDeps) {
     super(deps);
     this.repository = deps.repository;
+    this.auth = deps.auth;
   }
 
   private ownId(): string {
@@ -35,14 +42,38 @@ export class VendorsService extends BaseService {
     return vendorId;
   }
 
-  async me(): Promise<VendorWithCounts> {
-    return this.getRaw(this.ownId());
+  /**
+   * The caller's own vendor row, unless the desk has suspended or rejected it. The token already
+   * leaves such a vendor without a vendorId; this makes the same call for the token issued before.
+   * A PENDING vendor stays: a new seller opens the cabinet while the desk looks at them.
+   */
+  private async own(): Promise<VendorWithCounts> {
+    const vendor = await this.getRaw(this.ownId());
+    if (!vendorMayTrade(vendor)) throw new ForbiddenError('This vendor account is not active');
+    return vendor;
   }
 
+  async me(): Promise<VendorWithCounts> {
+    return this.own();
+  }
+
+  /**
+   * The desk, or the vendor the id names. The matrix has no vendor:*_any twin, so asking `can()` with
+   * the vendor as the resource refused every operator and admin and left the rule to the permission
+   * alone; who may touch which vendor is decided here instead, before any lookup, so a stranger cannot
+   * tell which ids exist from 404 against 403.
+   */
+  private assertDeskOrOwn(id: string): void {
+    if (isDeskContext(this.context())) return;
+    if (this.currentUser().vendorId !== id) throw new ForbiddenError('Not your vendor profile');
+  }
+
+  /** The desk reads any vendor of its tenant (vendor:read is theirs); a vendor reads only their own row. */
   async get(id: string): Promise<VendorWithCounts> {
-    const vendor = await this.getRaw(id);
-    this.authorize(PERMISSION.VENDOR_READ, { tenantId: vendor.tenantId, vendorId: vendor.id });
-    return vendor;
+    this.assertDeskOrOwn(id);
+    if (!isDeskContext(this.context())) return this.own();
+    this.authorize(PERMISSION.VENDOR_READ);
+    return this.getRaw(id);
   }
 
   async list(filters: VendorListFilters): Promise<PaginatedResult<VendorWithCounts>> {
@@ -73,8 +104,11 @@ export class VendorsService extends BaseService {
   }
 
   async update(id: string, data: Record<string, unknown>): Promise<VendorWithCounts> {
-    const vendor = await this.getRaw(id);
-    this.authorize(PERMISSION.VENDOR_WRITE, { tenantId: vendor.tenantId, vendorId: vendor.id });
+    this.assertDeskOrOwn(id);
+    // The legal name, phone and bank account are the desk's to change: vendor:write is theirs, and
+    // the vendor role does not hold it.
+    this.authorize(PERMISSION.VENDOR_WRITE);
+    await this.getRaw(id);
 
     return this.repository.update(id, {
       ...(data.displayName !== undefined ? { displayName: data.displayName as string } : {}),
@@ -87,23 +121,35 @@ export class VendorsService extends BaseService {
 
   async setStatus(id: string, status: VendorStatus): Promise<void> {
     this.authorize(PERMISSION.VENDOR_WRITE);
+    const vendor = await this.getRaw(id);
+    const roles = await this.repository.rolesOfUser(vendor.userId);
+    assertMayManageAccount(this.context(), vendor.userId, roles);
+
     await this.repository.setStatus(id, status);
+    // A "no" takes hold now, not when the access token expires. A yes needs no sign-out: the vendor's
+    // next token already carries the vendorId again.
+    if (!vendorMayTrade({ status })) await this.auth.logoutAll(vendor.userId);
   }
 
   /** Commission override for a negotiated deal with one vendor. */
   async setCommission(id: string, percent: number | null): Promise<VendorWithCounts> {
     this.authorize(PERMISSION.PRICING_WRITE);
+    // Inside the tenant first: the id alone must not reach another tenant's vendor.
+    await this.getRaw(id);
     return this.repository.update(id, { commissionPercent: percent });
   }
 
+  /** The desk reads any vendor's payout (payment:read is theirs too); a vendor reads only their own. */
   async payout(id: string, since?: Date): Promise<PayoutSummary> {
-    const vendor = await this.getRaw(id);
-    this.authorize(PERMISSION.PAYMENT_READ, { tenantId: vendor.tenantId, vendorId: vendor.id });
-    return this.repository.pendingPayout(id, since);
+    this.assertDeskOrOwn(id);
+    this.authorize(PERMISSION.PAYMENT_READ);
+    const vendor = isDeskContext(this.context()) ? await this.getRaw(id) : await this.own();
+    return this.repository.pendingPayout(vendor.id, since);
   }
 
   async myPayout(since?: Date): Promise<PayoutSummary> {
-    return this.repository.pendingPayout(this.ownId(), since);
+    const vendor = await this.own();
+    return this.repository.pendingPayout(vendor.id, since);
   }
 
   private async getRaw(id: string): Promise<VendorWithCounts> {

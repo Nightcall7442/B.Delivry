@@ -7,3 +7,4 @@ export { UsersController } from './controller/users.controller.js';
 export { usersRoutes } from './routes/users.routes.js';
 export type { UserWithProfiles } from './repository/users.repository.js';
 export type { CreateStaffInput, UpdateProfileInput, UserListFilters } from './types/index.js';
+export { assertMayManageAccount, isDesk, isDeskContext } from './domain/account-rank.js';

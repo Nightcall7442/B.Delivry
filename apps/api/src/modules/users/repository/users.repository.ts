@@ -59,6 +59,7 @@ export class UsersRepository extends BaseRepository {
   async createStaff(
     input: CreateStaffInput,
     passwordHash: string | null,
+    grantedBy: string,
   ): Promise<UserWithProfiles> {
     return this.prisma.user.create({
       data: {
@@ -71,7 +72,7 @@ export class UsersRepository extends BaseRepository {
         passwordHash,
         status: 'ACTIVE',
         phoneVerifiedAt: new Date(),
-        roles: { create: input.roles.map((role) => ({ role })) },
+        roles: { create: input.roles.map((role) => ({ role, grantedBy })) },
       },
       include: USER_INCLUDE,
     });

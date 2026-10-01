@@ -4,6 +4,7 @@
 import type { Role } from '@bazar/constants';
 import type { OtpPurpose, Prisma } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
+import { activeProfileIds } from '../guards/profile-access.js';
 import type { CreateUserInput, SessionRecord, UserWithRoles } from '../types/index.js';
 
 /** One query shape for "the principal", used by login and by token refresh. */
@@ -17,9 +18,10 @@ const USER_SELECT = {
   failedLogins: true,
   lockedUntil: true,
   roles: { select: { role: true } },
-  customer: { select: { id: true } },
-  courier: { select: { id: true } },
-  vendor: { select: { id: true } },
+  // The status flags ride along because a profile the desk has shut must not reach the token.
+  customer: { select: { id: true, blockedAt: true } },
+  courier: { select: { id: true, status: true, verifiedAt: true } },
+  vendor: { select: { id: true, status: true } },
 } satisfies Prisma.UserSelect;
 
 type UserRow = Prisma.UserGetPayload<{ select: typeof USER_SELECT }>;
@@ -31,6 +33,11 @@ export class AuthRepository extends BaseRepository {
       select: { permission: true },
     });
 
+    // Every sign-in (code, password, Telegram, refresh) builds its token from this one place, so a
+    // blocked customer, a suspended or unverified courier and a suspended or rejected vendor are
+    // left without that profile id wherever they come in.
+    const { customerId, courierId, vendorId } = activeProfileIds(row);
+
     return {
       id: row.id,
       tenantId: row.tenantId,
@@ -41,9 +48,9 @@ export class AuthRepository extends BaseRepository {
       failedLogins: row.failedLogins,
       lockedUntil: row.lockedUntil,
       roles: row.roles.map((entry) => entry.role as Role),
-      customerId: row.customer?.id ?? null,
-      courierId: row.courier?.id ?? null,
-      vendorId: row.vendor?.id ?? null,
+      customerId,
+      courierId,
+      vendorId,
       extraPermissions: extra.map((entry) => entry.permission),
     };
   }
@@ -154,8 +161,16 @@ export class AuthRepository extends BaseRepository {
     return row.attempts;
   }
 
-  async consumeOtp(otpId: string): Promise<void> {
-    await this.prisma.otpCode.update({ where: { id: otpId }, data: { consumedAt: new Date() } });
+  /**
+   * True for the one caller that spent the code. Conditional on it being unspent, so two requests
+   * carrying the right code at once cannot both sign in on it.
+   */
+  async consumeOtp(otpId: string): Promise<boolean> {
+    const { count } = await this.prisma.otpCode.updateMany({
+      where: { id: otpId, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+    return count === 1;
   }
 
   /** How many codes went to this number today, for the daily cap. */
@@ -205,26 +220,27 @@ export class AuthRepository extends BaseRepository {
   }
 
   /**
-   * Rotation: bump the version and store the new hash in one update. The old
-   * refresh token then fails its version check, which is how token replay is
-   * detected.
+   * Rotation: bump the version and store the new hash in one update. The old refresh token then
+   * fails its version check, which is how token replay is detected. The update only matches the
+   * version the caller read, so of two refreshes carrying the same token exactly one rotates (and
+   * gets the new version back); the other gets null and is a replay.
    */
   async rotateSession(
     sessionId: string,
+    expectedVersion: number,
     refreshTokenHash: string,
     expiresAt: Date,
-  ): Promise<number> {
-    const row = await this.prisma.session.update({
-      where: { id: sessionId },
+  ): Promise<number | null> {
+    const { count } = await this.prisma.session.updateMany({
+      where: { id: sessionId, version: expectedVersion, revokedAt: null },
       data: {
         refreshTokenHash,
         expiresAt,
         version: { increment: 1 },
         lastSeenAt: new Date(),
       },
-      select: { version: true },
     });
-    return row.version;
+    return count === 1 ? expectedVersion + 1 : null;
   }
 
   async revokeSession(sessionId: string): Promise<void> {
@@ -254,19 +270,24 @@ export class AuthRepository extends BaseRepository {
     });
   }
 
-  /** Oldest sessions beyond the per-user cap, so a device list cannot grow forever. */
-  async trimSessions(userId: string, keep: number): Promise<void> {
+  /**
+   * Oldest sessions beyond the per-user cap, so a device list cannot grow forever. Returns the ids it
+   * revoked: their access tokens are still good until they expire unless the caller kills them too.
+   */
+  async trimSessions(userId: string, keep: number): Promise<string[]> {
     const stale = await this.prisma.session.findMany({
       where: { userId, revokedAt: null },
       orderBy: { lastSeenAt: 'desc' },
       skip: keep,
       select: { id: true },
     });
-    if (stale.length === 0) return;
+    if (stale.length === 0) return [];
+    const ids = stale.map((session) => session.id);
     await this.prisma.session.updateMany({
-      where: { id: { in: stale.map((session) => session.id) } },
+      where: { id: { in: ids } },
       data: { revokedAt: new Date() },
     });
+    return ids;
   }
 
   async savePushToken(
