@@ -78,6 +78,22 @@ describe('tracking an order', () => {
     }
   });
 
+  it('stops following the courier once the order is closed', async () => {
+    // Their latest fix belongs to whatever trip they are on now, not to this order.
+    for (const status of ['DELIVERED', 'CANCELLED', 'FAILED']) {
+      for (const who of [customer, desk, courier]) {
+        const view = await runWithContext(who, () => service(status).trackOrder('o1'));
+        expect(view.courierPoint, status).toBeNull();
+        expect(view.courierUpdatedAt).toBeNull();
+        expect(view.routeGeometry).toBeNull();
+        expect(view.etaSeconds).toBeNull();
+      }
+    }
+    // While it is open the same person does get the dot.
+    const live = await runWithContext(customer, () => service('IN_DELIVERY').trackOrder('o1'));
+    expect(live.courierPoint).not.toBeNull();
+  });
+
   it('keeps the drop-off, the route and the drive time from the stall', async () => {
     const view = await runWithContext(stall, () => service('IN_DELIVERY').trackOrder('o1'));
     expect(view.dropoffPoint).toBeNull();

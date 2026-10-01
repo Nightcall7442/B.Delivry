@@ -107,10 +107,16 @@ export class Http {
     throw new ApiError(response.status, parsed.error);
   }
 
-  /** Renews the stored pair now — for callers that hit a 401 outside HTTP (the socket). */
-  async renew(): Promise<Tokens | null> {
+  /**
+   * Renews the stored pair now — for callers that hit a 401 outside HTTP (the socket). `stale` is the
+   * access token the caller was using: when the store already holds a newer one (another tab of the
+   * same browser got there first) that pair is the answer, and the refresh token is not spent twice.
+   */
+  async renew(stale?: string): Promise<Tokens | null> {
     const current = await this.options.tokens.get();
-    return current ? this.refresh(current) : null;
+    if (!current) return null;
+    if (stale !== undefined && current.accessToken !== stale) return current;
+    return this.refresh(current);
   }
 
   private refresh(expired: Tokens): Promise<Tokens | null> {

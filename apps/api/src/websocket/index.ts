@@ -4,12 +4,14 @@
 import websocket from '@fastify/websocket';
 import type { FastifyInstance } from 'fastify';
 import type { Container } from '../app/container.js';
-import { authenticateSocket } from './auth.js';
-import { WebsocketGateway } from './gateway.js';
+import { authenticateSocketSession } from './auth.js';
+import { WebsocketGateway, WS_CLOSE, type Connection } from './gateway.js';
+import { createRoomGuards } from './guards.js';
 import { handleMessage } from './handlers/index.js';
 
 export * from './events.js';
 export * from './gateway.js';
+export * from './rate-limit.js';
 export * from './rooms.js';
 
 /**
@@ -21,28 +23,9 @@ export async function registerWebsocket(app: FastifyInstance, container: Contain
   const gateway = new WebsocketGateway({
     pubsub: container.pubsub,
     logger: container.logger,
-    // Ownership of an order cannot be read from a token, so the gateway asks
-    // the orders service, inside the socket's own request context.
-    // A vendor listens to the rooms of their own stalls only.
-    ownsStore: async (storeId, user) => {
-      if (user.vendorId === undefined) return false;
-      const store = await container.prisma.store.findFirst({
-        where: { id: storeId, tenantId: user.tenantId, vendorId: user.vendorId },
-        select: { id: true },
-      });
-      return store !== null;
-    },
-    ownsOrder: async (orderId, user) => {
-      try {
-        const order = await container.services.orders.get(orderId);
-        return (
-          order.customerId === user.customerId ||
-          (order.courierId !== null && order.courierId === user.courierId)
-        );
-      } catch {
-        return false;
-      }
-    },
+    // Ownership cannot be read from a token, so the gateway asks the orders service (inside the
+    // socket's own request context) and the database, always for the user's own tenant.
+    ...createRoomGuards({ prisma: container.prisma, orders: container.services.orders }),
   });
 
   await app.register(websocket, {
@@ -50,28 +33,51 @@ export async function registerWebsocket(app: FastifyInstance, container: Contain
   });
 
   app.get('/ws', { websocket: true }, async (socket, request) => {
-    const user = await authenticateSocket(request.url, container.services.tokens);
-
-    if (user === null) {
-      socket.close(4401, 'Unauthorized');
-      return;
-    }
-
-    const connection = gateway.add(socket, user);
-    container.logger.debug({ userId: user.id, connections: gateway.size }, 'websocket connected');
+    let connection: Connection | null = null;
+    const drop = () => {
+      if (connection !== null) gateway.remove(connection.id);
+    };
+    // Listeners go on before the first await: a client that hangs up or errors while its token is
+    // being checked must not be left registered, and its first frames (the api-client joins its
+    // rooms the moment the socket opens) must wait for the verdict instead of vanishing.
+    socket.on('close', drop);
+    socket.on('error', drop);
+    const session = authenticateSocketSession(request.url, container.services.tokens);
 
     socket.on('message', (data: Buffer) => {
-      void handleMessage(connection, data.toString(), {
-        gateway,
-        tracking: container.services.tracking,
-        logger: container.logger,
-      }).catch((error: unknown) => {
-        container.logger.warn({ err: error }, 'websocket message failed');
-      });
+      const raw = data.toString();
+      void session
+        .then(async (verified) => {
+          if (connection === null || verified === null) return;
+          await handleMessage(connection, raw, {
+            gateway,
+            tracking: container.services.tracking,
+            logger: container.logger,
+          });
+        })
+        .catch((error: unknown) => {
+          container.logger.warn({ err: error }, 'websocket message failed');
+        });
     });
 
-    socket.on('close', () => gateway.remove(connection.id));
-    socket.on('error', () => gateway.remove(connection.id));
+    const verified = await session;
+    if (verified === null) {
+      socket.close(WS_CLOSE.UNAUTHORIZED, 'Unauthorized');
+      return;
+    }
+    // Hung up while the token was being checked: nobody left to serve.
+    if (socket.readyState !== 1) return;
+
+    // The token is kept to re-verify the socket as it lives on (a logout, a block) and closes it
+    // when the token runs out; the api-client then renews its token and reconnects by itself.
+    connection = gateway.add(socket, verified.user, {
+      expiresAt: verified.expiresAt,
+      revalidate: () => container.services.tokens.verifyAccessToken(verified.token),
+    });
+    container.logger.debug(
+      { userId: verified.user.id, connections: gateway.size },
+      'websocket connected',
+    );
   });
 
   await gateway.start();

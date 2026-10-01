@@ -26,11 +26,18 @@ export interface ParsedRoom {
 
 const KINDS = new Set<string>(['order', 'courier', 'customer', 'user', 'store', 'operator']);
 
+/** Every id the platform issues is a uuid; anything else is a client making names up. */
+const ROOM_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
 export function parseRoom(value: string): ParsedRoom | null {
   const separator = value.indexOf(':');
   if (separator <= 0) return null;
   const kind = value.slice(0, separator);
   const id = value.slice(separator + 1);
-  if (!KINDS.has(kind) || id.length === 0) return null;
+  if (!KINDS.has(kind) || !ROOM_ID.test(id)) return null;
   return { kind: kind as RoomKind, id };
 }
+
+/** Rooms that follow from who the socket is (its token) and need no ownership lookup to keep. */
+export const isPersonalRoom = (kind: RoomKind): boolean =>
+  kind === 'user' || kind === 'customer' || kind === 'courier';

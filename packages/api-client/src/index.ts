@@ -58,7 +58,7 @@ export function createApiClient(options: ApiClientOptions) {
     realtime: new RealtimeClient({
       url: options.baseUrl.replace(/^http/, 'ws').replace(/\/api\/v\d+\/?$/, '') + '/ws',
       tokens: options.tokens,
-      renew: () => http.renew(),
+      renew: (stale) => http.renew(stale),
     }),
   };
 }

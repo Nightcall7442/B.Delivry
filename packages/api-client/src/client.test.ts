@@ -200,3 +200,85 @@ describe('Http with nothing to read', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });
+
+describe('Http.renew', () => {
+  const refreshed = () =>
+    json(200, { ok: true, data: { accessToken: 'new', refreshToken: 'R2', expiresIn: 900 } });
+
+  const setup = (initial: Tokens | null) => {
+    const tokens = memoryTokens(initial);
+    const onSignedOut = vi.fn();
+    const fetchMock = vi.fn(async () => refreshed());
+    const http = new Http({
+      baseUrl: 'http://api',
+      tokens,
+      onSignedOut,
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+    return { http, tokens, onSignedOut, fetchMock };
+  };
+
+  /** The refresh token a refresh call spent. */
+  const spent = (fetchMock: ReturnType<typeof setup>['fetchMock']) =>
+    fetchMock.mock.calls.map((call) => {
+      const [url, init] = call as unknown as [string, RequestInit];
+      return { url, body: JSON.parse(String(init.body)) as unknown };
+    });
+
+  it('hands back the pair the store already holds, and spends no refresh token, when the caller’s token is stale', async () => {
+    // Another window of the same browser renewed first: the store has moved on from "A".
+    const { http, tokens, onSignedOut, fetchMock } = setup({
+      accessToken: 'B',
+      refreshToken: 'R-B',
+    });
+
+    await expect(http.renew('A')).resolves.toEqual({ accessToken: 'B', refreshToken: 'R-B' });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(tokens.peek()).toEqual({ accessToken: 'B', refreshToken: 'R-B' });
+    expect(onSignedOut).not.toHaveBeenCalled();
+  });
+
+  it('refreshes when the stored token is still the stale one', async () => {
+    const { http, tokens, fetchMock } = setup({ accessToken: 'A', refreshToken: 'R' });
+
+    await expect(http.renew('A')).resolves.toEqual({ accessToken: 'new', refreshToken: 'R2' });
+
+    expect(spent(fetchMock)).toEqual([
+      { url: 'http://api/auth/refresh', body: { refreshToken: 'R' } },
+    ]);
+    expect(tokens.peek()).toEqual({ accessToken: 'new', refreshToken: 'R2' });
+  });
+
+  it('refreshes as before when it is not told which token is stale', async () => {
+    const { http, tokens, fetchMock } = setup({ accessToken: 'B', refreshToken: 'R-B' });
+
+    await expect(http.renew()).resolves.toEqual({ accessToken: 'new', refreshToken: 'R2' });
+
+    expect(spent(fetchMock)).toEqual([
+      { url: 'http://api/auth/refresh', body: { refreshToken: 'R-B' } },
+    ]);
+    expect(tokens.peek()).toEqual({ accessToken: 'new', refreshToken: 'R2' });
+  });
+
+  it('two windows told at once spend the refresh token once: the second finds the new pair in the store', async () => {
+    const { http, fetchMock } = setup({ accessToken: 'A', refreshToken: 'R' });
+
+    const first = await http.renew('A');
+    // The second window still names the token it was opened with.
+    const second = await http.renew('A');
+
+    expect(first).toEqual({ accessToken: 'new', refreshToken: 'R2' });
+    expect(second).toEqual(first);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('has nothing to renew with when the store is empty', async () => {
+    const { http, fetchMock } = setup(null);
+
+    await expect(http.renew('A')).resolves.toBeNull();
+    await expect(http.renew()).resolves.toBeNull();
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

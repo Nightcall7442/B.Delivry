@@ -13,8 +13,9 @@ export interface LocationHandlerDeps {
 /**
  * The hot path of the whole platform: a courier phone sends a fix every few
  * seconds, and it has to reach the customer's map quickly. The tracking
- * service does the thinning and the broadcast; this only validates and hands
- * over inside the socket's request context.
+ * service does the validation (the order must be this courier's), the thinning
+ * and the broadcast; this only rate-limits and hands over inside the socket's
+ * request context.
  */
 export async function handleLocation(
   connection: Connection,
@@ -23,6 +24,9 @@ export async function handleLocation(
 ): Promise<void> {
   // Only a courier account has a position worth recording.
   if (connection.user.courierId === undefined) return;
+  // A phone reports every few seconds; a faster stream is a script, and every fix costs a database
+  // write and a pubsub message. Dropping the excess loses nothing the next fix does not repeat.
+  if (!deps.gateway.allowLocation(connection)) return;
 
   await deps.gateway.runAs(connection, () =>
     deps.tracking.push([
@@ -32,7 +36,8 @@ export async function handleLocation(
         heading: command.heading,
         speedKmh: command.speedKmh,
         accuracyMeters: command.accuracyMeters,
-        // The device clock is what orders the pings; a missing one means now.
+        // The device clock is what orders the pings; a missing one means now. The service decides
+        // what to do with one that is unreadable or far from the server's.
         recordedAt: command.recordedAt === undefined ? new Date() : new Date(command.recordedAt),
         orderId: command.orderId,
       },
