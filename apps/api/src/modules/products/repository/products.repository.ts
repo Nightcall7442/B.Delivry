@@ -4,6 +4,7 @@
 import type { Prisma, Product, ProductImage } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
+import { currentViewer, visibleProductWhere } from '../../catalog/domain/visibility.js';
 import type { CreateProductInput, ProductListFilters, UpdateProductInput } from '../types/index.js';
 
 const PRODUCT_INCLUDE = {
@@ -20,10 +21,27 @@ export class ProductsRepository extends BaseRepository {
     });
   }
 
+  /**
+   * One product as the viewer may see it: the owner's in any state, anyone else's only while it
+   * is on sale in a stall the public may see. Anything else is a miss, not a 403.
+   */
+  async findVisibleById(id: string): Promise<ProductWithImages | null> {
+    return this.prisma.product.findFirst({
+      where: {
+        ...this.scopedAlive({ id }),
+        AND: [visibleProductWhere(currentViewer(), { soldOutToo: false })],
+      },
+      include: PRODUCT_INCLUDE,
+    });
+  }
+
   async list(filters: ProductListFilters): Promise<PaginatedResult<ProductWithImages>> {
     const where: Prisma.ProductWhereInput = {
       ...this.tenantScope(),
       deletedAt: null,
+      // What the viewer may see is the floor; `storeId`, `availableOnly` and the rest only narrow
+      // it. The seller's own shelf (every good, sold out too) is the owner's alone.
+      AND: [visibleProductWhere(currentViewer(), { soldOutToo: false })],
       ...(filters.storeId !== undefined ? { storeId: filters.storeId } : {}),
       ...(filters.categoryId !== undefined ? { categoryId: filters.categoryId } : {}),
       ...(filters.availableOnly === true ? { available: true } : {}),
@@ -92,15 +110,15 @@ export class ProductsRepository extends BaseRepository {
     input: UpdateProductInput,
     changedBy: string | null,
   ): Promise<ProductWithImages> {
-    const current = await this.prisma.product.findUniqueOrThrow({
-      where: { id },
+    const current = await this.prisma.product.findFirstOrThrow({
+      where: this.scoped({ id }),
       select: { price: true, currency: true },
     });
 
     const priceChanged = input.price !== undefined && input.price.amount !== current.price;
 
     return this.prisma.product.update({
-      where: { id },
+      where: this.scoped({ id }),
       data: {
         ...(input.name !== undefined ? { name: input.name as Prisma.InputJsonValue } : {}),
         ...(input.description !== undefined
@@ -113,7 +131,6 @@ export class ProductsRepository extends BaseRepository {
         ...(input.minQuantity !== undefined ? { minQuantity: input.minQuantity } : {}),
         ...(input.quantityStep !== undefined ? { quantityStep: input.quantityStep } : {}),
         ...(input.weightGrams !== undefined ? { weightGrams: input.weightGrams } : {}),
-        ...(input.tags !== undefined ? { tags: input.tags } : {}),
         ...(input.tags !== undefined ? { tags: input.tags } : {}),
         ...(input.stock !== undefined ? { stock: input.stock } : {}),
         ...(input.available !== undefined ? { available: input.available } : {}),
@@ -151,28 +168,28 @@ export class ProductsRepository extends BaseRepository {
   }
 
   async setAvailability(id: string, available: boolean): Promise<void> {
-    await this.prisma.product.update({ where: { id }, data: { available } });
+    await this.prisma.product.update({ where: this.scoped({ id }), data: { available } });
   }
 
   /** Soft delete: past order items keep pointing at this row. */
   async softDelete(id: string): Promise<void> {
     await this.prisma.product.update({
-      where: { id },
+      where: this.scoped({ id }),
       data: { deletedAt: new Date(), available: false },
     });
   }
 
   async priceHistory(productId: string) {
     return this.prisma.productPrice.findMany({
-      where: { productId },
+      where: { productId, product: this.tenantScope() },
       orderBy: { validFrom: 'desc' },
       take: 100,
     });
   }
 
   async storeIdOf(productId: string): Promise<string | null> {
-    const row = await this.prisma.product.findUnique({
-      where: { id: productId },
+    const row = await this.prisma.product.findFirst({
+      where: this.scoped({ id: productId }),
       select: { storeId: true },
     });
     return row?.storeId ?? null;

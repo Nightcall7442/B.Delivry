@@ -2,6 +2,7 @@
  * Stores route definitions — mounted by src/routes/stores.routes.ts.
  */
 import { PERMISSION } from '@bazar/constants';
+import { httpUrl } from '@bazar/validation';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../../../middleware/auth.middleware.js';
@@ -21,13 +22,14 @@ import {
 const arrivalsSchema = z.object({
   productIds: z.array(z.string().uuid()).min(1).max(100),
   announce: z.boolean().default(false),
-  photoUrl: z.string().url().max(500).optional(),
+  photoUrl: httpUrl.optional(),
 });
 
 export function storesRoutes(controller: StoresController) {
   return async (app: FastifyInstance): Promise<void> => {
     // Browsing the marketplace needs no account: a customer picks a bazaar
-    // before they sign in.
+    // before they sign in. What it shows depends on who asks: the public gets live and closed
+    // stalls, a vendor also their own in any status, the desk all (see catalog/domain/visibility).
     app.get('/', { preHandler: validate({ query: storesListQuerySchema }) }, controller.list);
     app.get('/:id', { preHandler: validate({ params: storeIdParamsSchema }) }, controller.get);
     app.post(

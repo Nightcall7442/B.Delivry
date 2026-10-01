@@ -6,7 +6,7 @@
  */
 import { effectivePermissions } from '@bazar/auth';
 import { describe, expect, it } from 'vitest';
-import { ForbiddenError } from '../../src/common/errors/index.js';
+import { ConflictError, ForbiddenError } from '../../src/common/errors/index.js';
 import { runWithContext } from '../../src/common/tenant/tenant-context.js';
 import { systemContext } from '../../src/common/types/request-context.js';
 import { StoresService } from '../../src/modules/stores/service/stores.service.js';
@@ -36,6 +36,8 @@ const asVendorWithoutProfile = as(['VENDOR']);
 
 function service(status: string = 'ACTIVE', extra: Record<string, unknown> = {}) {
   const updates: Record<string, unknown>[] = [];
+  /** The status the owner's guarded write was made against, and whether the desk got there first. */
+  const guarded: { against: string[]; lost: boolean } = { against: [], lost: false };
   const schedules: unknown[] = [];
   const reads = { products: 0, orders: 0 };
   const enqueued: unknown[] = [];
@@ -57,6 +59,12 @@ function service(status: string = 'ACTIVE', extra: Record<string, unknown> = {})
         return store;
       },
       async update(_id: string, data: Record<string, unknown>) {
+        updates.push(data);
+        return { ...store, ...data };
+      },
+      async updateWhileIn(_id: string, against: string, data: Record<string, unknown>) {
+        guarded.against.push(against);
+        if (guarded.lost) return null;
         updates.push(data);
         return { ...store, ...data };
       },
@@ -89,7 +97,7 @@ function service(status: string = 'ACTIVE', extra: Record<string, unknown> = {})
     logger: { error() {}, warn() {}, info() {}, debug() {} },
     events: { async publish() {} },
   } as never);
-  return { svc, updates, schedules, reads, enqueued };
+  return { svc, updates, schedules, reads, enqueued, guarded };
 }
 
 describe('editing a stall', () => {
@@ -171,6 +179,26 @@ describe('editing a stall', () => {
     const reopening = service('CLOSED');
     await runWithContext(asStallVendor, () => reopening.svc.update('st1', { status: 'ACTIVE' }));
     expect(reopening.updates[0]).toMatchObject({ status: 'ACTIVE' });
+  });
+
+  it('does not let the owner’s status edit land over a suspension that raced it', async () => {
+    // The desk suspends between the read and the write: the guarded write finds the status moved.
+    const racing = service('ACTIVE');
+    racing.guarded.lost = true;
+    await expect(
+      runWithContext(asStallVendor, () => racing.svc.update('st1', { status: 'ACTIVE' })),
+    ).rejects.toBeInstanceOf(ConflictError);
+    expect(racing.updates).toEqual([]);
+    // The write is made against the status the check was made on.
+    expect(racing.guarded.against).toEqual(['ACTIVE']);
+
+    // The desk itself is not held to it, and an owner's edit with no status is an ordinary write.
+    const desk = service('SUSPENDED');
+    await runWithContext(asAdmin, () => desk.svc.update('st1', { status: 'ACTIVE' }));
+    const plain = service('ACTIVE');
+    await runWithContext(asStallVendor, () => plain.svc.update('st1', { minOrder: 1 }));
+    expect(desk.guarded.against).toEqual([]);
+    expect(plain.guarded.against).toEqual([]);
   });
 
   it('lets a vendor declare the badges on their own counter, but not join a chain', async () => {

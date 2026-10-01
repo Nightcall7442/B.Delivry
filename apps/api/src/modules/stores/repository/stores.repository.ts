@@ -5,6 +5,11 @@ import { boundingBox, haversineMeters } from '@bazar/maps';
 import type { Prisma, Store, StoreSchedule } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
+import {
+  SHUT_VENDOR_STATUSES,
+  currentViewer,
+  visibleStoreWhere,
+} from '../../catalog/domain/visibility.js';
 import type { ScheduleEntry, StoreListFilters } from '../types/index.js';
 
 const STORE_INCLUDE = { schedule: true } satisfies Prisma.StoreInclude;
@@ -17,6 +22,15 @@ export class StoresRepository extends BaseRepository {
       where: this.scopedAlive({ id }),
       include: STORE_INCLUDE,
     });
+  }
+
+  /** The platform has suspended or rejected this stall's vendor: the stall is shut for the public. */
+  async vendorIsShut(vendorId: string): Promise<boolean> {
+    const shut = await this.prisma.vendor.findFirst({
+      where: { id: vendorId, ...this.tenantScope(), status: { in: [...SHUT_VENDOR_STATUSES] } },
+      select: { id: true },
+    });
+    return shut !== null;
   }
 
   async findBySlug(slug: string): Promise<StoreWithSchedule | null> {
@@ -75,17 +89,32 @@ export class StoresRepository extends BaseRepository {
       .sort((a, b) => a.distanceMeters - b.distanceMeters);
   }
 
+  /**
+   * What the viewer may see is the floor and the filters only narrow it: an anonymous caller asking
+   * for `status=PENDING_REVIEW` or someone else's `vendorId` gets nothing that was not already
+   * theirs to see. A vendor's own stalls are theirs in any status; the desk sees every tenant stall.
+   */
   private buildWhere(filters: StoreListFilters): Prisma.StoreWhereInput {
     return {
       ...this.tenantScope(),
       deletedAt: null,
-      // Customers only ever see ACTIVE stores; admin lists pass an explicit status.
-      status: filters.status ?? 'ACTIVE',
+      AND: [visibleStoreWhere(currentViewer())],
+      // The shelf shows live stalls unless asked otherwise. The cabinet's own list (`mine`) is the
+      // caller's stalls whatever their status: a stall in review is still theirs to open.
+      ...(filters.status !== undefined
+        ? { status: filters.status }
+        : filters.mine === true
+          ? {}
+          : { status: 'ACTIVE' as const }),
       ...(filters.cityId !== undefined ? { cityId: filters.cityId } : {}),
       ...(filters.type !== undefined ? { type: filters.type } : {}),
       ...(filters.vendorId !== undefined ? { vendorId: filters.vendorId } : {}),
       ...(filters.categoryId !== undefined
-        ? { products: { some: { categoryId: filters.categoryId, available: true } } }
+        ? {
+            products: {
+              some: { categoryId: filters.categoryId, available: true, deletedAt: null },
+            },
+          }
         : {}),
       ...(filters.search !== undefined
         ? {
@@ -104,6 +133,23 @@ export class StoresRepository extends BaseRepository {
 
   async update(id: string, data: Prisma.StoreUpdateInput): Promise<StoreWithSchedule> {
     return this.prisma.store.update({ where: { id }, data, include: STORE_INCLUDE });
+  }
+
+  /**
+   * The same write, but only while the stall is still in the status it was checked in: an owner's
+   * edit that read the stall before the desk suspended it must not write over the suspension.
+   * Null when the status moved in between.
+   */
+  async updateWhileIn(
+    id: string,
+    status: Store['status'],
+    data: Prisma.StoreUpdateInput,
+  ): Promise<StoreWithSchedule | null> {
+    const { count } = await this.prisma.store.updateMany({
+      where: this.scopedAlive({ id, status }),
+      data: data as Prisma.StoreUpdateManyMutationInput,
+    });
+    return count === 0 ? null : this.findById(id);
   }
 
   async softDelete(id: string): Promise<void> {

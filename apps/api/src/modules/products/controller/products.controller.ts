@@ -17,7 +17,7 @@ export class ProductsController extends BaseController {
 
   get = async (request: FastifyRequest, reply: FastifyReply) => {
     const { id } = params<{ id: string }>(request);
-    return this.ok(reply, await this.service.get(id));
+    return this.ok(reply, await this.service.getVisible(id));
   };
 
   create = async (request: FastifyRequest, reply: FastifyReply) =>

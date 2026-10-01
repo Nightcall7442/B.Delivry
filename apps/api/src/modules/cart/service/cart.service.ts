@@ -41,8 +41,18 @@ export class CartService extends BaseService {
    * before they order rather than discover it on the receipt.
    */
   async get(storeId: string): Promise<CartView> {
+    await this.assertStore(storeId);
+    return this.read(storeId);
+  }
+
+  private async read(storeId: string): Promise<CartView> {
     const cart = await this.repository.ensure(this.customerId(), storeId);
     return this.toView(cart);
+  }
+
+  /** Opening a cart creates a row, so the store it is for has to be a real one of this tenant. */
+  private async assertStore(storeId: string): Promise<void> {
+    if (!(await this.repository.storeExists(storeId))) throw new NotFoundError('Store', storeId);
   }
 
   async list(): Promise<CartView[]> {
@@ -110,8 +120,15 @@ export class CartService extends BaseService {
 
     const cart = await this.repository.ensure(customerId, input.storeId);
 
-    if (await this.isFull(cart.id, input.productId)) {
+    const existing = await this.repository.findItemByProduct(cart.id, input.productId);
+    // An existing line only grows, so it does not count against the limit.
+    if (existing === null && (await this.repository.countItems(cart.id)) >= LIMITS.CART_MAX_ITEMS) {
       throw new ConflictError(`A cart may hold at most ${LIMITS.CART_MAX_ITEMS} items`);
+    }
+    // Adding is cumulative: the ceiling the schema puts on one request has to hold for the line,
+    // or a few hundred small adds build a quantity no order total can carry.
+    if (Number(existing?.quantity ?? 0) + input.quantity > LIMITS.CART_MAX_QTY_PER_ITEM) {
+      throw new ConflictError(`At most ${LIMITS.CART_MAX_QTY_PER_ITEM} of one product`);
     }
 
     await this.repository.upsertItem(
@@ -123,14 +140,7 @@ export class CartService extends BaseService {
       input.comment ?? null,
     );
 
-    return this.get(input.storeId);
-  }
-
-  private async isFull(cartId: string, productId: string): Promise<boolean> {
-    // An existing line only grows, so it does not count against the limit.
-    const existing = await this.repository.findItemByProduct(cartId, productId);
-    if (existing !== null) return false;
-    return (await this.repository.countItems(cartId)) >= LIMITS.CART_MAX_ITEMS;
+    return this.read(input.storeId);
   }
 
   async updateItem(
@@ -139,6 +149,7 @@ export class CartService extends BaseService {
     quantity: number,
     comment?: string,
   ): Promise<CartView> {
+    await this.assertStore(storeId);
     const cart = await this.repository.ensure(this.customerId(), storeId);
     const item = await this.repository.findItem(cart.id, itemId);
     if (item === null) throw new NotFoundError('Cart item', itemId);
@@ -149,15 +160,16 @@ export class CartService extends BaseService {
       await this.repository.setItemQuantity(itemId, quantity, comment ?? item.comment);
     }
 
-    return this.get(storeId);
+    return this.read(storeId);
   }
 
   async removeItem(storeId: string, itemId: string): Promise<CartView> {
+    await this.assertStore(storeId);
     const cart = await this.repository.ensure(this.customerId(), storeId);
     const item = await this.repository.findItem(cart.id, itemId);
     if (item === null) throw new NotFoundError('Cart item', itemId);
     await this.repository.removeItem(itemId);
-    return this.get(storeId);
+    return this.read(storeId);
   }
 
   /**

@@ -34,8 +34,9 @@ export class CatalogService extends BaseService {
     return this.repository.findPurchasable(storeId, [...new Set(ids)]);
   }
 
+  /** What the storefront may open: see `CatalogRepository.findVisibleById`. A hidden one is NotFound. */
   async get(id: string): Promise<ProductWithImages> {
-    const product = await this.repository.findById(id);
+    const product = await this.repository.findVisibleById(id);
     if (product === null) throw new NotFoundError('Product', id);
     return product;
   }
@@ -45,6 +46,15 @@ export class CatalogService extends BaseService {
   }
 
   async categories(parentId?: string | null) {
+    // The parent is part of the cache key, and it comes from the query string of an anonymous
+    // caller: an unknown one answers empty without leaving an entry behind.
+    if (
+      parentId !== undefined &&
+      parentId !== null &&
+      !(await this.repository.categoryExists(parentId))
+    ) {
+      return [];
+    }
     return cached(
       this.cache,
       `categories:${parentId ?? 'root'}`,

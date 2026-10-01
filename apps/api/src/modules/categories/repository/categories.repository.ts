@@ -3,11 +3,25 @@
  */
 import type { Category, Prisma } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
+import { currentViewer, visibleStoreWhere } from '../../catalog/domain/visibility.js';
 import type { CreateCategoryInput, UpdateCategoryInput } from '../types/index.js';
 
 export class CategoriesRepository extends BaseRepository {
   async findById(id: string): Promise<Category | null> {
     return this.prisma.category.findUnique({ where: { id } });
+  }
+
+  /**
+   * Whether this stall's shelves may be listed to the caller: the same stalls the shop window shows
+   * (and the owner's own, and the desk's), in this tenant. Categories are shared reference data,
+   * so without it `?storeId=` named any stall of any tenant, hidden ones included.
+   */
+  async storeIsVisible(storeId: string): Promise<boolean> {
+    const row = await this.prisma.store.findFirst({
+      where: { ...this.scopedAlive({ id: storeId }), AND: [visibleStoreWhere(currentViewer())] },
+      select: { id: true },
+    });
+    return row !== null;
   }
 
   async findBySlug(slug: string): Promise<Category | null> {

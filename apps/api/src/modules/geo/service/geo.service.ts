@@ -41,6 +41,9 @@ export class GeoService extends BaseService {
   }
 
   async listPlaces(level?: GeoLevel, parentId?: string): Promise<GeoPlace[]> {
+    // The parent is part of the cache key and comes from an anonymous query string: an unknown one
+    // answers empty without leaving an entry (and a tag member) behind for an hour.
+    if (parentId !== undefined && (await this.repository.findPlace(parentId)) === null) return [];
     return cached(
       this.cache,
       `places:${level ?? 'all'}:${parentId ?? 'root'}`,
@@ -138,7 +141,9 @@ export class GeoService extends BaseService {
     await this.cache.invalidateByTag(CACHE_TAG);
   }
 
+  /** The public list; checkout resolves through `resolveZone`, which knows its city is real. */
   async listZones(cityId: string): Promise<ZoneWithPolygon[]> {
+    if ((await this.repository.findPlace(cityId)) === null) return [];
     return this.zonesFor(cityId);
   }
 }
