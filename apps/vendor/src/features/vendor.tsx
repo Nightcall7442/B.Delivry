@@ -78,6 +78,8 @@ export function VendorProvider({ children }: { children: ReactNode }) {
   const storeId = store?.id ?? null;
   const storesRef = useRef<StoreDto[]>([]);
   storesRef.current = stores;
+  const storeIdRef = useRef<string | null>(null);
+  storeIdRef.current = storeId;
 
   const reloadStore = useCallback(async () => {
     if (!user) return;
@@ -112,18 +114,23 @@ export function VendorProvider({ children }: { children: ReactNode }) {
     };
   }, [user, storesTick]);
 
-  // Every stall of the vendor: the active orders in one request (an old order still waiting must not
-  // fall out of a window of newer finished ones), the latest in another.
+  // Every stall of the vendor, in a fixed number of requests however many stalls there are (the poll
+  // runs every few seconds, and the API allows 100 requests a minute per account: two per stall would
+  // spend all of it at five stalls). The server scopes `as: 'store'` to the account's own stalls.
+  // Active orders in one request (an old order still waiting must not fall out of a window of newer
+  // finished ones), the latest of all stalls in another, the latest of the stall on screen in a third
+  // (a busy neighbour must not crowd its history out).
   const reloadOrders = useCallback(async () => {
-    const ids = storesRef.current.map((row) => row.id);
-    if (ids.length === 0) return;
+    if (storesRef.current.length === 0) return;
+    const onScreen = storeIdRef.current;
     try {
-      const pages = await Promise.all(
-        ids.flatMap((id) => [
-          api().orders.list({ as: 'store', storeId: id, activeOnly: true, pageSize: 100 }),
-          api().orders.list({ as: 'store', storeId: id, pageSize: 50 }),
-        ]),
-      );
+      const pages = await Promise.all([
+        api().orders.list({ as: 'store', activeOnly: true, pageSize: 100 }),
+        api().orders.list({ as: 'store', pageSize: 50 }),
+        ...(onScreen === null
+          ? []
+          : [api().orders.list({ as: 'store', storeId: onScreen, pageSize: 50 })]),
+      ]);
       const byId = new Map<string, OrderDto>();
       for (const page of pages) for (const order of page.items) byId.set(order.id, order);
       setAllOrders(
@@ -158,6 +165,11 @@ export function VendorProvider({ children }: { children: ReactNode }) {
       sub.remove();
     };
   }, [storeKey, reloadOrders]);
+
+  // Another stall on screen: its own latest orders are read now, not at the next poll.
+  useEffect(() => {
+    if (storeId !== null) void reloadOrders().catch(() => undefined);
+  }, [storeId, reloadOrders]);
 
   // The socket: a new order is heard the moment it is placed, not at the next poll.
   useEffect(() => {

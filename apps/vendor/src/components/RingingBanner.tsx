@@ -27,13 +27,14 @@ export function RingingBanner() {
 
   return (
     <View pointerEvents="box-none" style={[s.wrap, { top: insets.top + 8 }]}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Новый заказ ${ringing.number}`}
-        onPress={open}
-        style={({ pressed }) => [s.banner, shadow.paper, press.base, pressed && press.down]}
-      >
-        <View style={{ flex: 1 }}>
+      {/* Two sibling buttons, not one inside the other: a button in a button is invalid HTML on the web. */}
+      <View style={[s.banner, shadow.paper]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Новый заказ ${ringing.number}`}
+          onPress={open}
+          style={({ pressed }) => [s.body, press.base, pressed && press.down]}
+        >
           <RNText style={s.tag}>Новый заказ</RNText>
           <RNText style={s.number}>{ringing.number}</RNText>
           {stores.length > 1 ? (
@@ -43,9 +44,11 @@ export function RingingBanner() {
             {items} поз. ·{' '}
             {formatMoney(ringing.totals.subtotal.amount, ringing.totals.subtotal.currency)}
           </RNText>
-        </View>
+        </Pressable>
         <View style={s.actions}>
-          <RNText style={s.open}>Открыть →</RNText>
+          <Pressable accessibilityRole="button" accessibilityLabel="Открыть заказ" onPress={open}>
+            <RNText style={s.open}>Открыть →</RNText>
+          </Pressable>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Заглушить"
@@ -55,7 +58,7 @@ export function RingingBanner() {
             <RNText style={s.mute}>Заглушить</RNText>
           </Pressable>
         </View>
-      </Pressable>
+      </View>
     </View>
   );
 }
@@ -72,6 +75,7 @@ const s = StyleSheet.create({
     borderColor: alpha(TONE.paperEdge, 0.4),
     padding: 16,
   },
+  body: { flex: 1 },
   tag: { ...capital, color: TONE.ochreLight },
   number: { fontFamily: sceneFont.display, ...scale.title, color: HALL.cream },
   line: { fontFamily: sceneFont.ui, ...scale.body, color: TONE.creamLight, marginTop: 2 },
