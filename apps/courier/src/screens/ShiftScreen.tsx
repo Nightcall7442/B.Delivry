@@ -230,7 +230,7 @@ function OfferCard({
         <Button
           label="Пропустить"
           variant="secondary"
-          style={{ flex: 1 }}
+          style={{ flex: 1, minWidth: 124 }}
           disabled={busy}
           onPress={() => onDecline(offer)}
         />
