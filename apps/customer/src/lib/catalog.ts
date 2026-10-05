@@ -40,7 +40,7 @@ export async function listCategories(): Promise<CategoryDto[]> {
 }
 
 export async function listProducts(
-  query: { storeId?: string; categoryId?: string; search?: string } = {},
+  query: { storeId?: string; categoryId?: string; search?: string; onSale?: boolean } = {},
 ): Promise<ProductDto[]> {
   const page = await api().catalog.products({ ...query, pageSize: 100 });
   return page.items;

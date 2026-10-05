@@ -142,7 +142,14 @@ export function ProductsScreen() {
         }
       />
 
-      <EditSheet product={editing} onClose={() => setEditing(null)} onSave={goods.save} />
+      <EditSheet
+        product={editing}
+        onClose={() => setEditing(null)}
+        onSave={goods.save}
+        onSale={goods.startSale}
+        onEndSale={goods.endSale}
+        onTiers={goods.setTiers}
+      />
     </Ground>
   );
 }

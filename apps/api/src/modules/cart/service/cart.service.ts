@@ -3,6 +3,7 @@
  */
 import { LIMITS, type Currency } from '@bazar/constants';
 import { money, multiply, sumMoney, zero } from '@bazar/payments';
+import { unitPriceFor } from '@bazar/storefront';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
 import {
   ConflictError,
@@ -72,8 +73,12 @@ export class CartService extends BaseService {
       const unitPrice = money(item.unitPrice, currency);
       const quantity = Number(item.quantity);
 
-      // A product missing from the purchasable set is gone or switched off.
-      const currentPrice = product === undefined ? unitPrice : money(product.price, currency);
+      // A product missing from the purchasable set is gone or switched off. A quantity tier
+      // prices the whole line, as the order will.
+      const currentPrice =
+        product === undefined
+          ? unitPrice
+          : money(unitPriceFor(product.price, product.priceTiers, quantity), currency);
 
       return {
         id: item.id,

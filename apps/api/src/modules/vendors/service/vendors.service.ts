@@ -58,6 +58,26 @@ export class VendorsService extends BaseService {
   }
 
   /**
+   * «Стать продавцом»: the caller's own application, whatever the desk decided — a customer who
+   * applied has no vendorId on the token yet, so this reads by user. Null = never applied.
+   */
+  async myApplication(): Promise<{
+    id: string;
+    status: VendorStatus;
+    displayName: string;
+    createdAt: Date;
+  } | null> {
+    const vendor = await this.repository.findByUserId(this.currentUser().id);
+    if (vendor === null) return null;
+    return {
+      id: vendor.id,
+      status: vendor.status as VendorStatus,
+      displayName: vendor.displayName,
+      createdAt: vendor.createdAt,
+    };
+  }
+
+  /**
    * The desk, or the vendor the id names. The matrix has no vendor:*_any twin, so asking `can()` with
    * the vendor as the resource refused every operator and admin and left the rule to the permission
    * alone; who may touch which vendor is decided here instead, before any lookup, so a stranger cannot
@@ -89,7 +109,10 @@ export class VendorsService extends BaseService {
     // Anyone signed in may apply, but for themselves: a vendor record (legal name, phone, bank
     // account) bound to another user is the desk's to create, whatever the body says.
     const user = this.currentUser();
-    const userId = user.permissions.includes(PERMISSION.VENDOR_WRITE) ? input.userId : user.id;
+    const userId =
+      user.permissions.includes(PERMISSION.VENDOR_WRITE) && input.userId !== undefined
+        ? input.userId
+        : user.id;
 
     const existing = await this.repository.findByUserId(userId);
     if (existing !== null) throw new ConflictError('This user is already a vendor');
@@ -125,7 +148,10 @@ export class VendorsService extends BaseService {
     const roles = await this.repository.rolesOfUser(vendor.userId);
     assertMayManageAccount(this.context(), vendor.userId, roles);
 
-    await this.repository.setStatus(id, status);
+    await this.repository.setStatus(id, status, {
+      userId: vendor.userId,
+      grantedBy: this.context().user?.id ?? null,
+    });
     // A "no" takes hold now, not when the access token expires. A yes needs no sign-out: the vendor's
     // next token already carries the vendorId again.
     if (!vendorMayTrade({ status })) await this.auth.logoutAll(vendor.userId);

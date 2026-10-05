@@ -8,6 +8,7 @@ import type { DeliveryService } from '../../modules/delivery/service/delivery.se
 import type { EventBus } from '../event-bus.js';
 import { registerAuditHandlers } from './audit.handler.js';
 import { registerCourierSearchHandlers } from './order-courier-search.handler.js';
+import { registerFavoritesSaleHandlers, type FavoritesSaleDeps } from './favorites-sale.handler.js';
 import {
   registerOrderNotificationHandlers,
   type RecipientDeps,
@@ -30,6 +31,7 @@ export interface EventHandlerDeps {
   perks: PerksDeps;
   recipient: RecipientDeps;
   delivery: DeliveryService;
+  favorites: FavoritesSaleDeps['favorites'];
 }
 
 /**
@@ -50,4 +52,5 @@ export function registerEventHandlers(deps: EventHandlerDeps): void {
   registerOrderPaymentHandlers(deps.events, deps.paymentSync);
   registerOrderGuaranteeHandlers(deps.events, deps.guarantee);
   registerCustomerPerksHandlers(deps.events, deps.perks);
+  registerFavoritesSaleHandlers(deps.events, { favorites: deps.favorites, queue: deps.queue });
 }

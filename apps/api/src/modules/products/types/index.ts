@@ -11,7 +11,6 @@ export interface CreateProductInput {
   description?: Record<string, string> | undefined;
   unit: ProductUnit;
   price: Money;
-  oldPrice?: Money | undefined;
   minQuantity?: number | undefined;
   quantityStep?: number | undefined;
   weightGrams?: number | undefined;
@@ -20,6 +19,8 @@ export interface CreateProductInput {
 }
 
 export type UpdateProductInput = Partial<Omit<CreateProductInput, 'storeId'>> & {
+  /** Only null: ends a sale. A sale starts through `startSale`, never with a typed price. */
+  oldPrice?: null | undefined;
   available?: boolean;
   tags?: string[] | undefined;
 };
@@ -29,6 +30,7 @@ export interface ProductListFilters {
   categoryId?: string | undefined;
   search?: string | undefined;
   availableOnly?: boolean | undefined;
+  onSale?: boolean | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
 }

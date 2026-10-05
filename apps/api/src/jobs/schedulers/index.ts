@@ -48,5 +48,9 @@ export async function registerSchedulers(
   // Cashback burns at dawn, before anyone spends what they no longer have.
   await queue.schedule(QUEUE.MAINTENANCE, JOB.EXPIRE_CASHBACK, { tenantId }, '0 5 * * *');
 
+  // «Честная скидка»: a sale nobody touched for the reference week loses its struck price within
+  // the hour, not at the next cut.
+  await queue.schedule(QUEUE.MAINTENANCE, JOB.END_STALE_SALES, { tenantId }, '45 * * * *');
+
   logger.info('schedulers registered');
 }

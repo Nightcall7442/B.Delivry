@@ -85,6 +85,7 @@ export class TariffFeeCalculator implements DeliveryFeeCalculator {
       minOrder: tariff.minOrder,
       freeDeliveryThreshold: tariff.freeDeliveryThreshold,
       commission: percentage(subtotal, tariff.commissionPercent),
+      commissionPercent: tariff.commissionPercent,
       reason: belowMinimum ? 'Order is below the minimum for this zone' : null,
       heavy,
       heavySurcharge,

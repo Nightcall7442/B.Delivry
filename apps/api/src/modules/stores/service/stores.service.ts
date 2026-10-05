@@ -17,7 +17,7 @@ import {
   StoreClosedError,
 } from '../../../common/errors/domain.errors.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
-import { canSeeStore, currentViewer } from '../../catalog/domain/visibility.js';
+import { ANONYMOUS, canSeeStore, currentViewer } from '../../catalog/domain/visibility.js';
 import type { StoresRepository, StoreWithSchedule } from '../repository/stores.repository.js';
 import type { OpenStore, ScheduleEntry, StoreListFilters } from '../types/index.js';
 
@@ -181,6 +181,17 @@ export class StoresService extends BaseService {
   }
 
   /**
+   * Whether a customer sees this stall at all — live by its own status, its vendor not shut —
+   * whoever is asking. A push about its goods («подешевело», «снова в наличии») goes only then: a
+   * link to a stall the public cannot open is a 404 in the customer's hand.
+   */
+  async isPublic(id: string): Promise<boolean> {
+    const store = await this.repository.findById(id);
+    if (store === null || !canSeeStore(store, ANONYMOUS)) return false;
+    return !(await this.repository.vendorIsShut(store.vendorId));
+  }
+
+  /**
    * What the order flow needs: the store exists, is open at the hour the order
    * is for (now, or the slot the customer picked — the rows shut at six and
    * still take orders for the morning), and has a map location a courier can
@@ -195,7 +206,8 @@ export class StoresService extends BaseService {
       throw new StoreClosedError(id);
     }
     // The platform shut this vendor: no new orders, even while the stall's own status says ACTIVE.
-    if (await this.repository.vendorIsShut(store.vendorId)) throw new StoreClosedError(id);
+    const vendor = await this.repository.vendorTerms(store.vendorId);
+    if (vendor.shut) throw new StoreClosedError(id);
 
     return {
       id: store.id,
@@ -209,6 +221,7 @@ export class StoresService extends BaseService {
       minOrder: store.minOrder,
       freeDeliveryThreshold: store.freeDeliveryThreshold,
       currency: 'UZS',
+      commissionPercent: vendor.commissionPercent,
     };
   }
 

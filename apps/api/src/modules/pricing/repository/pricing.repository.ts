@@ -41,8 +41,9 @@ export class PricingRepository extends BaseRepository {
   async findDefaultTariff(cityId?: string): Promise<Tariff | null> {
     const row = await this.prisma.tariff.findFirst({
       where: { active: true, OR: [{ cityId: cityId ?? null }, { cityId: null }] },
-      // A city-specific tariff sorts before the global one.
-      orderBy: [{ cityId: 'desc' }, { createdAt: 'asc' }],
+      // A city-specific tariff sorts before the global one: Postgres puts NULLs first in a
+      // descending sort, so the global tariff has to be sent last explicitly.
+      orderBy: [{ cityId: { sort: 'desc', nulls: 'last' } }, { createdAt: 'asc' }],
     });
     return row === null ? null : toTariff(row);
   }

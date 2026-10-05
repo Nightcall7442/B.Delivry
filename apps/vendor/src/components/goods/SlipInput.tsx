@@ -45,7 +45,9 @@ export function SlipInput({
 }
 
 const s = StyleSheet.create({
-  wrap: { gap: 4, flex: 1 },
+  // Grows to share a row (two fields side by side), but never below its own content: a bare
+  // `flex: 1` measures from zero, and in a column its hint spilled over what came next.
+  wrap: { gap: 4, flexGrow: 1, flexShrink: 1, flexBasis: 'auto' },
   label: { ...capital, color: TONE.inkSoft },
   field: {
     height: 56,

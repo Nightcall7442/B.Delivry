@@ -108,6 +108,43 @@
 .round:hover {
   transform: translateY(-1px);
 }
+/* «Поделиться»: ink on cream, beside the heart. */
+.shareButton {
+  border: 0;
+  cursor: pointer;
+}
+/* The heart and the share, side by side at the top bar's end. */
+.topEnd {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 10px;
+}
+/* «Избранное»: pomegranate on cream, filled once saved. */
+.heart {
+  color: var(--pomegranate);
+  border: 0;
+  cursor: pointer;
+}
+/* On a photo card: a smaller disc in the photograph's corner, a 44px target. */
+.heartCard {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cream) 88%, transparent);
+  box-shadow: var(--shadow);
+}
+.heartCard::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
 .round b {
   color: var(--pomegranate);
 }
@@ -333,6 +370,10 @@
   box-shadow: var(--shadow);
   cursor: pointer;
 }
+/* Not on the counter today. */
+.cardDim {
+  opacity: 0.45;
+}
 .cardPhoto::before {
   content: '';
   position: absolute;
@@ -408,11 +449,51 @@
   font-size: var(--fs-lead);
   color: var(--ink-soft);
 }
+/* «Честная скидка»: the lowest price of the week, struck through beside the price. */
+.signOld {
+  margin-left: 8px;
+  font-size: var(--fs-lead);
+  color: var(--ink-soft);
+  text-decoration-thickness: 2px;
+}
+/* The cut on the photograph's corner, opposite the heart. */
+.saleBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--pomegranate);
+  color: var(--cream);
+  font-weight: 800;
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+/* A discount card on the rail: wide enough for the sign, narrow enough that the next one peeks. */
+.dealCard {
+  flex: 0 0 min(240px, 68vw);
+}
+/* Square on the rail, so the sign with both prices is in view with the photo. */
+.dealCard .cardPhoto {
+  aspect-ratio: 1;
+}
 .signSay {
   font-family: var(--font-hand), 'Caveat', cursive;
   font-size: var(--fs-lead);
   line-height: 24px;
   color: var(--ink-paper);
+}
+/* A wholesale or «3 за …» step under the price, in the marker's red. */
+.signTier {
+  font-family: var(--font-hand), 'Caveat', cursive;
+  font-size: var(--fs-lead);
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pomegranate);
 }
 .signNote {
   font-size: var(--fs-caption);
@@ -453,6 +534,57 @@
   color: var(--ink-paper);
   font-size: var(--fs-caption);
   font-variant-numeric: tabular-nums;
+}
+/* Room under the last line for the «− N +» tab, so it never covers the price. */
+.signStepping {
+  padding-bottom: 26px;
+}
+/* «− N +»: the chosen badge grown two buttons, hanging off the sign's bottom corner. */
+.signStepper {
+  position: absolute;
+  right: -8px;
+  bottom: -14px;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--ochre);
+  color: var(--ink-paper);
+  box-shadow: var(--shadow);
+}
+.signStep {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--cream) 55%, transparent);
+  color: var(--ink-paper);
+  font-weight: 800;
+  font-size: var(--fs-lead);
+  line-height: 1;
+  cursor: pointer;
+}
+/* A 28px disc, a 44px target. */
+.signStep::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+.signStepMore {
+  background: var(--pomegranate);
+  color: var(--cream);
+}
+.signStepCount {
+  padding: 0 7px;
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* ---- the bottom bar: voice line + basket disc, or «Оформить» ---- */
@@ -879,6 +1011,28 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--pomegranate);
+}
+/* The customer's own words to the stall: italic, in ink, a button to change them. */
+.rcWish {
+  display: block;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+  font-style: italic;
+  font-size: var(--fs-body);
+  line-height: 20px;
+  color: var(--ink-paper);
+  cursor: pointer;
+}
+.rcWishRow > button {
+  text-align: left;
+}
+.rcWishField {
+  width: 100%;
+  max-width: 320px;
 }
 .rcAsk {
   display: flex;

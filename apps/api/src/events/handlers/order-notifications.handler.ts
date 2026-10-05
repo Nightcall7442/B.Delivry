@@ -123,7 +123,11 @@ export function registerOrderNotificationHandlers(
       template: TEMPLATE.PAYMENT_REFUNDED,
       params: { amount: event.payload.refundedAmount / 100, currency: event.payload.currency },
       ...(event.payload.orderId !== null ? { orderId: event.payload.orderId } : {}),
-      idempotencyKey: `notify:payment-refunded:${event.payload.paymentId}`,
+      // One payment may be returned in parts (a missing line, then a cancellation): each part is
+      // told once; a provider's duplicate callback for the same part is not.
+      idempotencyKey: `notify:payment-refunded:${event.payload.paymentId}:${
+        event.payload.full ? 'full' : event.payload.refundedAmount
+      }`,
     });
   });
 }

@@ -8,9 +8,10 @@ import {
   sortStallProducts,
   stallErrorText,
   toStallProducts,
+  type PriceTier,
   type StallProduct,
 } from '@bazar/storefront';
-import type { UpdateProductDto } from '@bazar/types';
+import type { MoneyDto, UpdateProductDto } from '@bazar/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** The API's page ceiling. */
@@ -123,12 +124,51 @@ export function useGoods(storeId: string | null) {
   /** Throws when the API refuses, so the sheet can say so; the shelf changes only on success. */
   const save = useCallback(
     async (id: string, update: Pick<UpdateProductDto, 'price' | 'stock'>) => {
-      // The answer is a database row, not a ProductDto: the shelf takes what was sent.
-      await api().catalog.updateProduct(id, update);
+      // The answer is a database row, not a ProductDto: the shelf takes what was sent, and the
+      // sale from the row (a price raised to the struck-through one ends the sale on the server).
+      const [row] = toStallProducts([await api().catalog.updateProduct(id, update)]);
       patch(id, {
         ...(update.price ? { price: update.price } : {}),
         ...(update.stock !== undefined ? { stock: update.stock } : {}),
+        ...(row ? { oldPrice: row.oldPrice } : {}),
       });
+    },
+    [patch],
+  );
+
+  /**
+   * «Честная скидка»: the new price only; the struck-through one is the lowest of last week and
+   * comes back in the row. Throws when the API refuses (the cut is not below that price).
+   */
+  const startSale = useCallback(
+    async (id: string, price: MoneyDto) => {
+      const [row] = toStallProducts([await api().catalog.startSale(id, price)]);
+      if (row) patch(id, { price: row.price, oldPrice: row.oldPrice });
+    },
+    [patch],
+  );
+
+  /** Quantity prices, all at once; the row that comes back carries them as the API stored them. */
+  const setTiers = useCallback(
+    async (id: string, tiers: PriceTier[], currency: string) => {
+      const [row] = toStallProducts([
+        await api().catalog.setTiers(
+          id,
+          tiers.map((tier) => ({
+            minQuantity: tier.minQuantity,
+            price: { amount: tier.price, currency: currency as MoneyDto['currency'] },
+          })),
+        ),
+      ]);
+      patch(id, { tiers: row?.tiers ?? tiers });
+    },
+    [patch],
+  );
+
+  const endSale = useCallback(
+    async (id: string) => {
+      const [row] = toStallProducts([await api().catalog.endSale(id)]);
+      if (row) patch(id, { price: row.price, oldPrice: null });
     },
     [patch],
   );
@@ -142,5 +182,8 @@ export function useGoods(storeId: string | null) {
     reload,
     setAvailable,
     save,
+    startSale,
+    endSale,
+    setTiers,
   };
 }

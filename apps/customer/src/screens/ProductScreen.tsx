@@ -5,7 +5,17 @@
  * What the stall promises — weighing at the counter, freshness, haggling — sits
  * as pills; reviews and the rest of the counter follow, scrolling over the photo.
  */
-import { arrivedToday, cashbackFor, estimateDelivery, tr, unitLabel } from '@bazar/storefront';
+import {
+  arrivedToday,
+  cashbackFor,
+  estimateDelivery,
+  nextTierText,
+  onTier,
+  productLineTotal,
+  tierTexts,
+  tr,
+  unitLabel,
+} from '@bazar/storefront';
 import type { MapStoreDto } from '@bazar/storefront';
 import type { ProductDto, ReviewDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
@@ -28,16 +38,18 @@ import {
   Say,
   Scene,
   SceneButton,
-  Sign,
   scene,
   sceneFont,
   useSceneTop,
   useSwing,
 } from '@/components/bazar';
+import { ProductTile, TILE_GAP, useTileWidth } from '@/components/shop/ProductTile';
 import { Bone } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
-import { useCart, useCartActions, useCartItem } from '@/features/cart/store';
+import { useCartItem } from '@/features/cart/store';
+import { useFavorite } from '@/features/favorites/store';
 import { getProduct, getStore, listProducts } from '@/lib/catalog';
+import { shareLink, stallUrl } from '@/lib/share';
 import { useData } from '@/lib/use-data';
 import {
   ArrowLeft,
@@ -48,6 +60,7 @@ import {
   Plus,
   Scale,
   Scooter,
+  Share as ShareIcon,
   Star,
   Tag,
   Wallet,
@@ -136,15 +149,26 @@ function ProductBody({
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const top = useSceneTop();
-  const { quantities } = useCart();
-  const { setQuantity } = useCartActions();
   const step = product.quantityStep || 1;
   const min = product.minQuantity || step;
   const { quantity, add, remove } = useCartItem(product.id, step, min);
-  const units = unitLabel(locale);
-  const unit = units[product.unit];
+  const favorite = useFavorite('product', product.id, `/product/${product.id}`);
+  const tileWidth = useTileWidth();
+  const unit = unitLabel(locale)[product.unit];
+  const share = () =>
+    shareLink(
+      t('share.product', {
+        name: tr(product.name, locale),
+        price: `${t.money(product.price.amount, product.price.currency)} / ${unit}`,
+        stall: store ? (store.ownerName ?? tr(store.name, locale)) : '',
+      }),
+      stallUrl(locale, product.storeId),
+    );
   const shownQty = quantity > 0 ? quantity : min;
-  const lineTotal = product.price.amount * shownQty;
+  // Quantity prices: the whole line at the step reached, and what the next step would give.
+  const lineTotal = productLineTotal(product, shownQty);
+  const steps = tierTexts(t, locale, product);
+  const next = nextTierText(t, locale, product, shownQty);
   const discount = product.oldPrice
     ? Math.round((1 - product.price.amount / product.oldPrice.amount) * 100)
     : 0;
@@ -192,6 +216,15 @@ function ProductBody({
                 .filter(Boolean)
                 .join(' · ')}
             </Text>
+            {steps.length > 0 ? (
+              <View style={s.tagSteps}>
+                {steps.map((step) => (
+                  <Text key={step} style={s.tagStep}>
+                    {step}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
           </Animated.View>
         </View>
 
@@ -247,6 +280,7 @@ function ProductBody({
               <Text style={s.amountSub} numberOfLines={2}>
                 {product.unit === 'KG' ? `${t('trust.weigh')} · ` : ''}
                 {t.money(lineTotal)}
+                {onTier(product, shownQty) ? ` · ${t('tiers.applied')}` : ''}
               </Text>
             </View>
             <Pressable
@@ -257,6 +291,12 @@ function ProductBody({
             </Pressable>
           </View>
           <View style={s.lines}>
+            {next ? (
+              <View style={s.line}>
+                <Tag size={16} color={scene.ochreLight} />
+                <Text style={s.lineText}>{next}</Text>
+              </View>
+            ) : null}
             <View style={s.line}>
               <Wallet size={16} color={scene.ochreLight} />
               <Text style={s.lineText}>
@@ -311,29 +351,9 @@ function ProductBody({
           <View style={s.section}>
             <Eyebrow>{t('scene.onCounter')}</Eyebrow>
             <View style={s.grid}>
-              {similar.map((p, i) => {
-                const qty = quantities[p.id] ?? 0;
-                return (
-                  <Sign
-                    key={p.id}
-                    style={s.sign}
-                    tilt={[-1, 1, 0.5, -0.5][i % 4] ?? 0}
-                    title={tr(p.name, locale)}
-                    price={`${t.money(p.price.amount, p.price.currency)} / ${units[p.unit]}`}
-                    count={qty}
-                    countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[p.unit]}` })}
-                    onPress={() => router.push(`/product/${p.id}`)}
-                    onAdd={() =>
-                      setQuantity(
-                        p.id,
-                        qty === 0
-                          ? p.minQuantity || p.quantityStep || 1
-                          : qty + (p.quantityStep || 1),
-                      )
-                    }
-                  />
-                );
-              })}
+              {similar.map((p, i) => (
+                <ProductTile key={p.id} product={p} index={i} style={{ width: tileWidth }} />
+              ))}
             </View>
           </View>
         ) : null}
@@ -345,9 +365,22 @@ function ProductBody({
         >
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
-        <SceneButton>
-          <Heart size={20} color={scene.pomegranate} />
-        </SceneButton>
+        <View style={s.topEnd}>
+          <SceneButton onPress={share} label={t('common.share')}>
+            <ShareIcon size={18} color={scene.ink} />
+          </SceneButton>
+          <SceneButton
+            onPress={favorite.toggle}
+            label={t(favorite.saved ? 'fav.forget' : 'fav.save')}
+            selected={favorite.saved}
+          >
+            <Heart
+              size={20}
+              color={scene.pomegranate}
+              fill={favorite.saved ? scene.pomegranate : 'none'}
+            />
+          </SceneButton>
+        </View>
       </View>
 
       <View style={[s.footer, { bottom: 24 + insets.bottom }]}>
@@ -373,6 +406,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  topEnd: { flexDirection: 'row', gap: 10 },
   tagWrap: { paddingHorizontal: 20, alignItems: 'flex-start' },
   // Cardboard, like every price sign: paper, the paper's edge, the pin on top.
   tag: {
@@ -408,6 +442,14 @@ const s = StyleSheet.create({
     ...scale.caption,
     color: scene.inkSoft,
     marginTop: 2,
+    fontVariant: ['tabular-nums'],
+  },
+  // The quantity prices under the sign's own price, in the paper's second ink.
+  tagSteps: { marginTop: 6, gap: 2 },
+  tagStep: {
+    fontFamily: sceneFont.hand,
+    ...scale.lead,
+    color: scene.pomegranate,
     fontVariant: ['tabular-nums'],
   },
   vendor: {
@@ -476,8 +518,7 @@ const s = StyleSheet.create({
   body: { fontFamily: sceneFont.italic, ...scale.lead, color: scene.creamMuted },
   // A glass card, not a pill: the paper corner.
   review: { borderRadius: radius.paper, padding: 12, gap: 6 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 14, paddingTop: 4 },
-  sign: { width: '47%', flexGrow: 1 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: TILE_GAP, rowGap: 18, paddingTop: 4 },
   footer: { position: 'absolute', left: 20, right: 20 },
   cta: {
     height: 56,

@@ -13,7 +13,8 @@ export interface VendorListFilters {
 }
 
 export interface CreateVendorInput {
-  userId: string;
+  /** The desk registers someone; an applicant applies for themselves and sends none. */
+  userId?: string | undefined;
   legalType: VendorLegalType;
   legalName: string;
   displayName: string;
@@ -26,7 +27,15 @@ export interface CreateVendorInput {
 /** What a vendor is owed for delivered orders not yet paid out. */
 export interface PayoutSummary {
   vendorId: string;
+  /** Everything owed: available + on hold. */
   pending: number;
+  /** Past the complaint window with no open complaint: may be paid out. */
+  available: number;
+  /** Still inside the freshness window, or under an open complaint. */
+  onHold: number;
+  onHoldOrders: number;
+  /** When the first window-held order clears (ISO); null when none is waiting on the clock. */
+  releasesAt: string | null;
   currency: string;
   orderCount: number;
 }

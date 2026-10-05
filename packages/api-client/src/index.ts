@@ -14,6 +14,7 @@ import {
   couriersApi,
   customersApi,
   deliveryApi,
+  favoritesApi,
   geoApi,
   haggleApi,
   ordersApi,
@@ -26,6 +27,7 @@ import {
   trackingApi,
   tenantsApi,
   uploadsApi,
+  vendorsApi,
 } from './endpoints/index.js';
 import type { ApiClientOptions } from './types.js';
 import { RealtimeClient } from './ws.js';
@@ -36,6 +38,7 @@ export function createApiClient(options: ApiClientOptions) {
     http,
     auth: authApi(http, options.tokens),
     customers: customersApi(http),
+    favorites: favoritesApi(http),
     addresses: addressesApi(http),
     analytics: analyticsApi(http),
     stores: storesApi(http),
@@ -50,6 +53,7 @@ export function createApiClient(options: ApiClientOptions) {
     tracking: trackingApi(http),
     tenants: tenantsApi(http),
     uploads: uploadsApi(http),
+    vendors: vendorsApi(http),
     couriers: couriersApi(http),
     delivery: deliveryApi(http),
     geo: geoApi(http),

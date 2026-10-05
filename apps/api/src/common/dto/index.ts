@@ -19,6 +19,7 @@ import type {
   Prisma,
   Product,
   ProductImage,
+  ProductPriceTier,
   Store,
   StoreSchedule,
   Tenant,
@@ -138,7 +139,9 @@ export function toImageDto(row: ProductImage): ImageDto {
   };
 }
 
-export function toProductDto(row: Product & { images: ProductImage[] }): ProductDto {
+export function toProductDto(
+  row: Product & { images: ProductImage[]; priceTiers?: ProductPriceTier[] },
+): ProductDto {
   return {
     arrivedAt: row.arrivedAt === null ? null : iso(row.arrivedAt),
     tags: row.tags as ProductDto['tags'],
@@ -154,6 +157,16 @@ export function toProductDto(row: Product & { images: ProductImage[] }): Product
     unit: row.unit,
     price: money(row.price, row.currency),
     oldPrice: row.oldPrice === null ? null : money(row.oldPrice, row.currency),
+    ...(row.priceTiers === undefined
+      ? {}
+      : {
+          priceTiers: row.priceTiers
+            .map((tier) => ({
+              minQuantity: decimal(tier.minQuantity) ?? 0,
+              price: money(tier.price, row.currency),
+            }))
+            .sort((a, b) => a.minQuantity - b.minQuantity),
+        }),
     minQuantity: decimal(row.minQuantity) ?? 1,
     quantityStep: decimal(row.quantityStep) ?? 1,
     weightGrams: row.weightGrams,

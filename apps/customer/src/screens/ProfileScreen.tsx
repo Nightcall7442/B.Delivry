@@ -46,6 +46,7 @@ interface Item {
 }
 
 const SERVICES: Item[] = [
+  { key: 'menu.favorites', href: '/favorites', icon: Heart },
   { key: 'menu.subscriptions', href: '/subscriptions', icon: Receipt },
   { key: 'menu.plus', href: '/plus', icon: Star },
   { key: 'menu.list', href: '/list', icon: Mic },
@@ -53,6 +54,7 @@ const SERVICES: Item[] = [
   { key: 'menu.business', href: '/business', icon: Basket },
   { key: 'menu.docs', href: '/documents', icon: Receipt },
   { key: 'menu.neighbour', href: '/neighbour', icon: Scooter },
+  { key: 'menu.seller', href: '/seller', icon: Basket },
 ];
 const MORE: Item[] = [
   { key: 'menu.address', href: '/address', icon: Home },

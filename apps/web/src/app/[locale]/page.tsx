@@ -10,11 +10,20 @@ export const dynamic = 'force-dynamic';
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const [stores, categories, products] = await Promise.all([
+  const [stores, categories, products, onSale] = await Promise.all([
     // Tashkent's own stores: a test stall in another city never shows on the site.
     listStores(locale, DEFAULT_POINT),
     listCategories(locale),
     listProducts(locale, {}),
+    listProducts(locale, { onSale: true }),
   ]);
-  return <BazaarHome stores={stores} categories={categories} products={products} locale={locale} />;
+  return (
+    <BazaarHome
+      stores={stores}
+      categories={categories}
+      products={products}
+      onSale={onSale}
+      locale={locale}
+    />
+  );
 }

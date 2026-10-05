@@ -2,7 +2,8 @@
  * Cart state: quantities keyed by product id, shared across the tree, persisted
  * on the device. Same hooks as the web app.
  */
-import type { CartQuantities } from '@bazar/storefront';
+import { cleanNote, notesFor, readNotes, withoutNotes } from '@bazar/storefront';
+import type { CartNotes, CartQuantities } from '@bazar/storefront';
 import {
   createContext,
   useCallback,
@@ -18,10 +19,12 @@ import { readJson, writeJson } from '@bazar/mobile';
 
 import { tap } from '@/lib/haptics';
 
-export type { CartLine, CartQuantities, CartStoreGroup } from '@bazar/storefront';
+export type { CartLine, CartNotes, CartQuantities, CartStoreGroup } from '@bazar/storefront';
 export { groupByStore } from '@bazar/storefront';
 
 const KEY = 'bazar.cart';
+/** «Без кости»: the wish for each line, beside the quantities (see @bazar/storefront cart-notes). */
+const NOTES_KEY = 'bazar.cart.notes';
 
 interface CartApi {
   quantities: CartQuantities;
@@ -31,35 +34,58 @@ interface CartApi {
   /** Whole-cart write: "repeat order", a recipe set. */
   replace: (next: CartQuantities) => void;
   clear: (productIds?: readonly string[]) => void;
+  notes: CartNotes;
+  /** The wish for one line; empty takes it off. */
+  setNote: (productId: string, note: string) => void;
 }
 
 const CartContext = createContext<CartApi | null>(null);
 
 const isQuantities = (v: unknown): v is CartQuantities =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
+const isAnything = (v: unknown): v is unknown => v !== undefined;
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [quantities, setQuantities] = useState<CartQuantities>({});
+  const [notes, setNotes] = useState<CartNotes>({});
   const [ready, setReady] = useState(false);
   const hydrated = useRef(false);
 
   useEffect(() => {
-    readJson(KEY, isQuantities).then((stored) => {
-      if (stored) {
-        setQuantities(
-          Object.fromEntries(
+    void Promise.all([readJson(KEY, isQuantities), readJson(NOTES_KEY, isAnything)]).then(
+      ([stored, storedNotes]) => {
+        // Nothing stored (a first launch): a line added while storage was read stays.
+        if (stored) {
+          const kept = Object.fromEntries(
             Object.entries(stored).filter(([, q]) => typeof q === 'number' && q > 0),
-          ),
-        );
-      }
-      hydrated.current = true;
-      setReady(true);
-    });
+          );
+          setQuantities(kept);
+          setNotes(notesFor(readNotes(storedNotes), kept));
+        }
+        hydrated.current = true;
+        setReady(true);
+      },
+    );
   }, []);
 
   useEffect(() => {
     if (hydrated.current) writeJson(KEY, quantities);
   }, [quantities]);
+
+  useEffect(() => {
+    if (hydrated.current) writeJson(NOTES_KEY, notes);
+  }, [notes]);
+
+  const setNote = useCallback((productId: string, note: string) => {
+    const clean = cleanNote(note);
+    setNotes((current) => {
+      if ((current[productId] ?? '') === clean) return current;
+      const draft = { ...current };
+      if (clean === '') delete draft[productId];
+      else draft[productId] = clean;
+      return draft;
+    });
+  }, []);
 
   const setQuantity = useCallback((productId: string, quantity: number) => {
     // Weighted goods step by 0.5, so round the float dust away.
@@ -71,10 +97,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       else draft[productId] = next;
       return draft;
     });
+    // A line taken out takes its wish with it.
+    if (next <= 0) setNotes((current) => withoutNotes(current, [productId]));
   }, []);
 
   const replace = useCallback((next: CartQuantities) => {
-    setQuantities(Object.fromEntries(Object.entries(next).filter(([, q]) => q > 0)));
+    const kept = Object.fromEntries(Object.entries(next).filter(([, q]) => q > 0));
+    setQuantities(kept);
+    setNotes((current) => notesFor(current, kept));
   }, []);
 
   const clear = useCallback((productIds?: readonly string[]) => {
@@ -84,11 +114,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       for (const id of productIds) delete draft[id];
       return draft;
     });
+    setNotes((current) => (productIds ? withoutNotes(current, productIds) : {}));
   }, []);
 
   const value = useMemo(
-    () => ({ quantities, ready, setQuantity, replace, clear }),
-    [quantities, ready, setQuantity, replace, clear],
+    () => ({ quantities, ready, setQuantity, replace, clear, notes, setNote }),
+    [quantities, ready, setQuantity, replace, clear, notes, setNote],
   );
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
@@ -105,6 +136,12 @@ export const useCartReady = (): boolean => useCart().ready;
 export function useCartActions(): Pick<CartApi, 'setQuantity' | 'replace' | 'clear'> {
   const { setQuantity, replace, clear } = useCart();
   return { setQuantity, replace, clear };
+}
+
+/** «Без кости»: the wishes for the lines, and setting one. */
+export function useCartNotes(): Pick<CartApi, 'notes' | 'setNote'> {
+  const { notes, setNote } = useCart();
+  return { notes, setNote };
 }
 
 /** Distinct products, not units — "3 позиции", the way a basket badge counts. */

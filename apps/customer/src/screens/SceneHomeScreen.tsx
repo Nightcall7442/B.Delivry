@@ -1,8 +1,8 @@
 /**
  * The front door as a walk into the bazaar: one photograph of the rows fills
  * the screen, the greeting sits on it, then the people who are at their
- * counters right now, the rows to walk along, and everything on the counters
- * today as cardboard signs you can take straight into the basket. Morning and
+ * counters right now, today's honest discounts, the rows to walk along, and everything on the
+ * counters today as cardboard signs you can take straight into the basket. Morning and
  * evening are the same screen in different light. No tab bar — the row is the
  * navigation, the basket is a disc that turns into «Оформить» once it has
  * something in it, the profile is the initial in the corner.
@@ -11,12 +11,13 @@ import {
   arrivedToday,
   chorsuTemperature,
   closesToday,
+  dealsOf,
   degrees,
   isShopfront,
+  productLineTotal,
   shopfronts,
   stallGoods,
   tr,
-  unitLabel,
 } from '@bazar/storefront';
 import { haversineMeters } from '@bazar/maps';
 import type { CategoryDto, LatLngDto, ProductDto } from '@bazar/types';
@@ -30,7 +31,6 @@ import {
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
   type ListRenderItemInfo,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -47,7 +47,7 @@ import {
   Scene,
   isEvening,
   SceneButton,
-  ProductCard,
+  Say,
   SceneHead,
   ShopSign,
   VendorCard,
@@ -55,14 +55,18 @@ import {
   sceneFont,
   useSceneTop,
 } from '@/components/bazar';
+import { ProductTile, useTileWidth } from '@/components/shop/ProductTile';
 import { LoadError } from '@/components/ui/Page';
 import { DEFAULT_POINT, useAddress } from '@/features/address/store';
-import { useCart, useCartActions } from '@/features/cart/store';
+import { useDeliverable } from '@/features/address/zone';
+import { useCart } from '@/features/cart/store';
 import { REACH_METERS, listCategories, listProducts, listStores } from '@/lib/catalog';
 import { EMPTY, useLoad } from '@/lib/use-data';
 import { Bell, Mic, radius, scale, shadow, useAuth, useLocale } from '@bazar/mobile';
 
 const TILTS = [-1.5, 1, -1, 1.5, -1, 1];
+/** A discount card on the rail: a little narrower than half the screen, so the next one peeks. */
+const DEAL_WIDTH = 156;
 
 /**
  * Whether the phone is out of reach of the address the counters are shown for — a pin left in
@@ -100,19 +104,25 @@ export function SceneHomeScreen() {
   const { user } = useAuth();
   const { address } = useAddress();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const top = useSceneTop();
   const { quantities } = useCart();
-  const { setQuantity } = useCartActions();
   const here = address?.point ?? DEFAULT_POINT;
   const storeLoad = useLoad(() => listStores(here), [here.lat, here.lng]);
   // No address yet, or the phone is in another city: the counters below are someone else's.
   const away = useAwayFrom(here);
-  const nudge = !address ? 'scene.whereAreYou' : away ? 'scene.awayFromAddress' : null;
+  // Go Bazar's «we are not operating in your location», said here rather than at checkout.
+  const deliverable = useDeliverable(address?.point);
+  const nudge = !address
+    ? 'scene.whereAreYou'
+    : deliverable === false
+      ? 'scene.outOfZone'
+      : away
+        ? 'scene.awayFromAddress'
+        : null;
   const categoryLoad = useLoad(() => listCategories(), []);
   const productLoad = useLoad(() => listProducts(), []);
+  const dealLoad = useLoad(() => listProducts({ onSale: true }), []);
   const evening = isEvening();
-  const units = unitLabel(locale);
   // The tag's temperature is the real one at Chorsu or nothing — never a number from the code.
   const [temperature, setTemperature] = useState<number | null>(null);
   useEffect(() => {
@@ -144,8 +154,19 @@ export function SceneHomeScreen() {
       .filter((p) => p.available && (open.size === 0 || open.has(p.storeId)))
       .sort((a, b) => fresh(b) - fresh(a) || a.storeId.localeCompare(b.storeId));
   }, [productLoad.data, stores]);
-  const inCart = counter.filter((p) => quantities[p.id]);
-  const total = inCart.reduce((sum, p) => sum + p.price.amount * (quantities[p.id] ?? 0), 0);
+  // «Скидки»: the city's goods on sale, deepest cut first, a few per stall.
+  const deals = useMemo(() => {
+    const here = new Set(stores.map((store) => store.id));
+    return dealsOf((dealLoad.data ?? EMPTY).filter((p) => here.has(p.storeId)));
+  }, [dealLoad.data, stores]);
+  // The basket bar counts what is on this screen: the counters and the discounts, once each.
+  const shown = useMemo(() => {
+    const ids = new Set(counter.map((p) => p.id));
+    return [...counter, ...deals.filter((p) => !ids.has(p.id))];
+  }, [counter, deals]);
+  const inCart = shown.filter((p) => quantities[p.id]);
+  // As the order will charge it: a quantity price counts.
+  const total = inCart.reduce((sum, p) => sum + productLineTotal(p, quantities[p.id] ?? 0), 0);
   const count = inCart.length;
   const stalls = new Set(inCart.map((p) => p.storeId));
   // One stall goes straight to checkout; several — the receipts decide how many trips it is.
@@ -162,39 +183,15 @@ export function SceneHomeScreen() {
   }).format(new Date());
   const failed = !storeLoad.data && storeLoad.error;
   // Two to a row, like signs on a counter; the last odd one keeps its half.
-  const cardWidth = (width - 20 * 2 - 12) / 2;
+  const cardWidth = useTileWidth();
   const renderProduct = ({ item: product, index: i }: ListRenderItemInfo<ProductDto>) => {
-    const qty = quantities[product.id] ?? 0;
     const stall = stores.find((store) => store.id === product.storeId);
     return (
-      <ProductCard
+      <ProductTile
+        product={product}
+        index={i}
+        stall={stall ? (stall.ownerName ?? tr(stall.name, locale)) : undefined}
         style={{ width: cardWidth }}
-        compact
-        photo={product.images[0]?.url ?? null}
-        tilt={[-1.2, 1, 0.6, -0.8][i % 4] ?? 0}
-        side={i % 2 ? 'right' : 'left'}
-        title={tr(product.name, locale)}
-        price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
-        say={product.description ? tr(product.description, locale) : undefined}
-        note={
-          [
-            stall ? (stall.ownerName ?? tr(stall.name, locale)) : null,
-            arrivedToday(product) ? t('store.arrivedToday') : null,
-          ]
-            .filter(Boolean)
-            .join(' · ') || undefined
-        }
-        count={qty}
-        countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
-        onPress={() => router.push(`/product/${product.id}`)}
-        onAdd={() =>
-          setQuantity(
-            product.id,
-            qty === 0
-              ? product.minQuantity || product.quantityStep || 1
-              : qty + (product.quantityStep || 1),
-          )
-        }
       />
     );
   };
@@ -236,7 +233,13 @@ export function SceneHomeScreen() {
             {nudge ? (
               <Glass
                 style={s.nudge}
-                onPress={() => router.push({ pathname: '/address', params: { locate: '1' } })}
+                // Away from the address: find the phone. Out of zone: pick another address.
+                onPress={() =>
+                  router.push({
+                    pathname: '/address',
+                    params: nudge === 'scene.outOfZone' ? {} : { locate: '1' },
+                  })
+                }
               >
                 <Text style={s.nudgeText}>{t(nudge)} →</Text>
               </Glass>
@@ -269,6 +272,36 @@ export function SceneHomeScreen() {
                 />
               ))}
             </ScrollView>
+
+            {deals.length > 0 ? (
+              <>
+                <SceneHead
+                  title={t('deals.title')}
+                  action={t('deals.all')}
+                  onAction={() =>
+                    router.push({ pathname: '/search', params: { sort: 'discount' } })
+                  }
+                />
+                <Say step="lead" color={scene.creamMuted} style={s.dealsHint}>
+                  {t('deals.honest')}
+                </Say>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={s.rail}
+                  contentContainerStyle={s.deals}
+                >
+                  {deals.map((product, i) => (
+                    <ProductTile
+                      key={product.id}
+                      product={product}
+                      index={i}
+                      style={{ width: DEAL_WIDTH }}
+                    />
+                  ))}
+                </ScrollView>
+              </>
+            ) : null}
 
             {shops.length > 0 ? (
               <>
@@ -420,6 +453,8 @@ const s = StyleSheet.create({
   // The rails keep room for their cards' shadow and hand it back, so the rhythm stays.
   rail: { marginBottom: -SHADOW_REACH },
   vendors: { paddingHorizontal: 20, gap: 10, paddingBottom: 8 + SHADOW_REACH },
+  deals: { paddingHorizontal: 20, gap: 12, paddingTop: 4, paddingBottom: 20 + SHADOW_REACH },
+  dealsHint: { paddingHorizontal: 20, marginTop: -6, marginBottom: 8 },
   rows: {
     paddingHorizontal: 20,
     paddingTop: 6,

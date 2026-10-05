@@ -1,7 +1,8 @@
 /**
  * Products persistence (Prisma). Tenant-scoped.
  */
-import type { Prisma, Product, ProductImage } from '@prisma/client';
+import type { PriceTier } from '@bazar/storefront';
+import type { Prisma, Product, ProductImage, ProductPriceTier } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import { currentViewer, visibleProductWhere } from '../../catalog/domain/visibility.js';
@@ -9,9 +10,13 @@ import type { CreateProductInput, ProductListFilters, UpdateProductInput } from 
 
 const PRODUCT_INCLUDE = {
   images: { orderBy: { sortOrder: 'asc' } },
+  priceTiers: { orderBy: { minQuantity: 'asc' } },
 } satisfies Prisma.ProductInclude;
 
-export type ProductWithImages = Product & { images: ProductImage[] };
+export type ProductWithImages = Product & {
+  images: ProductImage[];
+  priceTiers: ProductPriceTier[];
+};
 
 export class ProductsRepository extends BaseRepository {
   async findById(id: string): Promise<ProductWithImages | null> {
@@ -45,6 +50,7 @@ export class ProductsRepository extends BaseRepository {
       ...(filters.storeId !== undefined ? { storeId: filters.storeId } : {}),
       ...(filters.categoryId !== undefined ? { categoryId: filters.categoryId } : {}),
       ...(filters.availableOnly === true ? { available: true } : {}),
+      ...(filters.onSale === true ? { oldPrice: { not: null } } : {}),
       ...(filters.search !== undefined
         ? { slug: { contains: filters.search, mode: 'insensitive' as const } }
         : {}),
@@ -82,7 +88,6 @@ export class ProductsRepository extends BaseRepository {
         slug,
         unit: input.unit,
         price: input.price.amount,
-        oldPrice: input.oldPrice?.amount ?? null,
         currency: input.price.currency,
         minQuantity: input.minQuantity ?? 1,
         quantityStep: input.quantityStep ?? 1,
@@ -127,7 +132,7 @@ export class ProductsRepository extends BaseRepository {
         ...(input.categoryId !== undefined ? { categoryId: input.categoryId } : {}),
         ...(input.unit !== undefined ? { unit: input.unit } : {}),
         ...(input.price !== undefined ? { price: input.price.amount } : {}),
-        ...(input.oldPrice !== undefined ? { oldPrice: input.oldPrice.amount } : {}),
+        ...(input.oldPrice !== undefined ? { oldPrice: input.oldPrice } : {}),
         ...(input.minQuantity !== undefined ? { minQuantity: input.minQuantity } : {}),
         ...(input.quantityStep !== undefined ? { quantityStep: input.quantityStep } : {}),
         ...(input.weightGrams !== undefined ? { weightGrams: input.weightGrams } : {}),
@@ -143,6 +148,95 @@ export class ProductsRepository extends BaseRepository {
               },
             }
           : {}),
+      },
+      include: PRODUCT_INCLUDE,
+    });
+  }
+
+  /**
+   * The lowest price the good was sold at from `since` until now: the price in force at `since`
+   * (the last change before it) and every change after. Null when the history is empty.
+   */
+  async lowestPriceSince(productId: string, since: Date): Promise<number | null> {
+    const [before, after] = await Promise.all([
+      this.prisma.productPrice.findFirst({
+        where: { productId, validFrom: { lt: since } },
+        orderBy: { validFrom: 'desc' },
+        select: { price: true },
+      }),
+      this.prisma.productPrice.aggregate({
+        where: { productId, validFrom: { gte: since } },
+        _min: { price: true },
+      }),
+    ]);
+    const prices = [before?.price, after._min.price].filter(
+      (price): price is number => typeof price === 'number',
+    );
+    return prices.length === 0 ? null : Math.min(...prices);
+  }
+
+  /**
+   * Sales whose price has stood since `since` or longer — no price change on or after it — so the
+   * struck price is no longer one the good sold at within the reference week.
+   */
+  async staleSales(since: Date, limit: number): Promise<{ id: string; storeId: string }[]> {
+    return this.prisma.product.findMany({
+      where: this.scoped(staleSale(since)),
+      select: { id: true, storeId: true },
+      take: limit,
+    });
+  }
+
+  /**
+   * Ends those sales: the price stays, the struck one goes. The condition is checked again in the
+   * write, so a cut the seller made in between stands.
+   */
+  async endStaleSales(ids: string[], since: Date): Promise<number> {
+    if (ids.length === 0) return 0;
+    const { count } = await this.prisma.product.updateMany({
+      where: this.scoped({ id: { in: ids }, ...staleSale(since) }),
+      data: { oldPrice: null },
+    });
+    return count;
+  }
+
+  /**
+   * The quantity prices, all at once: the old set goes, the new one stands, in one transaction —
+   * with the product's row locked first, so two saves at the same moment cannot both delete the
+   * old set and leave a ladder merged from the two.
+   */
+  async setTiers(productId: string, tiers: readonly PriceTier[]): Promise<ProductWithImages> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "products" WHERE "id" = ${productId} FOR UPDATE`;
+      await tx.productPriceTier.deleteMany({ where: { productId } });
+      await tx.productPriceTier.createMany({
+        data: tiers.map((tier) => ({
+          productId,
+          minQuantity: tier.minQuantity,
+          price: tier.price,
+        })),
+      });
+    });
+    return this.prisma.product.findFirstOrThrow({
+      where: this.scoped({ id: productId }),
+      include: PRODUCT_INCLUDE,
+    });
+  }
+
+  /** A sale starts, moves or ends: both prices at once, the new price appended to the history. */
+  async setSale(
+    id: string,
+    prices: { price: number; oldPrice: number | null; currency: string },
+    changedBy: string | null,
+  ): Promise<ProductWithImages> {
+    return this.prisma.product.update({
+      where: this.scoped({ id }),
+      data: {
+        price: prices.price,
+        oldPrice: prices.oldPrice,
+        priceHistory: {
+          create: { price: prices.price, currency: prices.currency, changedBy },
+        },
       },
       include: PRODUCT_INCLUDE,
     });
@@ -217,4 +311,9 @@ export class ProductsRepository extends BaseRepository {
     });
     return row?.id ?? null;
   }
+}
+
+/** On sale, and the price not changed on or after `since`. */
+function staleSale(since: Date): Prisma.ProductWhereInput {
+  return { oldPrice: { not: null }, priceHistory: { none: { validFrom: { gte: since } } } };
 }

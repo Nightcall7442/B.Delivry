@@ -25,7 +25,16 @@ import {
 import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { DomeGround, PhotoGrade, press, radius, scale, shadow, useLocale } from '@bazar/mobile';
+import {
+  DomeGround,
+  Heart,
+  PhotoGrade,
+  press,
+  radius,
+  scale,
+  shadow,
+  useLocale,
+} from '@bazar/mobile';
 
 export { isEvening, tashkentHour } from '@bazar/storefront';
 
@@ -160,10 +169,16 @@ export function Scene({
 export function SceneButton({
   children,
   onPress,
+  label,
+  selected,
   style,
 }: {
   children: ReactNode;
   onPress?: () => void;
+  /** What a screen reader says: the glyph alone says nothing. */
+  label?: string;
+  /** A toggle (the heart): read out as on or off. */
+  selected?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   return (
@@ -171,6 +186,8 @@ export function SceneButton({
       onPress={onPress}
       hitSlop={6}
       accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={selected === undefined ? undefined : { selected }}
       style={({ pressed }) => [s.button, press.base, pressed && press.down, style]}
     >
       {children}
@@ -357,11 +374,14 @@ export function Printed({ children }: { children: ReactNode }) {
 /**
  * Cardboard price sign as on Chorsu: the name in the vendor's marker, the price
  * below, a note in small type, a pushpin on the top edge — it swings on the pin
- * when the product goes into the basket. `count` swaps the "+" for "N в корзине".
+ * when the product goes into the basket. `count` swaps the "+" for "N в корзине";
+ * with `onRemove` it becomes a «− N +» tab hanging off the corner, so a sign takes
+ * a step back where it was added, as the competitors' cards do.
  */
 export function Sign({
   title,
   price,
+  oldPrice,
   say,
   note,
   count = 0,
@@ -371,10 +391,13 @@ export function Sign({
   tilt = 0,
   onPress,
   onAdd,
+  onRemove,
   style,
 }: {
   title: string;
   price?: string | undefined;
+  /** The honest sale's struck price, beside the new one. */
+  oldPrice?: string | undefined;
   /** The vendor's own line, in their handwriting: «выбираю по хвостику». */
   say?: string | undefined;
   note?: string | undefined;
@@ -386,11 +409,15 @@ export function Sign({
   compact?: boolean;
   tilt?: number;
   onPress?: () => void;
-  onAdd?: () => void;
+  onAdd?: (() => void) | undefined;
+  /** A step back: with it, a chosen sign carries «− N +» instead of «N в корзине». */
+  onRemove?: (() => void) | undefined;
   /** Where the sign stands (width, margins); the sign's own paper is its own. */
   style?: StyleProp<ViewStyle>;
 }) {
+  const { t } = useLocale();
   const swing = useSwing(count);
+  const stepping = onAdd !== undefined && onRemove !== undefined && count > 0;
   return (
     // The sign hangs from its pin: tilt and swing turn it about the top edge.
     <Animated.View
@@ -406,6 +433,7 @@ export function Sign({
           compact && s.signCompact,
           accent && s.signAccent,
           count > 0 && s.signChosen,
+          stepping && s.signStepping,
           press.base,
           pressed && press.down,
         ]}
@@ -414,7 +442,12 @@ export function Sign({
         <Text style={[s.signTitle, compact && s.signTitleCompact]} numberOfLines={compact ? 3 : 2}>
           {title}
         </Text>
-        {price ? <Text style={[s.signPrice, accent && { color: scene.ink }]}>{price}</Text> : null}
+        {price ? (
+          <View style={s.signPriceRow}>
+            <Text style={[s.signPrice, accent && { color: scene.ink }]}>{price}</Text>
+            {oldPrice ? <Text style={s.signOld}>{oldPrice}</Text> : null}
+          </View>
+        ) : null}
         {say ? (
           <Text style={s.signSay} numberOfLines={2}>
             «{say}»
@@ -425,10 +458,36 @@ export function Sign({
             {note}
           </Text>
         ) : null}
-        {onAdd ? (
+        {stepping ? (
+          <View style={s.stepper}>
+            <Pressable
+              onPress={onRemove}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.less')}
+              style={({ pressed }) => [s.step, pressed && { opacity: 0.7 }]}
+            >
+              <Text style={s.stepText}>−</Text>
+            </Pressable>
+            <Text style={s.stepCount} numberOfLines={1}>
+              {countLabel ?? String(count)}
+            </Text>
+            <Pressable
+              onPress={onAdd}
+              hitSlop={6}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.more')}
+              style={({ pressed }) => [s.step, s.stepMore, pressed && { opacity: 0.8 }]}
+            >
+              <Text style={[s.stepText, { color: scene.cream }]}>+</Text>
+            </Pressable>
+          </View>
+        ) : onAdd ? (
           <Pressable
             onPress={onAdd}
             hitSlop={9}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.add')}
             style={({ pressed }) => [
               s.plus,
               count > 0 && s.plusChosen,
@@ -447,13 +506,18 @@ export function Sign({
 
 /**
  * A product on the counter: its photograph (4:5) with the cardboard sign pinned
- * over the bottom edge — the sign carries the name, the price and the "+".
+ * over the bottom edge — the sign carries the name, the price and the "+". On the
+ * photograph: the sale's sticker in the top corner and the heart in the other.
  */
 export function ProductCard({
   photo,
   tilt = 0,
   side = 'left',
   compact = false,
+  badge,
+  saved = false,
+  onSave,
+  dim = false,
   onPress,
   style,
   ...sign
@@ -464,16 +528,26 @@ export function ProductCard({
   side?: 'left' | 'right';
   /** Two to a row: the sign across the whole card, no vendor line. */
   compact?: boolean;
+  /** A pomegranate sticker on the photograph: «−18 %». */
+  badge?: string | undefined;
+  /** The heart in the photograph's corner; without `onSave` there is none. */
+  saved?: boolean;
+  onSave?: (() => void) | undefined;
+  /** Not on the counter today: the photograph fades, the sign says so. */
+  dim?: boolean;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
   title: string;
   price?: string | undefined;
+  oldPrice?: string | undefined;
   say?: string | undefined;
   note?: string | undefined;
   count?: number;
   countLabel?: string;
-  onAdd?: () => void;
+  onAdd?: (() => void) | undefined;
+  onRemove?: (() => void) | undefined;
 }) {
+  const { t } = useLocale();
   return (
     <View style={[s.card, style]}>
       {/* The frame carries the shadow; the photograph is clipped inside it (iOS drops the
@@ -481,7 +555,7 @@ export function ProductCard({
       <View style={s.cardFrame}>
         <Pressable
           onPress={onPress}
-          style={({ pressed }) => [s.cardPhoto, pressed && { opacity: 0.9 }]}
+          style={({ pressed }) => [s.cardPhoto, dim && s.cardDim, pressed && { opacity: 0.9 }]}
         >
           {photo ? (
             <>
@@ -501,6 +575,23 @@ export function ProductCard({
             style={StyleSheet.absoluteFill}
           />
         </Pressable>
+        {badge ? (
+          <View style={s.sticker} pointerEvents="none">
+            <Text style={s.stickerText}>{badge}</Text>
+          </View>
+        ) : null}
+        {onSave ? (
+          <Pressable
+            onPress={onSave}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t(saved ? 'fav.forget' : 'fav.save')}
+            accessibilityState={{ selected: saved }}
+            style={({ pressed }) => [s.cardHeart, press.base, pressed && press.down]}
+          >
+            <Heart size={16} color={scene.pomegranate} fill={saved ? scene.pomegranate : 'none'} />
+          </Pressable>
+        ) : null}
       </View>
       <Sign
         {...sign}
@@ -793,6 +884,8 @@ const s = StyleSheet.create({
   signCompact: { paddingHorizontal: 10 },
   signAccent: { backgroundColor: scene.ochre, borderColor: TONE.ochreDeep },
   signChosen: { borderColor: scene.ochre, borderWidth: 2 },
+  // Room under the last line for the «− N +» tab, so it never covers the price.
+  signStepping: { paddingBottom: 24 },
   pin: {
     position: 'absolute',
     top: -5,
@@ -814,10 +907,24 @@ const s = StyleSheet.create({
   },
   // «Мирзачульская» has to fit a half-width sign in one piece.
   signTitleCompact: { ...scale.lead, paddingRight: 10, letterSpacing: -0.2 },
+  signPriceRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    columnGap: 6,
+  },
   signPrice: {
     fontFamily: sceneFont.hand,
     ...scale.lead,
     color: scene.pomegranate,
+    fontVariant: ['tabular-nums'],
+  },
+  // What it was: small and struck, in the paper's second ink — the new price stays the loud one.
+  signOld: {
+    fontFamily: sceneFont.ui,
+    ...scale.caption,
+    color: scene.inkSoft,
+    textDecorationLine: 'line-through',
     fontVariant: ['tabular-nums'],
   },
   signSay: { fontFamily: sceneFont.hand, ...scale.lead, color: scene.inkSoft, marginTop: 2 },
@@ -845,6 +952,36 @@ const s = StyleSheet.create({
   plusChosen: { backgroundColor: scene.ochre, paddingHorizontal: 8, top: 'auto', bottom: -10 },
   plusText: { fontFamily: sceneFont.uiHeavy, ...scale.lead, color: scene.cream },
   plusTextChosen: { ...scale.caption, color: scene.ink, fontVariant: ['tabular-nums'] },
+  // «− N +»: the chosen badge grown two buttons, hanging off the same bottom corner.
+  stepper: {
+    position: 'absolute',
+    right: -8,
+    bottom: -13,
+    height: 30,
+    borderRadius: 15,
+    padding: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: scene.ochre,
+    ...shadow.paper,
+  },
+  step: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: alpha(TONE.creamLight, 0.55),
+  },
+  stepMore: { backgroundColor: scene.pomegranate },
+  stepText: { fontFamily: sceneFont.uiHeavy, ...scale.lead, lineHeight: 20, color: scene.ink },
+  stepCount: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.caption,
+    color: scene.ink,
+    paddingHorizontal: 6,
+    fontVariant: ['tabular-nums'],
+  },
   card: { paddingBottom: 6 },
   cardFrame: {
     aspectRatio: 4 / 5,
@@ -853,6 +990,37 @@ const s = StyleSheet.create({
     ...shadow.paper,
   },
   cardPhoto: { ...StyleSheet.absoluteFill, borderRadius: radius.photo, overflow: 'hidden' },
+  cardDim: { opacity: 0.45 },
+  // A sticker slapped on the photograph, a little askew, as a stall marks a cut price.
+  sticker: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.paper,
+    backgroundColor: scene.pomegranate,
+    transform: [{ rotate: '-4deg' }],
+    ...shadow.paper,
+  },
+  stickerText: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.caption,
+    color: scene.cream,
+    fontVariant: ['tabular-nums'],
+  },
+  cardHeart: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: alpha(TONE.creamLight, 0.92),
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadow.paper,
+  },
   cardSign: { marginTop: -30, marginLeft: 14, marginRight: 56 },
   cardSignCompact: { marginTop: -26, marginLeft: 6, marginRight: 6 },
   shopSign: {

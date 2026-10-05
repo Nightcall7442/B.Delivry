@@ -2,6 +2,7 @@
  * Catalog module-internal types & DTOs.
  */
 import type { ProductUnit } from '@bazar/constants';
+import type { PriceTier } from '@bazar/storefront';
 
 /**
  * A product as the order flow needs it: enough to price a line and check it
@@ -20,6 +21,8 @@ export interface PurchasableProduct {
   weightGrams: number | null;
   /** null = the seller does not track stock. */
   stock: number | null;
+  /** Quantity prices (@bazar/storefront tiers.ts); empty = the list price at any quantity. */
+  priceTiers: PriceTier[];
 }
 
 export interface CatalogSearchFilters {
@@ -30,6 +33,8 @@ export interface CatalogSearchFilters {
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
   availableOnly?: boolean | undefined;
+  /** Only goods with a struck-through price (the «Скидки» rail). */
+  onSale?: boolean | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
 }

@@ -115,6 +115,20 @@ const CATALOG: Catalog = {
       body: 'Order {orderNumber} could not be completed. Support will contact you.',
     },
   },
+  [TEMPLATE.ORDER_ITEMS_MISSING]: {
+    uz: {
+      title: 'Hammasi topilmadi',
+      body: '{orderNumber}: sotuvchida yoʻq edi — {items}. Hisobdan olib tashladik, toʻlovga {total} {currency}.',
+    },
+    ru: {
+      title: 'Не всё нашлось',
+      body: 'Заказ {orderNumber}: у продавца не оказалось — {items}. Убрали из счёта, к оплате {total} {currency}.',
+    },
+    en: {
+      title: 'Not everything was there',
+      body: 'Order {orderNumber}: the stall did not have {items}. Taken off the bill, {total} {currency} to pay.',
+    },
+  },
   [TEMPLATE.PAYMENT_CAPTURED]: {
     uz: { title: 'To‘lov qabul qilindi', body: '{amount} {currency} to‘lov qabul qilindi.' },
     ru: { title: 'Платёж принят', body: 'Платёж {amount} {currency} принят.' },

@@ -51,6 +51,48 @@ export interface CreateVendorDto {
   bankAccount?: string;
 }
 
+/**
+ * What the platform owes a vendor for delivered orders. Bazara's money-back guarantee: an order's
+ * money is on hold until the freshness window after delivery has passed with no open complaint.
+ * Minor units.
+ */
+export interface VendorPayoutDto {
+  vendorId: Id;
+  /** Everything owed: available + on hold. */
+  pending: number;
+  available: number;
+  onHold: number;
+  onHoldOrders: number;
+  /** When the first order held by the clock clears; null when none is. */
+  releasesAt: string | null;
+  currency: string;
+  orderCount: number;
+}
+
+/** A vendor as the desk's list answers it: the row, with its stall count. */
+export interface VendorRowDto {
+  id: Id;
+  userId: Id;
+  legalType: VendorLegalType;
+  status: VendorStatus;
+  legalName: string;
+  displayName: string;
+  taxId: string | null;
+  phone: string;
+  email: string | null;
+  createdAt: string;
+  verifiedAt: string | null;
+  _count: { stores: number };
+}
+
+/** «Стать продавцом»: the applicant's own row, whatever the desk decided. */
+export interface VendorApplicationDto {
+  id: Id;
+  status: VendorStatus;
+  displayName: string;
+  createdAt: string;
+}
+
 export type UpdateVendorDto = Partial<CreateVendorDto> & {
   status?: VendorStatus;
   commissionPercent?: number | null;

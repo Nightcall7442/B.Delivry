@@ -9,6 +9,7 @@
  * changes nothing.
  */
 import { Prisma, PrismaClient } from '@prisma/client';
+import { SALE } from '@bazar/constants';
 import { listProducts, listStores, HOURS, isShopfront } from '@bazar/storefront';
 
 const prisma = new PrismaClient();
@@ -361,6 +362,28 @@ async function seedStorefront(tenantId: string): Promise<{ stores: number; produ
       create: { tenantId, storeId, slug: product.slug, ...data },
       update: data,
     });
+    // «Честная скидка»: a seeded sale is a real one — the old price stood yesterday, the cut is
+    // today — so the hourly sweep does not end it before the week is out. Re-seeding after a week
+    // starts it afresh.
+    if (product.oldPrice) {
+      const weekAgo = new Date(Date.now() - SALE.REFERENCE_DAYS * 86_400_000);
+      const recent = await prisma.productPrice.count({
+        where: { productId: row.id, validFrom: { gte: weekAgo } },
+      });
+      if (recent === 0) {
+        await prisma.productPrice.createMany({
+          data: [
+            {
+              productId: row.id,
+              price: product.oldPrice.amount,
+              currency: product.price.currency,
+              validFrom: new Date(Date.now() - 86_400_000),
+            },
+            { productId: row.id, price: product.price.amount, currency: product.price.currency },
+          ],
+        });
+      }
+    }
     await prisma.productImage.deleteMany({ where: { productId: row.id } });
     if (product.images.length > 0) {
       await prisma.productImage.createMany({

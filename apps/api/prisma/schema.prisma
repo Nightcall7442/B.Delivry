@@ -499,6 +499,7 @@ model Customer {
   orders    Order[]
   reviews   Review[]
   subscriptions CartSubscription[]
+  favorites Favorite[]
 
   @@index([tenantId])
   @@map("customers")
@@ -669,6 +670,7 @@ model Store {
   products Product[]
   carts    Cart[]
   orders   Order[]
+  favorites Favorite[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, status])
@@ -906,8 +908,10 @@ model Product {
 
   images     ProductImage[]
   priceHistory ProductPrice[]
+  priceTiers   ProductPriceTier[]
   cartItems  CartItem[]
   orderItems OrderItem[]
+  favorites  Favorite[]
 
   @@unique([storeId, slug])
   @@index([tenantId, available])
@@ -918,6 +922,20 @@ model Product {
 
 // Price changes are appended, never overwritten: disputes about "it cost less
 // yesterday" are settled from here.
+// «От 10 кг по 16 000», «3 шт за 10 000» (kept per piece): from `minQuantity` of the product's
+// unit the whole line is priced at `price` per unit, never above the list price
+// (@bazar/storefront tiers.ts). Three at most, set by the seller.
+model ProductPriceTier {
+  id          String  @id @default(uuid())
+  productId   String
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  minQuantity Decimal @db.Decimal(10, 3)
+  price       Int
+
+  @@unique([productId, minQuantity])
+  @@map("product_price_tiers")
+}
+
 model ProductPrice {
   id        String   @id @default(uuid())
   productId String
@@ -991,6 +1009,28 @@ model CartItem {
   @@map("cart_items")
 }
 
+// «Избранное»: goods and stalls a customer keeps coming back to. A row names exactly one of the
+// two (a CHECK in the migration); the pair with the customer is unique, so saving twice is a no-op.
+model Favorite {
+  id         String   @id @default(uuid())
+  tenantId   String
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  storeId    String?
+  store      Store?   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([customerId, productId])
+  @@unique([customerId, storeId])
+  @@index([tenantId])
+  // «Подешевело»: who saved this good, read on every sale.
+  @@index([productId])
+  @@map("favorites")
+}
+
 // ============================================================================
 // ORDERS
 // ============================================================================
@@ -1050,6 +1090,9 @@ model Order {
   addressId    String?
   // Delivery fee before Plus / thresholds / coupons waived it: the courier's payout base.
   courierFee   Int       @default(0)
+  // The platform's cut of the goods, fixed when the order is placed: the vendor's own rate when
+  // the desk set one, else the zone tariff's. The stall is paid the subtotal less this.
+  commissionPercent Float @default(0)
   // "Заказ родителям": who opens the door when it is not the customer. The
   // courier calls this number; the recipient gets one SMS when the order sets off.
   recipientName  String?

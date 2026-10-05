@@ -4,12 +4,13 @@
  * cardboard signs — all of it, scrolling over the photo. Tapping the photo
  * opens it full-size (the "counter now" story); the cart pill floats.
  */
-import { arrivedToday, estimateDelivery, tr, unitLabel } from '@bazar/storefront';
+import { estimateDelivery, productLineTotal, tr } from '@bazar/storefront';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ProductTile, TILE_GAP, useTileWidth } from '@/components/shop/ProductTile';
 import { StoryViewer } from '@/components/shop/Stories';
 import {
   BasketGlyph,
@@ -19,20 +20,22 @@ import {
   Say,
   Scene,
   SceneButton,
-  Sign,
   scene,
   sceneFont,
   useSceneTop,
 } from '@/components/bazar';
 import { Bone, LoadError } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
-import { useCart, useCartActions } from '@/features/cart/store';
+import { useCart } from '@/features/cart/store';
+import { useFavorite } from '@/features/favorites/store';
 import { getStore, listCategories, listProducts } from '@/lib/catalog';
+import { shareLink, stallUrl } from '@/lib/share';
 import { EMPTY, useList, useLoad } from '@/lib/use-data';
 import {
   ArrowLeft,
   Clock,
   Heart,
+  Share as ShareIcon,
   Photo,
   Scooter,
   Star,
@@ -47,19 +50,19 @@ export function StoreScreen({ storeId }: { storeId: string }) {
   const { locale, t } = useLocale();
   const { address } = useAddress();
   const { quantities } = useCart();
-  const { setQuantity } = useCartActions();
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const top = useSceneTop();
   const [category, setCategory] = useState<string | null>(null);
   const [story, setStory] = useState(false);
+  const favorite = useFavorite('store', storeId, `/store/${storeId}`);
+  const tileWidth = useTileWidth();
 
   const storeLoad = useLoad(() => getStore(storeId), [storeId]);
   const productLoad = useLoad(() => listProducts({ storeId }), [storeId]);
   const store = storeLoad.data;
   const products = productLoad.data ?? EMPTY;
   const categories = useList(() => listCategories(), []);
-  const units = unitLabel(locale);
 
   const present = useMemo(() => {
     const ids = new Set(products.map((p) => p.categoryId));
@@ -69,7 +72,8 @@ export function StoreScreen({ storeId }: { storeId: string }) {
     (p) => p.available,
   );
   const inCart = products.filter((p) => quantities[p.id]);
-  const total = inCart.reduce((sum, p) => sum + p.price.amount * (quantities[p.id] ?? 0), 0);
+  // As the order will charge it: a quantity price counts.
+  const total = inCart.reduce((sum, p) => sum + productLineTotal(p, quantities[p.id] ?? 0), 0);
   const estimate =
     store && address
       ? estimateDelivery(store.point, address.point, store.preparationMinutes)
@@ -201,32 +205,14 @@ export function StoreScreen({ storeId }: { storeId: string }) {
               </ScrollView>
             ) : null}
             <View style={s.grid}>
-              {shown.map((product, i) => {
-                const qty = quantities[product.id] ?? 0;
-                return (
-                  <Sign
-                    key={product.id}
-                    style={s.sign}
-                    tilt={[-1, 1, 0.5, -0.5][i % 4] ?? 0}
-                    title={tr(product.name, locale)}
-                    price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
-                    note={arrivedToday(product) ? t('store.arrivedToday') : undefined}
-                    count={qty}
-                    countLabel={t('scene.inCart', {
-                      count: `${t.qty(qty)} ${units[product.unit]}`,
-                    })}
-                    onPress={() => router.push(`/product/${product.id}`)}
-                    onAdd={() =>
-                      setQuantity(
-                        product.id,
-                        qty === 0
-                          ? product.minQuantity || product.quantityStep || 1
-                          : qty + (product.quantityStep || 1),
-                      )
-                    }
-                  />
-                );
-              })}
+              {shown.map((product, i) => (
+                <ProductTile
+                  key={product.id}
+                  product={product}
+                  index={i}
+                  style={{ width: tileWidth }}
+                />
+              ))}
             </View>
           </View>
         </ScrollView>
@@ -251,9 +237,32 @@ export function StoreScreen({ storeId }: { storeId: string }) {
         >
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
-        <SceneButton>
-          <Heart size={20} color={scene.pomegranate} />
-        </SceneButton>
+        <View style={s.topEnd}>
+          <SceneButton
+            onPress={() =>
+              shareLink(
+                t('share.stall', {
+                  name: store ? (store.ownerName ?? tr(store.name, locale)) : '',
+                }),
+                stallUrl(locale, storeId),
+              )
+            }
+            label={t('common.share')}
+          >
+            <ShareIcon size={18} color={scene.ink} />
+          </SceneButton>
+          <SceneButton
+            onPress={favorite.toggle}
+            label={t(favorite.saved ? 'fav.forget' : 'fav.save')}
+            selected={favorite.saved}
+          >
+            <Heart
+              size={20}
+              color={scene.pomegranate}
+              fill={favorite.saved ? scene.pomegranate : 'none'}
+            />
+          </SceneButton>
+        </View>
       </View>
 
       {inCart.length > 0 ? (
@@ -287,6 +296,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  topEnd: { flexDirection: 'row', gap: 10 },
   person: { paddingHorizontal: 20, gap: 8 },
   avatar: {
     width: 52,
@@ -324,8 +334,7 @@ const s = StyleSheet.create({
   chipOn: { backgroundColor: scene.cream, borderColor: scene.cream },
   chipText: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.cream },
   chipTextOn: { color: scene.ink },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 14, paddingTop: 4 },
-  sign: { width: '47%', flexGrow: 1 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: TILE_GAP, rowGap: 18, paddingTop: 4 },
   cartBar: {
     position: 'absolute',
     left: 20,

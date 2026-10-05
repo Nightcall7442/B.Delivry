@@ -1,7 +1,7 @@
 /**
  * Catalog persistence (Prisma). Tenant-scoped.
  */
-import type { Prisma, Product, ProductImage } from '@prisma/client';
+import type { Prisma, Product, ProductImage, ProductPriceTier } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import { currentViewer, purchasableStoreWhere, visibleProductWhere } from '../domain/visibility.js';
@@ -9,9 +9,13 @@ import type { CatalogSearchFilters, PurchasableProduct } from '../types/index.js
 
 const PRODUCT_INCLUDE = {
   images: { orderBy: { sortOrder: 'asc' }, take: 10 },
+  priceTiers: { orderBy: { minQuantity: 'asc' } },
 } satisfies Prisma.ProductInclude;
 
-export type ProductWithImages = Product & { images: ProductImage[] };
+export type ProductWithImages = Product & {
+  images: ProductImage[];
+  priceTiers: ProductPriceTier[];
+};
 
 export class CatalogRepository extends BaseRepository {
   async findById(id: string): Promise<ProductWithImages | null> {
@@ -62,6 +66,7 @@ export class CatalogRepository extends BaseRepository {
         quantityStep: true,
         weightGrams: true,
         stock: true,
+        priceTiers: { select: { minQuantity: true, price: true } },
       },
     });
 
@@ -80,6 +85,10 @@ export class CatalogRepository extends BaseRepository {
           quantityStep: Number(row.quantityStep),
           weightGrams: row.weightGrams,
           stock: row.stock === null ? null : Number(row.stock),
+          priceTiers: row.priceTiers.map((tier) => ({
+            minQuantity: Number(tier.minQuantity),
+            price: tier.price,
+          })),
         },
       ]),
     );
@@ -112,6 +121,8 @@ export class CatalogRepository extends BaseRepository {
         }),
       ],
       ...(filters.availableOnly !== false ? { available: true } : {}),
+      // Every write keeps the struck-through price above the price, so its presence is the sale.
+      ...(filters.onSale === true ? { oldPrice: { not: null } } : {}),
       ...(filters.ids !== undefined ? { id: { in: filters.ids } } : {}),
       ...(filters.storeId !== undefined ? { storeId: filters.storeId } : {}),
       ...(filters.categoryId !== undefined ? { categoryId: filters.categoryId } : {}),

@@ -23,6 +23,7 @@ import {
   haggleFor,
   isOpenAt,
   type MapStoreDto,
+  orderLine,
   orderReasonText,
   paymentMethodText,
   photo,
@@ -36,12 +37,12 @@ import type { HaggleDto, OrderQuoteDto, ProductDto } from '@bazar/types';
 import { createT } from '@bazar/i18n';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ArrowLeft, Banknote, Card, Check, HomeGlyph, Smartphone } from '@/components/go/icons';
 import { useAddress } from '@/features/address';
 import { useAuth } from '@/features/auth';
-import { groupByStore, useCartActions, useCartQuantities } from '@/features/cart';
+import { groupByStore, useCartActions, useCartNotes, useCartQuantities } from '@/features/cart';
 import { useOrderList } from '@/features/orders';
 import { api } from '@/lib/api';
 
@@ -78,6 +79,7 @@ export function BazaarCheckout({
   const { address, setAddress } = useAddress();
   const quantities = useCartQuantities();
   const { clear, setQuantity } = useCartActions();
+  const { notes } = useCartNotes();
   const { orders: pastOrders } = useOrderList();
   // Agreed (haggled) prices: the quote already uses them; the lines should show the same.
   const [haggles, setHaggles] = useState<HaggleDto[]>([]);
@@ -88,14 +90,17 @@ export function BazaarCheckout({
       .then(setHaggles)
       .catch(() => undefined);
   }, [user]);
+  // A haggled price stands where it is below the line's own (list or quantity price), as the
+  // order prices it.
   const lineTotal = (line: {
     product: { id: string };
     quantity: number;
+    unitPrice: { amount: number };
     total: { amount: number };
   }) => {
     const agreed = haggleFor(haggles, line.product.id);
     return agreed?.status === 'ACCEPTED' && agreed.offeredPrice
-      ? Math.round(agreed.offeredPrice.amount * line.quantity)
+      ? Math.round(Math.min(agreed.offeredPrice.amount, line.unitPrice.amount) * line.quantity)
       : line.total.amount;
   };
 
@@ -113,15 +118,19 @@ export function BazaarCheckout({
       }),
     [extraStores, allGroups],
   );
-  const toItems = (g: { lines: { product: { id: string }; quantity: number }[] } | null) =>
-    g?.lines.map((line) => ({ productId: line.product.id, quantity: line.quantity })) ?? [];
-  const items = useMemo(() => toItems(group), [group]);
+  // Each line with its wish for the stall («без кости»), when the customer left one.
+  const toItems = useCallback(
+    (g: { lines: { product: { id: string }; quantity: number }[] } | null) =>
+      g?.lines.map((line) => orderLine(line.product.id, line.quantity, notes)) ?? [],
+    [notes],
+  );
+  const items = useMemo(() => toItems(group), [group, toItems]);
   const groupStores = useMemo(
     () => [
       { storeId: store.id, items },
       ...followers.map((f) => ({ storeId: f.store.id, items: toItems(f.group) })),
     ],
-    [store.id, items, followers],
+    [store.id, items, followers, toItems],
   );
   // B2B: pay by invoice once an operator approved the company.
   const [business, setBusiness] = useState<{ approved: boolean; days: number } | null>(null);

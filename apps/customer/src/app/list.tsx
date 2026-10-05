@@ -15,7 +15,14 @@ import {
   Camera,
   Mic,
 } from '@bazar/mobile';
-import { canDictate, dictate, parseShoppingList, tr, unitLabel } from '@bazar/storefront';
+import {
+  canDictate,
+  dictate,
+  parseShoppingList,
+  productLineTotal,
+  tr,
+  unitLabel,
+} from '@bazar/storefront';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -164,7 +171,7 @@ export default function ListRoute() {
               {line.product ? (
                 <Text role="title">
                   {tr(line.product.name, locale)} · {line.quantity} {units[line.product.unit]} ·{' '}
-                  {t.money(line.product.price.amount * line.quantity)}
+                  {t.money(productLineTotal(line.product, line.quantity))}
                 </Text>
               ) : (
                 <Text role="muted" style={{ color: color.danger }}>

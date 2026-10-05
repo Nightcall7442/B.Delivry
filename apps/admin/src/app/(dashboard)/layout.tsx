@@ -10,6 +10,7 @@ const NAV = [
   { href: '/orders', label: 'Заказы' },
   { href: '/couriers', label: 'Курьеры' },
   { href: '/stores', label: 'Точки' },
+  { href: '/vendors', label: 'Продавцы' },
   { href: '/companies', label: 'Компании' },
   { href: '/invoices', label: 'Счета' },
   { href: '/demand', label: 'Спрос' },

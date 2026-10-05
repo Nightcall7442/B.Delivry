@@ -7,7 +7,7 @@
 import { api } from '@bazar/mobile';
 import { revenueWindows } from '@bazar/storefront';
 import type { Currency } from '@bazar/constants';
-import type { SalesReportDto } from '@bazar/types';
+import type { SalesReportDto, VendorPayoutDto } from '@bazar/types';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -22,6 +22,8 @@ export interface Tally {
 export interface Revenue {
   today: Tally;
   week: Tally;
+  /** What the platform owes the stall; null when it could not be read (the rest still shows). */
+  payout: VendorPayoutDto | null;
 }
 
 const tally = ({ orders, revenue }: SalesReportDto): Tally => ({
@@ -42,11 +44,14 @@ export function useRevenue(storeId: string | null) {
     setFailed(false);
     try {
       const { today, week } = revenueWindows();
-      const [day, seven] = await Promise.all([
+      const [day, seven, payout] = await Promise.all([
         api().analytics.sales({ storeId, ...today }),
         api().analytics.sales({ storeId, ...week }),
+        api()
+          .vendors.payout()
+          .catch(() => null),
       ]);
-      if (mine === latest.current) setRevenue({ today: tally(day), week: tally(seven) });
+      if (mine === latest.current) setRevenue({ today: tally(day), week: tally(seven), payout });
     } catch {
       // A failed refresh keeps the last numbers; the card says they may be old.
       if (mine === latest.current) setFailed(true);

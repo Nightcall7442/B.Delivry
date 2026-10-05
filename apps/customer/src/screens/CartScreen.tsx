@@ -7,16 +7,19 @@
  * can share a courier.
  */
 import {
+  basketGrams,
+  CART_NOTE_MAX,
   type CartLine,
   cashbackFor,
   decodeShare,
   encodeShare,
-  basketGrams,
   estimateDelivery,
   haggleFor,
   isShopfront,
   type MapStoreDto,
+  nextTierText,
   oneTrip as oneTripStores,
+  onTier,
   tr,
   unitLabel,
 } from '@bazar/storefront';
@@ -46,6 +49,7 @@ import { useAddress } from '@/features/address/store';
 import {
   groupByStore,
   useCartActions,
+  useCartNotes,
   useCartQuantities,
   useCartReady,
 } from '@/features/cart/store';
@@ -469,11 +473,22 @@ function ReceiptRow({
   const { locale, t } = useLocale();
   const [asking, setAsking] = useState(false);
   const [price, setPrice] = useState('');
+  const { notes, setNote } = useCartNotes();
+  const note = notes[line.product.id] ?? '';
+  // «Без кости»: typed here, carried to the stall with the order line.
+  const [wishing, setWishing] = useState(false);
+  const [wish, setWish] = useState('');
+  const keepWish = () => {
+    setNote(line.product.id, wish);
+    setWishing(false);
+  };
   const { product, quantity } = line;
   const step = product.quantityStep || 1;
   const min = product.minQuantity || step;
   const unit = unitLabel(locale)[product.unit];
   const photo = product.images[0]?.url ?? null;
+  // «Ещё 2 кг — и по 16 000»: the quantity price one step away.
+  const next = nextTierText(t, locale, product, quantity);
 
   return (
     <View style={s.row}>
@@ -484,11 +499,13 @@ function ReceiptRow({
             {tr(product.name, locale)}
           </Text>
           <Text style={s.small}>
-            {t.money(product.price.amount)} / {unit}
+            {t.money(line.unitPrice.amount)} / {unit}
+            {onTier(product, quantity) ? ` · ${t('tiers.applied')}` : ''}
             {product.stock !== null && quantity > product.stock
               ? ` · ${t('store.left', { count: product.stock })}`
               : ''}
           </Text>
+          {next ? <Text style={[s.small, { color: scene.pomegranate }]}>{next}</Text> : null}
         </View>
         <Text style={s.rowPrice}>
           {product.unit === 'KG' ? '≈ ' : ''}
@@ -555,6 +572,40 @@ function ReceiptRow({
           </Pressable>
         )}
       </View>
+      {wishing ? (
+        <TextInput
+          value={wish}
+          onChangeText={setWish}
+          placeholder={t('cart.wishPlaceholder')}
+          placeholderTextColor={scene.inkSoft}
+          maxLength={CART_NOTE_MAX}
+          autoFocus
+          returnKeyType="done"
+          onSubmitEditing={keepWish}
+          onBlur={keepWish}
+          accessibilityLabel={t('cart.wish')}
+          style={[s.askInput, { flex: 0 }]}
+        />
+      ) : (
+        <Pressable
+          onPress={() => {
+            setWish(note);
+            setWishing(true);
+          }}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={note ? t('cart.wishEdit') : t('cart.wish')}
+          style={{ alignSelf: 'flex-start' }}
+        >
+          {note ? (
+            <Text style={s.wishText} numberOfLines={2}>
+              «{note}»
+            </Text>
+          ) : (
+            <Text style={[s.small, s.link]}>{t('cart.wish')}</Text>
+          )}
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -685,6 +736,8 @@ const s = StyleSheet.create({
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
   },
+  // The customer's own words to the stall, in the hand of the receipt's notes.
+  wishText: { fontFamily: sceneFont.italic, ...scale.body, color: scene.ink },
   // A field on the receipt: kraft, the paper's edge.
   askInput: {
     flex: 1,

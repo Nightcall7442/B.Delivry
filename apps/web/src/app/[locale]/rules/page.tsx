@@ -1,6 +1,6 @@
 import { RulesScreen } from '@/components/go/rules-screen';
 
-export const metadata = { title: 'Гарантии — Bazar Delivery' };
+export const metadata = { title: 'Гарантии и вопросы — Bazar Delivery' };
 
 export default async function RulesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

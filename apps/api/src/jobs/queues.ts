@@ -27,6 +27,7 @@ export const JOB = {
   DAILY_REPORTS: 'daily-reports',
   RUN_SUBSCRIPTIONS: 'run-subscriptions',
   EXPIRE_CASHBACK: 'expire-cashback',
+  END_STALE_SALES: 'end-stale-sales',
 } as const;
 
 export type JobName = (typeof JOB)[keyof typeof JOB];
@@ -51,6 +52,7 @@ export interface FindCourierJob extends TenantJob {
 
 export type RunSubscriptionsJob = TenantJob;
 export type ExpireCashbackJob = TenantJob;
+export type EndStaleSalesJob = TenantJob;
 
 export interface UpdateEtaJob extends TenantJob {
   orderId: string;
@@ -113,6 +115,7 @@ export interface JobPayloads {
   'daily-reports': DailyReportsJob;
   'run-subscriptions': RunSubscriptionsJob;
   'expire-cashback': ExpireCashbackJob;
+  'end-stale-sales': EndStaleSalesJob;
 }
 
 /** Which queue each job runs on. */
@@ -127,4 +130,5 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'daily-reports': QUEUE.ANALYTICS,
   'run-subscriptions': QUEUE.MAINTENANCE,
   'expire-cashback': QUEUE.MAINTENANCE,
+  'end-stale-sales': QUEUE.MAINTENANCE,
 };

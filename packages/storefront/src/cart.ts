@@ -10,6 +10,8 @@ export type CartQuantities = Record<string, number>;
 export interface CartLine {
   product: ProductDto;
   quantity: number;
+  /** Per unit at this quantity: the list price, or a quantity tier's (tiers.ts). */
+  unitPrice: MoneyDto;
   total: MoneyDto;
 }
 

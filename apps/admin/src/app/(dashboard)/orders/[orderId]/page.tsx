@@ -201,7 +201,9 @@ export default function OrderPage() {
                   <span>
                     {tr(item.name, 'ru')}{' '}
                     <span className="tabular-nums text-ink-muted">
-                      × {item.actualQuantity ?? item.quantity} {UNIT_LABEL[item.unit]}
+                      {item.actualQuantity === 0
+                        ? `нет у продавца (заказано ${item.quantity} ${UNIT_LABEL[item.unit]})`
+                        : `× ${item.actualQuantity ?? item.quantity} ${UNIT_LABEL[item.unit]}`}
                     </span>
                   </span>
                   <span className="tabular-nums">

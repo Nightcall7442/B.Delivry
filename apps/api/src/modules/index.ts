@@ -13,6 +13,7 @@ export * from './categories/index.js';
 export * from './couriers/index.js';
 export * from './customers/index.js';
 export * from './delivery/index.js';
+export * from './favorites/index.js';
 export * from './geo/index.js';
 export * from './notifications/index.js';
 export * from './orders/index.js';

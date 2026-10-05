@@ -8,14 +8,14 @@
  * grocery run actually needs: «Как в прошлый раз» and «Собрать по списку».
  */
 import {
-  HALL,
-  TONE,
   alpha,
   branchesOf,
   closesToday,
-  tr,
-  unitLabel,
+  HALL,
   type MapStoreDto,
+  productLineTotal,
+  TONE,
+  tr,
 } from '@bazar/storefront';
 import type { CategoryDto, OrderDto, ProductDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
@@ -37,7 +37,6 @@ import {
   BasketGlyph,
   Eyebrow,
   Glass,
-  ProductCard,
   Say,
   Scene,
   SceneButton,
@@ -46,13 +45,18 @@ import {
   sceneFont,
   useSceneTop,
 } from '@/components/bazar';
+import { ProductTile } from '@/components/shop/ProductTile';
 import { LoadError } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
 import { useCart, useCartActions } from '@/features/cart/store';
+import { useFavorite } from '@/features/favorites/store';
 import { listStores } from '@/lib/catalog';
+import { shareLink, stallUrl } from '@/lib/share';
 import { useData, useList } from '@/lib/use-data';
 import {
   ArrowLeft,
+  Heart,
+  Share as ShareIcon,
   Clock,
   Mic,
   Search,
@@ -77,7 +81,7 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const top = useSceneTop();
-  const units = unitLabel(locale);
+  const favorite = useFavorite('store', store.id, `/store/${store.id}`);
   const hero = store.counterPhotoUrl ?? store.coverUrl ?? null;
 
   const [category, setCategory] = useState<string | null>(null);
@@ -152,7 +156,8 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
   };
 
   const inCart = items.filter((p) => quantities[p.id]);
-  const total = inCart.reduce((sum, p) => sum + p.price.amount * (quantities[p.id] ?? 0), 0);
+  // As the order will charge it: a quantity price counts.
+  const total = inCart.reduce((sum, p) => sum + productLineTotal(p, quantities[p.id] ?? 0), 0);
   const closes = closesToday(store);
   const kind = t(`store.type.${store.type}` as 'store.type.SHOP');
 
@@ -284,32 +289,9 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
         onEndReached={() => {
           if (hasNext && !loading) void load(page + 1, false);
         }}
-        renderItem={({ item: product, index }) => {
-          const qty = quantities[product.id] ?? 0;
-          return (
-            <ProductCard
-              style={s.card}
-              compact
-              photo={product.images[0]?.url ?? null}
-              tilt={[-1.2, 1, 0.6, -0.8][index % 4] ?? 0}
-              side={index % 2 ? 'right' : 'left'}
-              title={tr(product.name, locale)}
-              price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
-              note={product.oldPrice ? t.money(product.oldPrice.amount) : undefined}
-              count={qty}
-              countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
-              onPress={() => router.push(`/product/${product.id}`)}
-              onAdd={() =>
-                setQuantity(
-                  product.id,
-                  qty === 0
-                    ? product.minQuantity || product.quantityStep || 1
-                    : qty + (product.quantityStep || 1),
-                )
-              }
-            />
-          );
-        }}
+        renderItem={({ item: product, index }) => (
+          <ProductTile product={product} index={index} style={s.card} />
+        )}
         ListEmptyComponent={
           loading ? null : failed ? (
             <View style={{ padding: 20 }}>
@@ -339,6 +321,30 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
         >
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
+        <View style={s.topEnd}>
+          <SceneButton
+            onPress={() =>
+              shareLink(
+                t('share.stall', { name: tr(store.name, locale) }),
+                stallUrl(locale, store.id),
+              )
+            }
+            label={t('common.share')}
+          >
+            <ShareIcon size={18} color={scene.ink} />
+          </SceneButton>
+          <SceneButton
+            onPress={favorite.toggle}
+            label={t(favorite.saved ? 'fav.forget' : 'fav.save')}
+            selected={favorite.saved}
+          >
+            <Heart
+              size={20}
+              color={scene.pomegranate}
+              fill={favorite.saved ? scene.pomegranate : 'none'}
+            />
+          </SceneButton>
+        </View>
       </View>
 
       {inCart.length > 0 ? (
@@ -365,7 +371,14 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
 }
 
 const s = StyleSheet.create({
-  top: { position: 'absolute', left: 20, right: 20, flexDirection: 'row' },
+  top: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  topEnd: { flexDirection: 'row', gap: 10 },
   // The painted board over the door: lapis with an ochre rule under the name — paper's corners.
   board: {
     marginHorizontal: 20,

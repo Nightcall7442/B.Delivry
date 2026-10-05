@@ -14,6 +14,8 @@ export const TEMPLATE = {
   ORDER_DELIVERED: 'order.delivered',
   ORDER_CANCELLED: 'order.cancelled',
   ORDER_FAILED: 'order.failed',
+  /** The stall did not have something: the line left the bill, the order goes on. */
+  ORDER_ITEMS_MISSING: 'order.items_missing',
   /** SMS to the person receiving an order placed for them. */
   ORDER_FOR_RECIPIENT: 'order.for_recipient',
   PAYMENT_CAPTURED: 'payment.captured',
@@ -86,6 +88,11 @@ export const TEMPLATE_CHANNELS: Record<TemplateKey, readonly NotificationChannel
     NOTIFICATION_CHANNEL.PUSH,
     NOTIFICATION_CHANNEL.TELEGRAM,
     NOTIFICATION_CHANNEL.SMS,
+    NOTIFICATION_CHANNEL.IN_APP,
+  ],
+  'order.items_missing': [
+    NOTIFICATION_CHANNEL.PUSH,
+    NOTIFICATION_CHANNEL.TELEGRAM,
     NOTIFICATION_CHANNEL.IN_APP,
   ],
   'payment.captured': [

@@ -22,6 +22,8 @@ export function vendorsRoutes(controller: VendorsController) {
     app.addHook('preHandler', requireAuth);
 
     app.get('/me', { preHandler: requireVendor }, controller.me);
+    // The applicant's own row, before the desk has said yes (no vendorId on the token yet).
+    app.get('/me/application', controller.myApplication);
     app.get(
       '/me/payout',
       { preHandler: [requireVendor, validate({ query: payoutQuerySchema })] },

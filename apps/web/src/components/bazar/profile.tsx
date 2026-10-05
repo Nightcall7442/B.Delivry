@@ -17,6 +17,7 @@ import {
   Basket,
   Chat,
   Coin,
+  Heart,
   HomeGlyph,
   Leaf,
   ListGlyph,
@@ -34,6 +35,7 @@ type Item = { key: MessageKey; href: string; icon: React.ReactNode };
 
 const SERVICES: Item[] = [
   { key: 'menu.orders', href: '/orders', icon: <Receipt /> },
+  { key: 'menu.favorites', href: '/favorites', icon: <Heart /> },
   { key: 'menu.subscriptions', href: '/subscriptions', icon: <Repeat /> },
   { key: 'menu.plus', href: '/plus', icon: <Star /> },
   { key: 'menu.list', href: '/list', icon: <Mic /> },
@@ -41,6 +43,7 @@ const SERVICES: Item[] = [
   { key: 'menu.business', href: '/business', icon: <Basket /> },
   { key: 'menu.docs', href: '/documents', icon: <ListGlyph /> },
   { key: 'menu.neighbour', href: '/neighbour', icon: <Bag /> },
+  { key: 'menu.seller', href: '/seller', icon: <Basket /> },
 ];
 const MORE: Item[] = [
   { key: 'menu.address', href: '/address', icon: <HomeGlyph /> },

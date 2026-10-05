@@ -41,7 +41,11 @@ const items = [
   { id: 'i-pcs', unit: 'PCS', quantity: 3, unitPrice: 5_000 },
 ];
 
-function service(status: OrderStatus, courierId: string | null = 'courier-1') {
+function service(
+  status: OrderStatus,
+  courierId: string | null = 'courier-1',
+  extra: Record<string, unknown> = {},
+) {
   const moves: { from: OrderStatus; to: OrderStatus; actorId: string | null }[] = [];
   const applied: { orderId: string; actuals: unknown; guard: unknown }[] = [];
   const published: { name: string; payload: Record<string, unknown> }[] = [];
@@ -60,6 +64,7 @@ function service(status: OrderStatus, courierId: string | null = 'courier-1') {
     courierId,
     items,
     store: { vendorId: 'vendor-stall' },
+    ...extra,
   });
   const svc = new OrdersService({
     prisma: { $transaction: async (fn: (tx: unknown) => unknown) => fn({}) },
@@ -198,13 +203,100 @@ describe('actual-quantities', () => {
     }
   });
 
-  it('takes weighed lines of this order only', async () => {
+  it('takes lines of this order only', async () => {
     const { svc, applied } = service(ORDER_STATUS.PICKING_UP);
-    for (const orderItemId of ['i-pcs', 'an-item-of-another-order']) {
+    await expect(
+      runWithContext(ownCourier, () =>
+        svc.reprice('o1', [{ orderItemId: 'an-item-of-another-order', actualQuantity: 1 }]),
+      ),
+    ).rejects.toBeInstanceOf(ConflictError);
+    expect(applied).toEqual([]);
+  });
+
+  it('takes counted goods short or not at all, never more and never in halves', async () => {
+    // 3 pieces ordered.
+    const { svc, applied, published } = service(ORDER_STATUS.PICKING_UP);
+    for (const actualQuantity of [4, 1.5, -1]) {
       await expect(
-        runWithContext(ownCourier, () => svc.reprice('o1', [{ orderItemId, actualQuantity: 1 }])),
+        runWithContext(ownCourier, () =>
+          svc.reprice('o1', [{ orderItemId: 'i-pcs', actualQuantity }]),
+        ),
       ).rejects.toBeInstanceOf(ConflictError);
     }
+    expect(applied).toEqual([]);
+
+    await runWithContext(ownCourier, () =>
+      svc.reprice('o1', [{ orderItemId: 'i-pcs', actualQuantity: 2 }]),
+    );
+    await runWithContext(ownCourier, () =>
+      svc.reprice('o1', [{ orderItemId: 'i-pcs', actualQuantity: 0 }]),
+    );
+    expect(applied).toHaveLength(2);
+    // Short or missing, the customer hears which line: the event names it with what was bought.
+    expect(published.map((event) => event.payload)).toEqual([
+      expect.objectContaining({
+        missing: [expect.objectContaining({ orderItemId: 'i-pcs', quantity: 2 })],
+      }),
+      expect.objectContaining({
+        missing: [expect.objectContaining({ orderItemId: 'i-pcs', quantity: 0 })],
+      }),
+    ]);
+  });
+
+  it('once paid, only lets the bill go down: what went back cannot be taken again', async () => {
+    // 2 kg at 10 000 + 500 g at 20 + 3 pieces at 5 000 + 5 000 delivery = 50 000, paid.
+    const paid = {
+      paymentStatus: 'CAPTURED',
+      deliveryFee: 5_000,
+      serviceFee: 0,
+      discount: 0,
+      total: 50_000,
+    };
+    const { svc, applied } = service(ORDER_STATUS.PICKING_UP, 'courier-1', paid);
+    await expect(
+      runWithContext(ownCourier, () => svc.reprice('o1', [kg(2.5)])),
+    ).rejects.toBeInstanceOf(ConflictError);
+    await runWithContext(ownCourier, () => svc.reprice('o1', [kg(1.8)]));
+    expect(applied).toHaveLength(1);
+
+    // The dill was paid back as missing; finding it after all would hand it over for nothing.
+    const refunded = {
+      ...paid,
+      paymentStatus: 'PARTIALLY_REFUNDED',
+      total: 35_000,
+      items: items.map((item) => (item.id === 'i-pcs' ? { ...item, actualQuantity: 0 } : item)),
+    };
+    const after = service(ORDER_STATUS.PICKING_UP, 'courier-1', refunded);
+    await expect(
+      runWithContext(ownCourier, () =>
+        after.svc.reprice('o1', [{ orderItemId: 'i-pcs', actualQuantity: 3 }]),
+      ),
+    ).rejects.toBeInstanceOf(ConflictError);
+    expect(after.applied).toEqual([]);
+  });
+
+  it('names a line as missing once: a later save of the sheet does not tell the customer again', async () => {
+    const reported = items.map((item) =>
+      item.id === 'i-pcs' ? { ...item, actualQuantity: 0 } : item,
+    );
+    const { svc, published } = service(ORDER_STATUS.PICKING_UP, 'courier-1', { items: reported });
+    await runWithContext(ownCourier, () =>
+      svc.reprice('o1', [kg(2), { orderItemId: 'i-pcs', actualQuantity: 0 }]),
+    );
+    expect(published.map((event) => event.payload['missing'])).toEqual([[]]);
+  });
+
+  it('does not reprice a bag with nothing left in it: that is a failed order', async () => {
+    const { svc, applied } = service(ORDER_STATUS.PICKING_UP);
+    await expect(
+      runWithContext(ownCourier, () =>
+        svc.reprice('o1', [
+          { orderItemId: 'i-kg', actualQuantity: 0 },
+          { orderItemId: 'i-g', actualQuantity: 0 },
+          { orderItemId: 'i-pcs', actualQuantity: 0 },
+        ]),
+      ),
+    ).rejects.toBeInstanceOf(ConflictError);
     expect(applied).toEqual([]);
   });
 
@@ -215,8 +307,8 @@ describe('actual-quantities', () => {
     expect(maxActualQuantity('KG', 0.2)).toBeCloseTo(1.2);
     expect(maxActualQuantity('G', 500)).toBe(1500);
 
-    const { svc, applied } = service(ORDER_STATUS.PICKING_UP);
-    for (const actualQuantity of [0, -1, Number.NaN, 4.01, 200, 10_000]) {
+    const { svc, applied, published } = service(ORDER_STATUS.PICKING_UP);
+    for (const actualQuantity of [-1, Number.NaN, 4.01, 200, 10_000]) {
       await expect(
         runWithContext(ownCourier, () => svc.reprice('o1', [kg(actualQuantity)])),
       ).rejects.toBeInstanceOf(ConflictError);
@@ -225,7 +317,15 @@ describe('actual-quantities', () => {
 
     await runWithContext(ownCourier, () => svc.reprice('o1', [kg(4)]));
     await runWithContext(ownCourier, () => svc.reprice('o1', [kg(0.01)]));
-    expect(applied).toHaveLength(2);
+    // Zero is «нет у продавца»: the line leaves the bill and is named as missing; a lighter
+    // weighing is the scale, not a shortage.
+    await runWithContext(ownCourier, () => svc.reprice('o1', [kg(0)]));
+    expect(applied).toHaveLength(3);
+    expect(published.map((event) => (event.payload as { missing: unknown[] }).missing)).toEqual([
+      [],
+      [],
+      [expect.objectContaining({ orderItemId: 'i-kg', quantity: 0 })],
+    ]);
   });
 
   it('weighs a line once per request', async () => {
@@ -301,6 +401,24 @@ describe('OrdersRepository.applyActualQuantities', () => {
       args: { where: { id: 'i-kg' }, data: { actualQuantity: 2.5, actualTotal: 25_000 } },
     });
     expect(result).toEqual({ previousTotal: 50_000, total: 55_000 });
+  });
+
+  it('keeps what an earlier report said for the lines this one does not name', async () => {
+    const earlier = {
+      ...row,
+      items: items.map((item) => (item.id === 'i-pcs' ? { ...item, actualQuantity: 0 } : item)),
+    };
+    const { repo, tx, calls } = repository(earlier);
+    await runWithContext(ownCourier, () =>
+      repo.applyActualQuantities(
+        'o1',
+        [{ orderItemId: 'i-kg', actualQuantity: 2 }],
+        tx as never,
+        guard,
+      ),
+    );
+    // 2 kg at 10 000 + 500 g at 20, the pieces the stall did not have stay off: 30 000 + the fee.
+    expect(calls[1]).toMatchObject({ args: { data: { subtotal: 30_000, total: 35_000 } } });
   });
 
   it('writes nothing when the order is no longer in that state', async () => {

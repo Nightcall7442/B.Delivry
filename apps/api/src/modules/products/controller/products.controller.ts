@@ -1,6 +1,7 @@
 /**
  * Products HTTP controller — thin: validate → call service → map response.
  */
+import type { Money } from '@bazar/payments';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { BaseController } from '../../../common/base/base.controller.js';
 import { body, params, query } from '../../../middleware/validation.middleware.js';
@@ -26,6 +27,23 @@ export class ProductsController extends BaseController {
   update = async (request: FastifyRequest, reply: FastifyReply) => {
     const { id } = params<{ id: string }>(request);
     return this.ok(reply, await this.service.update(id, body<UpdateProductInput>(request)));
+  };
+
+  startSale = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = params<{ id: string }>(request);
+    const { price } = body<{ price: Money }>(request);
+    return this.ok(reply, await this.service.startSale(id, price));
+  };
+
+  setTiers = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = params<{ id: string }>(request);
+    const { tiers } = body<{ tiers: { minQuantity: number; price: Money }[] }>(request);
+    return this.ok(reply, await this.service.setTiers(id, tiers));
+  };
+
+  endSale = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = params<{ id: string }>(request);
+    return this.ok(reply, await this.service.endSale(id));
   };
 
   setAvailability = async (request: FastifyRequest, reply: FastifyReply) => {

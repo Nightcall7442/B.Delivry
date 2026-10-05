@@ -11,6 +11,7 @@ import {
   ORDER_STATUS,
   type OrderStatus,
   PAYMENT_METHOD,
+  PAYMENT_STATUS,
   PERMISSION,
   type PaymentMethod,
   type PaymentStatus,
@@ -21,6 +22,7 @@ import {
   WEIGHTED_UNITS,
 } from '@bazar/constants';
 import { add, money, multiply, sumMoney, zero, type Money } from '@bazar/payments';
+import { unitPriceFor } from '@bazar/storefront';
 import type { OrderQuoteDto, QuoteOrderDto } from '@bazar/types';
 import { orderNumber } from '@bazar/utils';
 import type { ChatMessage, PrismaClient } from '@prisma/client';
@@ -53,7 +55,7 @@ import {
 } from '../domain/order-state-machine.js';
 import { ORDER_EVENT } from '../domain/order.events.js';
 import { standingOn } from '../domain/order-party.js';
-import { maxActualQuantity, WEIGHING_STATUSES } from '../domain/order-weighing.js';
+import { boughtSoFar, isBuyableQuantity, WEIGHING_STATUSES } from '../domain/order-weighing.js';
 import type { OrdersRepository, OrderWithRelations } from '../repository/orders.repository.js';
 import type {
   ActualQuantity,
@@ -152,12 +154,22 @@ export class OrdersService extends BaseService {
       );
     }
 
+    // Priced exactly as the quote the customer was shown: the stall's own minimum and free-delivery
+    // threshold, and the goods' weight for the car surcharge, as `quote` passes them.
     const quote = await this.pricing.quote({
       from: { lat: store.lat, lng: store.lng },
       to: { lat: address.lat, lng: address.lng },
       subtotal,
       cityId: address.cityId,
       ...(input.scheduledFor !== undefined ? { at: input.scheduledFor } : {}),
+      weightGrams: items.reduce(
+        (sum, item) => sum + (item.weightGrams ?? 0) * Number(item.quantity),
+        0,
+      ),
+      ...(store.minOrder !== null ? { minOrder: money(store.minOrder, currency) } : {}),
+      ...(store.freeDeliveryThreshold !== null
+        ? { freeDeliveryThreshold: money(store.freeDeliveryThreshold, currency) }
+        : {}),
       ...(coupon !== null ? { discount: coupon.discount } : {}),
       ...(plus || coupon?.freeDelivery === true || input.groupFollower === true
         ? { freeDelivery: true }
@@ -208,6 +220,8 @@ export class OrdersService extends BaseService {
           addressId: input.addressId,
           // A group's followers ride on the leader's trip: no second payout.
           courierFee: input.groupFollower === true ? 0 : quote.courierFee.amount,
+          // The vendor's own rate when the desk set one, else the zone tariff's.
+          commissionPercent: store.commissionPercent ?? quote.commissionPercent,
           currency,
           recipientName: input.recipientName ?? null,
           recipientPhone: input.recipientPhone ?? null,
@@ -484,8 +498,12 @@ export class OrdersService extends BaseService {
         );
       }
 
+      // A quantity tier prices the whole line («от 10 кг по 16 000»); a price agreed in haggling
+      // stands where it is lower still. Weighing later keeps this per-unit price.
+      const listOrTier = unitPriceFor(product.price, product.priceTiers, requestedItem.quantity);
+      const haggled = agreed.get(product.id);
       const unitPrice = money(
-        agreed.get(product.id) ?? product.price,
+        haggled === undefined ? listOrTier : Math.min(haggled, listOrTier),
         product.currency as Currency,
       );
       return {
@@ -679,12 +697,15 @@ export class OrdersService extends BaseService {
   }
 
   /**
-   * Weighed goods: 2 kg of tomatoes is never exactly 2 kg. The courier reports
-   * what was actually bought and the order is repriced before handover, so the
-   * customer pays for what they receive.
+   * What was actually bought. Weighed goods: 2 kg of tomatoes is never exactly 2 kg. And the stall
+   * may not have something — six flatbreads ordered and four left, or no dill at all: that line is
+   * bought short or not at all (0) and leaves the bill, rather than the whole order failing over it.
+   * The order is repriced before handover, so the customer pays for what they receive; money
+   * already taken above the new total goes back by itself (the guarantee handler).
    *
-   * It changes what the customer owes, so it is the courier carrying this order, at the stall,
-   * on weighed lines of this order, with numbers a scale could show.
+   * It changes what the customer owes, so it is the courier carrying this order, at the stall, on
+   * lines of this order, with numbers a scale or a count could show — and something must be left
+   * to deliver: an empty bag is a failed order (`POST /delivery/:id/fail`), not a repriced one.
    */
   async reprice(orderId: string, actuals: ActualQuantity[]): Promise<OrderWithRelations> {
     const order = await this.getOrThrow(orderId);
@@ -694,28 +715,54 @@ export class OrdersService extends BaseService {
     }
 
     // Ids are matched against this order's own lines, never against the table: an id from another
-    // order is simply not weighable here.
-    const weighable = new Map(
-      order.items
-        .filter((item) => WEIGHTED_UNITS.includes(item.unit))
-        .map((item) => [item.id, item]),
-    );
+    // order is simply not a line here.
+    const lines = new Map(order.items.map((item) => [item.id, item]));
     if (new Set(actuals.map((actual) => actual.orderItemId)).size !== actuals.length) {
       throw new ConflictError('Each item may be weighed once');
     }
     for (const actual of actuals) {
-      const item = weighable.get(actual.orderItemId);
-      if (item === undefined) throw new ConflictError('Only weighed items can be repriced');
-      if (
-        !(actual.actualQuantity > 0) ||
-        actual.actualQuantity > maxActualQuantity(item.unit, Number(item.quantity))
-      ) {
-        throw new ConflictError('The weight is out of range for the ordered quantity');
+      const item = lines.get(actual.orderItemId);
+      if (item === undefined) throw new ConflictError('Only items of this order can be repriced');
+      if (!isBuyableQuantity(item.unit, Number(item.quantity), actual.actualQuantity)) {
+        throw new ConflictError('The quantity is out of range for the ordered one');
       }
       if (actual.photoUrl !== undefined && !/^https?:\/\//i.test(actual.photoUrl)) {
         throw new ConflictError('The scale photo must be a web address');
       }
     }
+    // What each line ends up as: this report, else an earlier one, else what was ordered.
+    const bought = (item: (typeof order.items)[number]) =>
+      actuals.find((actual) => actual.orderItemId === item.id)?.actualQuantity ?? boughtSoFar(item);
+    if (order.items.every((item) => bought(item) === 0)) {
+      throw new ConflictError('Nothing is left to deliver: fail the order instead');
+    }
+    // Paid already: what goes back cannot be taken again, so from here the bill only goes down — a
+    // line found after all, or a heavier weighing, is not handed over for money that is not there.
+    if (
+      order.paymentStatus === PAYMENT_STATUS.CAPTURED ||
+      order.paymentStatus === PAYMENT_STATUS.PARTIALLY_REFUNDED
+    ) {
+      const subtotal = order.items.reduce(
+        (sum, item) => sum + Math.round(item.unitPrice * bought(item)),
+        0,
+      );
+      const total = Math.max(0, subtotal + order.deliveryFee + order.serviceFee - order.discount);
+      if (total > order.total) {
+        throw new ConflictError('The order is paid: its bill can only go down');
+      }
+    }
+    // Newly not there, or counted goods newly short — what the customer has not been told yet; a
+    // lighter weighing is the scale, not a shortage.
+    const missing = actuals.flatMap((actual) => {
+      const item = lines.get(actual.orderItemId);
+      if (item === undefined) return [];
+      const before = boughtSoFar(item);
+      const now = actual.actualQuantity;
+      const short = now === 0 || (!WEIGHTED_UNITS.includes(item.unit) && now < before);
+      return short && now < before
+        ? [{ orderItemId: item.id, name: item.name as Record<string, string>, quantity: now }]
+        : [];
+    });
 
     const { previousTotal, total } = await runInTransaction(this.prisma, (tx) =>
       this.repository.applyActualQuantities(orderId, actuals, tx, {
@@ -734,6 +781,7 @@ export class OrdersService extends BaseService {
         previousTotal,
         total,
         currency: order.currency,
+        missing,
       }),
     );
 

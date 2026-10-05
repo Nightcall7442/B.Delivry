@@ -421,13 +421,24 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                   />
                 ) : null}
                 <span style={{ minWidth: 0, flex: 1 }}>
-                  <span className={s.rcName}>{tr(item.name, locale)}</span>
-                  <span className={s.rcUnit}>
-                    {t.qty(item.actualQuantity ?? item.quantity)} {units[item.unit]}
-                    {item.actualQuantity !== null && item.actualQuantity !== item.quantity
-                      ? t('order.ordered', { quantity: item.quantity })
-                      : ''}
-                  </span>
+                  {item.actualQuantity === 0 ? (
+                    // The stall did not have it: the line stays visible, off the bill.
+                    <>
+                      <del className={s.rcName}>{tr(item.name, locale)}</del>
+                      <span className={s.rcUnit}>{t('order.missing')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className={s.rcName}>{tr(item.name, locale)}</span>
+                      <span className={s.rcUnit}>
+                        {t.qty(item.actualQuantity ?? item.quantity)} {units[item.unit]}
+                        {item.actualQuantity !== null && item.actualQuantity !== item.quantity
+                          ? t('order.ordered', { quantity: item.quantity })
+                          : ''}
+                      </span>
+                    </>
+                  )}
+                  {item.comment ? <span className={s.rcWish}>«{item.comment}»</span> : null}
                 </span>
                 <span className={s.rcSum}>{t.money((item.actualTotal ?? item.total).amount)}</span>
               </li>
