@@ -50,6 +50,22 @@ export const updateProductSchema = createProductSchema
 /** «Честная скидка»: only the new price is typed; the struck-through one comes from the history. */
 export const productSaleSchema = z.object({ price: positiveMoneySchema });
 
+/**
+ * Quantity prices, all of them at once (an empty list takes them off): from `minQuantity` the
+ * line is priced at `price` per unit. The ladder itself (falling, under the list price) is the
+ * service's to check against the product — @bazar/storefront tierProblem.
+ */
+export const productTiersSchema = z.object({
+  tiers: z
+    .array(
+      z.object({
+        minQuantity: z.number().positive().max(10_000),
+        price: positiveMoneySchema,
+      }),
+    )
+    .max(3),
+});
+
 export const productListQuerySchema = z.object({
   /** The basket's products by id (`ids=a&ids=b`); a lone value arrives as a string. */
   ids: z

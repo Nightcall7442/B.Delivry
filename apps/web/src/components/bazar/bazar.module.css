@@ -487,6 +487,14 @@
   line-height: 24px;
   color: var(--ink-paper);
 }
+/* A wholesale or «3 за …» step under the price, in the marker's red. */
+.signTier {
+  font-family: var(--font-hand), 'Caveat', cursive;
+  font-size: var(--fs-lead);
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pomegranate);
+}
 .signNote {
   font-size: var(--fs-caption);
   line-height: 16px;
@@ -1018,6 +1026,9 @@
   line-height: 20px;
   color: var(--ink-paper);
   cursor: pointer;
+}
+.rcWishRow > button {
+  text-align: left;
 }
 .rcWishField {
   width: 100%;

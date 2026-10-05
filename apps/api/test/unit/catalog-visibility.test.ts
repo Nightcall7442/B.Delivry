@@ -167,6 +167,7 @@ const product = (label: string, storeLabel: string, over: Row = {}): Row => ({
   available: true,
   deletedAt: null,
   images: [],
+  priceTiers: [],
   ...over,
 });
 

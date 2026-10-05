@@ -148,6 +148,7 @@ function world() {
               currency: 'UZS',
               minQuantity: 1,
               quantityStep: 1,
+              priceTiers: [],
             },
           ]),
       );

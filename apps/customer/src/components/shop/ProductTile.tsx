@@ -5,7 +5,7 @@
  * heart in the corner, and «− N +» once it is in the basket. Two to a row; the tile reads the cart
  * and the hearts itself, so a list renders it straight from its `renderItem`.
  */
-import { arrivedToday, discountPercent, tr, unitLabel } from '@bazar/storefront';
+import { arrivedToday, discountPercent, tiersOf, tr, unitLabel } from '@bazar/storefront';
 import type { ProductDto } from '@bazar/types';
 import { useLocale } from '@bazar/mobile';
 import { useRouter } from 'expo-router';
@@ -50,6 +50,10 @@ export function ProductTile({
   const soldOut = !product.available;
   const note = [
     soldOut ? t('fav.soldOut') : null,
+    // A wholesale or «3 за …» price: the product page says the steps.
+    !soldOut && tiersOf(product).some((tier) => tier.price < product.price.amount)
+      ? t('tiers.title')
+      : null,
     stall ?? null,
     !soldOut && arrivedToday(product) ? t('store.arrivedToday') : null,
   ]

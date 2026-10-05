@@ -7,7 +7,14 @@
 
 import { Camera, Mic } from '@/components/go/icons';
 import { createT } from '@bazar/i18n';
-import { canDictate, dictate, parseShoppingList, tr, unitLabel } from '@bazar/storefront';
+import {
+  canDictate,
+  dictate,
+  parseShoppingList,
+  productLineTotal,
+  tr,
+  unitLabel,
+} from '@bazar/storefront';
 import type { ProductDto } from '@bazar/types';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -143,7 +150,7 @@ export function ListScreen({ products, locale }: { products: ProductDto[]; local
               {line.product ? (
                 <p className="text-sm font-bold tabular-nums">
                   {tr(line.product.name, locale)} · {line.quantity} {units[line.product.unit]} ·{' '}
-                  {t.money(line.product.price.amount * line.quantity)}
+                  {t.money(productLineTotal(line.product, line.quantity))}
                 </p>
               ) : (
                 <p className="text-sm text-danger">{t('list.notFound')}</p>

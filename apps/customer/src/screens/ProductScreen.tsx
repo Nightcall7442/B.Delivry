@@ -5,7 +5,17 @@
  * What the stall promises — weighing at the counter, freshness, haggling — sits
  * as pills; reviews and the rest of the counter follow, scrolling over the photo.
  */
-import { arrivedToday, cashbackFor, estimateDelivery, tr, unitLabel } from '@bazar/storefront';
+import {
+  arrivedToday,
+  cashbackFor,
+  estimateDelivery,
+  nextTierText,
+  onTier,
+  productLineTotal,
+  tierTexts,
+  tr,
+  unitLabel,
+} from '@bazar/storefront';
 import type { MapStoreDto } from '@bazar/storefront';
 import type { ProductDto, ReviewDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
@@ -155,7 +165,10 @@ function ProductBody({
       stallUrl(locale, product.storeId),
     );
   const shownQty = quantity > 0 ? quantity : min;
-  const lineTotal = product.price.amount * shownQty;
+  // Quantity prices: the whole line at the step reached, and what the next step would give.
+  const lineTotal = productLineTotal(product, shownQty);
+  const steps = tierTexts(t, locale, product);
+  const next = nextTierText(t, locale, product, shownQty);
   const discount = product.oldPrice
     ? Math.round((1 - product.price.amount / product.oldPrice.amount) * 100)
     : 0;
@@ -203,6 +216,15 @@ function ProductBody({
                 .filter(Boolean)
                 .join(' · ')}
             </Text>
+            {steps.length > 0 ? (
+              <View style={s.tagSteps}>
+                {steps.map((step) => (
+                  <Text key={step} style={s.tagStep}>
+                    {step}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
           </Animated.View>
         </View>
 
@@ -258,6 +280,7 @@ function ProductBody({
               <Text style={s.amountSub} numberOfLines={2}>
                 {product.unit === 'KG' ? `${t('trust.weigh')} · ` : ''}
                 {t.money(lineTotal)}
+                {onTier(product, shownQty) ? ` · ${t('tiers.applied')}` : ''}
               </Text>
             </View>
             <Pressable
@@ -268,6 +291,12 @@ function ProductBody({
             </Pressable>
           </View>
           <View style={s.lines}>
+            {next ? (
+              <View style={s.line}>
+                <Tag size={16} color={scene.ochreLight} />
+                <Text style={s.lineText}>{next}</Text>
+              </View>
+            ) : null}
             <View style={s.line}>
               <Wallet size={16} color={scene.ochreLight} />
               <Text style={s.lineText}>
@@ -413,6 +442,14 @@ const s = StyleSheet.create({
     ...scale.caption,
     color: scene.inkSoft,
     marginTop: 2,
+    fontVariant: ['tabular-nums'],
+  },
+  // The quantity prices under the sign's own price, in the paper's second ink.
+  tagSteps: { marginTop: 6, gap: 2 },
+  tagStep: {
+    fontFamily: sceneFont.hand,
+    ...scale.lead,
+    color: scene.pomegranate,
     fontVariant: ['tabular-nums'],
   },
   vendor: {

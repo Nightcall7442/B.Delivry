@@ -6,6 +6,7 @@
 import type { ProductDto, Translated } from '@bazar/types';
 
 import { PHOTOS } from './photos.js';
+import { productLineTotal } from './tiers.js';
 
 export interface BundleLine {
   productSlug: string;
@@ -276,7 +277,8 @@ export function resolveBundle(bundle: Bundle, products: readonly ProductDto[]): 
     lines.push({
       product,
       quantity: line.quantity,
-      total: Math.round(product.price.amount * line.quantity),
+      // As the order will charge it: a quantity tier counts here too.
+      total: productLineTotal(product, line.quantity),
     });
   }
   return {

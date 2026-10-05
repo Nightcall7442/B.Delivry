@@ -3,7 +3,8 @@
  * the cabinet does not make: a positive price, a whole stock for pieces, and no quiet «clear» on a
  * good whose stock is counted. And the «честная скидка»: the seller types the new price only, the
  * customer sees the lowest price of last week struck through; a good on sale shows that price and
- * a way to end the sale.
+ * a way to end the sale. And quantity prices — «от 10 кг по 16 000», «3 шт за 10 000» — three steps
+ * at most, checked by the API's own rule before they are sent.
  */
 import { Button, scale } from '@bazar/mobile';
 import { SALE } from '@bazar/constants';
@@ -13,19 +14,25 @@ import {
   UNIT_LABEL,
   discountPercent,
   isFractionalUnit,
+  isSetPriced,
   parseSaleInput,
+  parseTierRows,
   priceInputText,
+  sameTiers,
   stallErrorText,
   stockText,
+  tierRowsOf,
   tr,
   validateProductEdit,
+  type PriceTier,
   type ProductEditResult,
   type StallProduct,
+  type TierRow,
 } from '@bazar/storefront';
 import type { MoneyDto } from '@bazar/types';
 import { formatMoney } from '@bazar/utils/money';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text as RNText, View } from 'react-native';
+import { Pressable, StyleSheet, Text as RNText, View } from 'react-native';
 
 import { Sheet } from '@/components/goods/Sheet';
 import { SlipInput } from '@/components/goods/SlipInput';
@@ -42,6 +49,7 @@ export function EditSheet({
   onSave,
   onSale,
   onEndSale,
+  onTiers,
 }: {
   product: StallProduct | null;
   onClose: () => void;
@@ -50,6 +58,8 @@ export function EditSheet({
   /** Starts a sale at this price; throws when the API refuses. */
   onSale: (id: string, price: MoneyDto) => Promise<void>;
   onEndSale: (id: string) => Promise<void>;
+  /** Replaces the quantity prices (per unit); throws when the API refuses. */
+  onTiers: (id: string, tiers: PriceTier[], currency: string) => Promise<void>;
 }) {
   // The sheet slides away over a moment: it keeps the good it was showing until it is gone.
   const last = useRef<StallProduct | null>(null);
@@ -59,7 +69,14 @@ export function EditSheet({
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [sale, setSale] = useState('');
-  const [errors, setErrors] = useState<{ price?: string; stock?: string; sale?: string }>({});
+  const [tierRows, setTierRows] = useState<TierRow[]>([]);
+  const [tiersOpen, setTiersOpen] = useState(false);
+  const [errors, setErrors] = useState<{
+    price?: string;
+    stock?: string;
+    sale?: string;
+    tiers?: string;
+  }>({});
   const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -68,6 +85,8 @@ export function EditSheet({
     setPrice(priceInputText(product.price.amount, product.price.currency));
     setStock(product.stock === null ? '' : stockText(product.stock));
     setSale('');
+    setTierRows(tierRowsOf(product));
+    setTiersOpen(product.tiers.length > 0);
     setErrors({});
     setFailure(null);
     setBusy(false);
@@ -79,18 +98,23 @@ export function EditSheet({
 
   const submit = async () => {
     const result = validateProductEdit({ price, stock }, view);
-    // The cut is measured against the price as the seller leaves it on this sheet.
+    // The cut and the quantity prices are measured against the price as the seller leaves it here.
     const cut = result.ok ? parseSaleInput(sale, result.update.price) : null;
-    if (!result.ok || (cut !== null && !cut.ok)) {
+    const ladder = result.ok
+      ? parseTierRows(tierRows, { ...view, price: result.update.price })
+      : null;
+    if (!result.ok || (cut !== null && !cut.ok) || (ladder !== null && !ladder.ok)) {
       setErrors({
         ...(result.ok ? {} : result.errors),
         ...(cut !== null && !cut.ok ? { sale: cut.error } : {}),
+        ...(ladder !== null && !ladder.ok ? { tiers: ladder.error } : {}),
       });
       return;
     }
     setErrors({});
     const salePrice = cut?.ok ? cut.value : null;
-    if (!result.changed && salePrice === null) {
+    const tiers = ladder?.ok && !sameTiers(ladder.value, view.tiers) ? ladder.value : null;
+    if (!result.changed && salePrice === null && tiers === null) {
       onClose();
       return;
     }
@@ -98,6 +122,7 @@ export function EditSheet({
     setFailure(null);
     try {
       if (result.changed) await onSave(view.id, result.update);
+      if (tiers !== null) await onTiers(view.id, tiers, result.update.price.currency);
       if (salePrice !== null)
         await onSale(view.id, { amount: salePrice, currency: result.update.price.currency });
       onClose();
@@ -184,6 +209,57 @@ export function EditSheet({
           editable={!busy}
         />
       )}
+      {tiersOpen ? (
+        <View style={s.tiers}>
+          <RNText style={s.tiersTitle}>
+            {isSetPriced(view.unit) ? 'Оптом и «3 за …»' : 'Оптом дешевле'}
+          </RNText>
+          {tierRows.map((row, i) => (
+            <View key={i} style={s.tierRow}>
+              <SlipInput
+                label={isSetPriced(view.unit) ? `Сколько, ${unit}` : `От, ${unit}`}
+                value={row.quantity}
+                onChangeText={(text) =>
+                  setTierRows((rows) =>
+                    rows.map((r, j) => (j === i ? { ...r, quantity: figures(text) } : r)),
+                  )
+                }
+                keyboardType={isFractionalUnit(view.unit) ? 'decimal-pad' : 'number-pad'}
+                editable={!busy}
+              />
+              <SlipInput
+                label={isSetPriced(view.unit) ? 'За все, сум' : `По, сум / ${unit}`}
+                value={row.price}
+                onChangeText={(text) =>
+                  setTierRows((rows) =>
+                    rows.map((r, j) => (j === i ? { ...r, price: figures(text) } : r)),
+                  )
+                }
+                keyboardType="decimal-pad"
+                editable={!busy}
+              />
+            </View>
+          ))}
+          <RNText style={errors.tiers ? s.failure : s.tiersHint}>
+            {errors.tiers ??
+              (isSetPriced(view.unit)
+                ? 'Например, 3 шт за 10 000: столько возьмут — столько и заплатят. Пустые строки — без акции.'
+                : 'Например, от 10 кг по 16 000: цена за весь заказ, кто берёт больше. Пустые строки — без опта.')}
+          </RNText>
+        </View>
+      ) : (
+        <Pressable
+          onPress={() => setTiersOpen(true)}
+          disabled={busy}
+          accessibilityRole="button"
+          hitSlop={8}
+          style={{ alignSelf: 'flex-start' }}
+        >
+          <RNText style={s.tiersLink}>
+            {isSetPriced(view.unit) ? '+ Оптом или «3 за …»' : '+ Оптом дешевле'}
+          </RNText>
+        </Pressable>
+      )}
       {failure ? (
         <RNText style={s.failure} accessibilityRole="alert">
           {failure}
@@ -216,4 +292,9 @@ const s = StyleSheet.create({
   saleText: { fontFamily: sceneFont.ui, ...scale.body, color: TONE.inkSoft },
   struck: { textDecorationLine: 'line-through', color: HALL.ink },
   actions: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  tiers: { gap: 8, marginTop: 4 },
+  tiersTitle: { fontFamily: sceneFont.heavy, ...scale.body, color: HALL.ink },
+  tierRow: { flexDirection: 'row', gap: 8 },
+  tiersHint: { fontFamily: sceneFont.ui, ...scale.caption, color: TONE.inkSoft },
+  tiersLink: { fontFamily: sceneFont.heavy, ...scale.body, color: HALL.pomegranate },
 });

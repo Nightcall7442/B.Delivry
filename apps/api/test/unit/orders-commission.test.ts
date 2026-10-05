@@ -68,6 +68,7 @@ async function place(own: number | null, tariff: number) {
               currency: 'UZS',
               stock: null,
               weightGrams: null,
+              priceTiers: [],
             },
           ],
         ]);

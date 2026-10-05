@@ -22,6 +22,7 @@ import {
   WEIGHTED_UNITS,
 } from '@bazar/constants';
 import { add, money, multiply, sumMoney, zero, type Money } from '@bazar/payments';
+import { unitPriceFor } from '@bazar/storefront';
 import type { OrderQuoteDto, QuoteOrderDto } from '@bazar/types';
 import { orderNumber } from '@bazar/utils';
 import type { ChatMessage, PrismaClient } from '@prisma/client';
@@ -487,8 +488,12 @@ export class OrdersService extends BaseService {
         );
       }
 
+      // A quantity tier prices the whole line («от 10 кг по 16 000»); a price agreed in haggling
+      // stands where it is lower still. Weighing later keeps this per-unit price.
+      const listOrTier = unitPriceFor(product.price, product.priceTiers, requestedItem.quantity);
+      const haggled = agreed.get(product.id);
       const unitPrice = money(
-        agreed.get(product.id) ?? product.price,
+        haggled === undefined ? listOrTier : Math.min(haggled, listOrTier),
         product.currency as Currency,
       );
       return {

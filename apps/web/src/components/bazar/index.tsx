@@ -6,7 +6,15 @@
 'use client';
 
 import type { T } from '@bazar/i18n';
-import { arrivedToday, discountPercent, photo, tr, unitLabel } from '@bazar/storefront';
+import {
+  arrivedToday,
+  discountPercent,
+  photo,
+  productLineTotal,
+  tierTexts,
+  tr,
+  unitLabel,
+} from '@bazar/storefront';
 import type { ProductDto, StoreDto } from '@bazar/types';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -50,6 +58,8 @@ export function ProductCard({
   const off = discountPercent(product);
   // Saved, but not on the counter today: the photo fades, the sign says so, no «+».
   const soldOut = !product.available;
+  // Wholesale and «3 за …» steps: the web has no product page, so the sign says them.
+  const steps = soldOut ? [] : tierTexts(t, locale, product);
   const note = [
     soldOut ? t('fav.soldOut') : null,
     stall ? (stall.ownerName ?? tr(stall.name, locale)) : null,
@@ -83,6 +93,11 @@ export function ProductCard({
         {product.description ? (
           <div className={s.signSay}>«{tr(product.description, locale)}»</div>
         ) : null}
+        {steps.map((step) => (
+          <div key={step} className={s.signTier}>
+            {step}
+          </div>
+        ))}
         {note ? <div className={s.signNote}>{note}</div> : null}
         {soldOut ? null : qty > 0 ? (
           // «− N +»: a step back where it was added, hanging off the same corner.
@@ -193,7 +208,8 @@ export function BasketBar({
   const quantities = useCartQuantities();
   const home = `/${locale}`;
   const inCart = products.filter((p) => quantities[p.id]);
-  const total = inCart.reduce((sum, p) => sum + p.price.amount * (quantities[p.id] ?? 0), 0);
+  // As the order will charge it: a quantity price counts.
+  const total = inCart.reduce((sum, p) => sum + productLineTotal(p, quantities[p.id] ?? 0), 0);
   const stalls = new Set(inCart.map((p) => p.storeId));
   // One stall goes straight to checkout; several — the receipts decide how many trips it is.
   const checkoutHref =

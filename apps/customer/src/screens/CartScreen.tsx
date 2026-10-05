@@ -7,17 +7,19 @@
  * can share a courier.
  */
 import {
+  basketGrams,
   CART_NOTE_MAX,
   type CartLine,
   cashbackFor,
   decodeShare,
   encodeShare,
-  basketGrams,
   estimateDelivery,
   haggleFor,
   isShopfront,
   type MapStoreDto,
+  nextTierText,
   oneTrip as oneTripStores,
+  onTier,
   tr,
   unitLabel,
 } from '@bazar/storefront';
@@ -485,6 +487,8 @@ function ReceiptRow({
   const min = product.minQuantity || step;
   const unit = unitLabel(locale)[product.unit];
   const photo = product.images[0]?.url ?? null;
+  // «Ещё 2 кг — и по 16 000»: the quantity price one step away.
+  const next = nextTierText(t, locale, product, quantity);
 
   return (
     <View style={s.row}>
@@ -495,11 +499,13 @@ function ReceiptRow({
             {tr(product.name, locale)}
           </Text>
           <Text style={s.small}>
-            {t.money(product.price.amount)} / {unit}
+            {t.money(line.unitPrice.amount)} / {unit}
+            {onTier(product, quantity) ? ` · ${t('tiers.applied')}` : ''}
             {product.stock !== null && quantity > product.stock
               ? ` · ${t('store.left', { count: product.stock })}`
               : ''}
           </Text>
+          {next ? <Text style={[s.small, { color: scene.pomegranate }]}>{next}</Text> : null}
         </View>
         <Text style={s.rowPrice}>
           {product.unit === 'KG' ? '≈ ' : ''}

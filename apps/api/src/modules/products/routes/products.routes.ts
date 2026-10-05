@@ -11,6 +11,7 @@ import {
   createProductSchema,
   productIdParamsSchema,
   productSaleSchema,
+  productTiersSchema,
   productsListQuerySchema,
   setAvailabilitySchema,
   updateProductSchema,
@@ -59,6 +60,17 @@ export function productsRoutes(controller: ProductsController) {
       '/:id/sale',
       { preHandler: [canWrite, validate({ params: productIdParamsSchema })] },
       controller.endSale,
+    );
+    // Quantity prices — «от 10 кг по 16 000», «3 шт за 10 000» — all at once; [] takes them off.
+    app.put(
+      '/:id/tiers',
+      {
+        preHandler: [
+          canWrite,
+          validate({ params: productIdParamsSchema, body: productTiersSchema }),
+        ],
+      },
+      controller.setTiers,
     );
     app.put(
       '/:id/availability',

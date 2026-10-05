@@ -109,14 +109,17 @@ export function CheckoutScreen({
       .then(setHaggles)
       .catch(() => undefined);
   }, [user]);
+  // A haggled price stands where it is below the line's own (list or quantity price), as the
+  // order prices it.
   const lineTotal = (line: {
     product: { id: string };
     quantity: number;
+    unitPrice: { amount: number };
     total: { amount: number };
   }) => {
     const agreed = haggleFor(haggles, line.product.id);
     return agreed?.status === 'ACCEPTED' && agreed.offeredPrice
-      ? Math.round(agreed.offeredPrice.amount * line.quantity)
+      ? Math.round(Math.min(agreed.offeredPrice.amount, line.unitPrice.amount) * line.quantity)
       : line.total.amount;
   };
 

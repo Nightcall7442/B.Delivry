@@ -28,6 +28,8 @@ export * from './speech.js';
 export * from './subscriptions.js';
 export * from './suggestions.js';
 export * from './text.js';
+export * from './tiers.js';
+export * from './tier-labels.js';
 export * from './photos.js';
 export * from './seasons.js';
 export * from './shops.js';

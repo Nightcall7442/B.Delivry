@@ -10,6 +10,7 @@ import {
   SALE,
 } from '@bazar/constants';
 import type { Money } from '@bazar/payments';
+import { MAX_PRICE_TIERS, tierProblem } from '@bazar/storefront';
 import { slugify } from '@bazar/utils';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
 import {
@@ -27,6 +28,13 @@ import { PRODUCT_EVENT } from '../domain/product.events.js';
 import type { CreateProductInput, ProductListFilters, UpdateProductInput } from '../types/index.js';
 
 const DAY_MS = 86_400_000;
+
+const TIER_PROBLEM = {
+  tooMany: `At most ${MAX_PRICE_TIERS} quantity prices`,
+  quantity: 'A quantity price starts above the smallest order',
+  price: 'A quantity price is a whole amount below the list price',
+  order: 'Each larger quantity must be cheaper per unit than the one before',
+} as const;
 
 interface Buyable {
   available: boolean;
@@ -216,6 +224,35 @@ export class ProductsService extends BaseService {
       if (stale.length < batch || count === 0) break;
     }
     return ended;
+  }
+
+  /**
+   * Quantity prices — «от 10 кг по 16 000» for the café buying by the sack, «3 шт за 10 000» for the
+   * third melon — set all at once, an empty list taking them off. A ladder down from above the
+   * smallest order, under the list price, three steps at most (@bazar/storefront tierProblem, the
+   * same answer the seller's sheet gives). Orders and the clients price lines by it.
+   */
+  async setTiers(
+    id: string,
+    input: readonly { minQuantity: number; price: Money }[],
+  ): Promise<ProductWithImages> {
+    const product = await this.get(id);
+    await this.assertOwnsStore(product.storeId);
+    if (input.some((tier) => tier.price.currency !== product.currency)) {
+      throw new ValidationError({ tiers: [`Tier prices must be in ${product.currency}`] });
+    }
+    const tiers = input.map((tier) => ({
+      minQuantity: tier.minQuantity,
+      price: tier.price.amount,
+    }));
+    const problem = tierProblem(tiers, {
+      price: product.price,
+      minQuantity: Number(product.minQuantity),
+    });
+    if (problem !== null) throw new ValidationError({ tiers: [TIER_PROBLEM[problem]] });
+    const updated = await this.repository.setTiers(id, tiers);
+    await this.invalidate(product.storeId);
+    return updated;
   }
 
   /** Alcohol and tobacco are not sold through the app: refused on the way in, whatever the store. */

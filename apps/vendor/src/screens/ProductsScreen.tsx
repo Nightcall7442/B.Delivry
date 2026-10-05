@@ -148,6 +148,7 @@ export function ProductsScreen() {
         onSave={goods.save}
         onSale={goods.startSale}
         onEndSale={goods.endSale}
+        onTiers={goods.setTiers}
       />
     </Ground>
   );

@@ -8,13 +8,14 @@
  * grocery run actually needs: «Как в прошлый раз» and «Собрать по списку».
  */
 import {
-  HALL,
-  TONE,
   alpha,
   branchesOf,
   closesToday,
-  tr,
+  HALL,
   type MapStoreDto,
+  productLineTotal,
+  TONE,
+  tr,
 } from '@bazar/storefront';
 import type { CategoryDto, OrderDto, ProductDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
@@ -155,7 +156,8 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
   };
 
   const inCart = items.filter((p) => quantities[p.id]);
-  const total = inCart.reduce((sum, p) => sum + p.price.amount * (quantities[p.id] ?? 0), 0);
+  // As the order will charge it: a quantity price counts.
+  const total = inCart.reduce((sum, p) => sum + productLineTotal(p, quantities[p.id] ?? 0), 0);
   const closes = closesToday(store);
   const kind = t(`store.type.${store.type}` as 'store.type.SHOP');
 

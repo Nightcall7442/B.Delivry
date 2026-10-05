@@ -35,6 +35,12 @@ export class ProductsController extends BaseController {
     return this.ok(reply, await this.service.startSale(id, price));
   };
 
+  setTiers = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = params<{ id: string }>(request);
+    const { tiers } = body<{ tiers: { minQuantity: number; price: Money }[] }>(request);
+    return this.ok(reply, await this.service.setTiers(id, tiers));
+  };
+
   endSale = async (request: FastifyRequest, reply: FastifyReply) => {
     const { id } = params<{ id: string }>(request);
     return this.ok(reply, await this.service.endSale(id));

@@ -908,6 +908,7 @@ model Product {
 
   images     ProductImage[]
   priceHistory ProductPrice[]
+  priceTiers   ProductPriceTier[]
   cartItems  CartItem[]
   orderItems OrderItem[]
   favorites  Favorite[]
@@ -921,6 +922,20 @@ model Product {
 
 // Price changes are appended, never overwritten: disputes about "it cost less
 // yesterday" are settled from here.
+// «От 10 кг по 16 000», «3 шт за 10 000» (kept per piece): from `minQuantity` of the product's
+// unit the whole line is priced at `price` per unit, never above the list price
+// (@bazar/storefront tiers.ts). Three at most, set by the seller.
+model ProductPriceTier {
+  id          String  @id @default(uuid())
+  productId   String
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  minQuantity Decimal @db.Decimal(10, 3)
+  price       Int
+
+  @@unique([productId, minQuantity])
+  @@map("product_price_tiers")
+}
+
 model ProductPrice {
   id        String   @id @default(uuid())
   productId String

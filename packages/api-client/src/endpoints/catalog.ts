@@ -25,6 +25,12 @@ export const catalogApi = (http: Http) => ({
    */
   startSale: (id: string, price: MoneyDto) =>
     http.request<ProductDto>('PUT', `/products/${id}/sale`, { body: { price } }),
+  /**
+   * Quantity prices, all at once — «от 10 кг по 16 000», «3 шт за 10 000» kept per piece; [] takes
+   * them off. 422 when the ladder does not go down under the list price.
+   */
+  setTiers: (id: string, tiers: { minQuantity: number; price: MoneyDto }[]) =>
+    http.request<ProductDto>('PUT', `/products/${id}/tiers`, { body: { tiers } }),
   /** The struck-through price becomes the price again. */
   endSale: (id: string) => http.request<ProductDto>('DELETE', `/products/${id}/sale`),
   setAvailability: (id: string, available: boolean) =>

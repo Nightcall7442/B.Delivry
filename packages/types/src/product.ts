@@ -4,6 +4,15 @@
 import type { ProductUnit, StoreTag } from '@bazar/constants';
 import type { Id, ImageDto, MoneyDto, TenantEntity, Translated } from './common.js';
 
+/**
+ * A quantity price: from `minQuantity` (in the product's unit) the whole line is priced at `price`
+ * per unit — «от 10 кг по 16 000», «3 шт за 10 000» (stored per piece). Never above the list price.
+ */
+export interface PriceTierDto {
+  minQuantity: number;
+  price: MoneyDto;
+}
+
 export interface ProductDto extends TenantEntity {
   storeId: Id;
   categoryId: Id | null;
@@ -14,6 +23,8 @@ export interface ProductDto extends TenantEntity {
   /** Price per `unit`. For KG goods this is the price of one kilogram. */
   price: MoneyDto;
   oldPrice: MoneyDto | null;
+  /** Wholesale and «3 за …» prices, by `minQuantity` ascending; absent or empty = none. */
+  priceTiers?: PriceTierDto[];
   /** Smallest amount a customer may order, in units (0.5 kg, 1 pcs). */
   minQuantity: number;
   quantityStep: number;

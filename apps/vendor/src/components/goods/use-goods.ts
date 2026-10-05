@@ -8,6 +8,7 @@ import {
   sortStallProducts,
   stallErrorText,
   toStallProducts,
+  type PriceTier,
   type StallProduct,
 } from '@bazar/storefront';
 import type { MoneyDto, UpdateProductDto } from '@bazar/types';
@@ -147,6 +148,23 @@ export function useGoods(storeId: string | null) {
     [patch],
   );
 
+  /** Quantity prices, all at once; the row that comes back carries them as the API stored them. */
+  const setTiers = useCallback(
+    async (id: string, tiers: PriceTier[], currency: string) => {
+      const [row] = toStallProducts([
+        await api().catalog.setTiers(
+          id,
+          tiers.map((tier) => ({
+            minQuantity: tier.minQuantity,
+            price: { amount: tier.price, currency: currency as MoneyDto['currency'] },
+          })),
+        ),
+      ]);
+      patch(id, { tiers: row?.tiers ?? tiers });
+    },
+    [patch],
+  );
+
   const endSale = useCallback(
     async (id: string) => {
       const [row] = toStallProducts([await api().catalog.endSale(id)]);
@@ -166,5 +184,6 @@ export function useGoods(storeId: string | null) {
     save,
     startSale,
     endSale,
+    setTiers,
   };
 }

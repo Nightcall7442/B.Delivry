@@ -14,6 +14,7 @@ import {
   dealsOf,
   degrees,
   isShopfront,
+  productLineTotal,
   shopfronts,
   stallGoods,
   tr,
@@ -164,7 +165,8 @@ export function SceneHomeScreen() {
     return [...counter, ...deals.filter((p) => !ids.has(p.id))];
   }, [counter, deals]);
   const inCart = shown.filter((p) => quantities[p.id]);
-  const total = inCart.reduce((sum, p) => sum + p.price.amount * (quantities[p.id] ?? 0), 0);
+  // As the order will charge it: a quantity price counts.
+  const total = inCart.reduce((sum, p) => sum + productLineTotal(p, quantities[p.id] ?? 0), 0);
   const count = inCart.length;
   const stalls = new Set(inCart.map((p) => p.storeId));
   // One stall goes straight to checkout; several — the receipts decide how many trips it is.

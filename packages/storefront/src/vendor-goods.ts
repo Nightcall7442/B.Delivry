@@ -15,6 +15,13 @@ import {
 import type { MoneyDto, Translated, UpdateProductDto } from '@bazar/types';
 
 import { tr } from './i18n.js';
+import {
+  MAX_PRICE_TIERS,
+  piecePriceOfSet,
+  setPriceOf,
+  tierProblem,
+  type PriceTier,
+} from './tiers.js';
 
 /** A `ProductDto` cut down to what the shelf shows and the seller edits. */
 export interface StallProduct {
@@ -25,6 +32,10 @@ export interface StallProduct {
   price: MoneyDto;
   /** On sale: the price struck through for the customer (the lowest of last week); null = no sale. */
   oldPrice: MoneyDto | null;
+  /** Quantity prices, per unit in minor units, by quantity ascending (tiers.ts). */
+  tiers: PriceTier[];
+  /** The smallest order, in the good's unit: a quantity price starts above it. */
+  minQuantity: number;
   /** The «В наличии» switch: off = the customer does not see the good at all. */
   available: boolean;
   /** null = the seller does not count this good (the normal case at a bazaar). */
@@ -65,6 +76,15 @@ function toStallProduct(row: unknown): StallProduct | null {
   const photo = Array.isArray(row.images) ? row.images.find(isRecord) : undefined;
   const oldField = row.oldPrice;
   const oldAmount = isRecord(oldField) ? numeric(oldField.amount) : numeric(oldField);
+  // A row's tier has a bare price and a decimal string; a DTO's a MoneyDto and a number.
+  const tiers = (Array.isArray(row.priceTiers) ? row.priceTiers : [])
+    .filter(isRecord)
+    .flatMap((tier) => {
+      const minQuantity = numeric(tier.minQuantity);
+      const price = isRecord(tier.price) ? numeric(tier.price.amount) : numeric(tier.price);
+      return minQuantity === null || price === null ? [] : [{ minQuantity, price }];
+    })
+    .sort((a, b) => a.minQuantity - b.minQuantity);
   return {
     id: row.id,
     storeId: row.storeId,
@@ -75,6 +95,8 @@ function toStallProduct(row: unknown): StallProduct | null {
         : PRODUCT_UNIT.PCS,
     price: { amount, currency },
     oldPrice: oldAmount !== null && oldAmount > amount ? { amount: oldAmount, currency } : null,
+    tiers,
+    minQuantity: numeric(row.minQuantity) ?? 1,
     available: row.available !== false,
     stock: numeric(row.stock),
     imageUrl: typeof photo?.url === 'string' ? photo.url : null,
@@ -264,3 +286,76 @@ export function validateProductEdit(
     },
   };
 }
+
+// ---- quantity prices ----------------------------------------------------------------------------
+
+/** One step of the ladder as the seller types it: how much, and for what. */
+export interface TierRow {
+  quantity: string;
+  /** Weighed goods: the price of a kilo (a litre…). Counted goods: the price of the whole set. */
+  price: string;
+}
+
+/** Counted goods are sold «N шт за X» — the set's price is typed; weighed ones by the kilo. */
+export const isSetPriced = (unit: ProductUnit): boolean => !isFractionalUnit(unit);
+
+/** The sheet opens on the steps the good has, as the seller typed them, then blank rows to three. */
+export function tierRowsOf(product: Pick<StallProduct, 'tiers' | 'unit' | 'price'>): TierRow[] {
+  const currency = product.price.currency as Currency;
+  const rows = product.tiers.map((tier) => ({
+    quantity: stockText(tier.minQuantity),
+    price: priceInputText(isSetPriced(product.unit) ? setPriceOf(tier) : tier.price, currency),
+  }));
+  while (rows.length < MAX_PRICE_TIERS) rows.push({ quantity: '', price: '' });
+  return rows;
+}
+
+const TIER_ERROR = {
+  tooMany: `Не больше ${MAX_PRICE_TIERS} ступеней`,
+  quantity: 'Количество — больше минимального заказа',
+  price: 'Цена за единицу — ниже обычной',
+  order: 'Чем больше берут, тем дешевле: каждая ступень дешевле предыдущей',
+} as const;
+
+/**
+ * The rows → the ladder the API takes, per unit: blank rows are skipped, a half-filled one is a
+ * mistake, a set price becomes the price of a piece (rounded down — the set never costs more than
+ * the label). Checked against the price the sheet is about to save, by the API's own rule.
+ */
+export function parseTierRows(
+  rows: readonly TierRow[],
+  product: Pick<StallProduct, 'unit' | 'minQuantity'> & { price: MoneyDto },
+): InputResult<PriceTier[]> {
+  const currency = product.price.currency as Currency;
+  const tiers: PriceTier[] = [];
+  for (const row of rows) {
+    const quantityText = squeeze(row.quantity);
+    const priceText = squeeze(row.price);
+    if (quantityText === '' && priceText === '') continue;
+    if (quantityText === '' || priceText === '') {
+      return { ok: false, error: 'Заполните и количество, и цену — или очистите строку' };
+    }
+    const quantity = parseStockInput(row.quantity, product.unit);
+    if (!quantity.ok) return { ok: false, error: quantity.error.replace('Остаток', 'Количество') };
+    if (quantity.value === null || quantity.value <= 0) {
+      return { ok: false, error: TIER_ERROR.quantity };
+    }
+    const price = parsePriceInput(row.price, currency);
+    if (!price.ok) return price;
+    tiers.push({
+      minQuantity: quantity.value,
+      price: isSetPriced(product.unit) ? piecePriceOfSet(price.value, quantity.value) : price.value,
+    });
+  }
+  tiers.sort((a, b) => a.minQuantity - b.minQuantity);
+  const problem = tierProblem(tiers, {
+    price: product.price.amount,
+    minQuantity: product.minQuantity,
+  });
+  return problem === null ? { ok: true, value: tiers } : { ok: false, error: TIER_ERROR[problem] };
+}
+
+/** Whether the sheet changed the ladder: nothing to send when it did not. */
+export const sameTiers = (a: readonly PriceTier[], b: readonly PriceTier[]): boolean =>
+  a.length === b.length &&
+  a.every((tier, i) => tier.minQuantity === b[i]?.minQuantity && tier.price === b[i]?.price);

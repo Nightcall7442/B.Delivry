@@ -1,7 +1,8 @@
 /**
  * Products persistence (Prisma). Tenant-scoped.
  */
-import type { Prisma, Product, ProductImage } from '@prisma/client';
+import type { PriceTier } from '@bazar/storefront';
+import type { Prisma, Product, ProductImage, ProductPriceTier } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import { currentViewer, visibleProductWhere } from '../../catalog/domain/visibility.js';
@@ -9,9 +10,13 @@ import type { CreateProductInput, ProductListFilters, UpdateProductInput } from 
 
 const PRODUCT_INCLUDE = {
   images: { orderBy: { sortOrder: 'asc' } },
+  priceTiers: { orderBy: { minQuantity: 'asc' } },
 } satisfies Prisma.ProductInclude;
 
-export type ProductWithImages = Product & { images: ProductImage[] };
+export type ProductWithImages = Product & {
+  images: ProductImage[];
+  priceTiers: ProductPriceTier[];
+};
 
 export class ProductsRepository extends BaseRepository {
   async findById(id: string): Promise<ProductWithImages | null> {
@@ -193,6 +198,24 @@ export class ProductsRepository extends BaseRepository {
       data: { oldPrice: null },
     });
     return count;
+  }
+
+  /** The quantity prices, all at once: the old set goes, the new one stands, in one transaction. */
+  async setTiers(productId: string, tiers: readonly PriceTier[]): Promise<ProductWithImages> {
+    await this.prisma.$transaction([
+      this.prisma.productPriceTier.deleteMany({ where: { productId } }),
+      this.prisma.productPriceTier.createMany({
+        data: tiers.map((tier) => ({
+          productId,
+          minQuantity: tier.minQuantity,
+          price: tier.price,
+        })),
+      }),
+    ]);
+    return this.prisma.product.findFirstOrThrow({
+      where: this.scoped({ id: productId }),
+      include: PRODUCT_INCLUDE,
+    });
   }
 
   /** A sale starts, moves or ends: both prices at once, the new price appended to the history. */

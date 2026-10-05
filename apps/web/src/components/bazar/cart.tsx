@@ -10,15 +10,17 @@ import { isApiError, room } from '@bazar/api-client';
 import { CASHBACK } from '@bazar/constants';
 import { createT, type T } from '@bazar/i18n';
 import {
+  basketGrams,
   CART_NOTE_MAX,
   decodeShare,
   encodeShare,
-  basketGrams,
   estimateDelivery,
   haggleFor,
   isShopfront,
   type MapStoreDto,
+  nextTierText,
   oneTrip as oneTripStores,
+  onTier,
   photo,
   tr,
   unitLabel,
@@ -374,6 +376,8 @@ function ReceiptLine({
   const min = product.minQuantity || step;
   const unit = unitLabel(locale)[product.unit];
   const image = product.images[0]?.url ?? null;
+  // «Ещё 2 кг — и по 16 000»: the quantity price one step away.
+  const next = nextTierText(t, locale, product, quantity);
 
   return (
     <li className={s.rcLine}>
@@ -384,11 +388,13 @@ function ReceiptLine({
       <div style={{ minWidth: 0, flex: 1 }}>
         <div className={s.rcName}>{tr(product.name, locale)}</div>
         <div className={s.rcUnit}>
-          {t.money(product.price.amount)} / {unit}
+          {t.money(line.unitPrice.amount)} / {unit}
+          {onTier(product, quantity) ? ` · ${t('tiers.applied')}` : ''}
           {product.stock !== null && quantity > product.stock ? (
             <span className={s.rcWarn}> · {t('store.left', { count: product.stock ?? 0 })}</span>
           ) : null}
         </div>
+        {next ? <div className={s.rcHaggle}>{next}</div> : null}
         {haggle?.status === 'ACCEPTED' && haggle.offeredPrice ? (
           <div className={s.rcHaggle}>
             ✓{' '}
@@ -433,7 +439,7 @@ function ReceiptLine({
           </button>
         )}
         {/* Its own line, under «поторговаться». */}
-        <div>
+        <div className={s.rcWishRow}>
           {wishing ? (
             <form
               className={s.rcAsk}

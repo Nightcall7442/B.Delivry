@@ -4,7 +4,7 @@
  * cardboard signs — all of it, scrolling over the photo. Tapping the photo
  * opens it full-size (the "counter now" story); the cart pill floats.
  */
-import { estimateDelivery, tr } from '@bazar/storefront';
+import { estimateDelivery, productLineTotal, tr } from '@bazar/storefront';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -72,7 +72,8 @@ export function StoreScreen({ storeId }: { storeId: string }) {
     (p) => p.available,
   );
   const inCart = products.filter((p) => quantities[p.id]);
-  const total = inCart.reduce((sum, p) => sum + p.price.amount * (quantities[p.id] ?? 0), 0);
+  // As the order will charge it: a quantity price counts.
+  const total = inCart.reduce((sum, p) => sum + productLineTotal(p, quantities[p.id] ?? 0), 0);
   const estimate =
     store && address
       ? estimateDelivery(store.point, address.point, store.preparationMinutes)

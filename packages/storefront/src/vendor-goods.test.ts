@@ -4,12 +4,14 @@ import {
   MAX_PRICE_MINOR,
   isSoldOut,
   parsePriceInput,
+  parseTierRows,
   parseSaleInput,
   parseStockInput,
   priceInputText,
   searchStallProducts,
   sortStallProducts,
   stockText,
+  tierRowsOf,
   toStallProducts,
   validateProductEdit,
   type StallProduct,
@@ -22,6 +24,8 @@ const product = (over: Partial<StallProduct> = {}): StallProduct => ({
   unit: 'KG',
   price: { amount: 1_250_000, currency: 'UZS' },
   oldPrice: null,
+  tiers: [],
+  minQuantity: 0.5,
   available: true,
   stock: null,
   imageUrl: null,
@@ -69,6 +73,8 @@ describe('toStallProducts', () => {
       unit: 'KG',
       price: { amount: 1_250_000, currency: 'UZS' },
       oldPrice: null,
+      tiers: [],
+      minQuantity: 1,
       available: false,
       stock: 12.5,
       imageUrl: 'https://img/1.jpg',
@@ -308,5 +314,108 @@ describe('parseSaleInput', () => {
     expect(parseSaleInput('12500', price).ok).toBe(false);
     expect(parseSaleInput('13000', price).ok).toBe(false);
     expect(parseSaleInput('дёшево', price).ok).toBe(false);
+  });
+});
+
+describe('quantity prices on the edit sheet', () => {
+  it('reads the ladder in either shape, cheapest step last', () => {
+    const [row, dto] = toStallProducts([
+      {
+        id: 'a',
+        storeId: 's1',
+        name: {},
+        unit: 'KG',
+        price: 1_800_000,
+        currency: 'UZS',
+        minQuantity: '0.500',
+        priceTiers: [
+          { minQuantity: '10.000', price: 1_600_000 },
+          { minQuantity: '5.000', price: 1_700_000 },
+        ],
+      },
+      {
+        id: 'b',
+        storeId: 's1',
+        name: {},
+        price: { amount: 400_000, currency: 'UZS' },
+        priceTiers: [{ minQuantity: 3, price: { amount: 333_333, currency: 'UZS' } }],
+      },
+    ]);
+    expect(row?.tiers).toEqual([
+      { minQuantity: 5, price: 1_700_000 },
+      { minQuantity: 10, price: 1_600_000 },
+    ]);
+    expect(row?.minQuantity).toBe(0.5);
+    expect(dto?.tiers).toEqual([{ minQuantity: 3, price: 333_333 }]);
+  });
+
+  it('opens on the steps as typed — a kilo’s price, a set’s price — then blank rows to three', () => {
+    const kilos = product({ tiers: [{ minQuantity: 5, price: 1_700_000 }] });
+    expect(tierRowsOf(kilos)).toEqual([
+      { quantity: '5', price: '17000' },
+      { quantity: '', price: '' },
+      { quantity: '', price: '' },
+    ]);
+    const melons = product({
+      unit: 'PCS',
+      price: { amount: 400_000, currency: 'UZS' },
+      tiers: [{ minQuantity: 3, price: 333_333 }],
+    });
+    expect(tierRowsOf(melons)[0]).toEqual({ quantity: '3', price: '10000' });
+  });
+
+  it('turns rows into the ladder: blank rows skipped, a set’s price into a piece’s', () => {
+    const melons = product({
+      unit: 'PCS',
+      minQuantity: 1,
+      price: { amount: 400_000, currency: 'UZS' },
+    });
+    expect(
+      parseTierRows(
+        [
+          { quantity: '3', price: '10 000' },
+          { quantity: '', price: '' },
+        ],
+        melons,
+      ),
+    ).toEqual({ ok: true, value: [{ minQuantity: 3, price: 333_333 }] });
+    expect(parseTierRows([{ quantity: '', price: '' }], melons)).toEqual({ ok: true, value: [] });
+    const kilos = product({ price: { amount: 1_800_000, currency: 'UZS' } });
+    expect(
+      parseTierRows(
+        [
+          { quantity: '10', price: '16000' },
+          { quantity: '5', price: '17000' },
+        ],
+        kilos,
+      ),
+    ).toEqual({
+      ok: true,
+      value: [
+        { minQuantity: 5, price: 1_700_000 },
+        { minQuantity: 10, price: 1_600_000 },
+      ],
+    });
+  });
+
+  it('says what is wrong, as the API would refuse it', () => {
+    const kilos = product();
+    const error = (rows: { quantity: string; price: string }[]) => {
+      const result = parseTierRows(rows, kilos);
+      return result.ok ? null : result.error;
+    };
+    expect(error([{ quantity: '5', price: '' }])).toMatch(/и количество, и цену/);
+    expect(error([{ quantity: '5', price: '12500' }])).toMatch(/ниже обычной/);
+    expect(error([{ quantity: '0,5', price: '12000' }])).toMatch(/больше минимального/);
+    expect(
+      error([
+        { quantity: '5', price: '11000' },
+        { quantity: '10', price: '12000' },
+      ]),
+    ).toMatch(/дешевле предыдущей/);
+    // Melons are whole: «2,5 шт» is no quantity.
+    const melons = product({ unit: 'PCS', minQuantity: 1 });
+    const half = parseTierRows([{ quantity: '2,5', price: '10000' }], melons);
+    expect(half.ok ? null : half.error).toMatch(/Количество — целое число/);
   });
 });
