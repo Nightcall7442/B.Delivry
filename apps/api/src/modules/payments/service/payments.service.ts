@@ -569,6 +569,26 @@ export class PaymentsService extends BaseService {
   }
 
   /**
+   * The bill went down after the money was taken — a line the stall did not have, a lighter
+   * weighing: what was paid above `total` goes back the way it came (a card through its provider,
+   * the balance to the balance). Measured against what is still held, so a second correction never
+   * returns the first one's money again. The platform's own call (the guarantee handler).
+   */
+  async refundOverpayment(orderId: string, total: number): Promise<Money | null> {
+    const held = (await this.repository.findBySubject(orderId)).find(
+      (payment) =>
+        payment.status === PAYMENT_STATUS.CAPTURED ||
+        payment.status === PAYMENT_STATUS.PARTIALLY_REFUNDED,
+    );
+    if (held === undefined) return null;
+    const over = held.amount - held.refundedAmount - total;
+    if (over <= 0) return null;
+    const amount = money(over, held.currency as Currency);
+    await this.refund(held.id, { amount, reason: 'bought less than was paid for' });
+    return amount;
+  }
+
+  /**
    * Handles a provider callback. The signature is checked before anything in
    * the payload is believed: a webhook endpoint is public by necessity.
    *

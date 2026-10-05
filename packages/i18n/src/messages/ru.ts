@@ -697,4 +697,5 @@ export const ru = {
   'deals.all': 'все скидки →',
   'deals.honest': 'Зачёркнута самая низкая цена за неделю — скидки честные',
   'deals.note': '−{percent} % · было {old}',
+  'order.missing': 'нет у продавца — убрали из счёта',
 } as const;

@@ -662,4 +662,5 @@ export const uz: Catalogue = {
   'deals.all': 'barcha chegirmalar →',
   'deals.honest': 'Ustidan chizilgani — haftaning eng past narxi, chegirmalar halol',
   'deals.note': '−{percent} % · avval {old}',
+  'order.missing': 'sotuvchida yoʻq — hisobdan olib tashlandi',
 };

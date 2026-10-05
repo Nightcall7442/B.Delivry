@@ -336,7 +336,7 @@ function ActiveCard({
       {failing && toPickup ? (
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
           <Button
-            label="Нет товара"
+            label="Ничего нет"
             variant="secondary"
             disabled={busy}
             onPress={() => onFail('Нет товара')}
@@ -350,6 +350,12 @@ function ActiveCard({
             style={{ flex: 1 }}
           />
         </View>
+      ) : null}
+      {failing && toPickup ? (
+        <Text role="muted" style={{ color: HALL.ink, marginTop: 6 }}>
+          Нет одной-двух позиций? Не отменяйте: «Забрал заказ» → отметьте «Нет у продавца»,
+          остальное довезите.
+        </Text>
       ) : null}
 
       {step.button ? (

@@ -11,6 +11,7 @@ import type { Order, Prisma } from '@prisma/client';
 import { BaseRepository, type PrismaTransaction } from '../../../common/base/base.repository.js';
 import { ConflictError, NotFoundError } from '../../../common/errors/index.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
+import { boughtSoFar } from '../domain/order-weighing.js';
 import type { FrozenAddress, OrderListFilters, OrderTotals, PricedItem } from '../types/index.js';
 
 /** What a caller almost always wants alongside the order itself. */
@@ -299,7 +300,8 @@ export class OrdersRepository extends BaseRepository {
 
     const lines = order.items.map((item) => {
       const actual = actuals.find((entry) => entry.orderItemId === item.id);
-      const quantity = actual === undefined ? Number(item.quantity) : actual.actualQuantity;
+      // A line reported in an earlier call keeps what was reported then, not what was ordered.
+      const quantity = actual !== undefined ? actual.actualQuantity : boughtSoFar(item);
       return { item, actual, lineTotal: Math.round(item.unitPrice * quantity) };
     });
     const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);

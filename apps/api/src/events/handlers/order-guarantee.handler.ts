@@ -1,8 +1,10 @@
 /**
- * The late-delivery promise, kept by a machine rather than a support desk:
- * delivered later than promised + tolerance → the delivery fee goes back to
- * the customer's balance, and they are told. The freshness promise is a
- * human call and stays a support ticket.
+ * The promises, kept by a machine rather than a support desk:
+ *   cancelled or failed after paying     → the money back to the balance
+ *   the stall did not have something     → the line leaves the bill, the customer is told, and
+ *   (order.repriced)                       what was paid above the new total goes back by itself
+ *   delivered later than promised + tolerance → the delivery fee back to the balance
+ * The freshness promise is a human call and stays a support ticket.
  */
 import {
   GUARANTEE,
@@ -43,7 +45,12 @@ export function registerOrderGuaranteeHandlers(events: EventBus, deps: Guarantee
     if (to !== ORDER_STATUS.CANCELLED && to !== ORDER_STATUS.FAILED) return;
     await runWithContext(systemContext(event.tenantId, `refund:${event.id}`, 'uz'), async () => {
       const order = await deps.orders.get(orderId);
-      if (order.paymentStatus !== PAYMENT_STATUS.CAPTURED) return;
+      // Partly refunded = a missing line was already paid back; the rest is the new total.
+      if (
+        order.paymentStatus !== PAYMENT_STATUS.CAPTURED &&
+        order.paymentStatus !== PAYMENT_STATUS.PARTIALLY_REFUNDED
+      )
+        return;
       if (order.paymentMethod === PAYMENT_METHOD.CASH) return;
       if (order.customer === null || order.customer === undefined) return;
 
@@ -68,6 +75,55 @@ export function registerOrderGuaranteeHandlers(events: EventBus, deps: Guarantee
           idempotencyKey: `notify:refund:${order.id}`,
         },
         { jobId: `notify:refund:${order.id}` },
+      );
+    });
+  });
+
+  // «Нет у продавца» does not fail the order: the line left the bill. The customer hears what was
+  // not there and the new total; money already taken above it goes back the way it came.
+  events.on(ORDER_EVENT.REPRICED, async (event) => {
+    const { orderId, number, total, currency, missing } = event.payload;
+    await runWithContext(systemContext(event.tenantId, `reprice:${event.id}`, 'uz'), async () => {
+      if (missing.length > 0) {
+        const key = `notify:missing:${orderId}:${event.id}`;
+        await deps.queue.enqueue(
+          QUEUE.NOTIFICATIONS,
+          JOB.SEND_NOTIFICATION,
+          {
+            tenantId: event.tenantId,
+            userId: event.payload.customerId,
+            template: TEMPLATE.ORDER_ITEMS_MISSING,
+            params: {
+              orderNumber: number,
+              items: missing
+                .map((line) => line.name['ru'] ?? Object.values(line.name)[0] ?? '')
+                .join(', '),
+              total: total / 100,
+              currency,
+            },
+            orderId,
+            deepLink: `/orders/${orderId}`,
+            idempotencyKey: key,
+          },
+          { jobId: key },
+        );
+      }
+      const refunded = await deps.payments.refundOverpayment(orderId, total);
+      if (refunded === null) return;
+      const key = `notify:reprice-refund:${orderId}:${event.id}`;
+      await deps.queue.enqueue(
+        QUEUE.NOTIFICATIONS,
+        JOB.SEND_NOTIFICATION,
+        {
+          tenantId: event.tenantId,
+          userId: event.payload.customerId,
+          template: TEMPLATE.PAYMENT_REFUNDED,
+          params: { amount: refunded.amount / 100, currency: refunded.currency },
+          orderId,
+          deepLink: `/orders/${orderId}`,
+          idempotencyKey: key,
+        },
+        { jobId: key },
       );
     });
   });

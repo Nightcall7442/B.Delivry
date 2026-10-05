@@ -92,7 +92,8 @@ export const actualQuantitiesSchema = z.object({
     .array(
       z.object({
         orderItemId: idSchema,
-        actualQuantity: quantitySchema,
+        /** What was actually bought; 0 = the stall did not have it, the line leaves the bill. */
+        actualQuantity: z.coerce.number().min(0).max(10_000),
         /** The scale, photographed: what the customer sees next to the weight. */
         photoUrl: httpUrl.optional(),
       }),

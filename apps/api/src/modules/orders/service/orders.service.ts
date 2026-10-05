@@ -53,7 +53,7 @@ import {
 } from '../domain/order-state-machine.js';
 import { ORDER_EVENT } from '../domain/order.events.js';
 import { standingOn } from '../domain/order-party.js';
-import { maxActualQuantity, WEIGHING_STATUSES } from '../domain/order-weighing.js';
+import { boughtSoFar, isBuyableQuantity, WEIGHING_STATUSES } from '../domain/order-weighing.js';
 import type { OrdersRepository, OrderWithRelations } from '../repository/orders.repository.js';
 import type {
   ActualQuantity,
@@ -679,12 +679,15 @@ export class OrdersService extends BaseService {
   }
 
   /**
-   * Weighed goods: 2 kg of tomatoes is never exactly 2 kg. The courier reports
-   * what was actually bought and the order is repriced before handover, so the
-   * customer pays for what they receive.
+   * What was actually bought. Weighed goods: 2 kg of tomatoes is never exactly 2 kg. And the stall
+   * may not have something — six flatbreads ordered and four left, or no dill at all: that line is
+   * bought short or not at all (0) and leaves the bill, rather than the whole order failing over it.
+   * The order is repriced before handover, so the customer pays for what they receive; money
+   * already taken above the new total goes back by itself (the guarantee handler).
    *
-   * It changes what the customer owes, so it is the courier carrying this order, at the stall,
-   * on weighed lines of this order, with numbers a scale could show.
+   * It changes what the customer owes, so it is the courier carrying this order, at the stall, on
+   * lines of this order, with numbers a scale or a count could show — and something must be left
+   * to deliver: an empty bag is a failed order (`POST /delivery/:id/fail`), not a repriced one.
    */
   async reprice(orderId: string, actuals: ActualQuantity[]): Promise<OrderWithRelations> {
     const order = await this.getOrThrow(orderId);
@@ -694,28 +697,39 @@ export class OrdersService extends BaseService {
     }
 
     // Ids are matched against this order's own lines, never against the table: an id from another
-    // order is simply not weighable here.
-    const weighable = new Map(
-      order.items
-        .filter((item) => WEIGHTED_UNITS.includes(item.unit))
-        .map((item) => [item.id, item]),
-    );
+    // order is simply not a line here.
+    const lines = new Map(order.items.map((item) => [item.id, item]));
     if (new Set(actuals.map((actual) => actual.orderItemId)).size !== actuals.length) {
       throw new ConflictError('Each item may be weighed once');
     }
     for (const actual of actuals) {
-      const item = weighable.get(actual.orderItemId);
-      if (item === undefined) throw new ConflictError('Only weighed items can be repriced');
-      if (
-        !(actual.actualQuantity > 0) ||
-        actual.actualQuantity > maxActualQuantity(item.unit, Number(item.quantity))
-      ) {
-        throw new ConflictError('The weight is out of range for the ordered quantity');
+      const item = lines.get(actual.orderItemId);
+      if (item === undefined) throw new ConflictError('Only items of this order can be repriced');
+      if (!isBuyableQuantity(item.unit, Number(item.quantity), actual.actualQuantity)) {
+        throw new ConflictError('The quantity is out of range for the ordered one');
       }
       if (actual.photoUrl !== undefined && !/^https?:\/\//i.test(actual.photoUrl)) {
         throw new ConflictError('The scale photo must be a web address');
       }
     }
+    // What each line ends up as: this report, else an earlier one, else what was ordered.
+    const bought = (item: (typeof order.items)[number]) =>
+      actuals.find((actual) => actual.orderItemId === item.id)?.actualQuantity ?? boughtSoFar(item);
+    if (order.items.every((item) => bought(item) === 0)) {
+      throw new ConflictError('Nothing is left to deliver: fail the order instead');
+    }
+    // Not there at all, or counted goods short; a lighter weighing is the scale, not a shortage.
+    const missing = order.items
+      .filter(
+        (item) =>
+          bought(item) === 0 ||
+          (!WEIGHTED_UNITS.includes(item.unit) && bought(item) < Number(item.quantity)),
+      )
+      .map((item) => ({
+        orderItemId: item.id,
+        name: item.name as Record<string, string>,
+        quantity: bought(item),
+      }));
 
     const { previousTotal, total } = await runInTransaction(this.prisma, (tx) =>
       this.repository.applyActualQuantities(orderId, actuals, tx, {
@@ -734,6 +748,7 @@ export class OrdersService extends BaseService {
         previousTotal,
         total,
         currency: order.currency,
+        missing,
       }),
     );
 

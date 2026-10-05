@@ -57,8 +57,16 @@ export interface OrderEventPayloads {
   };
   'order.delivered': OrderRef & { courierId: string | null; deliverySeconds: number };
   'order.failed': OrderRef & { reason: string; atStatus: OrderStatus };
-  /** Weighed goods came in heavier or lighter than ordered. */
-  'order.repriced': OrderRef & { previousTotal: number; total: number; currency: string };
+  /**
+   * What was bought differs from what was ordered: weighed goods came in heavier or lighter, or the
+   * stall did not have something (`missing`: lines bought short, or not at all).
+   */
+  'order.repriced': OrderRef & {
+    previousTotal: number;
+    total: number;
+    currency: string;
+    missing: { orderItemId: string; name: Record<string, string>; quantity: number }[];
+  };
   'order.message': OrderRef & {
     courierId: string | null;
     message: {
