@@ -669,9 +669,9 @@ export const uz: Catalogue = {
   'seller.title': 'Sotuvchi boʻlish',
   'seller.intro':
     'Bozordagi rasta yoki uy yonidagi doʻkon — Bazar orqali soting: yaqindagi xaridorlar peshtaxtangizni koʻradi, kuryer buyurtmani oʻzi olib ketadi.',
-  'seller.perkCounter': 'Ilova va saytda oʻz peshtaxtangiz',
-  'seller.perkCourier': 'Kuryer oʻzi oladi va tortadi',
-  'seller.perkPayout': 'Yetkazilgan buyurtmalar uchun toʻlov',
+  'seller.perkCounter': 'Ilovada peshtaxta',
+  'seller.perkCourier': 'Kuryer oʻzi oladi',
+  'seller.perkPayout': 'Buyurtmalar uchun toʻlov',
   'seller.stall': 'Rasta yoki doʻkon nomi',
   'seller.name': 'Ismingiz yoki firma nomi',
   'seller.legal.UNREGISTERED': 'Roʻyxatdan oʻtmagan',

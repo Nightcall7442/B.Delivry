@@ -704,9 +704,9 @@ export const ru = {
   'seller.title': 'Стать продавцом',
   'seller.intro':
     'Лавка на базаре или магазин у дома — продавайте через Bazar: покупатели рядом видят ваш прилавок, курьер забирает заказ сам.',
-  'seller.perkCounter': 'Ваш прилавок в приложении и на сайте',
-  'seller.perkCourier': 'Курьер забирает и взвешивает',
-  'seller.perkPayout': 'Выплата за доставленные заказы',
+  'seller.perkCounter': 'Прилавок в приложении',
+  'seller.perkCourier': 'Курьер заберёт сам',
+  'seller.perkPayout': 'Выплаты за заказы',
   'seller.stall': 'Название лавки или магазина',
   'seller.name': 'Ваше имя или название фирмы',
   'seller.legal.UNREGISTERED': 'Без регистрации',
