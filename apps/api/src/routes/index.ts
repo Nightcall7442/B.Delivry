@@ -24,6 +24,7 @@ import { reviewsRouteGroup } from './reviews.routes.js';
 import { storesRouteGroup } from './stores.routes.js';
 import { haggleRoutes } from '../modules/haggle/index.js';
 import { looksRoutes } from '../modules/looks/index.js';
+import { regularsRoutes } from '../modules/regulars/index.js';
 import { subscriptionsRoutes } from '../modules/subscriptions/index.js';
 import { supportRouteGroup } from './support.routes.js';
 import { trackingRouteGroup } from './tracking.routes.js';
@@ -67,6 +68,7 @@ export async function registerRoutes(app: FastifyInstance, container: Container)
       await api.register(geoRoutes(container.controllers.geo), { prefix: '/geo' });
       await api.register(haggleRoutes(container.controllers.haggle), { prefix: '/haggle' });
       await api.register(looksRoutes(container.controllers.looks), { prefix: '/looks' });
+      await api.register(regularsRoutes(container.controllers.regulars), { prefix: '/regulars' });
       await api.register(pricingRoutes(container.controllers.pricing), { prefix: '/pricing' });
       await api.register(promotionsRoutes(container.controllers.promotions), {
         prefix: '/promotions',

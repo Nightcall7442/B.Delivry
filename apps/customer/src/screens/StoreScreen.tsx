@@ -26,6 +26,7 @@ import {
 } from '@/components/bazar';
 import { Bone, LoadError } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
+import { RegularCard } from '@/components/shop/RegularCard';
 import { useCart } from '@/features/cart/store';
 import { useFavorite } from '@/features/favorites/store';
 import { getStore, listCategories, listProducts } from '@/lib/catalog';
@@ -170,6 +171,8 @@ export function StoreScreen({ storeId }: { storeId: string }) {
               ) : null}
             </View>
             {!store.isOpen ? <Text style={s.closed}>{t('store.closedHint')}</Text> : null}
+            {/* «Свой продавец»: shown only to someone who has bought here before. */}
+            <RegularCard storeId={store.id} seller={store.ownerName ?? tr(store.name, locale)} />
           </View>
 
           <View style={s.counter}>

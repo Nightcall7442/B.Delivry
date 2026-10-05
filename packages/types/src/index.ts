@@ -21,6 +21,7 @@ export * from './order.js';
 export * from './payment.js';
 export * from './price-index.js';
 export * from './pricing.js';
+export * from './regular.js';
 export * from './product.js';
 export * from './promotion.js';
 export * from './review.js';

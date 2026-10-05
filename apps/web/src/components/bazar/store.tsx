@@ -16,6 +16,7 @@ import { ArrowLeft, Star } from '@/components/go/icons';
 import { useAddress } from '@/features/address';
 
 import { BasketBar, HeartButton, ProductCard, ShareButton } from './index';
+import { RegularCard } from './regular-card';
 import s from './bazar.module.css';
 
 export function BazaarStore({
@@ -135,6 +136,13 @@ export function BazaarStore({
               <span className={`${s.pill} ${s.pillWarn}`}>{t('store.closedHint')}</span>
             ) : null}
           </div>
+          {/* «Свой продавец»: shown only to someone who has bought here before. */}
+          <RegularCard
+            storeId={store.id}
+            seller={store.ownerName ?? tr(store.name, locale)}
+            locale={locale}
+            t={t}
+          />
         </div>
 
         <div className={s.head}>

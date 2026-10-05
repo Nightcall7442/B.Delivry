@@ -786,4 +786,11 @@ export const uz: Catalogue = {
   'osh.hint':
     'Goʻsht, guruch, sabzi va yogʻni qozon qoidasi boʻyicha hisoblaymiz — yaqin rastalardan',
   'osh.cta': 'Osh yigʻish',
+  // ---------------------------------------------------------------- «Свой продавец»
+  'regular.title': 'Oʻz sotuvchingiz',
+  'regular.times.other': 'Bu yerdan {count} marta xarid qilgansiz',
+  'regular.since': '{date} dan beri',
+  'regular.again': 'Oʻtgan safargidek',
+  'regular.againHint': 'Oʻsha mahsulotlar va istaklar — darhol rasmiylashtirishga',
+  'regular.failed': 'Oʻtgan buyurtmani ochib boʻlmadi — yana urinib koʻring',
 };
