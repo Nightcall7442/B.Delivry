@@ -777,7 +777,7 @@ export function CheckoutScreen({
             value={t.money(subtotal)}
           />
           <Line
-            label={`${t('cart.delivery')}${quote ? ` · ${t('common.km', { km: (quote.distanceMeters / 1000).toFixed(1) })}` : ''}`}
+            label={`${t('cart.delivery')}${quote ? ` · ${t('common.km', { km: t.qty(Math.round(quote.distanceMeters / 100) / 10) })}` : ''}`}
             value={totals ? t.money(totals.deliveryFee.amount) : '—'}
           />
           {totals && totals.serviceFee.amount > 0 ? (

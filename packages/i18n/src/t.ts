@@ -26,8 +26,17 @@ export interface T {
   qty(value: number): string;
   /** "12 октября" / "12 oktabr": browsers lack Uzbek month names, so the catalogue carries them. */
   date(value: string | Date): string;
+  /**
+   * «понедельник, 5 октября» · «5 октября в 15:18» on the Tashkent clock. Built from the catalogue,
+   * not Intl: a browser renders Uzbek as «M10 5, MON», the server does not, and the page fails to hydrate.
+   */
+  when(value: string | Date, parts?: { weekday?: boolean; time?: boolean }): string;
+  /** «15:18» on the Tashkent clock. */
+  time(value: string | Date): string;
   locale: Locale;
 }
+
+const TASHKENT_OFFSET_MS = 5 * 60 * 60 * 1000;
 
 const NUMBER_LOCALE: Record<Locale, string> = { ru: 'ru-RU', uz: 'uz-Latn-UZ', en: 'en-US' };
 
@@ -78,6 +87,25 @@ export function createT(locale: string): T {
     const at = typeof value === 'string' ? new Date(value) : value;
     const months = (own['months'] ?? RU['months'] ?? '').split(',');
     return `${at.getDate()} ${months[at.getMonth()] ?? ''}`;
+  };
+  const pad = (n: number) => String(n).padStart(2, '0');
+  // Tashkent keeps UTC+5 all year: shift once and read the UTC fields, whatever zone runs this.
+  const tashkent = (value: string | Date) =>
+    new Date(new Date(value).getTime() + TASHKENT_OFFSET_MS);
+  t.time = (value) => {
+    const at = tashkent(value);
+    return `${pad(at.getUTCHours())}:${pad(at.getUTCMinutes())}`;
+  };
+  t.when = (value, parts = {}) => {
+    const at = tashkent(value);
+    const months = (own['months'] ?? RU['months'] ?? '').split(',');
+    let text = `${at.getUTCDate()} ${months[at.getUTCMonth()] ?? ''}`;
+    if (parts.weekday) {
+      const weekdays = (own['weekdays'] ?? RU['weekdays'] ?? '').split(',');
+      text = t('date.withWeekday', { date: text, weekday: weekdays[at.getUTCDay()] ?? '' });
+    }
+    if (parts.time) text = t('date.withTime', { date: text, time: t.time(value) });
+    return text;
   };
   t.locale = loc;
   translators.set(loc, t);

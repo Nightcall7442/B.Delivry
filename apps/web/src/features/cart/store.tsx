@@ -11,15 +11,7 @@
  */
 'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { cleanNote, notesFor, readNotes, withoutNotes } from '@bazar/storefront';
@@ -78,33 +70,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [quantities, setQuantities] = useState<CartQuantities>({});
   const [notes, setNotes] = useState<CartNotes>({});
   const [ready, setReady] = useState(false);
-  const hydrated = useRef(false);
 
   useEffect(() => {
     const stored = read();
     setQuantities(stored);
     setNotes(notesFor(readStoredNotes(), stored));
-    hydrated.current = true;
     setReady(true);
   }, []);
 
+  // Written only once the stored cart is in state: a ref flipped in the read effect let this run
+  // in the same pass with the empty initial cart, and a page re-mounted right then (a hydration
+  // retry) read back nothing.
   useEffect(() => {
-    if (!hydrated.current) return;
+    if (!ready) return;
     try {
       window.localStorage.setItem(KEY, JSON.stringify(quantities));
     } catch {
       // The quantities still live in state for this session.
     }
-  }, [quantities]);
+  }, [quantities, ready]);
 
   useEffect(() => {
-    if (!hydrated.current) return;
+    if (!ready) return;
     try {
       window.localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
     } catch {
       // As above: kept in state for this session.
     }
-  }, [notes]);
+  }, [notes, ready]);
 
   const setNote = useCallback((productId: string, note: string) => {
     const clean = cleanNote(note);

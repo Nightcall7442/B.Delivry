@@ -190,12 +190,7 @@ export function BazaarHome({
     return [...counter, ...deals.filter((p) => !ids.has(p.id))];
   }, [counter, deals]);
 
-  const dateLine = new Intl.DateTimeFormat(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    timeZone: 'Asia/Tashkent',
-  }).format(new Date());
+  const dateLine = t.when(new Date(), { weekday: true });
 
   return (
     <main className={`hall ${s.scene}`}>
@@ -203,11 +198,17 @@ export function BazaarHome({
         <div className={s.top}>
           <span className={s.tag}>
             {/* One tag, one line: the live temperature or, at night, the closing hour. */}
-            {temperature !== null
-              ? `Чорсу · ${evening ? 'вечер' : 'утро'} · ${degrees(temperature)}`
-              : evening
-                ? 'Чорсу · вечер · до 21:00'
-                : 'Чорсу · утро'}
+            {[
+              t('scene.place'),
+              t(evening ? 'scene.eveningTag' : 'scene.morningTag'),
+              temperature !== null
+                ? degrees(temperature)
+                : evening
+                  ? t('shop.until', { time: '21:00' })
+                  : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </span>
           {/* Signed in: the orders (a receipt, not a bell) and the profile — the initial, or the
               menu glyph without a name. A guest gets «Войти», not an avatar of nobody. */}
@@ -286,10 +287,11 @@ export function BazaarHome({
         {deals.length > 0 ? (
           <>
             <div className={s.head}>
-              <h2 className={s.headTitle}>
-                {t('deals.title')}
-                <span className={s.headMeta}> · {t('deals.honest')}</span>
-              </h2>
+              <div>
+                <h2 className={s.headTitle}>{t('deals.title')}</h2>
+                {/* Its own line: inline in the heading it wrapped under the title like a break. */}
+                <p className={s.headSub}>{t('deals.honest')}</p>
+              </div>
             </div>
             <div className={s.rail}>
               {deals.map((product, i) => (

@@ -1,7 +1,8 @@
 import { ListScreen } from '@/components/go/list-screen';
 import { listProducts } from '@/lib/catalog';
+import { titled } from '@/lib/metadata';
 
-export const metadata = { title: 'Список покупок — Bazar Delivery' };
+export const generateMetadata = titled('list.title');
 export const dynamic = 'force-dynamic';
 
 export default async function ListPage({ params }: { params: Promise<{ locale: string }> }) {

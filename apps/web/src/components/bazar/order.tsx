@@ -7,7 +7,6 @@
 'use client';
 
 import { ORDER_STATUS, isTerminalOrderStatus } from '@bazar/constants';
-import { haversineMeters } from '@bazar/maps';
 import {
   ONLINE_PROVIDERS,
   SLOT_HOURS,
@@ -199,28 +198,29 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
   const weighed = order.items.some((item) => item.actualQuantity !== null);
   const home = order.address.point ?? order.store.point ?? DEFAULT_POINT;
   const stall = order.store.point ?? home;
-  const span = haversineMeters(stall, home);
   // Follow the courier while there is one; otherwise show the whole trip.
   const center =
     courier && !terminal
       ? courier
       : { lat: (stall.lat + home.lat) / 2, lng: (stall.lng + home.lng) / 2 };
-  const zoom = courier && !terminal ? 14 : span > 6000 ? 11 : span > 3000 ? 12 : 13;
+  // The trip has to fit the clear band between the steps and the first card — about 120 px tall
+  // on a phone around the centre — or the house lands on «В пути». Metres per pixel at Tashkent's
+  // latitude halve with each zoom step.
+  const halfHeight = (Math.abs(stall.lat - home.lat) * 111_320) / 2;
+  const halfWidth =
+    (Math.abs(stall.lng - home.lng) * 111_320 * Math.cos((home.lat * Math.PI) / 180)) / 2;
+  const fit = Math.floor(Math.log2(118_000 / Math.max(halfHeight / 50, halfWidth / 130, 1)));
+  const zoom = courier && !terminal ? 14 : Math.min(15, Math.max(10, fit));
   const units = unitLabel(locale);
-  const placed = new Intl.DateTimeFormat(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Tashkent',
-  }).format(new Date(order.placedAt));
+  const placed = t.when(order.placedAt, { time: true });
   const chip = (on: boolean) => `${s.chipPaper} ${on ? s.chipPaperOn : ''}`;
 
   return (
     <main className={`hall ${s.scene}`}>
       {/* The map is the ground while the order is on its way; a dark scrim keeps the paper readable. */}
       <div className={`${s.mapGround} ${terminal ? s.mapGroundDone : ''}`}>
-        <MapView center={center} zoom={zoom} markers={markers} interactive />
+        {/* A finished order keeps the map only as the ground: its pins would show between the cards. */}
+        <MapView center={center} zoom={zoom} markers={terminal ? [] : markers} interactive />
       </div>
       <div className={`${s.body} ${s.narrow}`}>
         <div className={s.top}>
@@ -524,11 +524,10 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
               <>
                 <p className={s.rcName}>
                   {t('order.freshness', {
-                    time:
-                      freshnessDeadline(order)?.toLocaleTimeString(
-                        locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU',
-                        { hour: '2-digit', minute: '2-digit' },
-                      ) ?? '',
+                    time: (() => {
+                      const deadline = freshnessDeadline(order);
+                      return deadline ? t.time(deadline) : '';
+                    })(),
                   })}
                 </p>
                 <input

@@ -1,6 +1,7 @@
 import { InviteScreen } from '@/components/go/invite-screen';
+import { titled } from '@/lib/metadata';
 
-export const metadata = { title: 'Пригласить друга — Bazar Delivery' };
+export const generateMetadata = titled('invite.title');
 
 export default async function InvitePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

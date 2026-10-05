@@ -47,7 +47,12 @@ export function SubscriptionsScreen({ locale }: { locale: string }) {
           {t('common.signIn')}
         </Link>
       ) : rows === null ? null : rows.length === 0 ? (
-        <p className="mt-4 text-sm text-ink-muted">{t('subs.empty')}</p>
+        <>
+          <p className="mt-4 text-sm text-ink-muted">{t('subs.empty')}</p>
+          <Link href={`/${locale}/orders`} className="btn-go mt-4">
+            {t('menu.orders')}
+          </Link>
+        </>
       ) : (
         <ul className="mt-4 flex flex-col gap-3">
           {rows.map((row) => (

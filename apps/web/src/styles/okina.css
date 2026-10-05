@@ -1,0 +1,23 @@
+/*
+ * Uzbek writes oʻ and gʻ with U+02BB (and the hard sign with U+02BC). Manrope and Caveat carry
+ * neither, so a system font stepped in with its own width: «so‘ m», «QOʻ Y». These two files
+ * (1 KB each, cut from the same fonts) hold the fonts' own ‘ and ’ under those code points. Loaded
+ * after the fontsource faces: for a character two faces of a family both claim, the browser tries
+ * the later rule first.
+ */
+@font-face {
+  font-family: 'Manrope Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('/fonts/manrope-okina.woff2') format('woff2-variations');
+  unicode-range: U+02BB-02BC;
+}
+@font-face {
+  font-family: 'Caveat Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 700;
+  src: url('/fonts/caveat-okina.woff2') format('woff2-variations');
+  unicode-range: U+02BB-02BC;
+}

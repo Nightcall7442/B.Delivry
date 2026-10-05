@@ -257,6 +257,12 @@ export function BazaarCheckout({
   const deliverable = quote?.deliverable ?? false;
   // Why the order cannot be placed right now, in the customer's words.
   const blocker = quote && !deliverable ? orderReasonText(quote.reason, locale) : null;
+  // Below the minimum, the button says what is missing — the total it showed was above the minimum
+  // (the minimum is for goods, the total carries delivery), and read as a contradiction.
+  const shortOf =
+    quote && !deliverable && quote.reason?.includes('minimum')
+      ? Math.max(0, quote.minOrder.amount - quote.totals.subtotal.amount)
+      : 0;
   const ready = Boolean(
     user && group && address && items.length > 0 && deliverable && !submitting && !quoting,
   );
@@ -600,7 +606,7 @@ export function BazaarCheckout({
               <dt>
                 {t('cart.delivery')}
                 {quote
-                  ? ` · ${t('common.km', { km: (quote.distanceMeters / 1000).toFixed(1) })}`
+                  ? ` · ${t('common.km', { km: t.qty(Math.round(quote.distanceMeters / 100) / 10) })}`
                   : ''}
               </dt>
               <dd>{totals ? t.money(totals.deliveryFee.amount) : '—'}</dd>
@@ -667,9 +673,15 @@ export function BazaarCheckout({
                       : /* A dead button explains nothing: carry the reason on it. */
                         (blocker ?? t('checkout.order'))}
               </div>
-              {totals ? <div className={s.checkoutSub}>{t.money(totals.total.amount)}</div> : null}
+              {shortOf > 0 ? (
+                <div className={s.checkoutSub}>
+                  {t('checkout.shortOf', { amount: t.money(shortOf) })}
+                </div>
+              ) : totals ? (
+                <div className={s.checkoutSub}>{t.money(totals.total.amount)}</div>
+              ) : null}
             </span>
-            <span className={s.checkoutArrow}>→</span>
+            {ready ? <span className={s.checkoutArrow}>→</span> : null}
           </button>
         </div>
       </div>

@@ -2,8 +2,9 @@ import { redirect } from 'next/navigation';
 
 import { BazaarCheckout } from '@/components/bazar/checkout';
 import { getStore, listProducts } from '@/lib/catalog';
+import { titled } from '@/lib/metadata';
 
-export const metadata = { title: 'Оформление заказа — Bazar Delivery' };
+export const generateMetadata = titled('meta.checkout');
 export const dynamic = 'force-dynamic';
 
 export default async function CheckoutPage({

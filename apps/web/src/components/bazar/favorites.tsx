@@ -98,9 +98,18 @@ export function BazaarFavorites({ locale }: { locale: string }) {
               </Link>
             </>
           ) : favorites.ready && empty ? (
-            <p className={s.say} style={{ maxWidth: '40ch', margin: '10px 0 0' }}>
-              {t('fav.empty')}
-            </p>
+            <>
+              <p className={s.say} style={{ maxWidth: '40ch', margin: '10px 0 0' }}>
+                {t('fav.empty')}
+              </p>
+              <Link
+                href={`${home}/catalog`}
+                className={`${s.pill} ${s.pillSolid}`}
+                style={{ marginTop: 16 }}
+              >
+                {t('common.toStores')} →
+              </Link>
+            </>
           ) : null}
         </div>
 

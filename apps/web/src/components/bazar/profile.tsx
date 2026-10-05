@@ -7,6 +7,7 @@
 
 import { UI_LOCALES, createT, type MessageKey } from '@bazar/i18n';
 import { plusActive } from '@bazar/storefront';
+import { formatUzPhone } from '@bazar/utils/phone';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -14,7 +15,9 @@ import { useEffect, useState } from 'react';
 import {
   ArrowLeft,
   Bag,
+  Banknote,
   Basket,
+  Bell,
   Chat,
   Coin,
   Heart,
@@ -41,7 +44,7 @@ const SERVICES: Item[] = [
   { key: 'menu.plus', href: '/plus', icon: <Star /> },
   { key: 'menu.list', href: '/list', icon: <Mic /> },
   { key: 'menu.invite', href: '/invite', icon: <Coin /> },
-  { key: 'menu.business', href: '/business', icon: <Basket /> },
+  { key: 'menu.business', href: '/business', icon: <Banknote /> },
   { key: 'menu.docs', href: '/documents', icon: <ListGlyph /> },
   { key: 'menu.neighbour', href: '/neighbour', icon: <Bag /> },
   { key: 'menu.seller', href: '/seller', icon: <Basket /> },
@@ -94,31 +97,35 @@ export function BazaarProfile({ locale }: { locale: string }) {
 
         {/* The regular's card */}
         <div className={s.kraft} style={{ margin: '18px 0 22px', padding: '18px 20px 20px' }}>
-          <div className={s.kraftEyebrow} style={{ textAlign: 'left' }}>
-            {t('profile.regular')}
-          </div>
+          {user ? (
+            <div className={s.kraftEyebrow} style={{ textAlign: 'left' }}>
+              {t('profile.regular')}
+            </div>
+          ) : null}
           <div className={s.rcVendor} style={{ margin: '12px 0 0' }}>
             <span
               className={`${s.avatar} ${s.avatarSmall}`}
               style={{ width: 56, height: 56, fontSize: 'var(--fs-headline)' }}
             >
-              {user
-                ? user.firstName
-                  ? user.firstName.slice(0, 1).toUpperCase()
-                  : user.phone.slice(-2)
-                : '·'}
+              {/* The initial; without a name, a face that is nobody's digits. */}
+              {user?.firstName ? user.firstName.slice(0, 1).toUpperCase() : <Basket />}
             </span>
             <span style={{ minWidth: 0, flex: 1 }}>
               <span className={s.rcVendorName}>
-                {!ready ? '' : user ? user.firstName || user.phone : t('profile.guest')}
+                {!ready
+                  ? ''
+                  : user
+                    ? user.firstName || formatUzPhone(user.phone)
+                    : t('profile.guest')}
               </span>
-              <span className={s.rcVendorMeta}>
-                {user
-                  ? user.firstName
-                    ? user.phone
-                    : t('profile.regular')
-                  : t('profile.guestHint')}
-              </span>
+              {/* The eyebrow already says «постоянный покупатель»: the line under the name adds. */}
+              {user ? (
+                user.firstName ? (
+                  <span className={s.rcVendorMeta}>{formatUzPhone(user.phone)}</span>
+                ) : null
+              ) : (
+                <span className={s.rcVendorMeta}>{t('profile.guestHint')}</span>
+              )}
             </span>
           </div>
           {user ? (
@@ -175,7 +182,7 @@ export function BazaarProfile({ locale }: { locale: string }) {
                   }
                 >
                   <span className={s.payIcon}>
-                    <Chat />
+                    <Bell />
                   </span>
                   <span style={{ minWidth: 0, flex: 1 }}>
                     <span className={s.rcName}>{t('menu.telegram')}</span>
@@ -203,7 +210,7 @@ export function BazaarProfile({ locale }: { locale: string }) {
                       .catch(() => undefined);
                 }}
               >
-                {code === 'ru' ? 'Русский' : "O'zbekcha"}
+                {code === 'ru' ? 'Русский' : 'Oʻzbekcha'}
               </Link>
             ))}
           </div>

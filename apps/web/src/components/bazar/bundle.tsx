@@ -113,14 +113,10 @@ export function BazaarBundle({
           <h2 className={s.headTitle} style={{ whiteSpace: 'nowrap' }}>
             {t.n('bundle.products', resolved.lines.length)}
           </h2>
+          {/* Wrapped, not cut: which stalls the set comes from is what this line is for. */}
           <span
             className={s.headAction}
-            style={{
-              minWidth: 0,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
+            style={{ minWidth: 0, textAlign: 'right', whiteSpace: 'normal' }}
           >
             {stalls.map((store) => store.ownerName ?? tr(store.name, locale)).join(' · ')}
           </span>
@@ -176,7 +172,7 @@ export function BazaarBundle({
           </p>
         ) : null}
         {stalls.length > 1 ? (
-          <p className="eyebrow" style={{ marginTop: 12 }}>
+          <p className={s.say} style={{ margin: '12px 0 0' }}>
             {t('bundle.multiStall', { count: stalls.length })}
           </p>
         ) : null}

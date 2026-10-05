@@ -1,9 +1,9 @@
-import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { BazaarLogin } from '@/components/bazar/login';
+import { titled } from '@/lib/metadata';
 
-export const metadata: Metadata = { title: 'Вход — Bazar Delivery' };
+export const generateMetadata = titled('meta.login');
 
 export default async function LoginPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

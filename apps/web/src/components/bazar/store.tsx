@@ -49,13 +49,7 @@ export function BazaarStore({
     : null;
   const hero = store.counterPhotoUrl ?? store.coverUrl ?? null;
   const face = store.ownerPhotoUrl ?? null;
-  const takenAt = store.counterPhotoAt
-    ? new Date(store.counterPhotoAt).toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Asia/Tashkent',
-      })
-    : null;
+  const takenAt = store.counterPhotoAt ? t.time(store.counterPhotoAt) : null;
 
   return (
     <main className={`hall ${s.scene}`}>
@@ -89,7 +83,7 @@ export function BazaarStore({
           </span>
         </div>
 
-        <div className={s.greeting}>
+        <div className={`${s.greeting} ${hero ? s.greetingOnPhoto : ''}`}>
           <div className={s.person}>
             {store.ownerName ? (
               <span

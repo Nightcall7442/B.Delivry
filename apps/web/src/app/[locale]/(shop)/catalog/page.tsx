@@ -1,10 +1,9 @@
-import type { Metadata } from 'next';
-
 import { BazaarCatalog } from '@/components/bazar/catalog';
 import { DEFAULT_POINT } from '@bazar/storefront';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
+import { titled } from '@/lib/metadata';
 
-export const metadata: Metadata = { title: 'Карта рядов — Bazar Delivery' };
+export const generateMetadata = titled('map.title');
 export const dynamic = 'force-dynamic';
 
 type Search = { category?: string; q?: string };

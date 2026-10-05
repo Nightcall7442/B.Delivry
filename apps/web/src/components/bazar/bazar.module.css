@@ -91,6 +91,7 @@
 }
 .round {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   width: 44px;
@@ -192,6 +193,13 @@
   line-height: 26px;
   color: var(--ochre-light);
 }
+/* Words standing on a photograph (the door, a stall's counter): a shadow under each line, so
+   cream and ochre hold on the bright windows and white tiles too. */
+.greetingOnPhoto :is(.display, .say, .storeName, :global(.eyebrow)) {
+  text-shadow:
+    0 1px 2px rgb(var(--ground-deep-rgb) / 0.7),
+    0 2px 18px rgb(var(--ground-deep-rgb) / 0.8);
+}
 .greeting {
   padding-top: clamp(28px, 6vh, 64px);
   /* The greeting is two lines on the hall, and the people start right under it. */
@@ -244,9 +252,12 @@
   border-radius: var(--radius-paper);
   transform: rotate(-2deg);
   box-shadow: var(--shadow);
+  min-width: 0;
+  text-wrap: balance;
 }
 .tag::before {
   content: '';
+  flex-shrink: 0;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -669,6 +680,24 @@
   display: grid;
   place-items: center;
 }
+/* An icon carrying its count: the count sits up and out on the corner, the glyph stays whole. */
+.iconBadge {
+  position: relative;
+  display: inline-flex;
+}
+.iconBadge .badge {
+  top: -9px;
+  right: -13px;
+  box-shadow: 0 0 0 2px var(--ground-deep);
+}
+.round .iconBadge .badge {
+  box-shadow: 0 0 0 2px var(--cream);
+}
+/* The tab bar over a paper page: the glass would let the sheet's text through, under the labels. */
+.glassSolid {
+  background: rgb(var(--ground-deep-rgb) / 0.94);
+  box-shadow: var(--shadow);
+}
 .checkout {
   flex: 1;
   display: flex;
@@ -780,6 +809,14 @@
   font-weight: 700;
   color: var(--cream-muted);
 }
+.headSub {
+  margin: 4px 0 0;
+  font-family: var(--font-sans), 'Manrope', system-ui, sans-serif;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  font-weight: 700;
+  color: var(--cream-muted);
+}
 /* The padding centres the label in a link as well as in a button. */
 .chip {
   flex: 0 0 auto;
@@ -828,6 +865,16 @@
 .photoStall {
   -webkit-mask-image: linear-gradient(#000 22%, transparent 50%);
   mask-image: linear-gradient(#000 22%, transparent 50%);
+}
+/* The seller's name, row and motto stand on the counter photo: a white-tiled butcher's or a
+   sunlit row would swallow cream and ochre, so the scrim holds the photo down behind them. */
+.photoStall::before {
+  background: linear-gradient(
+    rgb(var(--ground-deep-rgb) / 0.55) 0%,
+    rgb(var(--ground-deep-rgb) / 0.62) 18%,
+    rgb(var(--ground-deep-rgb) / 0.78) 34%,
+    rgb(var(--ground-deep-rgb) / 0.92) 50%
+  );
 }
 .narrow {
   max-width: 640px;
@@ -1399,8 +1446,17 @@
   display: block;
   padding: 16px 20px 18px;
   margin-bottom: 18px;
-  color: inherit;
+  /* A link on paper: ink, as the receipt it is (inherit took the hall's cream). */
+  color: var(--ink-paper);
   text-decoration: none;
+}
+/* The number and the time each stay whole: on a phone the time drops under the number. */
+.slip .rcHead {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.slip .rcHead > span {
+  white-space: nowrap;
 }
 .slipDone {
   opacity: 0.86;

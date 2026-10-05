@@ -37,7 +37,7 @@ export function NeighbourScreen({ locale }: { locale: string }) {
   return (
     <GoShell locale={locale} back="history" expanded header={<h1>{t('neighbour.title')}</h1>}>
       <p className="mt-1 text-sm text-ink-muted">
-        {t('neighbour.intro', { km: NEIGHBOUR_COURIER.HOME_RADIUS_METERS / 1000 })}
+        {t('neighbour.intro', { km: t.qty(NEIGHBOUR_COURIER.HOME_RADIUS_METERS / 1000) })}
       </p>
       {!ready ? null : !user ? (
         <Link

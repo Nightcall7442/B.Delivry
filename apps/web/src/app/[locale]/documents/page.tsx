@@ -1,6 +1,7 @@
 import { DocumentsScreen } from '@/components/go/documents-screen';
+import { titled } from '@/lib/metadata';
 
-export const metadata = { title: 'Документы — Bazar Delivery' };
+export const generateMetadata = titled('docs.title');
 
 export default async function DocumentsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

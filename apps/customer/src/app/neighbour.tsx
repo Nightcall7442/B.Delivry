@@ -43,7 +43,7 @@ export default function NeighbourRoute() {
       }
     >
       <Text role="muted" style={{ marginTop: 4 }}>
-        {t('neighbour.intro', { km: NEIGHBOUR_COURIER.HOME_RADIUS_METERS / 1000 })}
+        {t('neighbour.intro', { km: t.qty(NEIGHBOUR_COURIER.HOME_RADIUS_METERS / 1000) })}
       </Text>
       {!ready ? null : !user ? (
         <Button

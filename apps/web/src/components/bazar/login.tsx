@@ -166,7 +166,10 @@ export function BazaarLogin({ locale }: { locale: string }) {
           </Link>
           <span className={s.tag}>{t('login.tagline')}</span>
         </div>
-        <div className={s.greeting} style={{ minHeight: '26vh', padding: '12px 0 22px' }}>
+        <div
+          className={`${s.greeting} ${s.greetingOnPhoto}`}
+          style={{ minHeight: '26vh', padding: '12px 0 22px' }}
+        >
           <div className="eyebrow">{t('login.taglineHint')}</div>
           <h1 className={`${s.display} ${evening ? s.displayEvening : ''}`}>
             {t(evening ? 'scene.evening' : 'scene.morning')}

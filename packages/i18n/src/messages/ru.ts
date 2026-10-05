@@ -11,7 +11,7 @@ export const ru = {
   'common.all': 'Все',
   'common.eta': '~{minutes} мин',
   'common.minutes': '{minutes} мин',
-  'common.km': '{km} км',
+  'common.km': '{km}\u00a0км',
   'common.close': 'Закрыть',
   'common.back': 'Назад',
   'common.menu': 'Меню',
@@ -127,7 +127,8 @@ export const ru = {
   'checkout.discount': 'Скидка',
   'checkout.weighNote':
     'Весовые товары курьер взвешивает у продавца — итог может отличаться на несколько процентов.',
-  'checkout.reason.minOrder': 'Сумма ниже минимальной для этого района',
+  'checkout.reason.minOrder': 'Сумма товаров ниже минимальной для этого района',
+  'checkout.shortOf': 'До минимума не хватает {amount}',
   'checkout.reason.otherCity': 'Эта точка в другом городе — выберите ближайшую к вам',
   'checkout.otherCityAction': 'Убрать из корзины и выбрать рядом',
   'checkout.reason.outOfZone': 'Сюда пока не возим — выберите адрес в зоне доставки',
@@ -484,7 +485,7 @@ export const ru = {
   'menu.neighbour': 'Стать курьером махалли',
   'neighbour.title': 'Курьер махалли',
   'neighbour.intro':
-    'Носите заказы соседям пешком в радиусе {km} км от дома и зарабатывайте на каждом. Заказы приходят в приложение курьера — тот же номер телефона.',
+    'Носите заказы соседям пешком в радиусе {km}\u00a0км от дома и зарабатывайте на каждом. Заказы приходят в приложение курьера — тот же номер телефона.',
   'neighbour.apply': 'Хочу носить заказы соседям',
   'neighbour.needAddress': 'Сначала укажите домашний адрес.',
   'neighbour.applied':
@@ -528,6 +529,9 @@ export const ru = {
   'chat.send': 'Отправить',
   'chat.customer': 'Чат с клиентом',
   months: 'января,февраля,марта,апреля,мая,июня,июля,августа,сентября,октября,ноября,декабря',
+  weekdays: 'воскресенье,понедельник,вторник,среда,четверг,пятница,суббота',
+  'date.withWeekday': '{weekday}, {date}',
+  'date.withTime': '{date} в {time}',
   'slots.today': 'Сегодня',
   'slots.tomorrow': 'Завтра',
 
@@ -612,7 +616,7 @@ export const ru = {
   'trust.fresh': 'Свежесть под гарантией',
   'trust.haggle': 'Можно поторговаться',
   'store.owner': 'За прилавком',
-  'store.ownerSince': 'на базаре с {year} года',
+  'store.ownerSince': 'на\u00a0базаре с\u00a0{year}\u00a0года',
   'order.story': 'История заказа',
   'order.weighedAs': 'взвесили {quantity} {unit}',
   'tile.cashback': '+{amount} на баланс',
@@ -661,6 +665,10 @@ export const ru = {
   'scene.evening': 'Хайрли кеч',
   'scene.morningLine': 'ряды с 6:30',
   'scene.eveningLine': 'зажгли фонари',
+  // The home tag: the bazaar, the time of day, then the weather or the closing hour.
+  'scene.place': 'Чорсу',
+  'scene.morningTag': 'утро',
+  'scene.eveningTag': 'вечер',
   'scene.vendorsHere': 'Продавцы на месте',
   'scene.whereAreYou': 'Укажите адрес — покажем ряды рядом с вами',
   'scene.awayFromAddress': 'Вы далеко от адреса доставки — показать ряды рядом',
@@ -713,7 +721,7 @@ export const ru = {
   'common.retry': 'Повторить',
   'shop.nearby': 'Магазины рядом',
   'shop.all': 'все магазины →',
-  'shop.until': 'до {time}',
+  'shop.until': 'до\u00a0{time}',
   'shop.closedToday': 'сегодня закрыто',
   'shop.branch': 'ближайший филиал · {address}',
   'shop.minOrder': 'заказ от {sum}',
@@ -839,5 +847,16 @@ export const ru = {
   'footer.title': 'О сервисе',
   'footer.offer': 'Публичная оферта',
   'footer.privacy': 'Политика данных',
+  // Browser tab titles and the search snippet.
+  'meta.home': '{name} — доставка с базаров и магазинов Узбекистана',
+  'meta.description':
+    'Доставка продуктов и товаров с базаров, магазинов и локальных торговых точек. Рассчитайте стоимость и отследите заказ.',
+  'meta.promo': '{name} — свежее с базара за 40 минут',
+  'meta.promoDescription':
+    'Продавцы Чорсу, Алайского и Фархадского — у вас в телефоне. Взвесим при вас, привезём за 40 минут.',
+  'meta.checkout': 'Оформление заказа',
+  'meta.login': 'Вход',
+  'meta.storeMissing': 'Точка не найдена',
+  'meta.bundleMissing': 'Набор не найден',
   'footer.line': 'Bazar Delivery · Ташкент — с базара до двери',
 } as const;

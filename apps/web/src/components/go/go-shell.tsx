@@ -5,6 +5,7 @@
 'use client';
 
 import { UI_LOCALES, createT, type MessageKey } from '@bazar/i18n';
+import { formatUzPhone } from '@bazar/utils/phone';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -16,7 +17,6 @@ import { MapView, type MapViewProps } from '@/components/map/map-view';
 import { MarketShell } from '@/components/go/market-shell';
 import { useAuth } from '@/features/auth';
 import { useAppName } from '@/features/branding';
-import { THEMES, useTheme } from '@/features/theme';
 import { useCartCount } from '@/features/cart';
 import { api } from '@/lib/api';
 
@@ -118,7 +118,6 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
   const t = createT(locale);
   const { user, ready, signOut } = useAuth();
   const appName = useAppName();
-  const [theme, setTheme] = useTheme();
   const first = useRef<HTMLAnchorElement>(null);
   useEffect(() => {
     first.current?.focus();
@@ -140,7 +139,7 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
         aria-label={t('common.close')}
         onClick={onClose}
       />
-      <nav className="paper-sheet relative flex h-full w-[82%] max-w-xs flex-col p-5 pt-[max(1.25rem,env(safe-area-inset-top))]">
+      <nav className="paper-sheet relative flex h-full w-[82%] max-w-xs flex-col overflow-y-auto overscroll-contain p-5 pt-[max(1.25rem,env(safe-area-inset-top))]">
         <p className="font-serif text-[length:var(--fs-headline)] font-bold leading-[34px]">
           {appName}
           <span className="text-saffron-500">.</span>
@@ -151,7 +150,7 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
               <Link
                 href={`/${locale}${item.href}`}
                 onClick={onClose}
-                className="block py-3 text-[length:var(--fs-lead)] leading-6"
+                className="block py-2.5 text-[length:var(--fs-lead)] leading-6"
               >
                 {t(item.key)}
               </Link>
@@ -184,7 +183,7 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
         <div className="mt-auto border-t border-line pt-4 text-sm">
           {!ready ? null : user ? (
             <div className="flex items-center justify-between gap-3">
-              <span className="min-w-0 truncate text-ink-muted">{user.phone}</span>
+              <span className="min-w-0 truncate text-ink-muted">{formatUzPhone(user.phone)}</span>
               <button
                 type="button"
                 className="shrink-0 rounded-paper px-2 py-1 text-ink-muted underline decoration-line-strong underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
@@ -201,25 +200,6 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
               {t('common.signIn')}
             </Link>
           )}
-        </div>
-        <div
-          className="mt-4 flex flex-wrap items-center gap-2 text-sm"
-          role="group"
-          aria-label={t('theme.title')}
-        >
-          {/* The label takes its own line: three chips beside it ran past the drawer's edge. */}
-          <span className="w-full text-ink-muted">{t('theme.title')}</span>
-          {THEMES.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setTheme(option)}
-              aria-pressed={option === theme}
-              className="rounded-full bg-surface-mute px-3 py-1 font-medium text-ink-muted transition-colors aria-pressed:bg-brand-500 aria-pressed:text-[var(--cream)]"
-            >
-              {t(`theme.${option}`)}
-            </button>
-          ))}
         </div>
         <div className="mt-4 flex gap-4 text-sm uppercase">
           {UI_LOCALES.map((code) => (
