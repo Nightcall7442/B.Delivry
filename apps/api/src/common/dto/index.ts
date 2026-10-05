@@ -43,6 +43,7 @@ import type {
   OrderStatusHistoryDto,
   PaymentDto,
   ProductDto,
+  ProductLookDto,
   PublicTenantDto,
   StoreDto,
   StoreScheduleDto,
@@ -54,6 +55,7 @@ import type {
 import { isStallOnlyView } from '../../modules/orders/domain/order-party.js';
 import { getContext } from '../tenant/tenant-context.js';
 import type { HaggleRow } from '../../modules/haggle/index.js';
+import type { LookRow } from '../../modules/looks/index.js';
 import type { SubscriptionWithNames } from '../../modules/subscriptions/index.js';
 
 type Decimalish = Prisma.Decimal | number | string | null | undefined;
@@ -591,6 +593,23 @@ export function toChatMessageDto(row: ChatMessage): ChatMessageDto {
 }
 
 // ---------------------------------------------------------------- haggle
+
+/** «Покажите товар»: an ask is waiting until it is answered or runs out. */
+export function toLookDto(row: LookRow, now: Date = new Date()): ProductLookDto {
+  return {
+    id: row.id,
+    tenantId: row.tenantId,
+    createdAt: iso(row.createdAt),
+    updatedAt: iso(row.updatedAt),
+    storeId: row.storeId,
+    productId: row.productId,
+    productName: row.product.name as ProductLookDto['productName'],
+    status: row.photoUrl !== null ? 'ANSWERED' : row.expiresAt > now ? 'WAITING' : 'LAPSED',
+    photoUrl: row.photoUrl,
+    answeredAt: row.answeredAt === null ? null : iso(row.answeredAt),
+    expiresAt: iso(row.expiresAt),
+  };
+}
 
 export function toHaggleDto(row: HaggleRow): HaggleDto {
   return {

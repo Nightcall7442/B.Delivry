@@ -19,6 +19,7 @@ export * from './help.js';
 export * from './holidays.js';
 export * from './labels.js';
 export * from './list-parser.js';
+export * from './looks.js';
 export * from './order.js';
 export * from './order-simulation.js';
 export * from './price-index.js';

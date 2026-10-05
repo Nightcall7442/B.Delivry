@@ -763,4 +763,16 @@ export const uz: Catalogue = {
   'prices.teaser': 'Bozor indeksi',
   'prices.teaserLine': 'Bugun nima qancha va bir haftada qanday',
   'prices.shareText': 'Bugungi bozor narxlari — {city}',
+  // ---------------------------------------------------------------- «Покажите товар»
+  'look.title': 'Sotuvchidan jonli surat',
+  'look.ask': 'Mahsulotni koʻrsating',
+  'look.askHint': 'Sotuvchi uni hozir rastada suratga olib yuboradi',
+  'look.waiting': 'Soʻradik — sotuvchi suratni shu yerga va bildirishnoma orqali yuboradi',
+  'look.lapsed': 'Sotuvchi javob berishga ulgurmadi — yana soʻrang',
+  'look.tooMany': 'Avval oldingi soʻrovlarga javobni kuting',
+  'look.failed': 'Soʻrab boʻlmadi — yana urinib koʻring',
+  'look.closed': 'Rasta hozir yopiq — ochilganda surat soʻrang',
+  'look.justNow': 'hozirgina olingan',
+  'look.minutesAgo': '{count} daqiqa oldin olingan',
+  'look.hoursAgo': '{count} soat oldin olingan',
 };

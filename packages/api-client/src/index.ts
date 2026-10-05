@@ -17,6 +17,7 @@ import {
   favoritesApi,
   geoApi,
   haggleApi,
+  looksApi,
   ordersApi,
   notificationsApi,
   paymentsApi,
@@ -58,6 +59,7 @@ export function createApiClient(options: ApiClientOptions) {
     delivery: deliveryApi(http),
     geo: geoApi(http),
     haggle: haggleApi(http),
+    looks: looksApi(http),
     /** ws://host/ws, derived from the HTTP base so one env var configures both. */
     realtime: new RealtimeClient({
       url: options.baseUrl.replace(/^http/, 'ws').replace(/\/api\/v\d+\/?$/, '') + '/ws',

@@ -24,6 +24,16 @@ export const CASHBACK = { PERCENT: 3, EXPIRES_DAYS: 30 } as const;
 /** Both sides of a referral get this once the newcomer's first order is delivered. */
 export const REFERRAL_BONUS_MINOR = 1_000_000;
 
+/**
+ * «Покажите товар»: how long an ask for a live photo waits for the stall, how long the photo is
+ * shown on the good as «свежее фото от продавца», and how many asks one customer keeps waiting.
+ */
+export const LOOK = {
+  ASK_TTL_MINUTES: 120,
+  FRESH_HOURS: 12,
+  MAX_WAITING: 3,
+} as const;
+
 /** Haggling: how long an ask waits for the vendor, how long an agreed price holds, the floor. */
 export const HAGGLE = {
   ASK_TTL_HOURS: 4,

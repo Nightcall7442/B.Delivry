@@ -15,6 +15,7 @@ export * from './delivery.js';
 export * from './favorite.js';
 export * from './geo.js';
 export * from './haggle.js';
+export * from './look.js';
 export * from './notification.js';
 export * from './order.js';
 export * from './payment.js';

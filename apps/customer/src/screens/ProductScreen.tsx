@@ -43,6 +43,7 @@ import {
   useSceneTop,
   useSwing,
 } from '@/components/bazar';
+import { LiveLook } from '@/components/shop/LiveLook';
 import { ProductTile, TILE_GAP, useTileWidth } from '@/components/shop/ProductTile';
 import { Bone } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
@@ -241,6 +242,11 @@ function ProductBody({
               </Text>
             </View>
           </Pressable>
+        ) : null}
+
+        {/* «Покажите товар»: the stall's fresh photo of this good, or the ask for one. */}
+        {product.available ? (
+          <LiveLook productId={product.id} open={store?.isOpen ?? true} />
         ) : null}
 
         <View style={s.pills}>
