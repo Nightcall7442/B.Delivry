@@ -123,6 +123,9 @@ function world(row: Partial<Row>, history: [number, number][]) {
       async get() {
         return { id: 's1', tenantId: TENANT, vendorId: 'vendor-1' };
       },
+      async isPublic() {
+        return true;
+      },
     },
     cache: { async invalidateByTag() {} },
     logger,
@@ -229,12 +232,21 @@ describe('an old price through the ordinary edit', () => {
     expect(product.oldPrice).toBeNull();
   });
 
-  it('goes away by itself when the price is raised to it or past it', async () => {
+  it('ends when an edit moves the price: an edit never moves a sale', async () => {
+    // Lower: a deeper cut that skipped the week's check. Higher: a nudge that restarted the week
+    // and kept the sweep from ever ending the sale. Either way the struck price goes.
+    for (const price of [12_000, 18_000, 21_000]) {
+      const { service, product } = world({ price: 15_000_00, oldPrice: 20_000_00 }, []);
+      await runWithContext(owner, () => service.update('p1', { price: som(price) }));
+      expect(product).toMatchObject({ price: price * 100, oldPrice: null });
+    }
+  });
+
+  it('stays when an edit leaves the price alone', async () => {
     const { service, product } = world({ price: 15_000_00, oldPrice: 20_000_00 }, []);
-    await runWithContext(owner, () => service.update('p1', { price: som(18_000) }));
-    expect(product).toMatchObject({ price: 18_000_00, oldPrice: 20_000_00 });
-    await runWithContext(owner, () => service.update('p1', { price: som(21_000) }));
-    expect(product).toMatchObject({ price: 21_000_00, oldPrice: null });
+    await runWithContext(owner, () => service.update('p1', { price: som(15_000) }));
+    await runWithContext(owner, () => service.update('p1', { available: true } as never));
+    expect(product).toMatchObject({ price: 15_000_00, oldPrice: 20_000_00 });
   });
 });
 

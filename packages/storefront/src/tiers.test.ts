@@ -56,6 +56,16 @@ describe('a quantity price', () => {
     expect(tierProblem([{ minQuantity: 0.5, price: 17_000_00 }], product)).toBe('quantity');
     expect(tierProblem([{ minQuantity: 5, price: LIST }], product)).toBe('price');
     expect(tierProblem([{ minQuantity: 5, price: 17_000_00.5 }], product)).toBe('price');
+    // As the database keeps it: to the thousandth, and whole for counted goods.
+    expect(tierProblem([{ minQuantity: 1.0004, price: 17_000_00 }], product)).toBe('quantity');
+    expect(tierProblem([{ minQuantity: 1.005, price: 17_000_00 }], product)).toBeNull();
+    expect(
+      tierProblem([{ minQuantity: 2.5, price: 3_000_00 }], {
+        price: 4_000_00,
+        minQuantity: 1,
+        whole: true,
+      }),
+    ).toBe('quantity');
     // More for less: 10 kg must not cost more per kilo than 5 kg.
     expect(
       tierProblem(

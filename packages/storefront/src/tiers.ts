@@ -69,19 +69,28 @@ export function nextTier(
   return ahead[0] ?? null;
 }
 
+/** A quantity as the database keeps it, Decimal(10,3): 1.0004 would be stored as 1.000. */
+const thousandths = (quantity: number): number => Math.round(quantity * 1000);
+
 /**
  * Why a set of tiers cannot stand, or null when it can: at most three, each from more than the
- * smallest order, prices falling as the quantity grows, all below the list price. The API refuses
- * on the same answer the seller's sheet shows.
+ * smallest order — in whole units for counted goods, to the thousandth for weighed ones, as the
+ * database keeps it — prices falling as the quantity grows, all below the list price. The API
+ * refuses on the same answer the seller's sheet shows.
  */
 export function tierProblem(
   tiers: readonly PriceTier[],
-  product: { price: number; minQuantity: number },
+  product: { price: number; minQuantity: number; whole?: boolean },
 ): 'tooMany' | 'quantity' | 'price' | 'order' | null {
   if (tiers.length > MAX_PRICE_TIERS) return 'tooMany';
   const sorted = [...tiers].sort((a, b) => a.minQuantity - b.minQuantity);
   for (const [i, tier] of sorted.entries()) {
-    if (!(tier.minQuantity > product.minQuantity) || !Number.isFinite(tier.minQuantity)) {
+    if (
+      !Number.isFinite(tier.minQuantity) ||
+      Math.abs(tier.minQuantity * 1000 - thousandths(tier.minQuantity)) > 1e-6 ||
+      (product.whole === true && !Number.isInteger(tier.minQuantity)) ||
+      !(tier.minQuantity > product.minQuantity)
+    ) {
       return 'quantity';
     }
     if (!Number.isInteger(tier.price) || tier.price <= 0 || tier.price >= product.price) {
@@ -90,13 +99,20 @@ export function tierProblem(
     const before = sorted[i - 1];
     if (
       before !== undefined &&
-      (tier.minQuantity === before.minQuantity || tier.price >= before.price)
+      (thousandths(tier.minQuantity) === thousandths(before.minQuantity) ||
+        tier.price >= before.price)
     ) {
       return 'order';
     }
   }
   return null;
 }
+
+/**
+ * A set reads back as typed only while the rounding of a piece (under a tiyin) adds up to under a
+ * sum: up to a hundred pieces. Beyond it the label is the price of a piece.
+ */
+export const MAX_SET_PIECES = 100;
 
 /**
  * Counted goods are sold «N шт за X»: the seller types the price of the set, the tier keeps the

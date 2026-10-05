@@ -154,12 +154,22 @@ export class OrdersService extends BaseService {
       );
     }
 
+    // Priced exactly as the quote the customer was shown: the stall's own minimum and free-delivery
+    // threshold, and the goods' weight for the car surcharge, as `quote` passes them.
     const quote = await this.pricing.quote({
       from: { lat: store.lat, lng: store.lng },
       to: { lat: address.lat, lng: address.lng },
       subtotal,
       cityId: address.cityId,
       ...(input.scheduledFor !== undefined ? { at: input.scheduledFor } : {}),
+      weightGrams: items.reduce(
+        (sum, item) => sum + (item.weightGrams ?? 0) * Number(item.quantity),
+        0,
+      ),
+      ...(store.minOrder !== null ? { minOrder: money(store.minOrder, currency) } : {}),
+      ...(store.freeDeliveryThreshold !== null
+        ? { freeDeliveryThreshold: money(store.freeDeliveryThreshold, currency) }
+        : {}),
       ...(coupon !== null ? { discount: coupon.discount } : {}),
       ...(plus || coupon?.freeDelivery === true || input.groupFollower === true
         ? { freeDelivery: true }

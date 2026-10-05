@@ -112,16 +112,23 @@ export function EditSheet({
       return;
     }
     setErrors({});
-    const salePrice = cut?.ok ? cut.value : null;
+    // On sale, a lower price is a deeper cut — the honest path, struck at the week's lowest; any
+    // other change of the price is an edit, and an edit ends the sale (the API's rule).
+    const deeper = view.oldPrice !== null && result.update.price.amount < view.price.amount;
+    const update = deeper ? { ...result.update, price: view.price } : result.update;
+    const edited = deeper
+      ? result.update.stock !== undefined && result.update.stock !== view.stock
+      : result.changed;
+    const salePrice = deeper ? result.update.price.amount : cut?.ok ? cut.value : null;
     const tiers = ladder?.ok && !sameTiers(ladder.value, view.tiers) ? ladder.value : null;
-    if (!result.changed && salePrice === null && tiers === null) {
+    if (!edited && salePrice === null && tiers === null) {
       onClose();
       return;
     }
     setBusy(true);
     setFailure(null);
     try {
-      if (result.changed) await onSave(view.id, result.update);
+      if (edited) await onSave(view.id, update);
       if (tiers !== null) await onTiers(view.id, tiers, result.update.price.currency);
       if (salePrice !== null)
         await onSale(view.id, { amount: salePrice, currency: result.update.price.currency });
@@ -186,7 +193,7 @@ export function EditSheet({
             <RNText style={s.struck}>
               {formatMoney(view.oldPrice.amount, view.oldPrice.currency)}
             </RNText>{' '}
-            зачёркнутой. Цена выше неё сама снимет скидку.
+            зачёркнутой. Цена ниже — скидка станет глубже, выше — скидка снимется.
           </RNText>
           <Button
             label="Снять скидку"

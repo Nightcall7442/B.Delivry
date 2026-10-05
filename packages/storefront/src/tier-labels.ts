@@ -7,13 +7,20 @@ import type { T } from '@bazar/i18n';
 import type { ProductDto } from '@bazar/types';
 
 import { unitLabel } from './labels.js';
-import { nextTier, setPriceOf, tierReached, tiersOf, type PriceTier } from './tiers.js';
+import {
+  MAX_SET_PIECES,
+  nextTier,
+  setPriceOf,
+  tierReached,
+  tiersOf,
+  type PriceTier,
+} from './tiers.js';
 import { isSetPriced } from './vendor-goods.js';
 
 export function tierText(t: T, locale: string, product: ProductDto, tier: PriceTier): string {
   const unit = unitLabel(locale)[product.unit];
   const currency = product.price.currency as Currency;
-  return isSetPriced(product.unit)
+  return isSetPriced(product.unit) && tier.minQuantity <= MAX_SET_PIECES
     ? t('tiers.set', {
         quantity: t.qty(tier.minQuantity),
         unit,
@@ -46,7 +53,7 @@ export function nextTierText(
   if (next === null) return null;
   const unit = unitLabel(locale)[product.unit];
   const currency = product.price.currency as Currency;
-  return isSetPriced(product.unit)
+  return isSetPriced(product.unit) && next.minQuantity <= MAX_SET_PIECES
     ? t('tiers.nextSet', {
         quantity: t.qty(next.minQuantity),
         unit,

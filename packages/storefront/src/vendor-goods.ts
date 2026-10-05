@@ -17,6 +17,7 @@ import type { MoneyDto, Translated, UpdateProductDto } from '@bazar/types';
 import { tr } from './i18n.js';
 import {
   MAX_PRICE_TIERS,
+  MAX_SET_PIECES,
   piecePriceOfSet,
   setPriceOf,
   tierProblem,
@@ -340,6 +341,9 @@ export function parseTierRows(
     if (quantity.value === null || quantity.value <= 0) {
       return { ok: false, error: TIER_ERROR.quantity };
     }
+    if (isSetPriced(product.unit) && quantity.value > MAX_SET_PIECES) {
+      return { ok: false, error: `В наборе — не больше ${MAX_SET_PIECES} шт` };
+    }
     const price = parsePriceInput(row.price, currency);
     if (!price.ok) return price;
     tiers.push({
@@ -351,6 +355,7 @@ export function parseTierRows(
   const problem = tierProblem(tiers, {
     price: product.price.amount,
     minQuantity: product.minQuantity,
+    whole: !isFractionalUnit(product.unit),
   });
   return problem === null ? { ok: true, value: tiers } : { ok: false, error: TIER_ERROR[problem] };
 }

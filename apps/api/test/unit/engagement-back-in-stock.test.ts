@@ -1,7 +1,8 @@
 /**
  * «Снова в наличии»: a good someone saved could not be bought — the seller switched it off, or its
  * counted stock ran out — and now it can. Whoever saved it hears so, once a day at most; an edit of
- * a good that was on the counter all along says nothing, and neither does switching one off.
+ * a good that was on the counter all along says nothing, and neither does switching one off, nor a
+ * stall the public cannot open.
  *
  * Real ProductsService and the favorites handler; the repository, the stores, the cache and the
  * queue are fakes.
@@ -44,7 +45,7 @@ interface Shelf {
   stock: string | null;
 }
 
-function world(shelf: Shelf) {
+function world(shelf: Shelf, options: { publicStall?: boolean } = {}) {
   const product = {
     id: 'p1',
     storeId: 's1',
@@ -76,6 +77,9 @@ function world(shelf: Shelf) {
     stores: {
       async get() {
         return { id: 's1', tenantId: TENANT, vendorId: 'vendor-1' };
+      },
+      async isPublic() {
+        return options.publicStall ?? true;
       },
     },
     cache: { async invalidateByTag() {} },
@@ -113,6 +117,12 @@ describe('a good back on the counter', () => {
     const { service, run, back } = world({ available: true, stock: '0.000' });
     await run(() => service.update('p1', { stock: 12 } as never));
     expect(back()).toHaveLength(1);
+  });
+
+  it('is no news from a stall the public cannot see: the link would be a 404', async () => {
+    const { service, run, back } = world({ available: false, stock: null }, { publicStall: false });
+    await run(() => service.setAvailability('p1', true));
+    expect(back()).toEqual([]);
   });
 
   it('is no news when it was buyable all along, or is switched off, or stays sold out', async () => {

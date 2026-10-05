@@ -54,11 +54,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void Promise.all([readJson(KEY, isQuantities), readJson(NOTES_KEY, isAnything)]).then(
       ([stored, storedNotes]) => {
-        const kept = Object.fromEntries(
-          Object.entries(stored ?? {}).filter(([, q]) => typeof q === 'number' && q > 0),
-        );
-        setQuantities(kept);
-        setNotes(notesFor(readNotes(storedNotes), kept));
+        // Nothing stored (a first launch): a line added while storage was read stays.
+        if (stored) {
+          const kept = Object.fromEntries(
+            Object.entries(stored).filter(([, q]) => typeof q === 'number' && q > 0),
+          );
+          setQuantities(kept);
+          setNotes(notesFor(readNotes(storedNotes), kept));
+        }
         hydrated.current = true;
         setReady(true);
       },

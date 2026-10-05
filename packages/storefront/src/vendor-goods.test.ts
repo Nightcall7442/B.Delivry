@@ -417,5 +417,8 @@ describe('quantity prices on the edit sheet', () => {
     const melons = product({ unit: 'PCS', minQuantity: 1 });
     const half = parseTierRows([{ quantity: '2,5', price: '10000' }], melons);
     expect(half.ok ? null : half.error).toMatch(/Количество — целое число/);
+    // A set reads back as typed only up to a hundred pieces.
+    const sack = parseTierRows([{ quantity: '150', price: '10000' }], melons);
+    expect(sack.ok ? null : sack.error).toMatch(/не больше 100 шт/);
   });
 });

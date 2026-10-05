@@ -200,18 +200,23 @@ export class ProductsRepository extends BaseRepository {
     return count;
   }
 
-  /** The quantity prices, all at once: the old set goes, the new one stands, in one transaction. */
+  /**
+   * The quantity prices, all at once: the old set goes, the new one stands, in one transaction —
+   * with the product's row locked first, so two saves at the same moment cannot both delete the
+   * old set and leave a ladder merged from the two.
+   */
   async setTiers(productId: string, tiers: readonly PriceTier[]): Promise<ProductWithImages> {
-    await this.prisma.$transaction([
-      this.prisma.productPriceTier.deleteMany({ where: { productId } }),
-      this.prisma.productPriceTier.createMany({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "products" WHERE "id" = ${productId} FOR UPDATE`;
+      await tx.productPriceTier.deleteMany({ where: { productId } });
+      await tx.productPriceTier.createMany({
         data: tiers.map((tier) => ({
           productId,
           minQuantity: tier.minQuantity,
           price: tier.price,
         })),
-      }),
-    ]);
+      });
+    });
     return this.prisma.product.findFirstOrThrow({
       where: this.scoped({ id: productId }),
       include: PRODUCT_INCLUDE,

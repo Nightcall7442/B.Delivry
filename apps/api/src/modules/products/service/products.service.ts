@@ -10,7 +10,7 @@ import {
   SALE,
 } from '@bazar/constants';
 import type { Money } from '@bazar/payments';
-import { MAX_PRICE_TIERS, tierProblem } from '@bazar/storefront';
+import { MAX_PRICE_TIERS, isFractionalUnit, tierProblem } from '@bazar/storefront';
 import { slugify } from '@bazar/utils';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
 import {
@@ -117,23 +117,31 @@ export class ProductsService extends BaseService {
     }
 
     await this.invalidate(product.storeId);
-    // A refill — stock typed in again, or a spreadsheet row — puts it back on the counter.
-    await this.announceIfBack(product, updated);
-    return this.get(updated.id);
+    const fresh = await this.get(updated.id);
+    // A refill — stock typed in again, or a spreadsheet row — puts it back on the counter. Read
+    // after the images were replaced, so the push carries the photo the shelf now has.
+    await this.announceIfBack(product, fresh);
+    return fresh;
   }
 
   /**
-   * The struck-through price only ever stands above the price. An edit may end a sale (null), never
-   * start or move one; and a price raised to it or past it ends the sale by itself, rather than
-   * leaving a «discount» that is a markup.
+   * An edit may end a sale (null), never start or move one: a price changed by an edit during a
+   * sale ends it. Otherwise a lower price kept a struck price nobody checked against the week (a
+   * deeper cut goes through `startSale`), and a price nudged every few days kept the week's sweep
+   * from ever ending the sale.
    */
   private oldPriceAfter(
     product: { price: number; oldPrice: number | null },
     input: UpdateProductInput,
   ): { oldPrice?: null } {
     if (input.oldPrice === null) return { oldPrice: null };
-    const price = input.price?.amount ?? product.price;
-    if (product.oldPrice !== null && product.oldPrice <= price) return { oldPrice: null };
+    if (
+      product.oldPrice !== null &&
+      input.price !== undefined &&
+      input.price.amount !== product.price
+    ) {
+      return { oldPrice: null };
+    }
     return {};
   }
 
@@ -170,18 +178,21 @@ export class ProductsService extends BaseService {
       this.currentUser().id,
     );
     await this.invalidate(product.storeId);
-    // Every accepted cut is below the price of the moment, so it is news.
-    await this.publish(
-      createEvent(PRODUCT_EVENT.SALE_STARTED, {
-        productId: id,
-        storeId: product.storeId,
-        name: product.name as Record<string, string>,
-        price: price.amount,
-        oldPrice: reference,
-        currency: product.currency,
-        imageUrl: product.images[0]?.url ?? null,
-      }),
-    );
+    // Every accepted cut is below the price of the moment, so it is news — to a public stall's
+    // customers only.
+    if (await this.stores.isPublic(product.storeId)) {
+      await this.publish(
+        createEvent(PRODUCT_EVENT.SALE_STARTED, {
+          productId: id,
+          storeId: product.storeId,
+          name: product.name as Record<string, string>,
+          price: price.amount,
+          oldPrice: reference,
+          currency: product.currency,
+          imageUrl: product.images[0]?.url ?? null,
+        }),
+      );
+    }
     return updated;
   }
 
@@ -248,6 +259,7 @@ export class ProductsService extends BaseService {
     const problem = tierProblem(tiers, {
       price: product.price,
       minQuantity: Number(product.minQuantity),
+      whole: !isFractionalUnit(product.unit),
     });
     if (problem !== null) throw new ValidationError({ tiers: [TIER_PROBLEM[problem]] });
     const updated = await this.repository.setTiers(id, tiers);
@@ -363,6 +375,7 @@ export class ProductsService extends BaseService {
    */
   private async announceIfBack(before: Buyable, after: Buyable & ProductWithImages): Promise<void> {
     if (buyable(before) || !buyable(after)) return;
+    if (!(await this.stores.isPublic(after.storeId))) return;
     await this.publish(
       createEvent(PRODUCT_EVENT.BACK_IN_STOCK, {
         productId: after.id,
