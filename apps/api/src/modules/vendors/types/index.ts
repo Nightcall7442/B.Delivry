@@ -13,7 +13,8 @@ export interface VendorListFilters {
 }
 
 export interface CreateVendorInput {
-  userId: string;
+  /** The desk registers someone; an applicant applies for themselves and sends none. */
+  userId?: string | undefined;
   legalType: VendorLegalType;
   legalName: string;
   displayName: string;

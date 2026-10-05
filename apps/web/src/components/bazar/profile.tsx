@@ -43,6 +43,7 @@ const SERVICES: Item[] = [
   { key: 'menu.business', href: '/business', icon: <Basket /> },
   { key: 'menu.docs', href: '/documents', icon: <ListGlyph /> },
   { key: 'menu.neighbour', href: '/neighbour', icon: <Bag /> },
+  { key: 'menu.seller', href: '/seller', icon: <Basket /> },
 ];
 const MORE: Item[] = [
   { key: 'menu.address', href: '/address', icon: <HomeGlyph /> },

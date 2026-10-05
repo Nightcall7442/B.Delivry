@@ -51,6 +51,30 @@ export interface CreateVendorDto {
   bankAccount?: string;
 }
 
+/** A vendor as the desk's list answers it: the row, with its stall count. */
+export interface VendorRowDto {
+  id: Id;
+  userId: Id;
+  legalType: VendorLegalType;
+  status: VendorStatus;
+  legalName: string;
+  displayName: string;
+  taxId: string | null;
+  phone: string;
+  email: string | null;
+  createdAt: string;
+  verifiedAt: string | null;
+  _count: { stores: number };
+}
+
+/** «Стать продавцом»: the applicant's own row, whatever the desk decided. */
+export interface VendorApplicationDto {
+  id: Id;
+  status: VendorStatus;
+  displayName: string;
+  createdAt: string;
+}
+
 export type UpdateVendorDto = Partial<CreateVendorDto> & {
   status?: VendorStatus;
   commissionPercent?: number | null;

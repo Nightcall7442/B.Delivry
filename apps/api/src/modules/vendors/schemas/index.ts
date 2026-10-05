@@ -15,7 +15,8 @@ export const vendorsListQuerySchema = listQuerySchema.extend({
 });
 
 export const registerVendorSchema = z.object({
-  userId: idSchema,
+  /** The desk registering someone else; an applicant leaves it out. */
+  userId: idSchema.optional(),
   legalType,
   legalName: z.string().trim().min(2).max(200),
   displayName: z.string().trim().min(2).max(120),

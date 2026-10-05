@@ -21,3 +21,4 @@ export * from './support.js';
 export * from './tracking.js';
 export * from './tenants.js';
 export * from './uploads.js';
+export * from './vendors.js';

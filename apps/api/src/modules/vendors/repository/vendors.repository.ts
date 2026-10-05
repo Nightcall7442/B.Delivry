@@ -60,7 +60,7 @@ export class VendorsRepository extends BaseRepository {
     );
   }
 
-  async create(input: CreateVendorInput): Promise<VendorWithCounts> {
+  async create(input: CreateVendorInput & { userId: string }): Promise<VendorWithCounts> {
     // The record is bound to a user by id: that user has to be someone of this tenant, or the desk of
     // one tenant could attach a vendor (a legal name, a bank account) to a person of another.
     this.found(
@@ -101,11 +101,30 @@ export class VendorsRepository extends BaseRepository {
     return rows.map((row) => row.role as Role);
   }
 
-  async setStatus(id: string, status: VendorStatus): Promise<Vendor> {
-    return this.prisma.vendor.update({
+  /**
+   * Approval and the VENDOR role go together, as a courier's verification and the COURIER role do:
+   * an applicant from «Стать продавцом» is a customer until the desk says yes, and the role is what
+   * lets them stock a stall in the seller app from their next token on.
+   */
+  async setStatus(
+    id: string,
+    status: VendorStatus,
+    approval: { userId: string; grantedBy: string | null } | null = null,
+  ): Promise<Vendor> {
+    const update = this.prisma.vendor.update({
       where: { id, ...this.tenantScope() },
       data: { status, ...(status === 'ACTIVE' ? { verifiedAt: new Date() } : {}) },
     });
+    if (status !== 'ACTIVE' || approval === null) return update;
+    const [vendor] = await this.prisma.$transaction([
+      update,
+      this.prisma.userRole.upsert({
+        where: { userId_role: { userId: approval.userId, role: 'VENDOR' } },
+        update: {},
+        create: { userId: approval.userId, role: 'VENDOR', grantedBy: approval.grantedBy },
+      }),
+    ]);
+    return vendor;
   }
 
   /**

@@ -665,4 +665,21 @@ export const uz: Catalogue = {
   'order.missing': 'sotuvchida yoʻq — hisobdan olib tashlandi',
   'scene.outOfZone': 'Bu manzilga hozircha yetkazmaymiz — boshqasini tanlang',
   'address.outOfZone': 'Bu yerga hozircha yetkazmaymiz: manzil yetkazish hududidan tashqarida',
+  'menu.seller': 'Sotuvchi boʻlish',
+  'seller.title': 'Sotuvchi boʻlish',
+  'seller.intro':
+    'Bozordagi rasta yoki uy yonidagi doʻkon — Bazar orqali soting: yaqindagi xaridorlar peshtaxtangizni koʻradi, kuryer buyurtmani oʻzi olib ketadi.',
+  'seller.perkCounter': 'Ilova va saytda oʻz peshtaxtangiz',
+  'seller.perkCourier': 'Kuryer oʻzi oladi va tortadi',
+  'seller.perkPayout': 'Yetkazilgan buyurtmalar uchun toʻlov',
+  'seller.stall': 'Rasta yoki doʻkon nomi',
+  'seller.name': 'Ismingiz yoki firma nomi',
+  'seller.legal.UNREGISTERED': 'Roʻyxatdan oʻtmagan',
+  'seller.legal.INDIVIDUAL_ENTREPRENEUR': 'YaTT',
+  'seller.legal.LLC': 'MChJ',
+  'seller.apply': 'Arizani yuborish',
+  'seller.pending': 'Ariza bizda — qoʻngʻiroq qilamiz, joy va komissiya haqida kelishamiz.',
+  'seller.approved':
+    'Siz sotuvchisiz: Bazar Seller ilovasini oching, shu raqam bilan kiring va peshtaxta oching.',
+  'seller.declined': 'Hozircha boʻlmadi — qoʻllab-quvvatlashga yozing, hal qilamiz.',
 };

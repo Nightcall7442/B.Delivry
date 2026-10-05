@@ -15,6 +15,9 @@ export class VendorsController extends BaseController {
   me = async (_request: FastifyRequest, reply: FastifyReply) =>
     this.ok(reply, await this.service.me());
 
+  myApplication = async (_request: FastifyRequest, reply: FastifyReply) =>
+    this.ok(reply, await this.service.myApplication());
+
   myPayout = async (request: FastifyRequest, reply: FastifyReply) => {
     const { since } = query<{ since?: string }>(request);
     return this.ok(
