@@ -5,9 +5,11 @@
 import { DELIVERY_EVENT } from '../modules/delivery/domain/delivery.events.js';
 import { ORDER_EVENT } from '../modules/orders/domain/order.events.js';
 import { PAYMENT_EVENT } from '../modules/payments/domain/payment.events.js';
+import { PRODUCT_EVENT } from '../modules/products/domain/product.events.js';
 import type { DeliveryEventPayloads } from '../modules/delivery/domain/delivery.events.js';
 import type { OrderEventPayloads } from '../modules/orders/domain/order.events.js';
 import type { PaymentEventPayloads } from '../modules/payments/domain/payment.events.js';
+import type { ProductEventPayloads } from '../modules/products/domain/product.events.js';
 
 /**
  * The full catalogue of things that happen in this system. One place, so a
@@ -18,10 +20,19 @@ export const EVENT = {
   ...ORDER_EVENT,
   ...DELIVERY_EVENT,
   ...PAYMENT_EVENT,
+  ...PRODUCT_EVENT,
 } as const;
 
-export type EventPayloads = OrderEventPayloads & DeliveryEventPayloads & PaymentEventPayloads;
+export type EventPayloads = OrderEventPayloads &
+  DeliveryEventPayloads &
+  PaymentEventPayloads &
+  ProductEventPayloads;
 
 export type EventName = keyof EventPayloads;
 
-export type { OrderEventPayloads, DeliveryEventPayloads, PaymentEventPayloads };
+export type {
+  OrderEventPayloads,
+  DeliveryEventPayloads,
+  PaymentEventPayloads,
+  ProductEventPayloads,
+};

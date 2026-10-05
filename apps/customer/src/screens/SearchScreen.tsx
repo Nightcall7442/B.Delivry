@@ -33,6 +33,7 @@ import { Bone, LoadError } from '@/components/ui/Page';
 import { useCart, useCartActions, useCartCount } from '@/features/cart/store';
 import { DEFAULT_POINT, useAddress } from '@/features/address/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
+import { saleNote } from '@/lib/sale';
 import { useData, useList, useLoad } from '@/lib/use-data';
 import { ArrowLeft, Photo, Search, noOutline, scale, useLocale } from '@bazar/mobile';
 
@@ -44,9 +45,16 @@ export function SearchScreen() {
   const insets = useSafeAreaInsets();
   const top = useSceneTop();
   const count = useCartCount();
-  const { q = '', category } = useLocalSearchParams<{ q?: string; category?: string }>();
+  const {
+    q = '',
+    category,
+    sort: sortParam,
+  } = useLocalSearchParams<{ q?: string; category?: string; sort?: string }>();
   const [draft, setDraft] = useState(q);
-  const [sort, setSort] = useState<SortKey>('default');
+  // «все скидки →» on the home opens the search sorted by the cut.
+  const [sort, setSort] = useState<SortKey>(
+    sortParam !== undefined && sortParam in SORTERS ? (sortParam as SortKey) : 'default',
+  );
 
   const { address } = useAddress();
   const here = address?.point ?? DEFAULT_POINT;
@@ -222,7 +230,11 @@ function StallGroup({
               tilt={[-1, 1, 0.5, -0.5][i % 4] ?? 0}
               title={tr(product.name, locale)}
               price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
-              note={arrivedToday(product) ? t('store.arrivedToday') : undefined}
+              note={
+                [saleNote(product, t), arrivedToday(product) ? t('store.arrivedToday') : null]
+                  .filter(Boolean)
+                  .join(' · ') || undefined
+              }
               count={qty}
               countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
               onPress={() => onProduct(product.id)}

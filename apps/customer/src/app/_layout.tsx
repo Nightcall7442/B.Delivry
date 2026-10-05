@@ -1,5 +1,5 @@
 /**
- * Root layout: fonts, the three local stores, a header-less stack. Every
+ * Root layout: fonts, the local stores, a header-less stack. Every
  * screen draws its own top buttons over the map.
  */
 import {
@@ -25,6 +25,7 @@ import { AuthProvider, BrandProvider, LocaleProvider } from '@bazar/mobile';
 import { ground } from '@/components/bazar';
 import { AddressProvider } from '@/features/address/store';
 import { CartProvider } from '@/features/cart/store';
+import { FavoritesProvider } from '@/features/favorites/store';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -55,19 +56,21 @@ export default function RootLayout() {
           <BrandProvider>
             <AddressProvider>
               <CartProvider>
-                {/* Every screen but the maps stands on the dark hall (the maps set their own). */}
-                <StatusBar style="light" />
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    // What shows between two screens while they cross-fade: the hall's deep.
-                    contentStyle: { backgroundColor: ground(1) },
-                    animation: 'fade',
-                    // A screen under the top one stops re-rendering (a tap on «+» used to re-render
-                    // every mounted screen); it catches up when it comes back.
-                    freezeOnBlur: true,
-                  }}
-                />
+                <FavoritesProvider>
+                  {/* Every screen but the maps stands on the dark hall (the maps set their own). */}
+                  <StatusBar style="light" />
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                      // What shows between two screens while they cross-fade: the hall's deep.
+                      contentStyle: { backgroundColor: ground(1) },
+                      animation: 'fade',
+                      // A screen under the top one stops re-rendering (a tap on «+» used to re-render
+                      // every mounted screen); it catches up when it comes back.
+                      freezeOnBlur: true,
+                    }}
+                  />
+                </FavoritesProvider>
               </CartProvider>
             </AddressProvider>
           </BrandProvider>

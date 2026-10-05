@@ -7,6 +7,7 @@ import { Basket, Edit, Photo, press, scale } from '@bazar/mobile';
 import {
   HALL,
   TONE,
+  discountPercent,
   UNIT_LABEL,
   isSoldOut,
   stockText,
@@ -55,6 +56,15 @@ export function ProductRow({
             </RNText>
             <RNText style={s.price}>
               {formatMoney(product.price.amount, product.price.currency)} / {unit}
+              {product.oldPrice !== null ? (
+                <RNText style={s.sale}>
+                  {'  '}
+                  <RNText style={s.struck}>
+                    {formatMoney(product.oldPrice.amount, product.oldPrice.currency)}
+                  </RNText>{' '}
+                  −{discountPercent(product)} %
+                </RNText>
+              ) : null}
             </RNText>
             <RNText style={[s.stock, soldOut && s.soldOut]}>
               {product.stock === null
@@ -112,6 +122,8 @@ const s = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   soldOut: { color: HALL.pomegranate },
+  sale: { color: HALL.pomegranate },
+  struck: { textDecorationLine: 'line-through', color: TONE.inkSoft },
   // The tear line of a receipt between the good and its switch.
   rule: {
     marginTop: 12,

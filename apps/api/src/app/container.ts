@@ -79,6 +79,11 @@ import {
   DeliveryService,
 } from '../modules/delivery/index.js';
 import { GeoController, GeoRepository, GeoService } from '../modules/geo/index.js';
+import {
+  FavoritesController,
+  FavoritesRepository,
+  FavoritesService,
+} from '../modules/favorites/index.js';
 import { HaggleController, HaggleService } from '../modules/haggle/index.js';
 import {
   NotificationsController,
@@ -158,6 +163,7 @@ export interface Container {
     couriers: CouriersService;
     customers: CustomersService;
     delivery: DeliveryService;
+    favorites: FavoritesService;
     geo: GeoService;
     haggle: HaggleService;
     notifications: NotificationsService;
@@ -189,6 +195,7 @@ export interface Container {
     couriers: CouriersController;
     customers: CustomersController;
     delivery: DeliveryController;
+    favorites: FavoritesController;
     geo: GeoController;
     haggle: HaggleController;
     notifications: NotificationsController;
@@ -274,6 +281,7 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     couriers: new CouriersRepository(prisma),
     customers: new CustomersRepository(prisma),
     delivery: new DeliveryRepository(prisma),
+    favorites: new FavoritesRepository(prisma),
     geo: new GeoRepository(prisma),
     notifications: new NotificationsRepository(prisma),
     orders: new OrdersRepository(prisma),
@@ -340,6 +348,12 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
   const vendors = new VendorsService({ ...deps, repository: repositories.vendors, auth });
   const users = new UsersService({ ...deps, repository: repositories.users, auth });
 
+  const favorites = new FavoritesService({
+    ...deps,
+    repository: repositories.favorites,
+    catalog,
+    stores,
+  });
   const haggle = new HaggleService({ ...deps, prisma, queue, realtime });
   const orders = new OrdersService({
     ...deps,
@@ -428,6 +442,7 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     couriers,
     customers,
     delivery,
+    favorites,
     geo,
     haggle,
     notifications,
@@ -461,6 +476,7 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     customers: new CustomersController(customers),
     delivery: new DeliveryController(delivery),
     geo: new GeoController(geo),
+    favorites: new FavoritesController(favorites),
     haggle: new HaggleController(haggle),
     notifications: new NotificationsController(notifications, telegramBot),
     orders: new OrdersController(orders, payments),
@@ -514,6 +530,7 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
         )?.vendor.userId ?? null,
     },
     delivery,
+    favorites,
   });
 
   const container: Container = {

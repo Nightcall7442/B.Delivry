@@ -142,6 +142,20 @@ export const Star = ({ size = 22 }: { size?: number }) => (
   </svg>
 );
 
+/** Hollow until saved: the «Избранное» heart. */
+export const Heart = ({ size = 22, filled = false }: { size?: number; filled?: boolean }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    {...stroke}
+    fill={filled ? 'currentColor' : 'none'}
+    aria-hidden
+  >
+    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" />
+  </svg>
+);
+
 export const Tag = ({ size = 22 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" {...stroke} aria-hidden>
     <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z" />

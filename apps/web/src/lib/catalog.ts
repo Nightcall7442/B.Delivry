@@ -38,7 +38,7 @@ export async function listCategories(locale: string): Promise<CategoryDto[]> {
 
 export async function listProducts(
   locale: string,
-  query: { storeId?: string; categoryId?: string; search?: string } = {},
+  query: { storeId?: string; categoryId?: string; search?: string; onSale?: boolean } = {},
 ): Promise<ProductDto[]> {
   const page = await serverApi(locale).catalog.products({ ...query, pageSize: 100 });
   return page.items;

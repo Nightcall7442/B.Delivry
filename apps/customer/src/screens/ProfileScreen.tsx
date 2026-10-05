@@ -46,6 +46,7 @@ interface Item {
 }
 
 const SERVICES: Item[] = [
+  { key: 'menu.favorites', href: '/favorites', icon: Heart },
   { key: 'menu.subscriptions', href: '/subscriptions', icon: Receipt },
   { key: 'menu.plus', href: '/plus', icon: Star },
   { key: 'menu.list', href: '/list', icon: Mic },

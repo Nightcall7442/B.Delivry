@@ -23,6 +23,8 @@ export interface StallProduct {
   name: Translated;
   unit: ProductUnit;
   price: MoneyDto;
+  /** On sale: the price struck through for the customer (the lowest of last week); null = no sale. */
+  oldPrice: MoneyDto | null;
   /** The «В наличии» switch: off = the customer does not see the good at all. */
   available: boolean;
   /** null = the seller does not count this good (the normal case at a bazaar). */
@@ -61,6 +63,8 @@ function toStallProduct(row: unknown): StallProduct | null {
     ? Object.fromEntries(Object.entries(row.name).filter(([, text]) => typeof text === 'string'))
     : {};
   const photo = Array.isArray(row.images) ? row.images.find(isRecord) : undefined;
+  const oldField = row.oldPrice;
+  const oldAmount = isRecord(oldField) ? numeric(oldField.amount) : numeric(oldField);
   return {
     id: row.id,
     storeId: row.storeId,
@@ -70,6 +74,7 @@ function toStallProduct(row: unknown): StallProduct | null {
         ? (row.unit as ProductUnit)
         : PRODUCT_UNIT.PCS,
     price: { amount, currency },
+    oldPrice: oldAmount !== null && oldAmount > amount ? { amount: oldAmount, currency } : null,
     available: row.available !== false,
     stock: numeric(row.stock),
     imageUrl: typeof photo?.url === 'string' ? photo.url : null,
@@ -171,6 +176,21 @@ export function priceInputText(minor: number, currency: Currency = DEFAULT_CURRE
   const digits = CURRENCY_MINOR_UNITS[currency];
   const major = minor / 10 ** digits;
   return Number.isInteger(major) ? String(major) : major.toFixed(digits).replace(/0+$/, '');
+}
+
+/**
+ * «Скидка» on the edit sheet: empty = no sale; otherwise a price below the one on the counter. The
+ * API holds the last word — the struck-through price is the lowest of the last week, and a cut
+ * that is not below it is refused there.
+ */
+export function parseSaleInput(text: string, price: MoneyDto): InputResult<number | null> {
+  if (squeeze(text) === '') return { ok: true, value: null };
+  const parsed = parsePriceInput(text, price.currency as Currency);
+  if (!parsed.ok) return parsed;
+  if (parsed.value >= price.amount) {
+    return { ok: false, error: 'Цена со скидкой — ниже обычной' };
+  }
+  return parsed;
 }
 
 const FRACTIONAL: readonly ProductUnit[] = [

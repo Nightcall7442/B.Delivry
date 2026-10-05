@@ -2,16 +2,31 @@
  * Products business logic. Vendor-side catalog management and price history.
  */
 import type { ProductUnit } from '@bazar/constants';
-import { LIMITS, PERMISSION, PRODUCT_UNIT, RESTRICTED_CATEGORY_SLUGS } from '@bazar/constants';
+import {
+  LIMITS,
+  PERMISSION,
+  PRODUCT_UNIT,
+  RESTRICTED_CATEGORY_SLUGS,
+  SALE,
+} from '@bazar/constants';
+import type { Money } from '@bazar/payments';
 import { slugify } from '@bazar/utils';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
-import { ConflictError, NotFoundError } from '../../../common/errors/domain.errors.js';
+import {
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+} from '../../../common/errors/domain.errors.js';
+import { createEvent } from '../../../events/event-bus.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
 import type { CacheStore } from '../../../infrastructure/redis/cache.js';
 import { currentViewer } from '../../catalog/domain/visibility.js';
 import type { StoresService } from '../../stores/service/stores.service.js';
 import type { ProductsRepository, ProductWithImages } from '../repository/products.repository.js';
+import { PRODUCT_EVENT } from '../domain/product.events.js';
 import type { CreateProductInput, ProductListFilters, UpdateProductInput } from '../types/index.js';
+
+const DAY_MS = 86_400_000;
 
 export interface ProductsServiceDeps extends ServiceDeps {
   repository: ProductsRepository;
@@ -75,7 +90,11 @@ export class ProductsService extends BaseService {
     await this.assertOwnsStore(product.storeId);
     await this.assertAllowedCategory(input.categoryId);
 
-    const updated = await this.repository.update(id, input, this.currentUser().id);
+    const updated = await this.repository.update(
+      id,
+      { ...input, ...this.oldPriceAfter(product, input) },
+      this.currentUser().id,
+    );
 
     if (input.images !== undefined) {
       await this.repository.replaceImages(id, input.images);
@@ -83,6 +102,84 @@ export class ProductsService extends BaseService {
 
     await this.invalidate(product.storeId);
     return this.get(updated.id);
+  }
+
+  /**
+   * The struck-through price only ever stands above the price. One typed at or below it is a
+   * mistake; a price raised to it or past it ends the sale by itself, rather than leaving a
+   * «discount» that is a markup.
+   */
+  private oldPriceAfter(
+    product: { price: number; oldPrice: number | null; currency: string },
+    input: UpdateProductInput,
+  ): { oldPrice?: Money | null } {
+    const price = input.price?.amount ?? product.price;
+    if (input.oldPrice !== undefined && input.oldPrice !== null && input.oldPrice.amount <= price) {
+      throw new ValidationError({ oldPrice: ['The old price must be higher than the price'] });
+    }
+    if (input.oldPrice !== undefined) return { oldPrice: input.oldPrice };
+    if (product.oldPrice !== null && product.oldPrice <= price) return { oldPrice: null };
+    return {};
+  }
+
+  /**
+   * «Честная скидка». The seller types the new price only; the struck-through one is what the good
+   * cost — the lowest price of the last `SALE.REFERENCE_DAYS` days, from the price history — so a
+   * price raised yesterday to be «cut» today shows no discount at all. A good already on sale keeps
+   * the price its sale started from; a new cut must go below it. Customers who saved the good hear
+   * about it (see the favorites sale handler).
+   */
+  async startSale(id: string, price: Money): Promise<ProductWithImages> {
+    const product = await this.get(id);
+    await this.assertOwnsStore(product.storeId);
+    if (price.currency !== product.currency) {
+      throw new ValidationError({ price: [`The price must be in ${product.currency}`] });
+    }
+    const before = product.price;
+    const since = new Date(Date.now() - SALE.REFERENCE_DAYS * DAY_MS);
+    const lowest = await this.repository.lowestPriceSince(id, since);
+    const reference = product.oldPrice ?? Math.min(lowest ?? product.price, product.price);
+    if (price.amount >= reference) {
+      throw new ConflictError(
+        `A sale price must be below ${reference}: the lowest price of the last ${SALE.REFERENCE_DAYS} days`,
+      );
+    }
+
+    const updated = await this.repository.setSale(
+      id,
+      { price: price.amount, oldPrice: reference, currency: product.currency },
+      this.currentUser().id,
+    );
+    await this.invalidate(product.storeId);
+    // A deeper cut is news; the same price again or a shallower one is not.
+    if (price.amount < before) {
+      await this.publish(
+        createEvent(PRODUCT_EVENT.SALE_STARTED, {
+          productId: id,
+          storeId: product.storeId,
+          name: product.name as Record<string, string>,
+          price: price.amount,
+          oldPrice: reference,
+          currency: product.currency,
+          imageUrl: product.images[0]?.url ?? null,
+        }),
+      );
+    }
+    return updated;
+  }
+
+  /** The sale is over: the struck-through price is the price again. Not on sale = nothing to do. */
+  async endSale(id: string): Promise<ProductWithImages> {
+    const product = await this.get(id);
+    await this.assertOwnsStore(product.storeId);
+    if (product.oldPrice === null) return product;
+    const updated = await this.repository.setSale(
+      id,
+      { price: product.oldPrice, oldPrice: null, currency: product.currency },
+      this.currentUser().id,
+    );
+    await this.invalidate(product.storeId);
+    return updated;
   }
 
   /** Alcohol and tobacco are not sold through the app: refused on the way in, whatever the store. */

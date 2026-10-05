@@ -112,6 +112,8 @@ export class CatalogRepository extends BaseRepository {
         }),
       ],
       ...(filters.availableOnly !== false ? { available: true } : {}),
+      // Every write keeps the struck-through price above the price, so its presence is the sale.
+      ...(filters.onSale === true ? { oldPrice: { not: null } } : {}),
       ...(filters.ids !== undefined ? { id: { in: filters.ids } } : {}),
       ...(filters.storeId !== undefined ? { storeId: filters.storeId } : {}),
       ...(filters.categoryId !== undefined ? { categoryId: filters.categoryId } : {}),

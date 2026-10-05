@@ -15,7 +15,7 @@ import { useMemo, useState } from 'react';
 import { ArrowLeft, Star } from '@/components/go/icons';
 import { useAddress } from '@/features/address';
 
-import { BasketBar, ProductCard } from './index';
+import { BasketBar, HeartButton, ProductCard } from './index';
 import s from './bazar.module.css';
 
 export function BazaarStore({
@@ -77,6 +77,7 @@ export function BazaarStore({
               .filter(Boolean)
               .join(' · ') || tr(store.name, locale)}
           </span>
+          <HeartButton kind="store" id={store.id} locale={locale} t={t} className={s.round} />
         </div>
 
         <div className={s.greeting}>

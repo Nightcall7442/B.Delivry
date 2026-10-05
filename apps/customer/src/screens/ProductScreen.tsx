@@ -37,6 +37,7 @@ import {
 import { Bone } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
 import { useCart, useCartActions, useCartItem } from '@/features/cart/store';
+import { useFavorite } from '@/features/favorites/store';
 import { getProduct, getStore, listProducts } from '@/lib/catalog';
 import { useData } from '@/lib/use-data';
 import {
@@ -141,6 +142,7 @@ function ProductBody({
   const step = product.quantityStep || 1;
   const min = product.minQuantity || step;
   const { quantity, add, remove } = useCartItem(product.id, step, min);
+  const favorite = useFavorite('product', product.id, `/product/${product.id}`);
   const units = unitLabel(locale);
   const unit = units[product.unit];
   const shownQty = quantity > 0 ? quantity : min;
@@ -345,8 +347,16 @@ function ProductBody({
         >
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
-        <SceneButton>
-          <Heart size={20} color={scene.pomegranate} />
+        <SceneButton
+          onPress={favorite.toggle}
+          label={t(favorite.saved ? 'fav.forget' : 'fav.save')}
+          selected={favorite.saved}
+        >
+          <Heart
+            size={20}
+            color={scene.pomegranate}
+            fill={favorite.saved ? scene.pomegranate : 'none'}
+          />
         </SceneButton>
       </View>
 

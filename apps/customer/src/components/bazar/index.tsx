@@ -160,10 +160,16 @@ export function Scene({
 export function SceneButton({
   children,
   onPress,
+  label,
+  selected,
   style,
 }: {
   children: ReactNode;
   onPress?: () => void;
+  /** What a screen reader says: the glyph alone says nothing. */
+  label?: string;
+  /** A toggle (the heart): read out as on or off. */
+  selected?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   return (
@@ -171,6 +177,8 @@ export function SceneButton({
       onPress={onPress}
       hitSlop={6}
       accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={selected === undefined ? undefined : { selected }}
       style={({ pressed }) => [s.button, press.base, pressed && press.down, style]}
     >
       {children}

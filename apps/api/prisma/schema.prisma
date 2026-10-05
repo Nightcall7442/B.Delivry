@@ -499,6 +499,7 @@ model Customer {
   orders    Order[]
   reviews   Review[]
   subscriptions CartSubscription[]
+  favorites Favorite[]
 
   @@index([tenantId])
   @@map("customers")
@@ -669,6 +670,7 @@ model Store {
   products Product[]
   carts    Cart[]
   orders   Order[]
+  favorites Favorite[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, status])
@@ -908,6 +910,7 @@ model Product {
   priceHistory ProductPrice[]
   cartItems  CartItem[]
   orderItems OrderItem[]
+  favorites  Favorite[]
 
   @@unique([storeId, slug])
   @@index([tenantId, available])
@@ -989,6 +992,26 @@ model CartItem {
 
   @@unique([cartId, productId])
   @@map("cart_items")
+}
+
+// «Избранное»: goods and stalls a customer keeps coming back to. A row names exactly one of the
+// two (a CHECK in the migration); the pair with the customer is unique, so saving twice is a no-op.
+model Favorite {
+  id         String   @id @default(uuid())
+  tenantId   String
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  storeId    String?
+  store      Store?   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([customerId, productId])
+  @@unique([customerId, storeId])
+  @@index([tenantId])
+  @@map("favorites")
 }
 
 // ============================================================================

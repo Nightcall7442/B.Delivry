@@ -45,6 +45,7 @@ export class ProductsRepository extends BaseRepository {
       ...(filters.storeId !== undefined ? { storeId: filters.storeId } : {}),
       ...(filters.categoryId !== undefined ? { categoryId: filters.categoryId } : {}),
       ...(filters.availableOnly === true ? { available: true } : {}),
+      ...(filters.onSale === true ? { oldPrice: { not: null } } : {}),
       ...(filters.search !== undefined
         ? { slug: { contains: filters.search, mode: 'insensitive' as const } }
         : {}),
@@ -127,7 +128,9 @@ export class ProductsRepository extends BaseRepository {
         ...(input.categoryId !== undefined ? { categoryId: input.categoryId } : {}),
         ...(input.unit !== undefined ? { unit: input.unit } : {}),
         ...(input.price !== undefined ? { price: input.price.amount } : {}),
-        ...(input.oldPrice !== undefined ? { oldPrice: input.oldPrice.amount } : {}),
+        ...(input.oldPrice !== undefined
+          ? { oldPrice: input.oldPrice === null ? null : input.oldPrice.amount }
+          : {}),
         ...(input.minQuantity !== undefined ? { minQuantity: input.minQuantity } : {}),
         ...(input.quantityStep !== undefined ? { quantityStep: input.quantityStep } : {}),
         ...(input.weightGrams !== undefined ? { weightGrams: input.weightGrams } : {}),
@@ -143,6 +146,47 @@ export class ProductsRepository extends BaseRepository {
               },
             }
           : {}),
+      },
+      include: PRODUCT_INCLUDE,
+    });
+  }
+
+  /**
+   * The lowest price the good was sold at from `since` until now: the price in force at `since`
+   * (the last change before it) and every change after. Null when the history is empty.
+   */
+  async lowestPriceSince(productId: string, since: Date): Promise<number | null> {
+    const [before, after] = await Promise.all([
+      this.prisma.productPrice.findFirst({
+        where: { productId, validFrom: { lt: since } },
+        orderBy: { validFrom: 'desc' },
+        select: { price: true },
+      }),
+      this.prisma.productPrice.aggregate({
+        where: { productId, validFrom: { gte: since } },
+        _min: { price: true },
+      }),
+    ]);
+    const prices = [before?.price, after._min.price].filter(
+      (price): price is number => typeof price === 'number',
+    );
+    return prices.length === 0 ? null : Math.min(...prices);
+  }
+
+  /** A sale starts, moves or ends: both prices at once, the new price appended to the history. */
+  async setSale(
+    id: string,
+    prices: { price: number; oldPrice: number | null; currency: string },
+    changedBy: string | null,
+  ): Promise<ProductWithImages> {
+    return this.prisma.product.update({
+      where: this.scoped({ id }),
+      data: {
+        price: prices.price,
+        oldPrice: prices.oldPrice,
+        priceHistory: {
+          create: { price: prices.price, currency: prices.currency, changedBy },
+        },
       },
       include: PRODUCT_INCLUDE,
     });

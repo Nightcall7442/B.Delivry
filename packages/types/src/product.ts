@@ -56,7 +56,9 @@ export interface CreateProductDto {
   stock?: number;
 }
 
-export type UpdateProductDto = Partial<Omit<CreateProductDto, 'storeId'>> & {
+export type UpdateProductDto = Partial<Omit<CreateProductDto, 'storeId' | 'oldPrice'>> & {
+  /** null ends a sale. */
+  oldPrice?: MoneyDto | null;
   available?: boolean;
   tags?: StoreTag[];
 };
@@ -70,4 +72,6 @@ export interface ProductListQuery {
   minPrice?: number;
   maxPrice?: number;
   availableOnly?: boolean;
+  /** Only goods with a struck-through price. */
+  onSale?: boolean;
 }

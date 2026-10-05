@@ -32,6 +32,13 @@ export const HAGGLE = {
   MIN_SHARE: 0.5,
 } as const;
 
+/**
+ * «Честная скидка»: the struck-through price is the lowest the good actually cost over this many
+ * days — not a number the seller types — so raising a price on Monday to «discount» it on Tuesday
+ * shows nothing. A week, not a month: produce prices move with the season.
+ */
+export const SALE = { REFERENCE_DAYS: 7 } as const;
+
 /** Paid placement for a store: first on the home list with a «Реклама» label. */
 export const PROMOTION = { PRICE_MINOR: 4_900_000, DAYS: 7 } as const;
 

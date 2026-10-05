@@ -7,6 +7,7 @@ export * from './catalog.js';
 export * from './couriers.js';
 export * from './customers.js';
 export * from './delivery.js';
+export * from './favorites.js';
 export * from './geo.js';
 export * from './haggle.js';
 export * from './notifications.js';

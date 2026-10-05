@@ -20,7 +20,7 @@ import { useCartActions, useCartQuantities } from '@/features/cart';
 import { api } from '@/lib/api';
 import { SHELF_PAGE } from '@/lib/catalog';
 
-import { BasketBar, ProductCard } from './index';
+import { BasketBar, HeartButton, ProductCard } from './index';
 import s from './bazar.module.css';
 
 export function BazaarShop({
@@ -145,6 +145,7 @@ export function BazaarShop({
             {t(`store.type.${store.type}` as 'store.type.SHOP')} ·{' '}
             {closes ? t('shop.until', { time: closes }) : t('shop.closedToday')}
           </span>
+          <HeartButton kind="store" id={store.id} locale={locale} t={t} className={s.round} />
         </div>
 
         {/* The photograph breathes first; the painted board hangs over its lower edge. */}

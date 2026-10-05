@@ -27,7 +27,9 @@ import {
 import { Bone, LoadError } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
 import { useCart, useCartActions } from '@/features/cart/store';
+import { useFavorite } from '@/features/favorites/store';
 import { getStore, listCategories, listProducts } from '@/lib/catalog';
+import { saleNote } from '@/lib/sale';
 import { EMPTY, useList, useLoad } from '@/lib/use-data';
 import {
   ArrowLeft,
@@ -53,6 +55,7 @@ export function StoreScreen({ storeId }: { storeId: string }) {
   const top = useSceneTop();
   const [category, setCategory] = useState<string | null>(null);
   const [story, setStory] = useState(false);
+  const favorite = useFavorite('store', storeId, `/store/${storeId}`);
 
   const storeLoad = useLoad(() => getStore(storeId), [storeId]);
   const productLoad = useLoad(() => listProducts({ storeId }), [storeId]);
@@ -210,7 +213,11 @@ export function StoreScreen({ storeId }: { storeId: string }) {
                     tilt={[-1, 1, 0.5, -0.5][i % 4] ?? 0}
                     title={tr(product.name, locale)}
                     price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
-                    note={arrivedToday(product) ? t('store.arrivedToday') : undefined}
+                    note={
+                      [saleNote(product, t), arrivedToday(product) ? t('store.arrivedToday') : null]
+                        .filter(Boolean)
+                        .join(' · ') || undefined
+                    }
                     count={qty}
                     countLabel={t('scene.inCart', {
                       count: `${t.qty(qty)} ${units[product.unit]}`,
@@ -251,8 +258,16 @@ export function StoreScreen({ storeId }: { storeId: string }) {
         >
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
-        <SceneButton>
-          <Heart size={20} color={scene.pomegranate} />
+        <SceneButton
+          onPress={favorite.toggle}
+          label={t(favorite.saved ? 'fav.forget' : 'fav.save')}
+          selected={favorite.saved}
+        >
+          <Heart
+            size={20}
+            color={scene.pomegranate}
+            fill={favorite.saved ? scene.pomegranate : 'none'}
+          />
         </SceneButton>
       </View>
 

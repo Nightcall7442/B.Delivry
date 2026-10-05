@@ -4,6 +4,7 @@ import {
   MAX_PRICE_MINOR,
   isSoldOut,
   parsePriceInput,
+  parseSaleInput,
   parseStockInput,
   priceInputText,
   searchStallProducts,
@@ -20,6 +21,7 @@ const product = (over: Partial<StallProduct> = {}): StallProduct => ({
   name: { ru: 'Помидоры', uz: 'Pomidor' },
   unit: 'KG',
   price: { amount: 1_250_000, currency: 'UZS' },
+  oldPrice: null,
   available: true,
   stock: null,
   imageUrl: null,
@@ -28,6 +30,23 @@ const product = (over: Partial<StallProduct> = {}): StallProduct => ({
 });
 
 describe('toStallProducts', () => {
+  it('reads a sale in either shape, and drops a struck-through price that is not above the price', () => {
+    const [row, dto, bogus] = toStallProducts([
+      { id: 'a', storeId: 's1', name: {}, price: 900_000, oldPrice: 1_200_000, currency: 'UZS' },
+      {
+        id: 'b',
+        storeId: 's1',
+        name: {},
+        price: { amount: 900_000, currency: 'UZS' },
+        oldPrice: { amount: 1_000_000, currency: 'UZS' },
+      },
+      { id: 'c', storeId: 's1', name: {}, price: 900_000, oldPrice: 900_000, currency: 'UZS' },
+    ]);
+    expect(row?.oldPrice).toEqual({ amount: 1_200_000, currency: 'UZS' });
+    expect(dto?.oldPrice).toEqual({ amount: 1_000_000, currency: 'UZS' });
+    expect(bogus?.oldPrice).toBeNull();
+  });
+
   it('reads the rows of GET /products: a bare integer price, a decimal string for the stock', () => {
     const [good] = toStallProducts([
       {
@@ -49,6 +68,7 @@ describe('toStallProducts', () => {
       name: { ru: 'Помидоры', uz: 'Pomidor' },
       unit: 'KG',
       price: { amount: 1_250_000, currency: 'UZS' },
+      oldPrice: null,
       available: false,
       stock: 12.5,
       imageUrl: 'https://img/1.jpg',
@@ -71,6 +91,7 @@ describe('toStallProducts', () => {
       },
     ]);
     expect(good?.price).toEqual({ amount: 300_000, currency: 'UZS' });
+    expect(good?.oldPrice).toBeNull();
     expect(good?.stock).toBeNull();
     expect(good?.imageUrl).toBeNull();
   });
@@ -268,5 +289,24 @@ describe('small helpers', () => {
     expect(stockText(12)).toBe('12');
     expect(stockText(1.5)).toBe('1,5');
     expect(stockText(0.1 + 0.2)).toBe('0,3');
+  });
+});
+
+describe('parseSaleInput', () => {
+  const price = { amount: 1_250_000, currency: 'UZS' as const };
+
+  it('reads an empty field as no sale', () => {
+    expect(parseSaleInput('', price)).toEqual({ ok: true, value: null });
+    expect(parseSaleInput('  ', price)).toEqual({ ok: true, value: null });
+  });
+
+  it('takes a price below the one on the counter, in soum as typed', () => {
+    expect(parseSaleInput('9 900', price)).toEqual({ ok: true, value: 990_000 });
+  });
+
+  it('refuses a «discount» that is not below the price, and what is not a price', () => {
+    expect(parseSaleInput('12500', price).ok).toBe(false);
+    expect(parseSaleInput('13000', price).ok).toBe(false);
+    expect(parseSaleInput('дёшево', price).ok).toBe(false);
   });
 });

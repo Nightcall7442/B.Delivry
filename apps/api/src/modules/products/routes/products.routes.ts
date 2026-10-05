@@ -10,6 +10,7 @@ import type { ProductsController } from '../controller/products.controller.js';
 import {
   createProductSchema,
   productIdParamsSchema,
+  productSaleSchema,
   productsListQuerySchema,
   setAvailabilitySchema,
   updateProductSchema,
@@ -42,6 +43,22 @@ export function productsRoutes(controller: ProductsController) {
         ],
       },
       controller.update,
+    );
+    // «Честная скидка»: the new price only; the struck-through one comes from the price history.
+    app.put(
+      '/:id/sale',
+      {
+        preHandler: [
+          canWrite,
+          validate({ params: productIdParamsSchema, body: productSaleSchema }),
+        ],
+      },
+      controller.startSale,
+    );
+    app.delete(
+      '/:id/sale',
+      { preHandler: [canWrite, validate({ params: productIdParamsSchema })] },
+      controller.endSale,
     );
     app.put(
       '/:id/availability',

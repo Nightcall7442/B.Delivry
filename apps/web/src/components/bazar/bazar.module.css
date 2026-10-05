@@ -108,6 +108,32 @@
 .round:hover {
   transform: translateY(-1px);
 }
+/* «Избранное»: pomegranate on cream, filled once saved. */
+.heart {
+  color: var(--pomegranate);
+  border: 0;
+  cursor: pointer;
+}
+/* On a photo card: a smaller disc in the photograph's corner, a 44px target. */
+.heartCard {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cream) 88%, transparent);
+  box-shadow: var(--shadow);
+}
+.heartCard::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
 .round b {
   color: var(--pomegranate);
 }
@@ -407,6 +433,38 @@
 .signPrice small {
   font-size: var(--fs-lead);
   color: var(--ink-soft);
+}
+/* «Честная скидка»: the lowest price of the week, struck through beside the price. */
+.signOld {
+  margin-left: 8px;
+  font-size: var(--fs-lead);
+  color: var(--ink-soft);
+  text-decoration-thickness: 2px;
+}
+/* The cut on the photograph's corner, opposite the heart. */
+.saleBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--pomegranate);
+  color: var(--cream);
+  font-weight: 800;
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+/* A discount card on the rail: wide enough for the sign, narrow enough that the next one peeks. */
+.dealCard {
+  flex: 0 0 min(240px, 68vw);
+}
+/* Square on the rail, so the sign with both prices is in view with the photo. */
+.dealCard .cardPhoto {
+  aspect-ratio: 1;
 }
 .signSay {
   font-family: var(--font-hand), 'Caveat', cursive;

@@ -6,13 +6,14 @@
 'use client';
 
 import type { T } from '@bazar/i18n';
-import { arrivedToday, photo, tr, unitLabel } from '@bazar/storefront';
+import { arrivedToday, discountPercent, photo, tr, unitLabel } from '@bazar/storefront';
 import type { ProductDto, StoreDto } from '@bazar/types';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { Bag, Mic } from '@/components/go/icons';
+import { Bag, Heart, Mic } from '@/components/go/icons';
 import { useCartActions, useCartQuantities } from '@/features/cart';
+import { useFavorite, type FavoriteKind } from '@/features/favorites';
 
 import s from './bazar.module.css';
 
@@ -44,6 +45,7 @@ export function ProductCard({
     if (qty === 0) setSwing(true);
     setQuantity(product.id, qty === 0 ? product.minQuantity || step : qty + step);
   };
+  const off = discountPercent(product);
   const note = [
     stall ? (stall.ownerName ?? tr(stall.name, locale)) : null,
     arrivedToday(product) ? t('store.arrivedToday') : null,
@@ -58,6 +60,8 @@ export function ProductCard({
         style={image ? { backgroundImage: `url(${photo(image, 960)})` } : undefined}
         aria-label={tr(product.name, locale)}
       />
+      <HeartButton kind="product" id={product.id} locale={locale} t={t} className={s.heartCard} />
+      {off > 0 ? <span className={s.saleBadge}>−{off} %</span> : null}
       <div
         className={`${s.sign} ${index % 2 ? s.signRight : ''} ${qty > 0 ? s.signChosen : ''} ${swing ? s.signSwing : ''}`}
         style={{ transform: `rotate(${[-1.2, 1, 0.6, -0.8][index % 4]}deg)` }}
@@ -67,6 +71,9 @@ export function ProductCard({
         <div className={s.signTitle}>{tr(product.name, locale)}</div>
         <div className={s.signPrice}>
           {t.money(product.price.amount)} <small>/ {units[product.unit]}</small>
+          {off > 0 && product.oldPrice ? (
+            <del className={s.signOld}>{t.money(product.oldPrice.amount)}</del>
+          ) : null}
         </div>
         {product.description ? (
           <div className={s.signSay}>«{tr(product.description, locale)}»</div>
@@ -82,6 +89,35 @@ export function ProductCard({
         </button>
       </div>
     </div>
+  );
+}
+
+/** The heart: saves a good or a stall to «Избранное»; a guest is asked to sign in first. */
+export function HeartButton({
+  kind,
+  id,
+  locale,
+  t,
+  className,
+}: {
+  kind: FavoriteKind;
+  id: string;
+  locale: string;
+  t: T;
+  /** The disc it sits in: the round header button, or the corner of a photo card. */
+  className: string | undefined;
+}) {
+  const { saved, toggle } = useFavorite(kind, id, locale);
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      className={`${className ?? ''} ${s.heart}`}
+      aria-pressed={saved}
+      aria-label={t(saved ? 'fav.forget' : 'fav.save')}
+    >
+      <Heart size={20} filled={saved} />
+    </button>
   );
 }
 

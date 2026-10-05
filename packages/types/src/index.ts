@@ -12,6 +12,7 @@ export * from './common.js';
 export * from './courier.js';
 export * from './customer.js';
 export * from './delivery.js';
+export * from './favorite.js';
 export * from './geo.js';
 export * from './haggle.js';
 export * from './notification.js';

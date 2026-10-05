@@ -30,6 +30,8 @@ export interface CatalogSearchFilters {
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
   availableOnly?: boolean | undefined;
+  /** Only goods with a struck-through price (the «Скидки» rail). */
+  onSale?: boolean | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
 }

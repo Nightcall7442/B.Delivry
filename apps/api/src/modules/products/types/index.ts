@@ -19,7 +19,9 @@ export interface CreateProductInput {
   stock?: number | undefined;
 }
 
-export type UpdateProductInput = Partial<Omit<CreateProductInput, 'storeId'>> & {
+export type UpdateProductInput = Partial<Omit<CreateProductInput, 'storeId' | 'oldPrice'>> & {
+  /** null ends a sale. */
+  oldPrice?: Money | null | undefined;
   available?: boolean;
   tags?: string[] | undefined;
 };
@@ -29,6 +31,7 @@ export interface ProductListFilters {
   categoryId?: string | undefined;
   search?: string | undefined;
   availableOnly?: boolean | undefined;
+  onSale?: boolean | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
 }

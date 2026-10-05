@@ -43,9 +43,22 @@ export const updateProductSchema = createProductSchema
   .partial()
   .omit({ storeId: true })
   .extend({
+    // null ends a sale: the struck-through price goes away.
+    oldPrice: positiveMoneySchema.nullable().optional(),
     available: z.boolean().optional(),
     tags: z.array(z.nativeEnum(STORE_TAG)).max(6).optional(),
-  });
+  })
+  .refine(
+    (v) =>
+      v.oldPrice === undefined ||
+      v.oldPrice === null ||
+      v.price === undefined ||
+      v.oldPrice.amount > v.price.amount,
+    { message: 'oldPrice must be higher than price', path: ['oldPrice'] },
+  );
+
+/** «Честная скидка»: only the new price is typed; the struck-through one comes from the history. */
+export const productSaleSchema = z.object({ price: positiveMoneySchema });
 
 export const productListQuerySchema = z.object({
   /** The basket's products by id (`ids=a&ids=b`); a lone value arrives as a string. */
@@ -60,6 +73,8 @@ export const productListQuerySchema = z.object({
   minPrice: z.coerce.number().int().nonnegative().optional(),
   maxPrice: z.coerce.number().int().nonnegative().optional(),
   availableOnly: queryBoolean.optional(),
+  /** Goods with a struck-through price: the «Скидки» rail. */
+  onSale: queryBoolean.optional(),
 });
 
 export const createCategorySchema = z.object({
@@ -75,3 +90,4 @@ export const updateCategorySchema = createCategorySchema
   .extend({ active: z.boolean().optional() });
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
+export type ProductSaleInput = z.infer<typeof productSaleSchema>;

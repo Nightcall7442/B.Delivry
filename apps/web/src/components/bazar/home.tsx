@@ -1,7 +1,7 @@
 /**
  * The front door on the web, as in the app: the hall under the dome (morning
  * or evening by Tashkent time), the greeting on it, then the people at their
- * counters, the rows to walk along, and everything
+ * counters, today's honest discounts, the rows to walk along, and everything
  * on the counters today as photo cards with a cardboard sign you can take
  * straight into the basket. Once the basket has something in it the voice
  * line at the bottom gives way to «Оформить».
@@ -13,6 +13,7 @@ import {
   arrivedToday,
   chorsuTemperature,
   closesToday,
+  dealsOf,
   degrees,
   isEvening,
   isShopfront,
@@ -42,11 +43,14 @@ export function BazaarHome({
   stores,
   categories,
   products,
+  onSale,
   locale,
 }: {
   stores: readonly MapStoreDto[];
   categories: readonly CategoryDto[];
   products: readonly ProductDto[];
+  /** Goods with a struck-through price, for the «Скидки» rail. */
+  onSale: readonly ProductDto[];
   locale: string;
 }) {
   const t = createT(locale);
@@ -85,6 +89,17 @@ export function BazaarHome({
       .filter((p) => p.available && all.has(p.storeId) && (open.size === 0 || open.has(p.storeId)))
       .sort((a, b) => fresh(b) - fresh(a) || a.storeId.localeCompare(b.storeId));
   }, [products, stores]);
+
+  // «Скидки»: the city's goods on sale, deepest cut first, a few per stall.
+  const deals = useMemo(() => {
+    const here = new Set(stores.map((store) => store.id));
+    return dealsOf(onSale.filter((p) => here.has(p.storeId)));
+  }, [onSale, stores]);
+  // The basket bar counts what is on this page: the counters and the discounts, once each.
+  const shown = useMemo(() => {
+    const ids = new Set(counter.map((p) => p.id));
+    return [...counter, ...deals.filter((p) => !ids.has(p.id))];
+  }, [counter, deals]);
 
   const dateLine = new Intl.DateTimeFormat(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', {
     weekday: 'long',
@@ -157,6 +172,31 @@ export function BazaarHome({
           })}
         </div>
 
+        {deals.length > 0 ? (
+          <>
+            <div className={s.head}>
+              <h2 className={s.headTitle}>
+                {t('deals.title')}
+                <span className={s.headMeta}> · {t('deals.honest')}</span>
+              </h2>
+            </div>
+            <div className={s.rail}>
+              {deals.map((product, i) => (
+                <div key={product.id} className={s.dealCard}>
+                  <ProductCard
+                    product={product}
+                    stall={stores.find((store) => store.id === product.storeId)}
+                    locale={locale}
+                    t={t}
+                    index={i}
+                    href={`${home}/stores/${product.storeId}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </>
+        ) : null}
+
         {shops.length > 0 ? (
           <>
             <div className={s.head}>
@@ -220,7 +260,7 @@ export function BazaarHome({
         </div>
       </div>
 
-      <BasketBar products={counter} locale={locale} t={t} evening={evening} />
+      <BasketBar products={shown} locale={locale} t={t} evening={evening} />
     </main>
   );
 }

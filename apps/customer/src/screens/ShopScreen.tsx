@@ -49,10 +49,13 @@ import {
 import { LoadError } from '@/components/ui/Page';
 import { useAddress } from '@/features/address/store';
 import { useCart, useCartActions } from '@/features/cart/store';
+import { useFavorite } from '@/features/favorites/store';
 import { listStores } from '@/lib/catalog';
+import { saleNote } from '@/lib/sale';
 import { useData, useList } from '@/lib/use-data';
 import {
   ArrowLeft,
+  Heart,
   Clock,
   Mic,
   Search,
@@ -78,6 +81,7 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
   const { height } = useWindowDimensions();
   const top = useSceneTop();
   const units = unitLabel(locale);
+  const favorite = useFavorite('store', store.id, `/store/${store.id}`);
   const hero = store.counterPhotoUrl ?? store.coverUrl ?? null;
 
   const [category, setCategory] = useState<string | null>(null);
@@ -295,7 +299,7 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
               side={index % 2 ? 'right' : 'left'}
               title={tr(product.name, locale)}
               price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
-              note={product.oldPrice ? t.money(product.oldPrice.amount) : undefined}
+              note={saleNote(product, t) ?? undefined}
               count={qty}
               countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
               onPress={() => router.push(`/product/${product.id}`)}
@@ -339,6 +343,17 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
         >
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
+        <SceneButton
+          onPress={favorite.toggle}
+          label={t(favorite.saved ? 'fav.forget' : 'fav.save')}
+          selected={favorite.saved}
+        >
+          <Heart
+            size={20}
+            color={scene.pomegranate}
+            fill={favorite.saved ? scene.pomegranate : 'none'}
+          />
+        </SceneButton>
       </View>
 
       {inCart.length > 0 ? (
@@ -365,7 +380,13 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
 }
 
 const s = StyleSheet.create({
-  top: { position: 'absolute', left: 20, right: 20, flexDirection: 'row' },
+  top: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   // The painted board over the door: lapis with an ochre rule under the name — paper's corners.
   board: {
     marginHorizontal: 20,
