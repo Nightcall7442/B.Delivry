@@ -56,6 +56,7 @@ import {
   useSceneTop,
 } from '@/components/bazar';
 import { PriceBoard } from '@/components/prices/PriceBoard';
+import { OshCard } from '@/components/shop/OshCard';
 import { ProductTile, useTileWidth } from '@/components/shop/ProductTile';
 import { LoadError } from '@/components/ui/Page';
 import { DEFAULT_POINT, useAddress } from '@/features/address/store';
@@ -320,6 +321,9 @@ export function SceneHomeScreen() {
                 </ScrollView>
               </>
             ) : null}
+
+            {/* «Ош на N человек»: the dish every guest is counted for. */}
+            <OshCard />
 
             {shops.length > 0 ? (
               <>

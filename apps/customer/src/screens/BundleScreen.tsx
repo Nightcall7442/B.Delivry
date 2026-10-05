@@ -6,6 +6,8 @@
  */
 import { ArrowLeft, Text as UiText, radius, scale, shadow, useLocale } from '@bazar/mobile';
 import {
+  bundleGuests,
+  bundleTitle,
   getBundle,
   photo,
   resolveBundle,
@@ -32,18 +34,21 @@ import {
   sceneFont,
   useSceneTop,
 } from '@/components/bazar';
+import { GuestStepper } from '@/components/shop/GuestStepper';
 import { Bone } from '@/components/ui/Page';
 import { useCartActions, useCartCount, useCartQuantities } from '@/features/cart/store';
 import { listProducts, listStores } from '@/lib/catalog';
 import { useData, useList } from '@/lib/use-data';
 
-export function BundleScreen({ slug }: { slug: string }) {
+export function BundleScreen({ slug, guests: asked }: { slug: string; guests?: number | null }) {
   const router = useRouter();
   const { locale, t } = useLocale();
   const insets = useSafeAreaInsets();
   const top = useSceneTop();
   const count = useCartCount();
   const bundle = getBundle(slug);
+  // «Ош на N человек»: the company from the link, within the set's range; the set's own otherwise.
+  const [guests, setGuests] = useState(() => (bundle ? bundleGuests(bundle, asked) : 0));
   const quantities = useCartQuantities();
   const { setQuantity } = useCartActions();
   const [added, setAdded] = useState(false);
@@ -52,8 +57,8 @@ export function BundleScreen({ slug }: { slug: string }) {
   const products = useData(() => listProducts(), []);
   const stores = useList(() => listStores(), []);
   const resolved = useMemo(
-    () => (bundle && products ? resolveBundle(bundle, products) : null),
-    [bundle, products],
+    () => (bundle && products ? resolveBundle(bundle, products, guests) : null),
+    [bundle, products, guests],
   );
   const storeById = useMemo(() => new Map(stores.map((store) => [store.id, store])), [stores]);
   const stalls = (resolved?.storeIds ?? [])
@@ -86,10 +91,28 @@ export function BundleScreen({ slug }: { slug: string }) {
         ) : (
           <>
             <View style={s.greeting}>
-              <Display>{tr(bundle.title, locale)}</Display>
+              <Display>{bundleTitle(t, bundle, guests)}</Display>
               <Say color={scene.creamMuted} numberOfLines={3}>
                 {tr(bundle.description, locale)}
               </Say>
+              {bundle.guests ? (
+                <View style={s.guests}>
+                  <GuestStepper
+                    bundle={bundle}
+                    guests={guests}
+                    onChange={(next) => {
+                      setGuests(next);
+                      setAdded(false);
+                    }}
+                    label={t('bundle.guests')}
+                  />
+                  {resolved && resolved.lines.length > 0 ? (
+                    <Text style={s.perGuest}>
+                      {t('bundle.perGuest', { amount: t.money(resolved.perGuest) })}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
             </View>
             {/* Let the dish breathe before the counters. */}
             <View style={{ height: 120 }} />
@@ -158,7 +181,7 @@ export function BundleScreen({ slug }: { slug: string }) {
         >
           <ArrowLeft size={20} color={scene.ink} />
         </SceneButton>
-        {bundle ? <KraftTag>{t.n('bundle.people', bundle.serves)}</KraftTag> : null}
+        {bundle ? <KraftTag>{t.n('bundle.people', guests)}</KraftTag> : null}
       </View>
 
       {resolved && resolved.lines.length > 0 ? (
@@ -195,6 +218,21 @@ const s = StyleSheet.create({
     zIndex: 2,
   },
   greeting: { paddingHorizontal: 20, gap: 8 },
+  guests: {
+    marginTop: 10,
+    padding: 14,
+    gap: 6,
+    borderRadius: radius.paper,
+    backgroundColor: scene.glass,
+    borderWidth: 1,
+    borderColor: scene.glassEdge,
+  },
+  perGuest: {
+    fontFamily: sceneFont.uiText,
+    ...scale.caption,
+    color: scene.creamMuted,
+    fontVariant: ['tabular-nums'],
+  },
   head: { paddingHorizontal: 20, paddingBottom: 12 },
   grid: {
     flexDirection: 'row',

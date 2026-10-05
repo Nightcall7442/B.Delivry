@@ -3,14 +3,21 @@
  * slug, so it survives catalogue edits; anything the API no longer sells is
  * simply left out of the resolved list (and the price).
  */
+import type { T } from '@bazar/i18n';
 import type { ProductDto, Translated } from '@bazar/types';
 
+import { tr } from './i18n.js';
 import { PHOTOS } from './photos.js';
 import { productLineTotal } from './tiers.js';
 
 export interface BundleLine {
   productSlug: string;
   quantity: number;
+  /**
+   * Goods that do not grow with every guest — a pack of cumin seasons a big kazan: one `quantity`
+   * covers this many people. Without it the line grows with the guests.
+   */
+  covers?: number;
 }
 
 export interface Bundle {
@@ -22,6 +29,10 @@ export interface Bundle {
   serves: number;
   photo: string;
   items: readonly BundleLine[];
+  /** «Ош на N человек»: a dish that is cooked for any company — the range of guests offered. */
+  guests?: { min: number; max: number };
+  /** The dish without the company, for «Плов на 12 человек» / «12 kishilik osh». */
+  dish?: Translated;
 }
 
 export const BUNDLES: readonly Bundle[] = [
@@ -35,15 +46,18 @@ export const BUNDLES: readonly Bundle[] = [
     },
     serves: 6,
     photo: PHOTOS['bundle-plov'] ?? '',
+    // The kazan's rule: a kilo each of rice, meat and carrots feeds six.
     items: [
       { productSlug: 'p-lamb', quantity: 1 },
       { productSlug: 'p-rice', quantity: 1 },
       { productSlug: 'p-carrot', quantity: 1 },
       { productSlug: 'p-onion', quantity: 0.5 },
-      { productSlug: 'p-oil', quantity: 1 },
-      { productSlug: 'p-zira', quantity: 1 },
+      { productSlug: 'p-oil', quantity: 1, covers: 15 },
+      { productSlug: 'p-zira', quantity: 1, covers: 30 },
       { productSlug: 'p-raisin', quantity: 0.2 },
     ],
+    guests: { min: 2, max: 100 },
+    dish: { ru: 'Плов', uz: 'osh', en: 'Plov' },
   },
   {
     slug: 'shurpa',
@@ -55,6 +69,8 @@ export const BUNDLES: readonly Bundle[] = [
     },
     serves: 4,
     photo: PHOTOS['bundle-shurpa'] ?? '',
+    guests: { min: 2, max: 40 },
+    dish: { ru: 'Шурпа', uz: 'shoʻrva', en: 'Shurpa' },
     items: [
       { productSlug: 'p-lamb', quantity: 0.7 },
       { productSlug: 'p-potato', quantity: 1 },
@@ -74,6 +90,8 @@ export const BUNDLES: readonly Bundle[] = [
     },
     serves: 4,
     photo: PHOTOS['bundle-achichuk'] ?? '',
+    guests: { min: 2, max: 100 },
+    dish: { ru: 'Ачичук', uz: 'achchiq-chuchuk', en: 'Achichuk' },
     items: [
       { productSlug: 'p-tomato', quantity: 0.6 },
       { productSlug: 'p-cucumber', quantity: 0.4 },
@@ -230,6 +248,7 @@ export const OCCASION_BUNDLES: readonly Bundle[] = [
     },
     serves: 30,
     photo: PHOTOS['bundle-plov'] ?? '',
+    guests: { min: 10, max: 300 },
     items: [
       { productSlug: 'p-lamb', quantity: 6 },
       { productSlug: 'p-rice', quantity: 5 },
@@ -256,15 +275,53 @@ export interface ResolvedBundleLine {
 
 export interface ResolvedBundle {
   bundle: Bundle;
+  /** The company the quantities are for. */
+  guests: number;
   lines: ResolvedBundleLine[];
   /** Products the set names but the catalogue no longer has. */
   missing: string[];
   total: number;
+  /** What one guest costs, minor units, rounded. */
+  perGuest: number;
   storeIds: string[];
 }
 
-/** Matches a set against what the API sells right now. */
-export function resolveBundle(bundle: Bundle, products: readonly ProductDto[]): ResolvedBundle {
+/** The company a set is for: the one asked for, within the set's range; its own when it is fixed. */
+export function bundleGuests(bundle: Bundle, wanted?: number | null): number {
+  if (bundle.guests === undefined || wanted === undefined || wanted === null) return bundle.serves;
+  if (!Number.isFinite(wanted)) return bundle.serves;
+  return Math.min(bundle.guests.max, Math.max(bundle.guests.min, Math.round(wanted)));
+}
+
+/** A quantity as the stall sells it: up to its step, never under its minimum. */
+export function sellableQuantity(
+  product: Pick<ProductDto, 'quantityStep' | 'minQuantity'>,
+  quantity: number,
+): number {
+  const step = product.quantityStep || 1;
+  const min = product.minQuantity || step;
+  // A millionth of a step over is the float's arithmetic, not a guest: 1.5 stays 1.5.
+  const stepped = Math.ceil(quantity / step - 1e-6) * step;
+  return Math.round(Math.max(min, stepped) * 1000) / 1000;
+}
+
+/** How much of a line `guests` people need. */
+function lineFor(line: BundleLine, bundle: Bundle, guests: number): number {
+  if (guests === bundle.serves) return line.quantity;
+  return line.covers !== undefined
+    ? Math.ceil(guests / line.covers) * line.quantity
+    : (line.quantity * guests) / bundle.serves;
+}
+
+/**
+ * Matches a set against what the API sells right now, for `guests` people (the set's own company
+ * when omitted): each line grows with the guests and is rounded up to what the stall sells.
+ */
+export function resolveBundle(
+  bundle: Bundle,
+  products: readonly ProductDto[],
+  guests: number = bundle.serves,
+): ResolvedBundle {
   const bySlug = new Map(products.map((product) => [product.slug, product]));
   const lines: ResolvedBundleLine[] = [];
   const missing: string[] = [];
@@ -274,18 +331,45 @@ export function resolveBundle(bundle: Bundle, products: readonly ProductDto[]): 
       missing.push(line.productSlug);
       continue;
     }
+    // Always as the stall sells it: a set's 200 g of raisins is the stall's half a kilo.
+    const quantity = sellableQuantity(product, lineFor(line, bundle, guests));
     lines.push({
       product,
-      quantity: line.quantity,
+      quantity,
       // As the order will charge it: a quantity tier counts here too.
-      total: productLineTotal(product, line.quantity),
+      total: productLineTotal(product, quantity),
     });
   }
+  const total = lines.reduce((sum, line) => sum + line.total, 0);
   return {
     bundle,
+    guests,
     lines,
     missing,
-    total: lines.reduce((sum, line) => sum + line.total, 0),
+    total,
+    perGuest: Math.round(total / guests),
     storeIds: [...new Set(lines.map((line) => line.product.storeId))],
   };
+}
+
+/** «Плов на 12 человек» for a set cooked for any company; the set's own title otherwise. */
+export function bundleTitle(t: T, bundle: Bundle, guests: number): string {
+  return bundle.dish === undefined
+    ? tr(bundle.title, t.locale)
+    : t.n('bundle.dishFor', guests, { dish: tr(bundle.dish, t.locale) });
+}
+
+/**
+ * The guest stepper's next count: one by one for a family, by fives for a wedding — a toy of 200 is
+ * not 180 taps — and always within the set's range.
+ */
+export function stepGuests(bundle: Bundle, guests: number, direction: 1 | -1): number {
+  const range = bundle.guests ?? { min: bundle.serves, max: bundle.serves };
+  const big = direction === 1 ? guests >= 20 : guests > 20;
+  const next = big
+    ? direction === 1
+      ? Math.floor(guests / 5) * 5 + 5
+      : Math.ceil(guests / 5) * 5 - 5
+    : guests + direction;
+  return Math.min(range.max, Math.max(range.min, next));
 }

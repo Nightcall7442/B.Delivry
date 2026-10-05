@@ -812,4 +812,16 @@ export const ru = {
   'look.justNow': 'снято только что',
   'look.minutesAgo': 'снято {count} мин назад',
   'look.hoursAgo': 'снято {count} ч назад',
+  // ---------------------------------------------------------------- «Ош на N человек»
+  'bundle.dishFor.one': '{dish} на {count} человека',
+  'bundle.dishFor.few': '{dish} на {count} человека',
+  'bundle.dishFor.many': '{dish} на {count} человек',
+  'bundle.guests': 'Гостей',
+  'bundle.perGuest': '≈ {amount} на человека',
+  'bundle.fewer': 'Меньше гостей',
+  'bundle.more': 'Больше гостей',
+  'osh.eyebrow': 'Плов на компанию',
+  'osh.question': 'Сколько гостей ждёте?',
+  'osh.hint': 'Посчитаем мясо, рис, морковь и масло по правилу казана — с прилавков рядом',
+  'osh.cta': 'Собрать плов',
 } as const;

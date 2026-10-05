@@ -2079,3 +2079,112 @@
   font-size: 10px;
   color: var(--cream-muted);
 }
+
+/* «Ош на N человек»: the guests, counted on the scene's glass. */
+.guestRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.guestLabel {
+  flex: 1;
+  font-size: var(--fs-body);
+  font-weight: 800;
+  color: var(--cream-muted);
+}
+.guestStep {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-edge);
+  background: var(--glass);
+  color: var(--cream);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.guestStepMore {
+  background: var(--pomegranate);
+  border-color: var(--pomegranate);
+}
+.guestStep:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.guestCount {
+  min-width: 56px;
+  text-align: center;
+  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+  font-weight: 700;
+  font-size: var(--fs-headline);
+  line-height: 34px;
+  color: var(--cream);
+  font-variant-numeric: tabular-nums;
+}
+.guestPanel {
+  margin-top: 14px;
+  max-width: 420px;
+  padding: 14px;
+  border-radius: var(--radius-paper);
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  backdrop-filter: var(--glass-blur);
+}
+.guestPer {
+  margin: 6px 0 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--cream-muted);
+  font-variant-numeric: tabular-nums;
+}
+.oshCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: var(--radius-paper);
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow);
+}
+.oshEyebrow {
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ochre-light);
+}
+.oshQuestion {
+  margin: 0;
+  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+  font-weight: 700;
+  font-size: var(--fs-title);
+  line-height: 26px;
+  color: var(--cream);
+}
+.oshHint {
+  margin: -4px 0 0;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--cream-muted);
+}
+.oshCta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--pomegranate);
+  color: var(--cream);
+  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+  font-weight: 700;
+  font-size: var(--fs-lead);
+  text-decoration: none;
+}

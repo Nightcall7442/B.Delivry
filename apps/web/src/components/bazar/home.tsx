@@ -16,6 +16,7 @@ import {
   closesToday,
   dealsOf,
   degrees,
+  getBundle,
   isEvening,
   isShopfront,
   photo,
@@ -32,6 +33,7 @@ import { Bell } from '@/components/go/icons';
 import { useAddress, useDeliverable } from '@/features/address';
 import { useAuth } from '@/features/auth';
 
+import { GuestStepper } from './guest-stepper';
 import { BasketBar, ProductCard } from './index';
 import s from './bazar.module.css';
 
@@ -86,6 +88,31 @@ function PriceBoard({
         })}
       </span>
     </Link>
+  );
+}
+
+const PLOV = getBundle('plov');
+
+/**
+ * «Ош на N человек»: how many guests, and the plov is counted by the kazan's rule — meat, rice,
+ * carrots, oil and cumin from the stalls nearby — one tap to the set for that company.
+ */
+function OshBoard({ locale, home }: { locale: string; home: string }) {
+  const t = createT(locale);
+  // A table of friends: where the stepper starts.
+  const [guests, setGuests] = useState(8);
+  if (!PLOV) return null;
+  return (
+    <section className={s.oshCard} aria-label={t('osh.eyebrow')}>
+      <span className={s.oshEyebrow}>{t('osh.eyebrow')}</span>
+      <h2 className={s.oshQuestion}>{t('osh.question')}</h2>
+      <p className={s.oshHint}>{t('osh.hint')}</p>
+      <GuestStepper bundle={PLOV} guests={guests} onChange={setGuests} t={t} />
+      <Link href={`${home}/bundles/${PLOV.slug}?guests=${guests}`} className={s.oshCta}>
+        <span>{t('osh.cta')}</span>
+        <span aria-hidden>→</span>
+      </Link>
+    </section>
   );
 }
 
@@ -270,6 +297,8 @@ export function BazaarHome({
             </div>
           </>
         ) : null}
+
+        <OshBoard locale={locale} home={home} />
 
         {shops.length > 0 ? (
           <>

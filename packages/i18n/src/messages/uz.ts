@@ -775,4 +775,15 @@ export const uz: Catalogue = {
   'look.justNow': 'hozirgina olingan',
   'look.minutesAgo': '{count} daqiqa oldin olingan',
   'look.hoursAgo': '{count} soat oldin olingan',
+  // ---------------------------------------------------------------- «Ош на N человек»
+  'bundle.dishFor.other': '{count} kishilik {dish}',
+  'bundle.guests': 'Mehmonlar',
+  'bundle.perGuest': '≈ har kishiga {amount}',
+  'bundle.fewer': 'Kamroq mehmon',
+  'bundle.more': 'Koʻproq mehmon',
+  'osh.eyebrow': 'Davraga osh',
+  'osh.question': 'Nechta mehmon kutyapsiz?',
+  'osh.hint':
+    'Goʻsht, guruch, sabzi va yogʻni qozon qoidasi boʻyicha hisoblaymiz — yaqin rastalardan',
+  'osh.cta': 'Osh yigʻish',
 };
