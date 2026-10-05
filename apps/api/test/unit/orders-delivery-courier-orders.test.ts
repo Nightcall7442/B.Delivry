@@ -41,7 +41,11 @@ const items = [
   { id: 'i-pcs', unit: 'PCS', quantity: 3, unitPrice: 5_000 },
 ];
 
-function service(status: OrderStatus, courierId: string | null = 'courier-1') {
+function service(
+  status: OrderStatus,
+  courierId: string | null = 'courier-1',
+  extra: Record<string, unknown> = {},
+) {
   const moves: { from: OrderStatus; to: OrderStatus; actorId: string | null }[] = [];
   const applied: { orderId: string; actuals: unknown; guard: unknown }[] = [];
   const published: { name: string; payload: Record<string, unknown> }[] = [];
@@ -60,6 +64,7 @@ function service(status: OrderStatus, courierId: string | null = 'courier-1') {
     courierId,
     items,
     store: { vendorId: 'vendor-stall' },
+    ...extra,
   });
   const svc = new OrdersService({
     prisma: { $transaction: async (fn: (tx: unknown) => unknown) => fn({}) },
@@ -236,6 +241,49 @@ describe('actual-quantities', () => {
         missing: [expect.objectContaining({ orderItemId: 'i-pcs', quantity: 0 })],
       }),
     ]);
+  });
+
+  it('once paid, only lets the bill go down: what went back cannot be taken again', async () => {
+    // 2 kg at 10 000 + 500 g at 20 + 3 pieces at 5 000 + 5 000 delivery = 50 000, paid.
+    const paid = {
+      paymentStatus: 'CAPTURED',
+      deliveryFee: 5_000,
+      serviceFee: 0,
+      discount: 0,
+      total: 50_000,
+    };
+    const { svc, applied } = service(ORDER_STATUS.PICKING_UP, 'courier-1', paid);
+    await expect(
+      runWithContext(ownCourier, () => svc.reprice('o1', [kg(2.5)])),
+    ).rejects.toBeInstanceOf(ConflictError);
+    await runWithContext(ownCourier, () => svc.reprice('o1', [kg(1.8)]));
+    expect(applied).toHaveLength(1);
+
+    // The dill was paid back as missing; finding it after all would hand it over for nothing.
+    const refunded = {
+      ...paid,
+      paymentStatus: 'PARTIALLY_REFUNDED',
+      total: 35_000,
+      items: items.map((item) => (item.id === 'i-pcs' ? { ...item, actualQuantity: 0 } : item)),
+    };
+    const after = service(ORDER_STATUS.PICKING_UP, 'courier-1', refunded);
+    await expect(
+      runWithContext(ownCourier, () =>
+        after.svc.reprice('o1', [{ orderItemId: 'i-pcs', actualQuantity: 3 }]),
+      ),
+    ).rejects.toBeInstanceOf(ConflictError);
+    expect(after.applied).toEqual([]);
+  });
+
+  it('names a line as missing once: a later save of the sheet does not tell the customer again', async () => {
+    const reported = items.map((item) =>
+      item.id === 'i-pcs' ? { ...item, actualQuantity: 0 } : item,
+    );
+    const { svc, published } = service(ORDER_STATUS.PICKING_UP, 'courier-1', { items: reported });
+    await runWithContext(ownCourier, () =>
+      svc.reprice('o1', [kg(2), { orderItemId: 'i-pcs', actualQuantity: 0 }]),
+    );
+    expect(published.map((event) => event.payload['missing'])).toEqual([[]]);
   });
 
   it('does not reprice a bag with nothing left in it: that is a failed order', async () => {

@@ -160,6 +160,23 @@ export class PaymentsRepository extends BaseRepository {
     return result.count === 1;
   }
 
+  /**
+   * Compare-and-set on what was already returned: the claim holds only if nobody returned anything
+   * since `seen` was read. Two handlers that both read the same row and both decided «20 000 back»
+   * cannot both pay it — the second finds the amount moved and claims nothing.
+   */
+  async claimRefundFrom(id: string, seen: number, amount: number): Promise<boolean> {
+    const result = await this.prisma.payment.updateMany({
+      where: {
+        ...this.scoped({ id }),
+        status: { in: ['CAPTURED', 'PARTIALLY_REFUNDED'] },
+        refundedAmount: seen,
+      },
+      data: { refundedAmount: { increment: amount } },
+    });
+    return result.count === 1;
+  }
+
   /** The provider or the wallet refused after the amount was claimed: give it back. */
   async releaseRefund(id: string, amount: number): Promise<void> {
     await this.prisma.payment.updateMany({

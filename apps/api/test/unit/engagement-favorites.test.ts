@@ -221,6 +221,13 @@ describe('saving a heart', () => {
     await runWithContext(asCustomer, () => svc.add('store', VISIBLE_STORE));
     expect(rows).toHaveLength(MAX_FAVORITES + 1);
   });
+
+  it('at the cap, saving what is already saved is still a no-op, not a refusal', async () => {
+    const full = Array.from({ length: MAX_FAVORITES - 1 }, (_, i) => row({ productId: `p-${i}` }));
+    const { svc, rows } = service([...full, row({ productId: VISIBLE_PRODUCT })]);
+    await runWithContext(asCustomer, () => svc.add('product', VISIBLE_PRODUCT));
+    expect(rows).toHaveLength(MAX_FAVORITES);
+  });
 });
 
 describe('the list and taking a heart off', () => {

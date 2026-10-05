@@ -53,7 +53,9 @@ export function SearchScreen() {
   const [draft, setDraft] = useState(q);
   // «все скидки →» on the home opens the search sorted by the cut.
   const [sort, setSort] = useState<SortKey>(
-    sortParam !== undefined && sortParam in SORTERS ? (sortParam as SortKey) : 'default',
+    sortParam !== undefined && Object.hasOwn(SORTERS, sortParam)
+      ? (sortParam as SortKey)
+      : 'default',
   );
 
   const { address } = useAddress();

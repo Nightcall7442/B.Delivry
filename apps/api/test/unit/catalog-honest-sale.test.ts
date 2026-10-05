@@ -1,9 +1,10 @@
 /**
  * «Честная скидка». A seller types the sale price only; the struck-through price is the lowest the
  * good cost over the last week, read from the price history — so a price raised on Monday to be
- * «cut» on Tuesday shows no discount at all, and an «old price» typed by hand at or below the price
- * is refused. A price raised to or past the old one ends the sale by itself. A real cut is an event
- * the customers who saved the good hear about, once a day at most.
+ * «cut» on Tuesday shows no discount at all, and there is no «old price» to type: an edit may only
+ * end a sale, and a spreadsheet's «old_price» goes through the same honest cut. A price raised to
+ * or past the old one ends the sale by itself. A real cut is an event the customers who saved the
+ * good hear about, once a day at most.
  *
  * Real ProductsService and the favorites sale handler; the repository, the stores, the cache and
  * the queue are fakes.
@@ -12,13 +13,17 @@ import { effectivePermissions, type AuthenticatedUser } from '@bazar/auth';
 import { ROLE, SALE, type Role } from '@bazar/constants';
 import { money } from '@bazar/payments';
 import { describe, expect, it } from 'vitest';
-import { ConflictError, ForbiddenError, ValidationError } from '../../src/common/errors/index.js';
+import { ConflictError, ForbiddenError } from '../../src/common/errors/index.js';
 import { runWithContext } from '../../src/common/tenant/tenant-context.js';
 import type { RequestContext } from '../../src/common/types/request-context.js';
 import type { DomainEvent, EventBus, EventHandler } from '../../src/events/event-bus.js';
 import type { EventName } from '../../src/events/event-types.js';
 import { registerFavoritesSaleHandlers } from '../../src/events/handlers/favorites-sale.handler.js';
 import { PRODUCT_EVENT } from '../../src/modules/products/domain/product.events.js';
+import {
+  createProductSchema,
+  updateProductSchema,
+} from '../../src/modules/products/schemas/index.js';
 import { ProductsService } from '../../src/modules/products/service/products.service.js';
 
 const TENANT = 't1';
@@ -93,6 +98,13 @@ function world(row: Partial<Row>, history: [number, number][]) {
       prices.push({ price: next.price, validFrom: new Date() });
       return product;
     },
+    async categoryIdsBySlug() {
+      return new Map<string, string>();
+    },
+    async findByNameRu() {
+      return 'p1';
+    },
+    async replaceImages() {},
     async update(
       _id: string,
       input: { price?: { amount: number }; oldPrice?: { amount: number } | null },
@@ -146,22 +158,31 @@ describe('starting a sale', () => {
     expect(product).toMatchObject({ price: 22_000_00, oldPrice: 25_000_00 });
   });
 
-  it('keeps the price the sale started from when the cut goes deeper or shallower', async () => {
+  it('measures every cut anew: a deeper one is struck through at the price it cut', async () => {
     const { service, product, published } = world({ price: 20_000_00 }, [[3, 20_000_00]]);
     await runWithContext(owner, () => service.startSale('p1', som(16_000)));
+    expect(product).toMatchObject({ price: 16_000_00, oldPrice: 20_000_00 });
     await runWithContext(owner, () => service.startSale('p1', som(14_000)));
-    expect(product).toMatchObject({ price: 14_000_00, oldPrice: 20_000_00 });
-    await runWithContext(owner, () => service.startSale('p1', som(17_000)));
-    expect(product).toMatchObject({ price: 17_000_00, oldPrice: 20_000_00 });
-    // Two cuts are news; climbing back is not.
-    expect(published.map((e) => e.name)).toEqual([
-      PRODUCT_EVENT.SALE_STARTED,
-      PRODUCT_EVENT.SALE_STARTED,
-    ]);
-    expect(published[1]?.payload).toMatchObject({ price: 14_000_00, oldPrice: 20_000_00 });
-    // Not below where it started: refused.
+    // 16 000 was charged this week: that is the honest «было».
+    expect(product).toMatchObject({ price: 14_000_00, oldPrice: 16_000_00 });
+    // Climbing back through a «sale» is no cut at all.
     await expect(
-      runWithContext(owner, () => service.startSale('p1', som(20_000))),
+      runWithContext(owner, () => service.startSale('p1', som(17_000))),
+    ).rejects.toBeInstanceOf(ConflictError);
+    expect(published.map((e) => e.payload)).toEqual([
+      expect.objectContaining({ price: 16_000_00, oldPrice: 20_000_00 }),
+      expect.objectContaining({ price: 14_000_00, oldPrice: 16_000_00 }),
+    ]);
+  });
+
+  it('does not lean on a struck-through price older than the week', async () => {
+    // On sale at 15 000 «from 30 000» for a month: the week knows only 15 000.
+    const { service } = world({ price: 15_000_00, oldPrice: 30_000_00 }, [
+      [40, 30_000_00],
+      [30, 15_000_00],
+    ]);
+    await expect(
+      runWithContext(owner, () => service.startSale('p1', som(16_000))),
     ).rejects.toBeInstanceOf(ConflictError);
   });
 
@@ -184,16 +205,25 @@ describe('starting a sale', () => {
 });
 
 describe('an old price through the ordinary edit', () => {
-  it('is refused at or below the price', async () => {
-    const { service } = world({ price: 20_000_00 }, []);
-    await expect(
-      runWithContext(owner, () => service.update('p1', { oldPrice: som(20_000) })),
-    ).rejects.toBeInstanceOf(ValidationError);
-    await expect(
-      runWithContext(owner, () =>
-        service.update('p1', { price: som(30_000), oldPrice: som(25_000) }),
-      ),
-    ).rejects.toBeInstanceOf(ValidationError);
+  it('cannot be typed, on a new good or an edit — only taken away', () => {
+    const base = {
+      storeId: '00000000-0000-4000-8000-000000000001',
+      name: { ru: 'Помидоры' },
+      unit: 'KG',
+      price: som(10_000),
+      images: [{ url: 'https://cdn.example/a.jpg' }],
+    };
+    expect(createProductSchema.parse({ ...base, oldPrice: som(99_000) })).not.toHaveProperty(
+      'oldPrice',
+    );
+    expect(updateProductSchema.safeParse({ oldPrice: som(99_000) }).success).toBe(false);
+    expect(updateProductSchema.parse({ oldPrice: null })).toEqual({ oldPrice: null });
+  });
+
+  it('ends a sale when asked', async () => {
+    const { service, product } = world({ price: 15_000_00, oldPrice: 20_000_00 }, []);
+    await runWithContext(owner, () => service.update('p1', { oldPrice: null }));
+    expect(product.oldPrice).toBeNull();
   });
 
   it('goes away by itself when the price is raised to it or past it', async () => {
@@ -202,6 +232,23 @@ describe('an old price through the ordinary edit', () => {
     expect(product).toMatchObject({ price: 18_000_00, oldPrice: 20_000_00 });
     await runWithContext(owner, () => service.update('p1', { price: som(21_000) }));
     expect(product).toMatchObject({ price: 21_000_00, oldPrice: null });
+  });
+});
+
+describe('a spreadsheet’s old_price', () => {
+  const csv = (price: number, old: number) =>
+    `name_ru;price;unit;image_url;old_price\nПомидоры;${price};KG;https://cdn.example/t.jpg;${old}`;
+
+  it('goes through the honest cut: struck through at the week’s lowest, not at the column', async () => {
+    const { service, product } = world({ price: 20_000_00 }, [[3, 20_000_00]]);
+    await runWithContext(owner, () => service.importCsv('s1', csv(15_000, 99_000)));
+    expect(product).toMatchObject({ price: 15_000_00, oldPrice: 20_000_00 });
+  });
+
+  it('is no sale when the row is no cut: the row’s price, nothing struck through', async () => {
+    const { service, product } = world({ price: 20_000_00 }, [[3, 20_000_00]]);
+    await runWithContext(owner, () => service.importCsv('s1', csv(25_000, 99_000)));
+    expect(product).toMatchObject({ price: 25_000_00, oldPrice: null });
   });
 });
 

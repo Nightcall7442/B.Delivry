@@ -17,45 +17,35 @@ export const productUnitSchema = z.nativeEnum(PRODUCT_UNIT);
 /** Quantities are fractional for weighed goods, so this is not an int. */
 export const quantitySchema = z.coerce.number().positive().max(10_000);
 
-export const createProductSchema = z
-  .object({
-    storeId: idSchema,
-    categoryId: idSchema.optional(),
-    name: translatedSchema,
-    description: translatedSchema.optional(),
-    unit: productUnitSchema,
-    price: positiveMoneySchema,
-    oldPrice: positiveMoneySchema.optional(),
-    minQuantity: quantitySchema.default(1),
-    quantityStep: quantitySchema.default(1),
-    weightGrams: z.coerce.number().int().positive().max(500_000).optional(),
-    // A product without a photograph is not on the counter: the app shows nothing without one.
-    images: z.array(imageSchema).min(1).max(LIMITS.PRODUCT_MAX_IMAGES),
-    stock: z.coerce.number().min(0).optional(),
-  })
-  .refine((v) => v.oldPrice === undefined || v.oldPrice.amount > v.price.amount, {
-    message: 'oldPrice must be higher than price',
-    path: ['oldPrice'],
-  });
+/**
+ * There is no «old price» to type, here or on an edit: the struck-through price is the lowest of the
+ * last week from the price history («честная скидка», `PUT /products/:id/sale`). A number a seller
+ * could type would be a number a seller could inflate.
+ */
+export const createProductSchema = z.object({
+  storeId: idSchema,
+  categoryId: idSchema.optional(),
+  name: translatedSchema,
+  description: translatedSchema.optional(),
+  unit: productUnitSchema,
+  price: positiveMoneySchema,
+  minQuantity: quantitySchema.default(1),
+  quantityStep: quantitySchema.default(1),
+  weightGrams: z.coerce.number().int().positive().max(500_000).optional(),
+  // A product without a photograph is not on the counter: the app shows nothing without one.
+  images: z.array(imageSchema).min(1).max(LIMITS.PRODUCT_MAX_IMAGES),
+  stock: z.coerce.number().min(0).optional(),
+});
 
 export const updateProductSchema = createProductSchema
-  .innerType()
   .partial()
   .omit({ storeId: true })
   .extend({
-    // null ends a sale: the struck-through price goes away.
-    oldPrice: positiveMoneySchema.nullable().optional(),
+    // Only null: it ends a sale. A sale is started through `PUT /products/:id/sale`.
+    oldPrice: z.null().optional(),
     available: z.boolean().optional(),
     tags: z.array(z.nativeEnum(STORE_TAG)).max(6).optional(),
-  })
-  .refine(
-    (v) =>
-      v.oldPrice === undefined ||
-      v.oldPrice === null ||
-      v.price === undefined ||
-      v.oldPrice.amount > v.price.amount,
-    { message: 'oldPrice must be higher than price', path: ['oldPrice'] },
-  );
+  });
 
 /** «Честная скидка»: only the new price is typed; the struck-through one comes from the history. */
 export const productSaleSchema = z.object({ price: positiveMoneySchema });

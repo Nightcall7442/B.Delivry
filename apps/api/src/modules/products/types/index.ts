@@ -11,7 +11,6 @@ export interface CreateProductInput {
   description?: Record<string, string> | undefined;
   unit: ProductUnit;
   price: Money;
-  oldPrice?: Money | undefined;
   minQuantity?: number | undefined;
   quantityStep?: number | undefined;
   weightGrams?: number | undefined;
@@ -19,9 +18,9 @@ export interface CreateProductInput {
   stock?: number | undefined;
 }
 
-export type UpdateProductInput = Partial<Omit<CreateProductInput, 'storeId' | 'oldPrice'>> & {
-  /** null ends a sale. */
-  oldPrice?: Money | null | undefined;
+export type UpdateProductInput = Partial<Omit<CreateProductInput, 'storeId'>> & {
+  /** Only null: ends a sale. A sale starts through `startSale`, never with a typed price. */
+  oldPrice?: null | undefined;
   available?: boolean;
   tags?: string[] | undefined;
 };

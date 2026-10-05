@@ -93,7 +93,8 @@ export const actualQuantitiesSchema = z.object({
       z.object({
         orderItemId: idSchema,
         /** What was actually bought; 0 = the stall did not have it, the line leaves the bill. */
-        actualQuantity: z.coerce.number().min(0).max(10_000),
+        // A number, not coerced: an empty or null field must not quietly take a line off the bill.
+        actualQuantity: z.number().min(0).max(10_000),
         /** The scale, photographed: what the customer sees next to the weight. */
         photoUrl: httpUrl.optional(),
       }),

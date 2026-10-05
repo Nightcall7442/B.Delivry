@@ -507,6 +507,14 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     vendors: new VendorsController(vendors),
   };
 
+  const vendorUserOf = async (storeId: string) =>
+    (
+      await prisma.store.findUnique({
+        where: { id: storeId },
+        select: { vendor: { select: { userId: true } } },
+      })
+    )?.vendor.userId ?? null;
+
   // Wiring the reactions last, once every service exists.
   registerEventHandlers({
     events,
@@ -516,19 +524,9 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     autoAssign: (tenantId) => admin.autoAssign(tenantId),
     stats: { couriers, customers },
     paymentSync: { orders, payments },
-    guarantee: { orders, payments, queue },
+    guarantee: { orders, payments, queue, vendorUserOf },
     perks: { customers, couriers, orders, payments, stores, queue },
-    recipient: {
-      orders,
-      notifications,
-      vendorUserOf: async (storeId) =>
-        (
-          await prisma.store.findUnique({
-            where: { id: storeId },
-            select: { vendor: { select: { userId: true } } },
-          })
-        )?.vendor.userId ?? null,
-    },
+    recipient: { orders, notifications, vendorUserOf },
     delivery,
     favorites,
   });

@@ -18,6 +18,7 @@ export interface FavoritesSaleDeps {
 }
 
 const sum = (minor: number) => `${(minor / 100).toLocaleString('ru-RU')} сум`;
+const ENQUEUE_BATCH = 100;
 
 export function registerFavoritesSaleHandlers(events: EventBus, deps: FavoritesSaleDeps): void {
   events.on(PRODUCT_EVENT.SALE_STARTED, async (event) => {
@@ -31,9 +32,9 @@ export function registerFavoritesSaleHandlers(events: EventBus, deps: FavoritesS
     const percent = Math.round((1 - price / oldPrice) * 100);
     // Tashkent's date: a second cut the same day is not a second push.
     const day = new Date(event.at.getTime() + 5 * 3_600_000).toISOString().slice(0, 10);
-    for (const customerId of savers) {
+    const tell = (customerId: string) => {
       const key = `sale:${productId}:${day}:${customerId}`;
-      await deps.queue.enqueue(
+      return deps.queue.enqueue(
         QUEUE.NOTIFICATIONS,
         JOB.SEND_NOTIFICATION,
         {
@@ -50,6 +51,10 @@ export function registerFavoritesSaleHandlers(events: EventBus, deps: FavoritesS
         },
         { jobId: key },
       );
+    };
+    // The seller's request waits for this: in batches, not one round trip per saver.
+    for (let i = 0; i < savers.length; i += ENQUEUE_BATCH) {
+      await Promise.all(savers.slice(i, i + ENQUEUE_BATCH).map(tell));
     }
   });
 }

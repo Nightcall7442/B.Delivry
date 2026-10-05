@@ -1011,6 +1011,8 @@ model Favorite {
   @@unique([customerId, productId])
   @@unique([customerId, storeId])
   @@index([tenantId])
+  // «Подешевело»: who saved this good, read on every sale.
+  @@index([productId])
   @@map("favorites")
 }
 

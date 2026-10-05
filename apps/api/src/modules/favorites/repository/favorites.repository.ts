@@ -19,6 +19,13 @@ export class FavoritesRepository extends BaseRepository {
     };
   }
 
+  async has(customerId: string, kind: FavoriteKind, targetId: string): Promise<boolean> {
+    const found = await this.prisma.favorite.count({
+      where: this.scoped({ customerId, [column(kind)]: targetId }),
+    });
+    return found > 0;
+  }
+
   count(customerId: string, kind: FavoriteKind): Promise<number> {
     return this.prisma.favorite.count({
       where: this.scoped({ customerId, [column(kind)]: { not: null } }),

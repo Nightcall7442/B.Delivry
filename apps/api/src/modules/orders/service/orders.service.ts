@@ -11,6 +11,7 @@ import {
   ORDER_STATUS,
   type OrderStatus,
   PAYMENT_METHOD,
+  PAYMENT_STATUS,
   PERMISSION,
   type PaymentMethod,
   type PaymentStatus,
@@ -718,18 +719,33 @@ export class OrdersService extends BaseService {
     if (order.items.every((item) => bought(item) === 0)) {
       throw new ConflictError('Nothing is left to deliver: fail the order instead');
     }
-    // Not there at all, or counted goods short; a lighter weighing is the scale, not a shortage.
-    const missing = order.items
-      .filter(
-        (item) =>
-          bought(item) === 0 ||
-          (!WEIGHTED_UNITS.includes(item.unit) && bought(item) < Number(item.quantity)),
-      )
-      .map((item) => ({
-        orderItemId: item.id,
-        name: item.name as Record<string, string>,
-        quantity: bought(item),
-      }));
+    // Paid already: what goes back cannot be taken again, so from here the bill only goes down — a
+    // line found after all, or a heavier weighing, is not handed over for money that is not there.
+    if (
+      order.paymentStatus === PAYMENT_STATUS.CAPTURED ||
+      order.paymentStatus === PAYMENT_STATUS.PARTIALLY_REFUNDED
+    ) {
+      const subtotal = order.items.reduce(
+        (sum, item) => sum + Math.round(item.unitPrice * bought(item)),
+        0,
+      );
+      const total = Math.max(0, subtotal + order.deliveryFee + order.serviceFee - order.discount);
+      if (total > order.total) {
+        throw new ConflictError('The order is paid: its bill can only go down');
+      }
+    }
+    // Newly not there, or counted goods newly short — what the customer has not been told yet; a
+    // lighter weighing is the scale, not a shortage.
+    const missing = actuals.flatMap((actual) => {
+      const item = lines.get(actual.orderItemId);
+      if (item === undefined) return [];
+      const before = boughtSoFar(item);
+      const now = actual.actualQuantity;
+      const short = now === 0 || (!WEIGHTED_UNITS.includes(item.unit) && now < before);
+      return short && now < before
+        ? [{ orderItemId: item.id, name: item.name as Record<string, string>, quantity: now }]
+        : [];
+    });
 
     const { previousTotal, total } = await runInTransaction(this.prisma, (tx) =>
       this.repository.applyActualQuantities(orderId, actuals, tx, {

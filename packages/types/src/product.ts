@@ -48,7 +48,6 @@ export interface CreateProductDto {
   description?: Translated;
   unit: ProductUnit;
   price: MoneyDto;
-  oldPrice?: MoneyDto;
   minQuantity?: number;
   quantityStep?: number;
   weightGrams?: number;
@@ -56,9 +55,9 @@ export interface CreateProductDto {
   stock?: number;
 }
 
-export type UpdateProductDto = Partial<Omit<CreateProductDto, 'storeId' | 'oldPrice'>> & {
-  /** null ends a sale. */
-  oldPrice?: MoneyDto | null;
+export type UpdateProductDto = Partial<Omit<CreateProductDto, 'storeId'>> & {
+  /** Only null: ends a sale. A sale starts through the sale endpoint, never with a typed price. */
+  oldPrice?: null;
   available?: boolean;
   tags?: StoreTag[];
 };

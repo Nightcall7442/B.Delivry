@@ -204,7 +204,10 @@ export class PaymentsService extends BaseService {
       customerId: order.customerId,
       amount: this.orders.totalsOf(order).total,
       description: `Order ${order.number}`,
-      paid: order.paymentStatus === PAYMENT_STATUS.CAPTURED,
+      // Partly refunded (a line the stall did not have) is still paid: never a second charge.
+      paid:
+        order.paymentStatus === PAYMENT_STATUS.CAPTURED ||
+        order.paymentStatus === PAYMENT_STATUS.PARTIALLY_REFUNDED,
       closed: isTerminalOrderStatus(order.status),
       refundable: order.status !== 'DELIVERED',
     };
@@ -570,21 +573,78 @@ export class PaymentsService extends BaseService {
 
   /**
    * The bill went down after the money was taken — a line the stall did not have, a lighter
-   * weighing: what was paid above `total` goes back the way it came (a card through its provider,
-   * the balance to the balance). Measured against what is still held, so a second correction never
-   * returns the first one's money again. The platform's own call (the guarantee handler).
+   * weighing: what was paid above the order's total as it stands now goes back to the balance (the
+   * gateways cannot return part of a payment; the balance is where every guarantee pays out). Read
+   * fresh, claimed with a compare-and-set, so a second correction or a double tap never returns the
+   * same money twice. The platform's own call (the guarantee handler).
    */
-  async refundOverpayment(orderId: string, total: number): Promise<Money | null> {
-    const held = (await this.repository.findBySubject(orderId)).find(
+  async refundOverpayment(orderId: string): Promise<Money | null> {
+    const held = await this.heldFor(orderId);
+    if (held === undefined) return null;
+    const order = await this.orders.get(orderId);
+    const over = held.amount - held.refundedAmount - order.total;
+    if (over <= 0) return null;
+    return this.returnToBalance(held, over, 'bought less than was paid for');
+  }
+
+  /**
+   * A paid order that will never reach the door: what is still held — not the bill, which may have
+   * moved since — goes back to the balance. The platform's own call (the guarantee handler).
+   */
+  async refundRemainder(orderId: string, reason: string): Promise<Money | null> {
+    const held = await this.heldFor(orderId);
+    if (held === undefined) return null;
+    const rest = held.amount - held.refundedAmount;
+    if (rest <= 0) return null;
+    return this.returnToBalance(held, rest, reason);
+  }
+
+  /** The payment that took the order's money, still holding some of it. */
+  private async heldFor(orderId: string): Promise<Payment | undefined> {
+    return (await this.repository.findBySubject(orderId)).find(
       (payment) =>
         payment.status === PAYMENT_STATUS.CAPTURED ||
         payment.status === PAYMENT_STATUS.PARTIALLY_REFUNDED,
     );
-    if (held === undefined) return null;
-    const over = held.amount - held.refundedAmount - total;
-    if (over <= 0) return null;
-    const amount = money(over, held.currency as Currency);
-    await this.refund(held.id, { amount, reason: 'bought less than was paid for' });
+  }
+
+  private async returnToBalance(
+    payment: Payment,
+    minor: number,
+    reason: string,
+  ): Promise<Money | null> {
+    if (!(await this.repository.claimRefundFrom(payment.id, payment.refundedAmount, minor))) {
+      return null;
+    }
+    const amount = money(minor, payment.currency as Currency);
+    try {
+      const userId = await this.repository.customerUserId(payment.customerId);
+      if (userId === null) throw new NotFoundError('Customer', payment.customerId);
+      await this.creditWallet({
+        userId,
+        type: 'REFUND',
+        amount,
+        orderId: payment.orderId,
+        comment: reason,
+      });
+    } catch (error) {
+      await this.repository.releaseRefund(payment.id, minor);
+      throw error;
+    }
+    const full = payment.refundedAmount + minor >= payment.amount;
+    const updated = await this.repository.updateStatus(
+      payment.id,
+      full ? PAYMENT_STATUS.REFUNDED : PAYMENT_STATUS.PARTIALLY_REFUNDED,
+    );
+    // The order follows (order-payment handler) and the customer is told (order-notifications).
+    await this.publish(
+      createEvent(PAYMENT_EVENT.REFUNDED, {
+        ...this.eventPayload(updated),
+        refundedAmount: minor,
+        reason,
+        full,
+      }),
+    );
     return amount;
   }
 

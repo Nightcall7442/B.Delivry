@@ -105,19 +105,16 @@ export class ProductsService extends BaseService {
   }
 
   /**
-   * The struck-through price only ever stands above the price. One typed at or below it is a
-   * mistake; a price raised to it or past it ends the sale by itself, rather than leaving a
-   * «discount» that is a markup.
+   * The struck-through price only ever stands above the price. An edit may end a sale (null), never
+   * start or move one; and a price raised to it or past it ends the sale by itself, rather than
+   * leaving a «discount» that is a markup.
    */
   private oldPriceAfter(
-    product: { price: number; oldPrice: number | null; currency: string },
+    product: { price: number; oldPrice: number | null },
     input: UpdateProductInput,
-  ): { oldPrice?: Money | null } {
+  ): { oldPrice?: null } {
+    if (input.oldPrice === null) return { oldPrice: null };
     const price = input.price?.amount ?? product.price;
-    if (input.oldPrice !== undefined && input.oldPrice !== null && input.oldPrice.amount <= price) {
-      throw new ValidationError({ oldPrice: ['The old price must be higher than the price'] });
-    }
-    if (input.oldPrice !== undefined) return { oldPrice: input.oldPrice };
     if (product.oldPrice !== null && product.oldPrice <= price) return { oldPrice: null };
     return {};
   }
@@ -125,9 +122,10 @@ export class ProductsService extends BaseService {
   /**
    * «Честная скидка». The seller types the new price only; the struck-through one is what the good
    * cost — the lowest price of the last `SALE.REFERENCE_DAYS` days, from the price history — so a
-   * price raised yesterday to be «cut» today shows no discount at all. A good already on sale keeps
-   * the price its sale started from; a new cut must go below it. Customers who saved the good hear
-   * about it (see the favorites sale handler).
+   * price raised yesterday to be «cut» today shows no discount at all. The reference is measured
+   * anew on every cut, sale prices included: a deeper cut is struck through at the price it cut, and
+   * a sale that has run past the week no longer leans on the price it started from. Customers who
+   * saved the good hear about it (see the favorites sale handler).
    */
   async startSale(id: string, price: Money): Promise<ProductWithImages> {
     const product = await this.get(id);
@@ -135,10 +133,13 @@ export class ProductsService extends BaseService {
     if (price.currency !== product.currency) {
       throw new ValidationError({ price: [`The price must be in ${product.currency}`] });
     }
-    const before = product.price;
     const since = new Date(Date.now() - SALE.REFERENCE_DAYS * DAY_MS);
     const lowest = await this.repository.lowestPriceSince(id, since);
-    const reference = product.oldPrice ?? Math.min(lowest ?? product.price, product.price);
+    const reference = Math.min(
+      lowest ?? product.price,
+      product.price,
+      product.oldPrice ?? Number.POSITIVE_INFINITY,
+    );
     if (price.amount >= reference) {
       throw new ConflictError(
         `A sale price must be below ${reference}: the lowest price of the last ${SALE.REFERENCE_DAYS} days`,
@@ -151,20 +152,18 @@ export class ProductsService extends BaseService {
       this.currentUser().id,
     );
     await this.invalidate(product.storeId);
-    // A deeper cut is news; the same price again or a shallower one is not.
-    if (price.amount < before) {
-      await this.publish(
-        createEvent(PRODUCT_EVENT.SALE_STARTED, {
-          productId: id,
-          storeId: product.storeId,
-          name: product.name as Record<string, string>,
-          price: price.amount,
-          oldPrice: reference,
-          currency: product.currency,
-          imageUrl: product.images[0]?.url ?? null,
-        }),
-      );
-    }
+    // Every accepted cut is below the price of the moment, so it is news.
+    await this.publish(
+      createEvent(PRODUCT_EVENT.SALE_STARTED, {
+        productId: id,
+        storeId: product.storeId,
+        name: product.name as Record<string, string>,
+        price: price.amount,
+        oldPrice: reference,
+        currency: product.currency,
+        imageUrl: product.images[0]?.url ?? null,
+      }),
+    );
     return updated;
   }
 
@@ -229,7 +228,9 @@ export class ProductsService extends BaseService {
         continue;
       }
       const categoryId = categorySlug ? categories.get(categorySlug) : undefined;
+      // «old_price» says «this is on sale»; what it is struck through at is the history's to say.
       const oldPrice = row['old_price'] ? Math.round(Number(row['old_price']) * 100) : undefined;
+      const onSale = oldPrice !== undefined && Number.isFinite(oldPrice) && oldPrice > price;
       const stock = row['stock'] ? Number(row['stock']) : undefined;
       const weightGrams = row['weight_grams'] ? Math.round(Number(row['weight_grams'])) : undefined;
       const input: CreateProductInput = {
@@ -238,9 +239,6 @@ export class ProductsService extends BaseService {
         name: { ru: nameRu, uz: row['name_uz']?.trim() || nameRu },
         unit: unit as ProductUnit,
         price: { amount: price, currency: 'UZS' },
-        ...(oldPrice !== undefined && oldPrice > price
-          ? { oldPrice: { amount: oldPrice, currency: 'UZS' } }
-          : {}),
         images: [{ url: image }],
         ...(stock !== undefined && Number.isFinite(stock) ? { stock } : {}),
         ...(weightGrams !== undefined && Number.isFinite(weightGrams) ? { weightGrams } : {}),
@@ -250,8 +248,22 @@ export class ProductsService extends BaseService {
         await this.create(input);
         result.created += 1;
       } else {
-        const { storeId: _storeId, ...rest } = input;
-        await this.update(existing, { ...rest, available: true });
+        // A new good has no history to be cheaper than; a known one goes through the honest sale,
+        // and stays at the row's price without a struck-through one if that is no cut at all.
+        const { storeId: _storeId, price: _price, ...rest } = input;
+        await this.update(existing, {
+          ...rest,
+          ...(onSale ? {} : { price: input.price }),
+          available: true,
+        });
+        if (onSale) {
+          try {
+            await this.startSale(existing, input.price);
+          } catch (error) {
+            if (!(error instanceof ConflictError)) throw error;
+            await this.update(existing, { price: input.price });
+          }
+        }
         result.updated += 1;
       }
     }

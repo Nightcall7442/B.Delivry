@@ -43,7 +43,12 @@ export class FavoritesService extends BaseService {
     // Throws NotFound for what this caller may not see, the same answer as for what does not exist.
     if (kind === 'product') await this.catalog.get(targetId);
     else await this.stores.getVisible(targetId);
-    if ((await this.repository.count(customerId, kind)) >= MAX_FAVORITES) {
+    // Saving what is already saved is a no-op even at the cap. The cap is soft: two saves racing
+    // past it by one are not worth a lock.
+    if (
+      (await this.repository.count(customerId, kind)) >= MAX_FAVORITES &&
+      !(await this.repository.has(customerId, kind, targetId))
+    ) {
       throw new ConflictError(`At most ${MAX_FAVORITES} saved ${kind}s`);
     }
     await this.repository.add(customerId, kind, targetId);

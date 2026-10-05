@@ -83,7 +83,6 @@ export class ProductsRepository extends BaseRepository {
         slug,
         unit: input.unit,
         price: input.price.amount,
-        oldPrice: input.oldPrice?.amount ?? null,
         currency: input.price.currency,
         minQuantity: input.minQuantity ?? 1,
         quantityStep: input.quantityStep ?? 1,
@@ -128,9 +127,7 @@ export class ProductsRepository extends BaseRepository {
         ...(input.categoryId !== undefined ? { categoryId: input.categoryId } : {}),
         ...(input.unit !== undefined ? { unit: input.unit } : {}),
         ...(input.price !== undefined ? { price: input.price.amount } : {}),
-        ...(input.oldPrice !== undefined
-          ? { oldPrice: input.oldPrice === null ? null : input.oldPrice.amount }
-          : {}),
+        ...(input.oldPrice !== undefined ? { oldPrice: input.oldPrice } : {}),
         ...(input.minQuantity !== undefined ? { minQuantity: input.minQuantity } : {}),
         ...(input.quantityStep !== undefined ? { quantityStep: input.quantityStep } : {}),
         ...(input.weightGrams !== undefined ? { weightGrams: input.weightGrams } : {}),
