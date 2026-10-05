@@ -25,6 +25,7 @@ import {
   Receipt,
   Repeat,
   Star,
+  Tag,
 } from '@/components/go/icons';
 import { useAuth } from '@/features/auth';
 import { api } from '@/lib/api';
@@ -48,6 +49,7 @@ const SERVICES: Item[] = [
 const MORE: Item[] = [
   { key: 'menu.address', href: '/address', icon: <HomeGlyph /> },
   { key: 'menu.support', href: '/support', icon: <Chat /> },
+  { key: 'menu.prices', href: '/prices', icon: <Tag /> },
   { key: 'menu.rules', href: '/rules', icon: <Leaf /> },
 ];
 

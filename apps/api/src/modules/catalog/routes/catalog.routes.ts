@@ -7,6 +7,7 @@ import type { CatalogController } from '../controller/catalog.controller.js';
 import {
   catalogSearchQuerySchema,
   categoryListQuerySchema,
+  priceIndexQuerySchema,
   productIdParamsSchema,
 } from '../schemas/index.js';
 
@@ -19,6 +20,12 @@ export function catalogRoutes(controller: CatalogController) {
       '/categories',
       { preHandler: validate({ query: categoryListQuerySchema }) },
       controller.categories,
+    );
+    // «Индекс базара»: before `/:id`, which would take the word for an id.
+    app.get(
+      '/price-index',
+      { preHandler: validate({ query: priceIndexQuerySchema }) },
+      controller.priceIndex,
     );
     app.get('/:id', { preHandler: validate({ params: productIdParamsSchema }) }, controller.get);
   };

@@ -22,10 +22,12 @@ import { Ground, capital, sceneFont } from '@/components/scene';
 import { SignOut, TelegramCard } from '@/components/stall/AccountCard';
 import { CounterPhoto } from '@/components/stall/CounterPhoto';
 import { HaggleCard } from '@/components/stall/HaggleCard';
+import { LookCard } from '@/components/stall/LookCard';
 import { HoursCard } from '@/components/stall/HoursCard';
 import { RevenueCard } from '@/components/stall/RevenueCard';
 import { StallHeader } from '@/components/stall/StallHeader';
 import { useHaggles } from '@/components/stall/use-haggles';
+import { useLooks } from '@/components/stall/use-looks';
 import { useRevenue } from '@/components/stall/use-revenue';
 import { useVendor } from '@/features/vendor';
 
@@ -38,6 +40,7 @@ export function StoreScreen() {
   const storeId = store?.id ?? null;
   const revenue = useRevenue(storeId);
   const haggles = useHaggles(storeId);
+  const looks = useLooks(storeId);
   const [refreshing, setRefreshing] = useState(false);
 
   // Reading the stall again after a write that went through must not turn the write into a failure.
@@ -45,7 +48,7 @@ export function StoreScreen() {
 
   const refresh = () => {
     setRefreshing(true);
-    void Promise.all([reread(), revenue.reload(), haggles.reload()]).then(() =>
+    void Promise.all([reread(), revenue.reload(), haggles.reload(), looks.reload()]).then(() =>
       setRefreshing(false),
     );
   };
@@ -85,6 +88,8 @@ export function StoreScreen() {
             <View key={store.id} style={s.section}>
               <StallHeader stores={stores} store={store} onSelect={selectStore} />
               <CounterPhoto store={store} onChanged={reread} />
+              {/* Time-sensitive like an order: a customer is deciding right now. */}
+              <LookCard looks={looks} />
 
               <RNText style={s.heading}>Часы</RNText>
               <HoursCard store={store} onSaved={reread} />

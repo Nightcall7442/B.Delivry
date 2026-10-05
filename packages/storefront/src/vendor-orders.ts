@@ -141,6 +141,16 @@ export function orderClock(iso: string): string {
   return `${two(local.getUTCHours())}:${two(local.getUTCMinutes())}`;
 }
 
+/** «28 сентября» on Tashkent's calendar — with the year once it is not this one. */
+export function dateLabel(iso: string, now: Date = new Date()): string {
+  const day = dayIndex(Date.parse(iso));
+  // Noon UTC of that date is the same date on any phone from UTC−11 to UTC+11 (`t.date` reads the device's).
+  const date = createT('ru').date(new Date(day * DAY_MS + DAY_MS / 2));
+  const year = new Date(day * DAY_MS).getUTCFullYear();
+  const sameYear = year === new Date(dayIndex(now.getTime()) * DAY_MS).getUTCFullYear();
+  return sameYear ? date : `${date} ${year}`;
+}
+
 /** «сегодня, 14:05», «вчера, 21:40», then «28 сентября, 09:12» — with the year once it is not this one. */
 export function placedLabel(iso: string, now: Date = new Date()): string {
   const day = dayIndex(Date.parse(iso));
@@ -148,11 +158,7 @@ export function placedLabel(iso: string, now: Date = new Date()): string {
   const clock = orderClock(iso);
   if (day === today) return `сегодня, ${clock}`;
   if (day === today - 1) return `вчера, ${clock}`;
-  // Noon UTC of that date is the same date on any phone from UTC−11 to UTC+11 (`t.date` reads the device's).
-  const date = createT('ru').date(new Date(day * DAY_MS + DAY_MS / 2));
-  const year = new Date(day * DAY_MS).getUTCFullYear();
-  const sameYear = year === new Date(today * DAY_MS).getUTCFullYear();
-  return `${sameYear ? date : `${date} ${year}`}, ${clock}`;
+  return `${dateLabel(iso, now)}, ${clock}`;
 }
 
 /** «Запланирован на завтра 08:00–10:00» for a slot order; null for «как можно скорее». */

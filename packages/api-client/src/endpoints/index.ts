@@ -10,6 +10,8 @@ export * from './delivery.js';
 export * from './favorites.js';
 export * from './geo.js';
 export * from './haggle.js';
+export * from './looks.js';
+export * from './regulars.js';
 export * from './notifications.js';
 export * from './orders.js';
 export * from './page.js';

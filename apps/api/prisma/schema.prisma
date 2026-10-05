@@ -297,8 +297,8 @@ model Tenant {
 }
 
 model TenantSettings {
-  tenantId String  @id
-  tenant   Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId String @id
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Kill switch: stop taking orders platform-wide without a deploy.
   ordersEnabled      Boolean @default(true)
@@ -324,41 +324,41 @@ model User {
   tenant   Tenant @relation(fields: [tenantId], references: [id])
 
   // Canonical +998XXXXXXXXX. Login identity, unique inside a tenant.
-  phone           String
-  email           String?
-  passwordHash    String?
-  firstName       String?
-  lastName        String?
-  avatarUrl       String?
-  locale          String     @default("uz")
-  status          UserStatus @default(PENDING)
-  phoneVerifiedAt DateTime?
-  lastLoginAt     DateTime?
+  phone            String
+  email            String?
+  passwordHash     String?
+  firstName        String?
+  lastName         String?
+  avatarUrl        String?
+  locale           String     @default("uz")
+  status           UserStatus @default(PENDING)
+  phoneVerifiedAt  DateTime?
+  lastLoginAt      DateTime?
   // Failed password attempts since the last success; feeds the lockout.
-  failedLogins    Int        @default(0)
-  lockedUntil     DateTime?
+  failedLogins     Int        @default(0)
+  lockedUntil      DateTime?
   // Telegram bot: the chat that gets this user's order updates, and the
   // one-shot code the app hands to t.me/<bot>?start=<code> to link it.
-  telegramChatId   String? @unique
-  telegramLinkCode String? @unique
+  telegramChatId   String?    @unique
+  telegramLinkCode String?    @unique
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  roles         UserRole[]
-  sessions      Session[]
-  otpCodes      OtpCode[]
-  pushTokens    PushToken[]
-  customer      Customer?
-  courier       Courier?
-  vendor        Vendor?
-  notifications Notification[]
-  wallet        WalletTransaction[]
-  tickets       SupportTicket[]      @relation("TicketAuthor")
-  assignedTickets SupportTicket[]    @relation("TicketAssignee")
-  ticketMessages SupportMessage[]
-  auditLogs     AuditLog[]
+  roles           UserRole[]
+  sessions        Session[]
+  otpCodes        OtpCode[]
+  pushTokens      PushToken[]
+  customer        Customer?
+  courier         Courier?
+  vendor          Vendor?
+  notifications   Notification[]
+  wallet          WalletTransaction[]
+  tickets         SupportTicket[]     @relation("TicketAuthor")
+  assignedTickets SupportTicket[]     @relation("TicketAssignee")
+  ticketMessages  SupportMessage[]
+  auditLogs       AuditLog[]
 
   @@unique([tenantId, phone])
   @@index([tenantId, status])
@@ -403,15 +403,15 @@ model Session {
   // Hash, never the token itself: a database leak must not hand out sessions.
   refreshTokenHash String
   // Bumped on every rotation; an older version replayed means the token leaked.
-  version          Int      @default(0)
+  version          Int       @default(0)
   deviceId         String?
   deviceName       String?
   ip               String?
   userAgent        String?
   expiresAt        DateTime
   revokedAt        DateTime?
-  lastSeenAt       DateTime @default(now())
-  createdAt        DateTime @default(now())
+  lastSeenAt       DateTime  @default(now())
+  createdAt        DateTime  @default(now())
 
   @@index([userId, revokedAt])
   @@index([expiresAt])
@@ -423,15 +423,15 @@ model OtpCode {
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  tenantId String
-  phone    String
+  tenantId   String
+  phone      String
   // Hashed like a password: an OTP is a credential for its 5 minutes.
-  codeHash String
-  purpose  OtpPurpose @default(LOGIN)
-  attempts Int        @default(0)
-  expiresAt DateTime
+  codeHash   String
+  purpose    OtpPurpose @default(LOGIN)
+  attempts   Int        @default(0)
+  expiresAt  DateTime
   consumedAt DateTime?
-  createdAt DateTime  @default(now())
+  createdAt  DateTime   @default(now())
 
   @@index([tenantId, phone, purpose])
   @@index([expiresAt])
@@ -443,13 +443,13 @@ model PushToken {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  token    String @unique
-  platform String
-  deviceId String?
+  token     String    @unique
+  platform  String
+  deviceId  String?
   // Cleared when the provider reports the token as gone.
   invalidAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@index([userId, invalidAt])
   @@map("push_tokens")
@@ -466,22 +466,22 @@ model Customer {
   userId   String @unique
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  defaultAddressId String?
-  orderCount       Int      @default(0)
-  totalSpent       Int      @default(0)
+  defaultAddressId   String?
+  orderCount         Int       @default(0)
+  totalSpent         Int       @default(0)
   // Store credit from refunds and referrals, in minor units.
-  balance          Int      @default(0)
-  currency         String   @default("UZS")
-  loyaltyPoints    Int      @default(0)
+  balance            Int       @default(0)
+  currency           String    @default("UZS")
+  loyaltyPoints      Int       @default(0)
   // Bazar Plus: free delivery and priority dispatch until this moment.
-  plusUntil        DateTime?
+  plusUntil          DateTime?
   // Referral: my code to share, and who brought me here.
-  referralCode     String?  @unique
-  referredById     String?
+  referralCode       String?   @unique
+  referredById       String?
   referralRewardedAt DateTime?
-  marketingOptIn   Boolean  @default(true)
-  blockedAt        DateTime?
-  lastOrderAt      DateTime?
+  marketingOptIn     Boolean   @default(true)
+  blockedAt          DateTime?
+  lastOrderAt        DateTime?
   // B2B (cafés, canteens): the company on the invoice, and the credit an
   // operator granted — INVOICE orders are allowed once approved, up to the limit.
   companyName        String?
@@ -494,12 +494,13 @@ model Customer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  addresses Address[]
-  carts     Cart[]
-  orders    Order[]
-  reviews   Review[]
+  addresses     Address[]
+  carts         Cart[]
+  orders        Order[]
+  reviews       Review[]
   subscriptions CartSubscription[]
-  favorites Favorite[]
+  favorites     Favorite[]
+  storeNotes    StoreCustomerNote[]
 
   @@index([tenantId])
   @@map("customers")
@@ -509,14 +510,14 @@ model Customer {
 // the slot. Items are a snapshot (id, name, unit, quantity) so a renamed
 // product keeps its line and a removed one is simply skipped.
 model CartSubscription {
-  id         String   @id @default(uuid())
-  tenantId   String
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  storeId    String
-  addressId  String
+  id            String        @id @default(uuid())
+  tenantId      String
+  customerId    String
+  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  storeId       String
+  addressId     String
   paymentMethod PaymentMethod
-  items      Json
+  items         Json
 
   // Local (Asia/Tashkent) weekday 0 = Sunday … 6 = Saturday, and the slot's start hour.
   weekday Int
@@ -550,19 +551,19 @@ model Courier {
   cityId      String
   city        GeoPlace      @relation(fields: [cityId], references: [id])
 
-  rating           Float @default(0)
-  ratingCount      Int   @default(0)
-  completedOrders  Int   @default(0)
-  cancelledOrders  Int   @default(0)
+  rating              Float  @default(0)
+  ratingCount         Int    @default(0)
+  completedOrders     Int    @default(0)
+  cancelledOrders     Int    @default(0)
   // Cash collected on delivery that the courier still owes the platform.
-  balance          Int   @default(0)
-  currency         String @default("UZS")
-  maxConcurrentOrders Int @default(1)
+  balance             Int    @default(0)
+  currency            String @default("UZS")
+  maxConcurrentOrders Int    @default(1)
 
   // Denormalized last fix: the live map reads this instead of scanning the
   // location history table on every refresh.
-  lastLat       Decimal? @db.Decimal(9, 6)
-  lastLng       Decimal? @db.Decimal(9, 6)
+  lastLat        Decimal?  @db.Decimal(9, 6)
+  lastLng        Decimal?  @db.Decimal(9, 6)
   lastLocationAt DateTime?
 
   // Mahalla courier: a neighbour who delivers on foot near home only.
@@ -592,18 +593,18 @@ model Vendor {
   userId   String @unique
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  legalType VendorLegalType @default(UNREGISTERED)
-  status    VendorStatus    @default(PENDING)
-  legalName String
-  displayName String
+  legalType         VendorLegalType @default(UNREGISTERED)
+  status            VendorStatus    @default(PENDING)
+  legalName         String
+  displayName       String
   // STIR/INN. Absent for unregistered bazaar sellers.
-  taxId     String?
-  phone     String
-  email     String?
-  bankAccount String?
+  taxId             String?
+  phone             String
+  email             String?
+  bankAccount       String?
   // Overrides the tariff commission when set.
   commissionPercent Float?
-  verifiedAt DateTime?
+  verifiedAt        DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -621,43 +622,43 @@ model Store {
   vendorId String
   vendor   Vendor @relation(fields: [vendorId], references: [id])
 
-  type   StoreType
-  status StoreStatus @default(DRAFT)
+  type            StoreType
+  status          StoreStatus @default(DRAFT)
   // i18n text: { "uz": "...", "ru": "...", "en": "..." }
-  name        Json
-  description Json?
-  slug        String
-  logoUrl     String?
-  coverUrl    String?
+  name            Json
+  description     Json?
+  slug            String
+  logoUrl         String?
+  coverUrl        String?
   // "Прилавок сейчас": the vendor's morning photo of the counter, dated.
   counterPhotoUrl String?
   counterPhotoAt  DateTime?
-  phone       String?
+  phone           String?
 
-  cityId String
-  city   GeoPlace @relation(fields: [cityId], references: [id])
-  address String?
-  lat     Decimal? @db.Decimal(9, 6)
-  lng     Decimal? @db.Decimal(9, 6)
+  cityId        String
+  city          GeoPlace @relation(fields: [cityId], references: [id])
+  address       String?
+  lat           Decimal? @db.Decimal(9, 6)
+  lng           Decimal? @db.Decimal(9, 6)
   // Row/stall number at the bazaar: what the courier actually looks for.
-  standNumber String?
+  standNumber   String?
   // The person behind the counter: name, the year they started, a photo, a line in their words.
   ownerName     String?
   ownerSince    Int?
   ownerPhotoUrl String?
   ownerMotto    Json?
 
-  rating      Float @default(0)
-  reviewCount Int   @default(0)
+  rating                Float     @default(0)
+  reviewCount           Int       @default(0)
   // Minutes the store needs before a courier should arrive.
-  preparationMinutes Int @default(15)
+  preparationMinutes    Int       @default(15)
   // Paid placement: shown first on the home list with a «Реклама» label until then.
-  promotedUntil DateTime?
+  promotedUntil         DateTime?
   // Badges the customer sees: eco, halal, homemade… (STORE_TAG in constants).
-  tags          String[] @default([])
+  tags                  String[]  @default([])
   // A chain (Korzinka, Makro…): branches share the slug, the customer sees one shopfront
   // and the order goes to the branch nearest their address.
-  chainSlug String?
+  chainSlug             String?
   // Per-store overrides of the tariff's minimum order and free-delivery threshold (minor units).
   minOrder              Int?
   freeDeliveryThreshold Int?
@@ -666,11 +667,12 @@ model Store {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  schedule StoreSchedule[]
-  products Product[]
-  carts    Cart[]
-  orders   Order[]
-  favorites Favorite[]
+  schedule      StoreSchedule[]
+  products      Product[]
+  carts         Cart[]
+  orders        Order[]
+  favorites     Favorite[]
+  customerNotes StoreCustomerNote[]
 
   @@unique([tenantId, slug])
   @@index([tenantId, status])
@@ -686,11 +688,11 @@ model StoreSchedule {
   store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   // 0 = Sunday, matching Date.getDay().
-  weekday Int
+  weekday  Int
   // Minutes since local midnight, so comparisons need no date parsing.
-  opensAt Int
+  opensAt  Int
   closesAt Int
-  closed  Boolean @default(false)
+  closed   Boolean @default(false)
 
   @@unique([storeId, weekday])
   @@map("store_schedules")
@@ -701,7 +703,7 @@ model StoreSchedule {
 // ============================================================================
 
 model GeoPlace {
-  id       String   @id @default(uuid())
+  id       String     @id @default(uuid())
   level    GeoLevel
   code     String
   // i18n names.
@@ -736,9 +738,9 @@ model DeliveryZone {
 
   // GeoJSON Polygon coordinates: [[[lng, lat], ...]]. Checked in application
   // code (packages/maps pointInPolygon) until PostGIS is introduced.
-  polygon Json
+  polygon  Json
   tariffId String
-  tariff   Tariff @relation(fields: [tariffId], references: [id])
+  tariff   Tariff  @relation(fields: [tariffId], references: [id])
   // Higher wins where zones overlap.
   priority Int     @default(0)
   active   Boolean @default(true)
@@ -757,17 +759,17 @@ model Tariff {
   city   GeoPlace? @relation(fields: [cityId], references: [id])
 
   // All amounts in minor units.
-  base               Int
-  perKm              Int
-  freeDistanceMeters Int     @default(0)
-  minFee             Int
-  maxFee             Int?
-  commissionPercent  Float   @default(0)
-  serviceFee         Int     @default(0)
+  base                  Int
+  perKm                 Int
+  freeDistanceMeters    Int     @default(0)
+  minFee                Int
+  maxFee                Int?
+  commissionPercent     Float   @default(0)
+  serviceFee            Int     @default(0)
   freeDeliveryThreshold Int?
-  minOrder           Int     @default(0)
-  currency           String  @default("UZS")
-  active             Boolean @default(true)
+  minOrder              Int     @default(0)
+  currency              String  @default("UZS")
+  active                Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -805,19 +807,19 @@ model Address {
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
-  label  AddressLabel @default(HOME)
-  title  String?
-  cityId String
-  city   GeoPlace @relation(fields: [cityId], references: [id])
+  label      AddressLabel @default(HOME)
+  title      String?
+  cityId     String
+  city       GeoPlace     @relation(fields: [cityId], references: [id])
   districtId String?
   mahallaId  String?
 
-  street    String?
-  house     String?
-  apartment String?
-  entrance  String?
-  floor     String?
-  intercom  String?
+  street       String?
+  house        String?
+  apartment    String?
+  entrance     String?
+  floor        String?
+  intercom     String?
   // Uzbek addressing is landmark-driven; these two matter as much as the number.
   landmark     String?
   instructions String?
@@ -840,20 +842,20 @@ model Address {
 // ============================================================================
 
 model Category {
-  id       String    @id @default(uuid())
+  id       String     @id @default(uuid())
   name     Json
-  slug     String    @unique
+  slug     String     @unique
   parentId String?
-  parent   Category? @relation("CategoryTree", fields: [parentId], references: [id])
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
   children Category[] @relation("CategoryTree")
 
   // Materialized ancestor chain, so a whole subtree is one LIKE query.
   path      String
-  depth     Int      @default(0)
+  depth     Int     @default(0)
   iconUrl   String?
   imageUrl  String?
-  sortOrder Int      @default(0)
-  active    Boolean  @default(true)
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -866,11 +868,11 @@ model Category {
 }
 
 model Product {
-  id       String @id @default(uuid())
-  tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id])
-  storeId  String
-  store    Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  id         String    @id @default(uuid())
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id])
+  storeId    String
+  store      Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id])
 
@@ -889,7 +891,7 @@ model Product {
   quantityStep Decimal @default(1) @db.Decimal(10, 3)
   weightGrams  Int?
 
-  available Boolean @default(true)
+  available Boolean  @default(true)
   // null = the seller does not track stock (typical for a bazaar stall).
   stock     Decimal? @db.Decimal(10, 3)
 
@@ -897,21 +899,22 @@ model Product {
   reviewCount Int   @default(0)
 
   discountRequests DiscountRequest[]
+  looks            ProductLook[]
 
   // "Сегодня привезли": set by the vendor in the morning; the badge lasts a day.
   arrivedAt DateTime?
-  tags      String[] @default([])
+  tags      String[]  @default([])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  images     ProductImage[]
+  images       ProductImage[]
   priceHistory ProductPrice[]
   priceTiers   ProductPriceTier[]
-  cartItems  CartItem[]
-  orderItems OrderItem[]
-  favorites  Favorite[]
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+  favorites    Favorite[]
 
   @@unique([storeId, slug])
   @@index([tenantId, available])
@@ -996,7 +999,7 @@ model CartItem {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  quantity Decimal @db.Decimal(10, 3)
+  quantity  Decimal @db.Decimal(10, 3)
   // Price when the item was added; compared against the product on checkout.
   unitPrice Int
   currency  String  @default("UZS")
@@ -1075,37 +1078,37 @@ model Order {
   addressLat          Decimal? @db.Decimal(9, 6)
   addressLng          Decimal? @db.Decimal(9, 6)
 
-  comment      String?
+  comment            String?
   // What the courier does when the stall is out of something, and what the
   // customer wants the vendor to know ("помидоры покрепче").
   substitutionPolicy SubstitutionPolicy @default(CALL)
   vendorComment      String?
-  cancelReason String?
+  cancelReason       String?
   // null = as soon as possible.
-  scheduledFor DateTime?
-  etaAt        DateTime?
+  scheduledFor       DateTime?
+  etaAt              DateTime?
   // What the customer was told at checkout; the late-delivery promise is measured against it.
-  promisedAt   DateTime?
+  promisedAt         DateTime?
   // The saved address the frozen copy below came from; lets a subscription reuse it.
-  addressId    String?
+  addressId          String?
   // Delivery fee before Plus / thresholds / coupons waived it: the courier's payout base.
-  courierFee   Int       @default(0)
+  courierFee         Int                @default(0)
   // The platform's cut of the goods, fixed when the order is placed: the vendor's own rate when
   // the desk set one, else the zone tariff's. The stall is paid the subtotal less this.
-  commissionPercent Float @default(0)
+  commissionPercent  Float              @default(0)
   // "Заказ родителям": who opens the door when it is not the customer. The
   // courier calls this number; the recipient gets one SMS when the order sets off.
-  recipientName  String?
-  recipientPhone String?
+  recipientName      String?
+  recipientPhone     String?
   // Cross-bazaar: sibling orders from stalls of one bazaar share a courier and
   // one delivery fee; the group id is the leading order's id.
-  groupId      String?
+  groupId            String?
   // INVOICE orders: pay by this date (placed + the customer's credit days).
-  dueAt        DateTime?
-  placedAt     DateTime  @default(now())
-  confirmedAt  DateTime?
-  deliveredAt  DateTime?
-  cancelledAt  DateTime?
+  dueAt              DateTime?
+  placedAt           DateTime           @default(now())
+  confirmedAt        DateTime?
+  deliveredAt        DateTime?
+  cancelledAt        DateTime?
 
   couponId String?
   coupon   Coupon? @relation(fields: [couponId], references: [id])
@@ -1153,9 +1156,9 @@ model SearchQuery {
 }
 
 model OrderItem {
-  id      String @id @default(uuid())
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   // Nullable: the product may be deleted later, the line must survive.
   productId String?
   product   Product? @relation(fields: [productId], references: [id])
@@ -1191,21 +1194,21 @@ enum HaggleStatus {
 // The bazaar's oldest feature: "Попросить скидку". The vendor answers with a
 // price; an accepted one is this customer's personal price until it expires.
 model DiscountRequest {
-  id         String       @id @default(uuid())
-  tenantId   String
-  customerId String
-  storeId    String
-  productId  String
-  product    Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id           String       @id @default(uuid())
+  tenantId     String
+  customerId   String
+  storeId      String
+  productId    String
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
   // Per unit, minor units.
-  askedPrice Int
+  askedPrice   Int
   // The vendor's answer (accepted as asked, or a counter); null until answered.
   offeredPrice Int?
-  status     HaggleStatus @default(PENDING)
-  message    String?
-  reply      String?
+  status       HaggleStatus @default(PENDING)
+  message      String?
+  reply        String?
   // Unanswered: when the ask lapses; accepted: how long the price holds.
-  expiresAt  DateTime
+  expiresAt    DateTime
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1213,6 +1216,47 @@ model DiscountRequest {
   @@index([tenantId, storeId, status])
   @@index([customerId, productId, status])
   @@map("discount_requests")
+}
+
+// «Свой продавец»: what a stall keeps in mind about one of its customers — «кость отдельно,
+// любит постное». The stall's own: the customer never sees it.
+model StoreCustomerNote {
+  id         String   @id @default(uuid())
+  tenantId   String
+  storeId    String
+  store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  note       String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([storeId, customerId])
+  @@map("store_customer_notes")
+}
+
+// «Покажите товар»: a customer asks the stall for a photograph of this very good, now; the seller
+// shoots it from the counter. The photo then shows on the good for everyone while it is fresh.
+model ProductLook {
+  id         String    @id @default(uuid())
+  tenantId   String
+  customerId String
+  storeId    String
+  productId  String
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  photoUrl   String?
+  answeredAt DateTime?
+  // How long the ask waits for the stall.
+  expiresAt  DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, storeId, answeredAt])
+  @@index([customerId, productId])
+  @@index([productId, answeredAt])
+  @@map("product_looks")
 }
 
 // "Я у второго подъезда": the customer and the courier, in the order's own thread.
@@ -1257,14 +1301,14 @@ model Delivery {
   order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   courierId String?
-  courier   Courier? @relation(fields: [courierId], references: [id])
+  courier   Courier?       @relation(fields: [courierId], references: [id])
   status    DeliveryStatus @default(PENDING)
 
-  pickupLat  Decimal? @db.Decimal(9, 6)
-  pickupLng  Decimal? @db.Decimal(9, 6)
-  pickupAddress String
-  dropoffLat Decimal? @db.Decimal(9, 6)
-  dropoffLng Decimal? @db.Decimal(9, 6)
+  pickupLat      Decimal? @db.Decimal(9, 6)
+  pickupLng      Decimal? @db.Decimal(9, 6)
+  pickupAddress  String
+  dropoffLat     Decimal? @db.Decimal(9, 6)
+  dropoffLng     Decimal? @db.Decimal(9, 6)
   dropoffAddress String
 
   distanceMeters Int    @default(0)
@@ -1340,16 +1384,16 @@ model CourierLocation {
 // ============================================================================
 
 model Payment {
-  id       String @id @default(uuid())
-  tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  id         String         @id @default(uuid())
+  tenantId   String
+  tenant     Tenant         @relation(fields: [tenantId], references: [id])
   // Null for a Plus month or a tip: those belong to the customer, not to an order.
-  orderId  String?
-  order    Order?  @relation(fields: [orderId], references: [id])
+  orderId    String?
+  order      Order?         @relation(fields: [orderId], references: [id])
   customerId String
-  purpose  PaymentPurpose @default(ORDER)
+  purpose    PaymentPurpose @default(ORDER)
   // The id provider callbacks carry: the order id, or "plus:<customerId>:<period>" / "tip:<orderId>:<amount>".
-  subject  String
+  subject    String
 
   method   PaymentMethod
   provider String
@@ -1382,14 +1426,14 @@ model PaymentTransaction {
   paymentId String
   payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
 
-  type   TransactionType
-  status PaymentStatus
-  amount Int
-  currency String @default("UZS")
-  externalId String?
+  type           TransactionType
+  status         PaymentStatus
+  amount         Int
+  currency       String          @default("UZS")
+  externalId     String?
   // Unique: the same key twice must never charge twice.
-  idempotencyKey String @unique
-  raw    Json?
+  idempotencyKey String          @unique
+  raw            Json?
 
   createdAt DateTime @default(now())
 
@@ -1408,7 +1452,7 @@ model WalletTransaction {
   type         WalletTransactionType
   amount       Int
   balanceAfter Int
-  currency     String @default("UZS")
+  currency     String                @default("UZS")
   orderId      String?
   comment      String?
 
@@ -1427,22 +1471,22 @@ model Promotion {
   id       String @id @default(uuid())
   tenantId String
 
-  name        Json
-  description Json?
+  name         Json
+  description  Json?
   discountType DiscountType
   // Percent for PERCENT, minor units for FIXED, ignored for FREE_DELIVERY.
   value        Float
   maxDiscount  Int?
   minOrder     Int?
-  currency     String @default("UZS")
+  currency     String       @default("UZS")
 
   storeIds    String[]
   categoryIds String[]
   cityIds     String[]
 
-  startsAt DateTime
-  endsAt   DateTime?
-  active   Boolean   @default(true)
+  startsAt  DateTime
+  endsAt    DateTime?
+  active    Boolean   @default(true)
   bannerUrl String?
 
   createdAt DateTime @default(now())
@@ -1460,15 +1504,15 @@ model Coupon {
   promotionId String
   promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
 
-  code String
+  code            String
   // null = unlimited.
-  maxRedemptions Int?
-  maxPerCustomer Int  @default(1)
-  redemptionCount Int @default(0)
+  maxRedemptions  Int?
+  maxPerCustomer  Int       @default(1)
+  redemptionCount Int       @default(0)
   // Set for personal coupons issued as compensation.
-  customerId String?
-  expiresAt  DateTime?
-  active     Boolean   @default(true)
+  customerId      String?
+  expiresAt       DateTime?
+  active          Boolean   @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1509,10 +1553,10 @@ model Review {
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
-  target   ReviewTarget
-  targetId String
-  rating   Int
-  comment  String?
+  target    ReviewTarget
+  targetId  String
+  rating    Int
+  comment   String?
   photoUrls String[]
 
   reply     String?
@@ -1541,10 +1585,10 @@ model Notification {
   body     String
   deepLink String?
   orderId  String?
-  order    Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  order    Order?              @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   // Same key twice = one notification, even across job retries.
-  idempotencyKey String? @unique
+  idempotencyKey String?   @unique
   externalId     String?
   failureReason  String?
   sentAt         DateTime?
@@ -1572,11 +1616,11 @@ model NotificationPreference {
 }
 
 model SupportTicket {
-  id       String @id @default(uuid())
+  id       String  @id @default(uuid())
   tenantId String
   number   String
   userId   String
-  user     User   @relation("TicketAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  user     User    @relation("TicketAuthor", fields: [userId], references: [id], onDelete: Cascade)
   orderId  String?
   order    Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
 

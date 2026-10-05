@@ -85,6 +85,8 @@ import {
   FavoritesService,
 } from '../modules/favorites/index.js';
 import { HaggleController, HaggleService } from '../modules/haggle/index.js';
+import { LooksController, LooksService } from '../modules/looks/index.js';
+import { RegularsController, RegularsService } from '../modules/regulars/index.js';
 import {
   NotificationsController,
   NotificationsRepository,
@@ -166,6 +168,8 @@ export interface Container {
     favorites: FavoritesService;
     geo: GeoService;
     haggle: HaggleService;
+    looks: LooksService;
+    regulars: RegularsService;
     notifications: NotificationsService;
     telegramBot: TelegramBotService;
     orders: OrdersService;
@@ -198,6 +202,8 @@ export interface Container {
     favorites: FavoritesController;
     geo: GeoController;
     haggle: HaggleController;
+    looks: LooksController;
+    regulars: RegularsController;
     notifications: NotificationsController;
     orders: OrdersController;
     payments: PaymentsController;
@@ -355,6 +361,8 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     stores,
   });
   const haggle = new HaggleService({ ...deps, prisma, queue, realtime });
+  const looks = new LooksService({ ...deps, prisma, queue });
+  const regulars = new RegularsService({ ...deps, prisma });
   const orders = new OrdersService({
     ...deps,
     prisma,
@@ -445,8 +453,10 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     favorites,
     geo,
     haggle,
+    looks,
     notifications,
     orders,
+    regulars,
     payments,
     pricing,
     telegramBot,
@@ -478,6 +488,8 @@ export function buildContainer(config: Config, options: BuildOptions = {}): Cont
     geo: new GeoController(geo),
     favorites: new FavoritesController(favorites),
     haggle: new HaggleController(haggle),
+    looks: new LooksController(looks),
+    regulars: new RegularsController(regulars),
     notifications: new NotificationsController(notifications, telegramBot),
     orders: new OrdersController(orders, payments),
     payments: new PaymentsController(

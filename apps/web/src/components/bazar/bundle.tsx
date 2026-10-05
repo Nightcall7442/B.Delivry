@@ -10,6 +10,7 @@ import { createT } from '@bazar/i18n';
 import {
   type Bundle,
   type MapStoreDto,
+  bundleTitle,
   photo,
   resolveBundle,
   tr,
@@ -23,17 +24,22 @@ import { useMemo, useState } from 'react';
 import { ArrowLeft, Bag } from '@/components/go/icons';
 import { useCartActions, useCartQuantities } from '@/features/cart';
 
+import { GuestStepper } from './guest-stepper';
+
 import s from './bazar.module.css';
 
 export function BazaarBundle({
   bundle,
   products,
   stores,
+  guests: initialGuests,
   locale,
 }: {
   bundle: Bundle;
   products: readonly ProductDto[];
   stores: readonly MapStoreDto[];
+  /** «Ош на N человек»: the company, already within the set's range (`bundleGuests`). */
+  guests: number;
   locale: string;
 }) {
   const t = createT(locale);
@@ -46,7 +52,11 @@ export function BazaarBundle({
   // The sign that just went into the basket swings on its pin (see ProductCard).
   const [swinging, setSwinging] = useState<string | null>(null);
 
-  const resolved = useMemo(() => resolveBundle(bundle, products), [bundle, products]);
+  const [guests, setGuests] = useState(initialGuests);
+  const resolved = useMemo(
+    () => resolveBundle(bundle, products, guests),
+    [bundle, products, guests],
+  );
   const storeById = useMemo(() => new Map(stores.map((store) => [store.id, store])), [stores]);
   const stalls = resolved.storeIds
     .map((id) => storeById.get(id))
@@ -71,14 +81,32 @@ export function BazaarBundle({
           <Link href={home} className={s.round} aria-label={t('common.back')}>
             <ArrowLeft />
           </Link>
-          <span className={s.tag}>{t.n('bundle.people', bundle.serves)}</span>
+          <span className={s.tag}>{t.n('bundle.people', guests)}</span>
         </div>
 
         <div className={s.greeting} style={{ minHeight: '30vh', padding: '12px 0 22px' }}>
-          <h1 className={`${s.display} ${s.displayPage}`}>{tr(bundle.title, locale)}</h1>
+          <h1 className={`${s.display} ${s.displayPage}`}>{bundleTitle(t, bundle, guests)}</h1>
           <p className={s.say} style={{ margin: '8px 0 0', maxWidth: '44ch' }}>
             {tr(bundle.description, locale)}
           </p>
+          {bundle.guests ? (
+            <div className={s.guestPanel}>
+              <GuestStepper
+                bundle={bundle}
+                guests={guests}
+                onChange={(next) => {
+                  setGuests(next);
+                  setAdded(false);
+                }}
+                t={t}
+              />
+              {resolved.lines.length > 0 ? (
+                <p className={s.guestPer}>
+                  {t('bundle.perGuest', { amount: t.money(resolved.perGuest) })}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div className={s.head}>

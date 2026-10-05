@@ -7,6 +7,8 @@ export * from './schemas/cart.schema.js';
 export * from './schemas/common.schema.js';
 export * from './schemas/geo.schema.js';
 export * from './schemas/haggle.schema.js';
+export * from './schemas/look.schema.js';
+export * from './schemas/regular.schema.js';
 export * from './schemas/order.schema.js';
 export * from './schemas/pagination.schema.js';
 export * from './schemas/payment.schema.js';

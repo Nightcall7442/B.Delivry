@@ -2,6 +2,7 @@
 import type {
   CategoryDto,
   MoneyDto,
+  PriceIndexDto,
   ProductDto,
   ProductListQuery,
   UpdateProductDto,
@@ -16,6 +17,11 @@ export const catalogApi = (http: Http) => ({
   products: (query: ProductListQuery & PageQuery = {}) =>
     http.paginated<ProductDto>('/catalog', { ...query }),
   product: (id: string) => http.request<ProductDto>('GET', `/catalog/${id}`),
+  /** «Индекс базара» of a city; the busiest one when none is named. Public. */
+  priceIndex: (cityId?: string) =>
+    http.request<PriceIndexDto>('GET', '/catalog/price-index', {
+      query: cityId === undefined ? {} : { cityId },
+    }),
   /** Vendor/staff: the write side of the catalogue. */
   updateProduct: (id: string, body: UpdateProductDto) =>
     http.request<ProductDto>('PATCH', `/products/${id}`, { body }),

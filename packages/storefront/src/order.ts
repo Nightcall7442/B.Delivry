@@ -24,6 +24,21 @@ export function repeatQuantities(
   return next;
 }
 
+/**
+ * «Как в прошлый раз»: the wishes that went with the lines («без кости»), to put back beside them —
+ * the stall reads them again as it did then.
+ */
+export function repeatNotes(
+  items: readonly { productId: string | null; comment: string | null }[],
+): Record<string, string> {
+  const notes: Record<string, string> = {};
+  for (const item of items) {
+    const wish = item.comment?.trim();
+    if (item.productId !== null && wish) notes[item.productId] = wish;
+  }
+  return notes;
+}
+
 export interface LocalOrder {
   id: string;
   number: string;

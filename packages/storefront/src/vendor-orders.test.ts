@@ -32,6 +32,7 @@ import {
   itemQuantityText,
   orderClock,
   pickPile,
+  dateLabel,
   placedLabel,
   scheduleHint,
   shownPile,
@@ -416,5 +417,14 @@ describe('vendorErrorText', () => {
     const odd = new ApiError(500, { code: 'BOOM', message: 'Boom' });
     expect(vendorErrorText(odd)).toBe('Boom (BOOM)');
     expect(vendorErrorText(new Error('x'))).toBe('Что-то пошло не так. Попробуйте ещё раз.');
+  });
+});
+
+describe('the day a regular first bought', () => {
+  it('is the Tashkent date, with the year once it is not this one', () => {
+    const now = new Date('2026-10-05T10:00:00Z');
+    // 21:30 UTC on 4 Sep is already 5 Sep in Tashkent.
+    expect(dateLabel('2026-09-04T21:30:00Z', now)).toBe('5 сентября');
+    expect(dateLabel('2025-12-31T10:00:00Z', now)).toBe('31 декабря 2025');
   });
 });

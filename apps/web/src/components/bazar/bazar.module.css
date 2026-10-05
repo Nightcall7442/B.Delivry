@@ -2002,3 +2002,248 @@
     transition: none;
   }
 }
+
+/* «Индекс базара» on the home: the price board at a bazaar's gate, figures in chalk. */
+.indexBoard {
+  display: block;
+  margin-top: 24px;
+  padding: 14px 16px 12px;
+  border-radius: var(--radius-paper);
+  background: var(--board);
+  border: 1px solid color-mix(in srgb, var(--ochre) 35%, transparent);
+  box-shadow: var(--shadow);
+  color: var(--cream);
+  text-decoration: none;
+}
+.indexHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.indexTitle {
+  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+  font-weight: 700;
+  font-size: var(--fs-lead);
+  line-height: 24px;
+  color: var(--ochre-light);
+}
+.indexMore {
+  font-weight: 700;
+  color: var(--ochre-light);
+}
+.indexMeta {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  font-weight: 700;
+  color: var(--cream-muted);
+}
+.indexRows {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed color-mix(in srgb, var(--cream) 22%, transparent);
+}
+.indexCell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.indexName {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--cream-muted);
+}
+.indexPrice {
+  font-family: var(--font-hand), 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 24px;
+  white-space: nowrap;
+  color: var(--cream);
+}
+.indexUp {
+  font-family: var(--font-sans), 'Manrope', system-ui, sans-serif;
+  font-size: 10px;
+  color: var(--ochre-light);
+}
+.indexDown {
+  font-family: var(--font-sans), 'Manrope', system-ui, sans-serif;
+  font-size: 10px;
+  color: var(--cream-muted);
+}
+
+/* «Ош на N человек»: the guests, counted on the scene's glass. */
+.guestRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.guestLabel {
+  flex: 1;
+  font-size: var(--fs-body);
+  font-weight: 800;
+  color: var(--cream-muted);
+}
+.guestStep {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-edge);
+  background: var(--glass);
+  color: var(--cream);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.guestStepMore {
+  background: var(--pomegranate);
+  border-color: var(--pomegranate);
+}
+.guestStep:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.guestCount {
+  min-width: 56px;
+  text-align: center;
+  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+  font-weight: 700;
+  font-size: var(--fs-headline);
+  line-height: 34px;
+  color: var(--cream);
+  font-variant-numeric: tabular-nums;
+}
+.guestPanel {
+  margin-top: 14px;
+  max-width: 420px;
+  padding: 14px;
+  border-radius: var(--radius-paper);
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  backdrop-filter: var(--glass-blur);
+}
+.guestPer {
+  margin: 6px 0 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--cream-muted);
+  font-variant-numeric: tabular-nums;
+}
+.oshCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: var(--radius-paper);
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow);
+}
+.oshEyebrow {
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ochre-light);
+}
+.oshQuestion {
+  margin: 0;
+  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+  font-weight: 700;
+  font-size: var(--fs-title);
+  line-height: 26px;
+  color: var(--cream);
+}
+.oshHint {
+  margin: -4px 0 0;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--cream-muted);
+}
+.oshCta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--pomegranate);
+  color: var(--cream);
+  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+  font-weight: 700;
+  font-size: var(--fs-lead);
+  text-decoration: none;
+}
+
+/* «Свой продавец»: the customer is known at this stall. */
+.regular {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: var(--radius-paper);
+  border: 1px solid var(--ochre);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+}
+.regularHead {
+  font-size: var(--fs-body);
+  font-weight: 800;
+  color: var(--ochre-light);
+}
+.regularSeller {
+  font-weight: 600;
+  color: var(--cream-muted);
+}
+.regularLine {
+  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+  font-weight: 700;
+  font-size: var(--fs-lead);
+  line-height: 24px;
+  color: var(--cream);
+}
+.regularAgain {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: var(--radius-paper);
+  border: 1px solid var(--glass-edge);
+  background: var(--glass);
+  color: var(--cream);
+  text-align: left;
+  cursor: pointer;
+}
+.regularAgain:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.regularAgainTitle {
+  font-size: var(--fs-body);
+  font-weight: 800;
+}
+.regularAgainHint {
+  font-size: var(--fs-caption);
+  color: var(--cream-muted);
+}
+.regularError {
+  font-size: var(--fs-caption);
+  color: var(--ochre-light);
+}

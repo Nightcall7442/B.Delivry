@@ -20,6 +20,7 @@ import { FactsSlip } from '@/components/orders/FactsSlip';
 import { GatherSlip } from '@/components/orders/GatherSlip';
 import { LoadError } from '@/components/orders/Notices';
 import { NotesSlip } from '@/components/orders/NotesSlip';
+import { RegularSlip } from '@/components/orders/RegularSlip';
 import { OrderSkeleton } from '@/components/orders/Skeleton';
 import { StatusSlip } from '@/components/orders/StatusSlip';
 import { useOrder } from '@/components/orders/useOrder';
@@ -100,6 +101,8 @@ export function OrderScreen({ orderId }: { orderId: string }) {
             <StatusSlip order={order} />
             {atStall ? <CourierSlip order={order} /> : null}
             <NotesSlip order={order} />
+            {/* «Свой покупатель»: who has come back, and what the seller noted about them. */}
+            <RegularSlip order={order} />
             <GatherSlip order={order} />
             {atStall ? null : <CourierSlip order={order} />}
             <FactsSlip order={order} />
