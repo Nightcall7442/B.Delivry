@@ -37,6 +37,11 @@ export class CatalogController extends BaseController {
     return this.ok(reply, toProductDto(await this.service.get(id)));
   };
 
+  priceIndex = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { cityId } = query<{ cityId?: string }>(request);
+    return this.ok(reply, await this.service.priceIndex(cityId));
+  };
+
   categories = async (request: FastifyRequest, reply: FastifyReply) => {
     const { parentId, root } = query<{ parentId?: string; root?: boolean }>(request);
     // root=true means "top level", which is parentId === null, not undefined.

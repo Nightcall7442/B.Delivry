@@ -55,6 +55,7 @@ import {
   sceneFont,
   useSceneTop,
 } from '@/components/bazar';
+import { PriceBoard } from '@/components/prices/PriceBoard';
 import { ProductTile, useTileWidth } from '@/components/shop/ProductTile';
 import { LoadError } from '@/components/ui/Page';
 import { DEFAULT_POINT, useAddress } from '@/features/address/store';
@@ -62,7 +63,7 @@ import { useDeliverable } from '@/features/address/zone';
 import { useCart } from '@/features/cart/store';
 import { REACH_METERS, listCategories, listProducts, listStores } from '@/lib/catalog';
 import { EMPTY, useLoad } from '@/lib/use-data';
-import { Bell, Mic, radius, scale, shadow, useAuth, useLocale } from '@bazar/mobile';
+import { Bell, Mic, api, radius, scale, shadow, useAuth, useLocale } from '@bazar/mobile';
 
 const TILTS = [-1.5, 1, -1, 1.5, -1, 1];
 /** A discount card on the rail: a little narrower than half the screen, so the next one peeks. */
@@ -131,6 +132,12 @@ export function SceneHomeScreen() {
 
   const stores = storeLoad.data ?? EMPTY;
   const categories = categoryLoad.data ?? EMPTY;
+  // «Индекс базара» of the address's own city: the city of the stalls around it.
+  const cityId = stores.find((store) => !isShopfront(store))?.cityId;
+  const priceLoad = useLoad(
+    () => (cityId === undefined ? Promise.resolve(null) : api().catalog.priceIndex(cityId)),
+    [cityId],
+  );
   // People first: the stalls, open ones leading. Shops are buildings and get their own rail.
   const vendors = useMemo(
     () =>
@@ -248,6 +255,17 @@ export function SceneHomeScreen() {
               <View style={{ paddingHorizontal: 20 }}>
                 <LoadError onRetry={() => void storeLoad.reload()} />
               </View>
+            ) : null}
+            {priceLoad.data && priceLoad.data.items.length > 0 ? (
+              <PriceBoard
+                index={priceLoad.data}
+                onPress={() =>
+                  router.push({
+                    pathname: '/prices',
+                    params: { city: priceLoad.data!.city?.id ?? '' },
+                  })
+                }
+              />
             ) : null}
             <View style={{ height: 28 }} />
 

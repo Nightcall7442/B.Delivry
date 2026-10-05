@@ -21,6 +21,7 @@ export * from './labels.js';
 export * from './list-parser.js';
 export * from './order.js';
 export * from './order-simulation.js';
+export * from './price-index.js';
 export * from './pricing.js';
 export * from './sales.js';
 export * from './slots.js';

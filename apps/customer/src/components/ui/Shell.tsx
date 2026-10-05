@@ -215,6 +215,7 @@ const MENU: ReadonlyArray<{ href: Href; key: MessageKey }> = [
   { href: '/invite', key: 'menu.invite' },
   { href: '/address', key: 'menu.address' },
   { href: '/search', key: 'menu.search' },
+  { href: '/prices', key: 'menu.prices' },
   { href: '/support', key: 'menu.support' },
   { href: '/rules', key: 'menu.rules' },
 ];

@@ -736,4 +736,31 @@ export const uz: Catalogue = {
   'seller.approved':
     'Siz sotuvchisiz: Bazar Seller ilovasini oching, shu raqam bilan kiring va peshtaxta oching.',
   'seller.declined': 'Hozircha boʻlmadi — qoʻllab-quvvatlashga yozing, hal qilamiz.',
+  // ---------------------------------------------------------------- «Индекс базара»
+  'menu.prices': 'Bozor narxlari',
+  'prices.title': 'Bozor narxlari',
+  'prices.intro':
+    'Asosiy mahsulotlar rastalarda qancha turadi — sotuvchilarning oʻzlari qoʻygan narxlar boʻyicha.',
+  'prices.asOf': '{city} · {date}, {time}',
+  'prices.vsShops': 'Bozor va doʻkonlar',
+  'prices.cheaper': 'Rastalarda {percent} % arzon',
+  'prices.dearer': 'Rastalarda {percent} % qimmat',
+  'prices.vsShopsHint': 'shahar doʻkonlari javonlaridagidan',
+  'prices.week': 'Bir haftada',
+  'prices.weekHint': 'savat boʻyicha oʻrtacha',
+  'prices.up': '+{percent} %',
+  'prices.down': '−{percent} %',
+  'prices.flat': 'oʻzgarmadi',
+  'prices.per': '{per} uchun',
+  'prices.range': '{min} dan {max} gacha',
+  'prices.stalls.other': '{count} ta rasta',
+  'prices.shops': 'doʻkonda {price}',
+  'prices.trend': 'Narx yonidagi chiziq — soʻnggi 8 haftada qanday oʻzgargani.',
+  'prices.how': 'Qanday hisoblaymiz',
+  'prices.howBody':
+    'Rastalar orasidagi oʻrta narxni olamiz: bitta juda qimmat yoki juda arzon rasta uni siljitmaydi. Haftalik oʻzgarish — bir hafta oldin ham sotilgan oʻsha mahsulotlar boʻyicha: yangi sotuvchi oʻsishni chizmaydi.',
+  'prices.empty': 'Bu shaharda indeksni hisoblash uchun rastalar hali kam.',
+  'prices.teaser': 'Bozor indeksi',
+  'prices.teaserLine': 'Bugun nima qancha va bir haftada qanday',
+  'prices.shareText': 'Bugungi bozor narxlari — {city}',
 };

@@ -11,6 +11,7 @@
 import { createT } from '@bazar/i18n';
 import {
   arrivedToday,
+  changeText,
   chorsuTemperature,
   closesToday,
   dealsOf,
@@ -20,9 +21,10 @@ import {
   photo,
   shopfronts,
   tr,
+  trendOf,
   type MapStoreDto,
 } from '@bazar/storefront';
-import type { CategoryDto, ProductDto } from '@bazar/types';
+import type { CategoryDto, PriceIndexDto, ProductDto } from '@bazar/types';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -32,6 +34,60 @@ import { useAuth } from '@/features/auth';
 
 import { BasketBar, ProductCard } from './index';
 import s from './bazar.module.css';
+
+/**
+ * «Индекс базара» as the price board at a bazaar's gate: the first staples in chalk, how the rows
+ * stand against the shops and how the week went. The whole board opens the index.
+ */
+function PriceBoard({
+  index,
+  locale,
+  href,
+}: {
+  index: PriceIndexDto;
+  locale: string;
+  href: string;
+}) {
+  const t = createT(locale);
+  const cheaper = index.cheaperThanShopsPercent;
+  const meta = [
+    cheaper !== null
+      ? t(cheaper >= 0 ? 'prices.cheaper' : 'prices.dearer', { percent: Math.abs(cheaper) })
+      : null,
+    index.weekChangePercent !== null
+      ? `${t('prices.week').toLowerCase()} ${changeText(t, index.weekChangePercent)}`
+      : null,
+  ].filter(Boolean);
+  return (
+    <Link href={href} className={s.indexBoard}>
+      <span className={s.indexHead}>
+        <span className={s.indexTitle}>{t('prices.teaser')}</span>
+        <span className={s.indexMore}>→</span>
+      </span>
+      <span className={s.indexMeta}>
+        {meta.length > 0 ? meta.join(' · ') : t('prices.teaserLine')}
+      </span>
+      <span className={s.indexRows}>
+        {index.items.slice(0, 6).map((item) => {
+          const trend = trendOf(item.changePercent);
+          return (
+            <span key={item.key} className={s.indexCell}>
+              <span className={s.indexName}>{tr(item.title, locale)}</span>
+              <span className={s.indexPrice}>
+                {t.money(item.median, index.currency)}
+                {trend !== 'flat' ? (
+                  <span className={trend === 'up' ? s.indexUp : s.indexDown} aria-hidden>
+                    {trend === 'up' ? ' ▲' : ' ▼'}
+                  </span>
+                ) : null}
+              </span>
+            </span>
+          );
+        })}
+      </span>
+    </Link>
+  );
+}
 
 /** The motto is a sentence; the card has room for four words of it. */
 function shortLine(text: string): string {
@@ -44,6 +100,7 @@ export function BazaarHome({
   categories,
   products,
   onSale,
+  prices = null,
   locale,
 }: {
   stores: readonly MapStoreDto[];
@@ -51,6 +108,8 @@ export function BazaarHome({
   products: readonly ProductDto[];
   /** Goods with a struck-through price, for the «Скидки» rail. */
   onSale: readonly ProductDto[];
+  /** «Индекс базара» of the city, for the board under the greeting. */
+  prices?: PriceIndexDto | null;
   locale: string;
 }) {
   const t = createT(locale);
@@ -153,6 +212,10 @@ export function BazaarHome({
             </Link>
           ) : null}
         </div>
+
+        {prices && prices.items.length > 0 ? (
+          <PriceBoard index={prices} locale={locale} href={`${home}/prices`} />
+        ) : null}
 
         <div className={s.head}>
           <h2 className={s.headTitle}>{t('scene.vendorsHere')}</h2>

@@ -164,6 +164,61 @@ export class CatalogRepository extends BaseRepository {
     return result.count === 1;
   }
 
+  /** The cities with a live stall or shop, the busiest first: those the «Индекс базара» is for. */
+  async indexCities(): Promise<{ id: string; name: Record<string, string> }[]> {
+    const counts = await this.prisma.store.groupBy({
+      by: ['cityId'],
+      where: { ...this.tenantScope(), ...purchasableStoreWhere() },
+      _count: { _all: true },
+    });
+    const places = await this.prisma.geoPlace.findMany({
+      where: { id: { in: counts.map((row) => row.cityId) } },
+      select: { id: true, name: true },
+    });
+    const size = new Map(counts.map((row) => [row.cityId, row._count._all]));
+    return places
+      .sort((a, b) => (size.get(b.id) ?? 0) - (size.get(a.id) ?? 0) || a.id.localeCompare(b.id))
+      .map((place) => ({ id: place.id, name: place.name as Record<string, string> }));
+  }
+
+  /**
+   * What a city's live stalls and shops have on sale, with every price recorded since `since` and
+   * the one in force at it: the «Индекс базара» is built from these.
+   */
+  async indexGoods(cityId: string, since: Date) {
+    const goods = await this.prisma.product.findMany({
+      where: this.scopedAlive({ available: true, store: { ...purchasableStoreWhere(), cityId } }),
+      select: {
+        id: true,
+        name: true,
+        unit: true,
+        price: true,
+        currency: true,
+        storeId: true,
+        createdAt: true,
+        store: { select: { type: true, ownerName: true } },
+      },
+    });
+    const ids = goods.map((good) => good.id);
+    const [recent, before] = await Promise.all([
+      this.prisma.productPrice.findMany({
+        where: { productId: { in: ids }, validFrom: { gte: since } },
+        select: { productId: true, price: true, validFrom: true },
+      }),
+      this.prisma.productPrice.findMany({
+        where: { productId: { in: ids }, validFrom: { lt: since } },
+        orderBy: [{ productId: 'asc' }, { validFrom: 'desc' }],
+        distinct: ['productId'],
+        select: { productId: true, price: true, validFrom: true },
+      }),
+    ]);
+    const history = new Map<string, { price: number; validFrom: Date }[]>();
+    for (const row of [...before, ...recent]) {
+      history.set(row.productId, [...(history.get(row.productId) ?? []), row]);
+    }
+    return goods.map((good) => ({ ...good, history: history.get(good.id) ?? [] }));
+  }
+
   async categoryExists(id: string): Promise<boolean> {
     return (await this.prisma.category.count({ where: { id, active: true } })) > 0;
   }

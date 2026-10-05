@@ -109,6 +109,7 @@ const MENU = [
   { href: '/invite', key: 'menu.invite' },
   { href: '/address', key: 'menu.address' },
   { href: '/catalog', key: 'menu.search' },
+  { href: '/prices', key: 'menu.prices' },
   { href: '/support', key: 'menu.support' },
   { href: '/rules', key: 'menu.rules' },
 ] as const satisfies ReadonlyArray<{ href: string; key: MessageKey }>;

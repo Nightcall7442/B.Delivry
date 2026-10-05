@@ -22,6 +22,7 @@ import {
   Heart,
   Home,
   Leaf,
+  Tag,
   Mic,
   Receipt,
   Scooter,
@@ -59,6 +60,7 @@ const SERVICES: Item[] = [
 const MORE: Item[] = [
   { key: 'menu.address', href: '/address', icon: Home },
   { key: 'menu.support', href: '/support', icon: Chat },
+  { key: 'menu.prices', href: '/prices', icon: Tag },
   { key: 'menu.rules', href: '/rules', icon: Leaf },
 ];
 

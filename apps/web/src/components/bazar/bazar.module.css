@@ -2002,3 +2002,80 @@
     transition: none;
   }
 }
+
+/* «Индекс базара» on the home: the price board at a bazaar's gate, figures in chalk. */
+.indexBoard {
+  display: block;
+  margin-top: 24px;
+  padding: 14px 16px 12px;
+  border-radius: var(--radius-paper);
+  background: var(--board);
+  border: 1px solid color-mix(in srgb, var(--ochre) 35%, transparent);
+  box-shadow: var(--shadow);
+  color: var(--cream);
+  text-decoration: none;
+}
+.indexHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.indexTitle {
+  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+  font-weight: 700;
+  font-size: var(--fs-lead);
+  line-height: 24px;
+  color: var(--ochre-light);
+}
+.indexMore {
+  font-weight: 700;
+  color: var(--ochre-light);
+}
+.indexMeta {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  font-weight: 700;
+  color: var(--cream-muted);
+}
+.indexRows {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed color-mix(in srgb, var(--cream) 22%, transparent);
+}
+.indexCell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.indexName {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--cream-muted);
+}
+.indexPrice {
+  font-family: var(--font-hand), 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 24px;
+  white-space: nowrap;
+  color: var(--cream);
+}
+.indexUp {
+  font-family: var(--font-sans), 'Manrope', system-ui, sans-serif;
+  font-size: 10px;
+  color: var(--ochre-light);
+}
+.indexDown {
+  font-family: var(--font-sans), 'Manrope', system-ui, sans-serif;
+  font-size: 10px;
+  color: var(--cream-muted);
+}

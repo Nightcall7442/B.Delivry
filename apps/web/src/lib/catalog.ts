@@ -4,7 +4,7 @@
  * because nothing here can show or price them.
  */
 import type { MapStoreDto } from '@bazar/storefront';
-import type { CategoryDto, LatLngDto, ProductDto, StoreDto } from '@bazar/types';
+import type { CategoryDto, LatLngDto, PriceIndexDto, ProductDto, StoreDto } from '@bazar/types';
 
 import { serverApi } from '@/lib/api';
 
@@ -58,3 +58,12 @@ export async function listShelves(locale: string, storeId: string): Promise<Cate
 }
 
 export const SHELF_PAGE = 24;
+
+/** «Индекс базара» of a city (the busiest when none is named); null when the API cannot say. */
+export async function priceIndex(locale: string, cityId?: string): Promise<PriceIndexDto | null> {
+  try {
+    return await serverApi(locale).catalog.priceIndex(cityId);
+  } catch {
+    return null;
+  }
+}

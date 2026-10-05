@@ -14,4 +14,6 @@ export const categoryListQuerySchema = z.object({
   root: queryBoolean.optional(),
 });
 
+export const priceIndexQuerySchema = z.object({ cityId: idSchema.optional() });
+
 export type CatalogSearchQuery = z.infer<typeof catalogSearchQuerySchema>;

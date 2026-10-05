@@ -4,18 +4,20 @@
  */
 import { BazaarHome } from '@/components/bazar/home';
 import { DEFAULT_POINT } from '@bazar/storefront';
-import { listCategories, listProducts, listStores } from '@/lib/catalog';
+import { listCategories, listProducts, listStores, priceIndex } from '@/lib/catalog';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const [stores, categories, products, onSale] = await Promise.all([
+  const [stores, categories, products, onSale, prices] = await Promise.all([
     // Tashkent's own stores: a test stall in another city never shows on the site.
     listStores(locale, DEFAULT_POINT),
     listCategories(locale),
     listProducts(locale, {}),
     listProducts(locale, { onSale: true }),
+    // The busiest city's index: the site's home is Tashkent's, like its stalls.
+    priceIndex(locale),
   ]);
   return (
     <BazaarHome
@@ -23,6 +25,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       categories={categories}
       products={products}
       onSale={onSale}
+      prices={prices}
       locale={locale}
     />
   );
