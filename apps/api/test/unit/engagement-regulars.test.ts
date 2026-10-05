@@ -7,6 +7,7 @@
  * Real RegularsService over a small in-memory Prisma; the summaries are tested on their own.
  */
 import { effectivePermissions } from '@bazar/auth';
+import { ORDER_STATUS } from '@bazar/constants';
 import { describe, expect, it } from 'vitest';
 import { runWithContext } from '../../src/common/tenant/tenant-context.js';
 import { systemContext } from '../../src/common/types/request-context.js';
@@ -63,12 +64,47 @@ function world() {
   const notes = new Map<string, string>();
   const ORDERS = [
     // The order on the table, at Farkhod's stall (vendor v1).
-    { id: 'o-now', storeId: 'st1', customerId: 'c1', vendorId: 'v1', status: 'CONFIRMED', at: 5 },
-    { id: 'o-1', storeId: 'st1', customerId: 'c1', vendorId: 'v1', status: 'DELIVERED', at: 1 },
-    { id: 'o-2', storeId: 'st1', customerId: 'c1', vendorId: 'v1', status: 'DELIVERED', at: 3 },
-    { id: 'o-x', storeId: 'st1', customerId: 'c1', vendorId: 'v1', status: 'CANCELLED', at: 4 },
+    {
+      id: 'o-now',
+      storeId: 'st1',
+      customerId: 'c1',
+      vendorId: 'v1',
+      status: ORDER_STATUS.CONFIRMED,
+      at: 5,
+    },
+    {
+      id: 'o-1',
+      storeId: 'st1',
+      customerId: 'c1',
+      vendorId: 'v1',
+      status: ORDER_STATUS.DELIVERED,
+      at: 1,
+    },
+    {
+      id: 'o-2',
+      storeId: 'st1',
+      customerId: 'c1',
+      vendorId: 'v1',
+      status: ORDER_STATUS.DELIVERED,
+      at: 3,
+    },
+    {
+      id: 'o-x',
+      storeId: 'st1',
+      customerId: 'c1',
+      vendorId: 'v1',
+      status: ORDER_STATUS.CANCELLED,
+      at: 4,
+    },
     // The same customer at another stall: not Farkhod's business.
-    { id: 'o-other', storeId: 'st2', customerId: 'c1', vendorId: 'v2', status: 'DELIVERED', at: 2 },
+    {
+      id: 'o-other',
+      storeId: 'st2',
+      customerId: 'c1',
+      vendorId: 'v2',
+      status: ORDER_STATUS.DELIVERED,
+      at: 2,
+    },
   ];
   type Where = {
     id?: string | { not: string };

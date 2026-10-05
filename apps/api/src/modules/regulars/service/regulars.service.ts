@@ -5,6 +5,7 @@
  * own orders (no phone, no address). The customer, on a stall's page, sees that they are known
  * there and can take the last order again.
  */
+import { ORDER_STATUS } from '@bazar/constants';
 import type { MyStallDto, RegularDto } from '@bazar/types';
 import type { PrismaClient } from '@prisma/client';
 import { BaseService, type ServiceDeps } from '../../../common/base/base.service.js';
@@ -34,7 +35,7 @@ export class RegularsService extends BaseService {
       tenantId: this.tenantId(),
       storeId: order.storeId,
       customerId: order.customerId,
-      status: 'DELIVERED' as const,
+      status: ORDER_STATUS.DELIVERED,
       id: { not: order.id },
     };
     const [count, first, history, note] = await Promise.all([
@@ -91,7 +92,7 @@ export class RegularsService extends BaseService {
       tenantId: this.tenantId(),
       storeId,
       customerId: user.customerId,
-      status: 'DELIVERED' as const,
+      status: ORDER_STATUS.DELIVERED,
     };
     const [count, first, last] = await Promise.all([
       this.prisma.order.count({ where: delivered }),
