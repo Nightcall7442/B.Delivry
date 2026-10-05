@@ -32,4 +32,10 @@ describe('t', () => {
       .filter((key) => !uzKeys.has(key));
     expect(missing).toEqual([]);
   });
+
+  it('writes Uzbek numbers as Russian does, whatever locale data the runtime has', () => {
+    expect(createT('uz').qty(1.5)).toBe('1,5');
+    expect(createT('uz').qty(12000)).toBe(createT('ru').qty(12000));
+    expect(createT('en').qty(1.5)).toBe('1.5');
+  });
 });

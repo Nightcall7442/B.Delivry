@@ -68,7 +68,11 @@ export function createT(locale: string): T {
     return fill(own[form] ?? own[other] ?? RU[ruForm] ?? key, { count, ...params });
   };
   t.money = (minor, currency) => formatMoney(minor, currency, NUMBER_LOCALE[loc]);
-  const qty = new Intl.NumberFormat(NUMBER_LOCALE[loc], { maximumFractionDigits: 2 });
+  // Uzbek writes numbers as Russian does (1,5 · 12 000), and a browser without Uzbek locale data
+  // writes «1.5»: the server and the page must agree, so Uzbek borrows the Russian formatter.
+  const qty = new Intl.NumberFormat(loc === 'en' ? NUMBER_LOCALE.en : NUMBER_LOCALE.ru, {
+    maximumFractionDigits: 2,
+  });
   t.qty = (value) => qty.format(value);
   t.date = (value) => {
     const at = typeof value === 'string' ? new Date(value) : value;
