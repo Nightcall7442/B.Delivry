@@ -13,6 +13,7 @@ export function SlipInput({
   suffix,
   error,
   hint,
+  hideLabel = false,
   ...input
 }: Omit<TextInputProps, 'style'> & {
   label: string;
@@ -20,18 +21,25 @@ export function SlipInput({
   suffix?: string;
   error?: string | undefined;
   hint?: string;
+  /** A column's second and third rows: the label is above the first, the reader still hears it. */
+  hideLabel?: boolean;
 }) {
   return (
     <View style={s.wrap}>
-      <RNText style={s.label}>{label}</RNText>
+      {hideLabel ? null : <RNText style={s.label}>{label}</RNText>}
       <View style={[s.field, error !== undefined && s.fieldError]}>
         <TextInput
           accessibilityLabel={label}
-          placeholderTextColor={TONE.inkSoft}
+          // Lighter than a typed figure: «Без скидки» must not read as a value.
+          placeholderTextColor={alpha(TONE.inkSoft, 0.55)}
           style={s.input}
           {...input}
         />
-        {suffix ? <RNText style={s.suffix}>{suffix}</RNText> : null}
+        {suffix ? (
+          <RNText style={s.suffix} numberOfLines={1}>
+            {suffix}
+          </RNText>
+        ) : null}
       </View>
       {error !== undefined ? (
         <RNText style={s.error} accessibilityLiveRegion="polite">
@@ -62,8 +70,10 @@ const s = StyleSheet.create({
     backgroundColor: alpha(TONE.kraft, 0.45),
   },
   fieldError: { borderColor: HALL.pomegranate },
+  // The figures give way, the unit does not: «сум / шт» broke into three lines out of the field.
   input: {
     flex: 1,
+    minWidth: 0,
     paddingVertical: 0,
     fontSize: scale.title.fontSize,
     color: HALL.ink,
@@ -71,7 +81,7 @@ const s = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     ...noOutline,
   },
-  suffix: { fontFamily: sceneFont.ui, ...scale.body, color: TONE.inkSoft },
+  suffix: { flexShrink: 0, fontFamily: sceneFont.ui, ...scale.body, color: TONE.inkSoft },
   error: { fontFamily: sceneFont.ui, ...scale.body, color: HALL.pomegranate },
   hint: { fontFamily: sceneFont.ui, ...scale.caption, color: TONE.inkSoft },
 });

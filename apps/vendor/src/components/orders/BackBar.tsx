@@ -54,6 +54,7 @@ const s = StyleSheet.create({
     fontFamily: sceneFont.display,
     ...scale.title,
     color: TONE.creamLight,
-    fontVariant: ['tabular-nums'],
+    // Lining figures: an order number is compared by eye and read aloud.
+    fontVariant: ['lining-nums', 'tabular-nums'],
   },
 });

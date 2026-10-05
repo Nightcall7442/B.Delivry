@@ -51,6 +51,8 @@ export interface VendorApi {
   reloadOrders: () => Promise<void>;
   /** Orders waiting for the stall's answer across ALL its stalls (the tab badge). */
   waiting: number;
+  /** The other stalls with orders waiting, the one with most first: the badge counts them too. */
+  waitingElsewhere: { storeId: string; count: number }[];
   /** The order that has not been acknowledged yet, oldest first, of any stall; null when up to date. */
   ringing: OrderDto | null;
   /** The stall has seen this order: the vibration and the banner stop for it. */
@@ -224,6 +226,16 @@ export function VendorProvider({ children }: { children: ReactNode }) {
     () => allOrders.filter((order) => order.status === ORDER_STATUS.PENDING).length,
     [allOrders],
   );
+  const waitingElsewhere = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const order of allOrders) {
+      if (order.status !== ORDER_STATUS.PENDING || order.storeId === storeId) continue;
+      counts.set(order.storeId, (counts.get(order.storeId) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .map(([id, count]) => ({ storeId: id, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [allOrders, storeId]);
   const ringing = useMemo(
     () => (seen === null ? null : (unseenOrders(allOrders, seen)[0] ?? null)),
     [allOrders, seen],
@@ -249,6 +261,7 @@ export function VendorProvider({ children }: { children: ReactNode }) {
       ordersFailed,
       reloadOrders,
       waiting,
+      waitingElsewhere,
       ringing,
       acknowledge,
     }),
@@ -262,6 +275,7 @@ export function VendorProvider({ children }: { children: ReactNode }) {
       ordersFailed,
       reloadOrders,
       waiting,
+      waitingElsewhere,
       ringing,
       acknowledge,
     ],

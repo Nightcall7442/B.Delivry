@@ -81,11 +81,12 @@ export function HoursCard({
     <Paper style={s.card}>
       <View style={s.head}>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <RNText style={s.label}>Часы работы</RNText>
+          <RNText style={s.label}>Расписание</RNText>
           <RNText style={s.summary}>
             {none
               ? 'Не заданы — заказы не принимаются'
-              : `${daysText(saved.days)} · ${saved.opens} – ${saved.closes}`}
+              : // The range is one piece: «18:00» never sits alone on the next line.
+                `${daysText(saved.days)} · ${saved.opens}\u00a0–\u00a0${saved.closes}`}
           </RNText>
         </View>
         {editing ? null : (
@@ -209,11 +210,13 @@ const s = StyleSheet.create({
   done: { fontFamily: sceneFont.italic, ...scale.lead, color: TONE.inkSoft },
   form: { gap: 12, marginTop: 4 },
   times: { flexDirection: 'row', gap: 12 },
-  days: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  // The week in one row of equal stamps, like a calendar: 4 + 3 wider ones looked uneven.
+  days: { flexDirection: 'row', gap: 6 },
   // A day is a small stamp: ink when the stall trades, kraft when it does not.
   day: {
     flexGrow: 1,
-    minWidth: 64,
+    flexBasis: 0,
+    minWidth: 0,
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',

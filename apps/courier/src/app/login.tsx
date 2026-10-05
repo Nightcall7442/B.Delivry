@@ -26,7 +26,7 @@ export default function LoginRoute() {
           <Text style={[s.title, evening && { fontFamily: sceneFont.displayItalic }]}>
             {evening ? 'Хайрли кеч' : 'Хайрли тонг'}
           </Text>
-          <Text style={s.line}>За руль — по номеру курьера. Без паролей.</Text>
+          <Text style={s.line}>За руль — по номеру курьера.</Text>
         </View>
         <Paper>
           <LoginForm title="Bazar Courier" onSignedIn={() => router.replace('/shift')} />

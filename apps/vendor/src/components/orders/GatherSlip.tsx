@@ -39,6 +39,8 @@ export function GatherSlip({ order }: { order: OrderDto }) {
           ) : null}
           {item.comment ? (
             <View style={s.comment}>
+              {/* Labelled: it is this line's wish, not the «если чего-то нет» box under it. */}
+              <RNText style={s.commentLabel}>Покупатель просит</RNText>
               <RNText style={s.commentText}>{item.comment}</RNText>
             </View>
           ) : null}
@@ -70,7 +72,15 @@ const s = StyleSheet.create({
   weigh: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   weighText: { fontFamily: sceneFont.italic, ...scale.body, color: TONE.inkSoft },
   // What the customer asked of this one line: kraft, so it is read before the bag is closed.
-  comment: { backgroundColor: TONE.kraft, borderRadius: radius.paper, padding: 8 },
+  comment: {
+    backgroundColor: TONE.kraft,
+    borderRadius: radius.paper,
+    borderLeftWidth: 3,
+    borderLeftColor: HALL.ochre,
+    padding: 8,
+    gap: 2,
+  },
+  commentLabel: { ...capital, color: TONE.inkSoft },
   commentText: { fontFamily: sceneFont.uiHeavy, ...scale.body, color: HALL.ink },
   ifOut: {
     backgroundColor: TONE.kraft,
@@ -79,5 +89,5 @@ const s = StyleSheet.create({
     gap: 2,
     marginTop: 4,
   },
-  ifOutText: { fontFamily: sceneFont.ui, ...scale.lead, color: HALL.ink },
+  ifOutText: { fontFamily: sceneFont.ui, ...scale.body, color: HALL.ink },
 });

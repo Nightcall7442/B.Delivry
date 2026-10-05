@@ -21,7 +21,10 @@ export function FactsSlip({ order }: { order: OrderDto }) {
   const { subtotal } = order.totals;
   return (
     <Paper>
-      <Row label="Клиент" value={customerFirstName(order.customer)} />
+      {/* Without a first name the row said «Клиент … Клиент»: then there is nothing to show. */}
+      {order.customer?.firstName?.trim() ? (
+        <Row label="Клиент" value={customerFirstName(order.customer)} />
+      ) : null}
       <Row label="Оплата" value={PAYMENT_METHOD_TEXT[order.paymentMethod].title} />
       <View style={s.rule} />
       <View style={s.row}>

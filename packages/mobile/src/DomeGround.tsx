@@ -13,6 +13,7 @@ import { GROUND, hallLight, type HallLight } from '@bazar/storefront';
 import { Image } from 'expo-image';
 import { memo, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Platform, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const HALL_GROUND = {
   morning: require('../assets/hall/hall-morning-ground.webp'),
@@ -23,6 +24,8 @@ const HALL_LIGHT = {
   evening: require('../assets/hall/hall-evening-light.png'),
 } as const;
 const PHOTO_GRADE = require('../assets/hall/photo-grade.png');
+/** Where the string of lamps hangs in the light picture on a phone-width screen, in points. */
+const LAMPS_Y = 40;
 
 function useStillness(): boolean {
   const [still, setStill] = useState(false);
@@ -71,6 +74,11 @@ function useBreath(low: number, period: number): Animated.Value {
 export const DomeGround = memo(function DomeGround({ light }: { light?: HallLight }) {
   const hall = light ?? hallLight();
   const evening = hall === 'evening';
+  // The lamps hang about 40 px down the picture: inside the status bar on a phone with a notch,
+  // but across the screen's title where the bar is short (or absent, on the web). There the light
+  // is lifted so the wire runs above the title instead of through it.
+  const { top } = useSafeAreaInsets();
+  const lift = Math.min(0, top - LAMPS_Y);
   // Morning shafts breathe slowly; the lamps flicker a little.
   const breath = useBreath(evening ? 0.9 : 0.72, evening ? 6000 : 16000);
   return (
@@ -93,7 +101,7 @@ export const DomeGround = memo(function DomeGround({ light }: { light?: HallLigh
       >
         <Image
           source={HALL_LIGHT[hall]}
-          style={StyleSheet.absoluteFill}
+          style={[StyleSheet.absoluteFill, { top: lift }]}
           contentFit="cover"
           contentPosition="top"
           transition={0}

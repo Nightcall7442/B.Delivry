@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState, Linking, Pressable, StyleSheet, Text as RNText, View } from 'react-native';
 
 import { Paper, sceneFont } from '@/components/scene';
+import { formatUzPhone } from '@bazar/utils/phone';
 
 export function TelegramCard() {
   const { user, refresh } = useAuth();
@@ -78,7 +79,11 @@ export function SignOut() {
       accessibilityLabel="Выйти из аккаунта"
       style={s.signOut}
     >
-      <RNText style={s.signOutText}>{user?.phone ? `${user.phone} · Выйти` : 'Выйти'}</RNText>
+      {/* The number as it is said aloud; «Выйти» looks like what it is — the thing to tap. */}
+      <RNText style={s.signOutText}>
+        {user?.phone ? `${formatUzPhone(user.phone)} · ` : ''}
+        <RNText style={s.signOutAction}>Выйти</RNText>
+      </RNText>
     </Pressable>
   );
 }
@@ -89,6 +94,11 @@ const s = StyleSheet.create({
   sub: { fontFamily: sceneFont.ui, ...scale.body, color: TONE.inkSoft, marginTop: 2 },
   error: { fontFamily: sceneFont.ui, ...scale.body, color: HALL.pomegranate, marginTop: 8 },
   signOut: { alignSelf: 'center', minHeight: 48, justifyContent: 'center', paddingHorizontal: 16 },
+  signOutAction: {
+    fontFamily: sceneFont.uiHeavy,
+    color: TONE.ochreLight,
+    textDecorationLine: 'underline',
+  },
   signOutText: {
     fontFamily: sceneFont.ui,
     ...scale.body,
