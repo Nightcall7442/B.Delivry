@@ -15,6 +15,7 @@ export * from './checkout.js';
 export * from './catalog-data.js';
 export * from './i18n.js';
 export * from './guarantees.js';
+export * from './help.js';
 export * from './holidays.js';
 export * from './labels.js';
 export * from './list-parser.js';

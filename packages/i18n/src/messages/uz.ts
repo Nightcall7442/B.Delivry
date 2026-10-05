@@ -246,9 +246,10 @@ export const uz: Catalogue = {
   'error.hint': 'Sahifani yangilang — savat va buyurtmalar joyida.',
   'notFound.title': 'Bunday sahifa yoʻq',
   'notFound.hint': 'Havola eskirgan yoki xato terilgan.',
-  'menu.rules': 'Kafolatlar',
-  'rules.title': 'Bizning qoidalar',
-  'rules.intro': 'Qoʻngʻiroq va bahssiz bajaradigan ikkita vaʼda.',
+  'menu.rules': 'Kafolatlar va savollar',
+  'rules.title': 'Kafolatlar va savollar',
+  'rules.intro':
+    'Qoʻngʻiroq va bahssiz bajaradigan ikkita vaʼda — va eng koʻp soʻraladigan savollar.',
   'rules.freshness.title': 'Yangilik kafolati',
   'rules.freshness.body':
     'Yangiligi yoqmadimi — yetkazilgandan keyin {hours} soat ichida xabar bering, surat qoʻshing. Mahsulot pulini savolsiz qaytaramiz.',
@@ -256,6 +257,44 @@ export const uz: Catalogue = {
   'rules.late.body':
     'Vaʼda qilingan vaqtdan {minutes} daqiqadan koʻp kechiksak — yetkazish bizdan: uning narxi darhol balansingizga qaytadi.',
   'rules.slot.hint': 'Oynalar uchun vaʼda vaqti — oynaning oxiri.',
+  'help.promises': 'Kafolatlar',
+  'help.returns': 'Pulni qachon qaytaramiz',
+  'help.returnsIntro':
+    'Qaytgan pul ilovadagi balansda turadi: u bilan keyingi buyurtmani toʻlash mumkin.',
+  'help.faq': 'Koʻp soʻraladigan savollar',
+  'help.missing.title': 'Sotuvchida nimadir boʻlmadi',
+  'help.missing.body':
+    'Kuryer pozitsiyani «sotuvchida yoʻq» deb belgilaydi — u hisobdan chiqadi, qolgani sizga yetkaziladi. Nima boʻlmaganini yozamiz; buyurtma toʻlangan boʻlsa, farq oʻzi balansga qaytadi.',
+  'help.weight.title': 'Tarozi kamroq koʻrsatdi',
+  'help.weight.body':
+    'Kuryer sotuvchi oldida tortadi va tarozini suratga oladi — surat buyurtmada. Tarozi boʻyicha toʻlaysiz; koʻproq toʻlagan boʻlsangiz, farq balansga qaytadi.',
+  'help.cancel.title': 'Buyurtmani bekor qilish',
+  'help.cancel.body':
+    'Kuryer buyurtmani sotuvchidan olmaguncha bekor qilish mumkin. Buyurtma toʻlangan boʻlsa, yechilgan hamma pul balansga qaytadi.',
+  'help.estimate.title': 'Nega savatdagi summa «taxminan»?',
+  'help.estimate.body':
+    'Goʻsht, sabzavot va mevalar tarozida sotiladi: savatda — taxminiy, aniq summa — sotuvchi oldida tortilgandan keyin. Onlayn toʻlov ham tortilgandan keyin.',
+  'help.stalls.title': 'Bir nechta sotuvchidan buyurtma qilsa boʻladimi?',
+  'help.stalls.body':
+    'Ha: bitta bozorning rastalarini bitta kuryer yigʻadi, yetkazib berish bitta. Turli bozorlardagi doʻkonlar — alohida buyurtmalar.',
+  'help.sale.title': 'Chegirmalar haqiqiymi?',
+  'help.sale.body':
+    'Oxirgi {days} kundagi eng past narx chizilgan — kecha narxni koʻtarib, bugun «tushirish» ishlamaydi. {days} kun oʻzgarmagan chegirmani oʻzimiz olib tashlaymiz.',
+  'help.haggle.title': 'Savdolashsa boʻladimi?',
+  'help.haggle.body':
+    'Ha: savatda «Chegirma soʻrash»ni bosing va narxni ayting. Sotuvchi {hours} soat ichida javob beradi, kelishilgan narx {holds} soat amal qiladi.',
+  'help.wish.title': '«Suyaksiz» yoki «kattaroq» deb qanday soʻrash mumkin?',
+  'help.wish.body':
+    'Savatdagi qator ostida — «+ sotuvchiga istak». Uni sotuvchi yigʻishda, kuryer tortishda koʻradi.',
+  'help.payment.title': 'Qanday toʻlash mumkin?',
+  'help.payment.body':
+    'Kuryerga naqd yoki karta bilan, Payme / Click orqali yoki ilovadagi balansdan. Kompaniyalarga — kechiktirilgan hisob boʻyicha.',
+  'help.cashback.title': 'Keshbek nima?',
+  'help.cashback.body':
+    'Mahsulotlar summasining {percent} % yetkazilgandan keyin balansga tushadi. Keshbek {days} kun amal qiladi.',
+  'help.hearts.title': 'Mahsulot arzonlashgani yoki paydo boʻlganini qanday bilaman?',
+  'help.hearts.body':
+    'Mahsulotda ♥ ni bosing: arzonlashganda yoki yana sotuvga chiqqanda yozamiz — kuniga bir martadan koʻp emas.',
   'checkout.rulesLink': 'Yangilik kafolati va kechikish sugʻurtasi',
   'order.late': '{minutes} daqiqa kechikdik — yetkazish bizdan, {amount} balansga qaytdi.',
   'order.freshness': 'Yangiligi yoqmadimi? {time} gacha xabar bering — mahsulot pulini qaytaramiz.',
@@ -572,8 +611,8 @@ export const uz: Catalogue = {
   'login.taglineHint': 'Chorsu · Oloy · Farhod — uyingizga yetkazamiz',
   'support.callTitle': 'Qoʻngʻiroq qilish',
   'support.telegramTitle': 'Telegram',
-  'support.rulesTitle': 'Qoidalar va kafolatlar',
-  'support.rulesHint': 'Yangilik, kechikish, qaytarish',
+  'support.rulesTitle': 'Kafolatlar va savollar',
+  'support.rulesHint': 'Yangilik, pulni qaytarish, koʻp soʻraladigan savollar',
   'invite.how': 'Bu qanday ishlaydi',
   'invite.step1': 'Doʻstingizga kod yoki havolani yuboring',
   'invite.step2': 'Doʻstingiz birinchi buyurtmaga {bonus} oladi',
