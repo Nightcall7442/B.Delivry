@@ -32,7 +32,7 @@ export function fromAddressDto(dto: AddressDto): DeliveryAddress | null {
 
 /**
  * The address as a headline: a dropped pin shows «Точка на карте», not its coordinates — also when
- * the API has appended «, kv. 5» after them.
+ * the API has appended «, кв. 5» after them.
  */
 export const addressLabel = (text: string): string =>
   text.replace(/\s*·\s*-?\d+\.\d+,\s*-?\d+\.\d+/, '');

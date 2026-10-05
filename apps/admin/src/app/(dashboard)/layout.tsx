@@ -2,14 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 
 import { useAuth } from '@/features/auth';
+import { formatUzPhone } from '@bazar/utils/phone';
 
 const NAV = [
   { href: '/orders', label: 'Заказы' },
   { href: '/couriers', label: 'Курьеры' },
-  { href: '/stores', label: 'Точки' },
+  { href: '/stores', label: 'Прилавки' },
   { href: '/vendors', label: 'Продавцы' },
   { href: '/companies', label: 'Компании' },
   { href: '/invoices', label: 'Счета' },
@@ -31,6 +32,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (ready && (!user || !isStaff)) router.replace('/login');
   }, [ready, user, isStaff, router]);
+
+  // The page you are on is the label you see: the strip brings it into view.
+  const strip = useRef<HTMLElement>(null);
+  useEffect(() => {
+    strip.current
+      ?.querySelector('[aria-current="page"]')
+      ?.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, [pathname, ready]);
 
   if (!ready || !user || !isStaff) return null;
 
@@ -68,7 +77,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="font-display shrink-0 text-title font-bold">
           Bazar<span style={{ color: 'var(--ochre)' }}>.</span>
         </div>
-        <nav className="flex min-w-0 flex-1 gap-2 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* The strip fades at its edges instead of cutting a label against «Выйти». */}
+        <nav
+          ref={strip}
+          className="flex min-w-0 flex-1 gap-2 overflow-x-auto px-3 py-1 [mask-image:linear-gradient(to_right,transparent,black_12px,black_calc(100%-12px),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {nav}
         </nav>
         <div className="shrink-0">{signOutButton}</div>
@@ -92,7 +105,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             borderTop: '1.5px dashed color-mix(in srgb, var(--ink-paper) 35%, transparent)',
           }}
         >
-          <div className="truncate text-sm font-bold tabular-nums">{user.phone}</div>
+          <div className="truncate text-sm font-bold tabular-nums">{formatUzPhone(user.phone)}</div>
           <div className="mt-1">{signOutButton}</div>
         </div>
       </aside>

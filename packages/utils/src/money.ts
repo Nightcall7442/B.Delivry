@@ -29,7 +29,7 @@ function numberFormat(locale: string, fractionDigits: number): Intl.NumberFormat
   return format;
 }
 
-/** 1234567 tiyin -> "12 345,67 soum" (uz/ru use a space as the thousands separator). */
+/** 1234567 tiyin -> "12 345,67 soum" (uz/ru use a space as the thousands separator; the unit is held on with a no-break space). */
 export function formatMoney(
   minor: number,
   currency: Currency = DEFAULT_CURRENCY,
@@ -45,7 +45,8 @@ export function formatMoney(
   );
   // "сум" is Cyrillic; Uzbek Latin readers expect "soʻm".
   const symbol = currency === 'UZS' && locale.startsWith('uz') ? 'soʻm' : CURRENCY_SYMBOL[currency];
-  return `${formatted} ${symbol}`;
+  // A no-break space: «146 500» and «сум» never part at a line end.
+  return `${formatted}\u00a0${symbol}`;
 }
 
 /** "12 345,67" / "12345.67" -> minor units. Returns null on garbage input. */

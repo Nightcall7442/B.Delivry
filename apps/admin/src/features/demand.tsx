@@ -34,7 +34,8 @@ export function Demand({ storeId }: { storeId?: string }) {
           <li key={row.query} className="flex items-center justify-between py-2">
             <span>{row.query}</span>
             <span className="tabular-nums text-ink-muted">
-              {row.count} × {row.results === 0 ? '· нет в каталоге' : ''}
+              {queries(row.count)}
+              {row.results === 0 ? ' · нет в каталоге' : ''}
             </span>
           </li>
         ))}
@@ -70,4 +71,19 @@ export function Demand({ storeId }: { storeId?: string }) {
       )}
     </div>
   );
+}
+
+/** «1 запрос», «3 запроса», «12 запросов». */
+function queries(count: number): string {
+  const mod100 = count % 100;
+  const mod10 = count % 10;
+  const word =
+    mod100 >= 11 && mod100 <= 14
+      ? 'запросов'
+      : mod10 === 1
+        ? 'запрос'
+        : mod10 >= 2 && mod10 <= 4
+          ? 'запроса'
+          : 'запросов';
+  return `${count} ${word}`;
 }

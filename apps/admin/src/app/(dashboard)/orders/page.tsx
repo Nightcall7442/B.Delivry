@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth';
 import { ORDER_LABEL, when } from '@/features/labels';
 import { api } from '@/lib/api';
+import { formatUzPhone } from '@bazar/utils/phone';
 
 type Filter = 'active' | 'attention' | 'all';
 
@@ -76,14 +77,15 @@ export default function OrdersPage() {
           {(
             [
               ['active', 'Активные'],
-              ['attention', `Внимание${attention ? ` · ${attention}` : ''}`],
+              // The count is always there: the control keeps its width while the board changes.
+              ['attention', `Внимание · ${attention}`],
               ['all', 'Все'],
             ] as const
           ).map(([key, label]) => (
             <button
               key={key}
               type="button"
-              className={`h-9 rounded-full px-4 text-sm font-semibold ${filter === key ? 'bg-[var(--cream)] text-[var(--ink-paper)]' : 'text-[var(--cream-muted)]'}`}
+              className={`h-9 whitespace-nowrap rounded-full px-4 text-sm font-semibold tabular-nums ${filter === key ? 'bg-[var(--cream)] text-[var(--ink-paper)]' : 'text-[var(--cream-muted)]'}`}
               onClick={() => setFilter(key)}
             >
               {label}
@@ -91,7 +93,7 @@ export default function OrdersPage() {
           ))}
         </div>
         <input
-          className="glass h-11 w-56 rounded-full px-4 text-lead text-[var(--cream)] placeholder:text-[var(--cream-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-saffron-400"
+          className="glass h-11 w-full rounded-full px-4 sm:w-56 text-lead text-[var(--cream)] placeholder:text-[var(--cream-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-saffron-400"
           placeholder="Номер заказа"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -105,8 +107,9 @@ export default function OrdersPage() {
               <th className="px-4 py-3">Заказ</th>
               <th className="px-4 py-3">Статус</th>
               <th className="px-4 py-3">Точка</th>
-              <th className="px-4 py-3">Клиент</th>
-              <th className="px-4 py-3">Курьер</th>
+              {/* On a phone the board keeps what tells orders apart; the rest is one tap away. */}
+              <th className="hidden px-4 py-3 md:table-cell">Клиент</th>
+              <th className="hidden px-4 py-3 md:table-cell">Курьер</th>
               <th className="px-4 py-3 text-right">Сумма</th>
               <th className="px-4 py-3">Когда</th>
             </tr>
@@ -116,7 +119,7 @@ export default function OrdersPage() {
               const label = ORDER_LABEL[order.status];
               return (
                 <tr key={order.id} className="hover:bg-sand-50">
-                  <td className="px-4 py-3">
+                  <td className="whitespace-nowrap px-4 py-3">
                     <Link
                       href={`/orders/${order.id}`}
                       className="font-medium text-brand-700 underline-offset-2 hover:underline"
@@ -125,11 +128,13 @@ export default function OrdersPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`badge ${label.tone}`}>{label.text}</span>
+                    <span className={`badge whitespace-nowrap ${label.tone}`}>{label.text}</span>
                   </td>
                   <td className="px-4 py-3">{tr(order.store.name, 'ru')}</td>
-                  <td className="px-4 py-3 tabular-nums">{order.customer?.phone ?? '—'}</td>
-                  <td className="px-4 py-3">
+                  <td className="hidden whitespace-nowrap px-4 py-3 tabular-nums md:table-cell">
+                    {order.customer?.phone ? formatUzPhone(order.customer.phone) : '—'}
+                  </td>
+                  <td className="hidden px-4 py-3 md:table-cell">
                     {order.delivery?.courierId ? (
                       <span className="text-ink">назначен</span>
                     ) : isTerminalOrderStatus(order.status) ? (
@@ -138,17 +143,25 @@ export default function OrdersPage() {
                       <span className="text-ink-muted">нет</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+                  <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                     {formatMoney(order.totals.total.amount)}
                   </td>
-                  <td className="px-4 py-3 text-ink-muted">{when(order.placedAt)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-ink-muted">
+                    {when(order.placedAt)}
+                  </td>
                 </tr>
               );
             })}
             {!loading && rows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-12 text-center text-ink-muted">
-                  Пусто. {filter === 'active' ? 'Активных заказов нет.' : ''}
+                  {search.trim()
+                    ? `По «${search.trim()}» ничего не нашли — проверьте номер заказа.`
+                    : filter === 'active'
+                      ? 'Активных заказов нет — новые появятся здесь сами.'
+                      : filter === 'attention'
+                        ? 'Всё идёт своим ходом: заказов, которым нужен человек, нет.'
+                        : 'Заказов пока нет.'}
                 </td>
               </tr>
             ) : null}

@@ -9,7 +9,7 @@ import {
 } from '@bazar/constants';
 import {
   PAYMENT_METHOD_TEXT,
-  SUBSTITUTION_TEXT,
+  PAYMENT_STATUS_TEXT,
   UNIT_LABEL,
   slotLabel,
   tr,
@@ -23,13 +23,16 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   COURIER_LABEL,
   DELIVERY_LABEL,
+  ORDER_ACTION,
   ORDER_LABEL,
+  SUBSTITUTION_DESK,
   VEHICLE_LABEL,
   ago,
   when,
 } from '@/features/labels';
 import { useAuth } from '@/features/auth';
 import { api } from '@/lib/api';
+import { formatUzPhone } from '@bazar/utils/phone';
 
 /** Moves the desk may make by hand; courier steps stay with the courier app. */
 const MANUAL: readonly OrderStatus[] = [
@@ -126,7 +129,10 @@ export default function OrderPage() {
         ← Все заказы
       </Link>
       <div className="mt-2 flex flex-wrap items-center gap-3">
-        <h1 className="font-display text-headline font-extrabold">{order.number}</h1>
+        {/* Read out over the phone: lining figures, «01» never «o1». */}
+        <h1 className="font-display text-headline font-extrabold lining-nums tabular-nums">
+          {order.number}
+        </h1>
         {/* On the ground the paper tones vanish: the stamp is pressed in ochre as text. */}
         <span className="badge text-[var(--ochre-light)]">{label.text}</span>
         <span className="text-sm text-ink-muted">{when(order.placedAt)}</span>
@@ -140,7 +146,7 @@ export default function OrderPage() {
         <div className="flex flex-col gap-4">
           <section className="card p-4">
             <h2 className="font-display text-lead font-bold">Кто и куда</h2>
-            <dl className="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+            <dl className="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[10rem_1fr] sm:gap-y-2">
               <dt className="text-ink-muted">Клиент</dt>
               <dd className="tabular-nums">
                 {order.customer?.firstName ? `${order.customer.firstName} · ` : ''}
@@ -149,7 +155,7 @@ export default function OrderPage() {
                     href={`tel:${order.customer.phone}`}
                     className="underline-offset-2 hover:underline"
                   >
-                    {order.customer.phone}
+                    {formatUzPhone(order.customer.phone)}
                   </a>
                 ) : (
                   '—'
@@ -174,7 +180,8 @@ export default function OrderPage() {
               ) : null}
               <dt className="text-ink-muted">Оплата</dt>
               <dd>
-                {PAYMENT_METHOD_TEXT[order.paymentMethod].title} · {order.paymentStatus}
+                {PAYMENT_METHOD_TEXT[order.paymentMethod].title} ·{' '}
+                {PAYMENT_STATUS_TEXT[order.paymentStatus].toLowerCase()}
               </dd>
               {order.comment ? (
                 <>
@@ -189,7 +196,7 @@ export default function OrderPage() {
                 </>
               ) : null}
               <dt className="text-ink-muted">Если нет товара</dt>
-              <dd>{SUBSTITUTION_TEXT[order.substitutionPolicy].title}</dd>
+              <dd>{SUBSTITUTION_DESK[order.substitutionPolicy] ?? order.substitutionPolicy}</dd>
             </dl>
           </section>
 
@@ -205,8 +212,14 @@ export default function OrderPage() {
                         ? `нет у продавца (заказано ${item.quantity} ${UNIT_LABEL[item.unit]})`
                         : `× ${item.actualQuantity ?? item.quantity} ${UNIT_LABEL[item.unit]}`}
                     </span>
+                    {/* The customer's wish for the line: what the stall was asked to do. */}
+                    {item.comment ? (
+                      <span className="mt-0.5 block text-xs font-semibold text-brand-700">
+                        «{item.comment}»
+                      </span>
+                    ) : null}
                   </span>
-                  <span className="tabular-nums">
+                  <span className="whitespace-nowrap tabular-nums">
                     {formatMoney((item.actualTotal ?? item.total).amount)}
                   </span>
                 </li>
@@ -227,6 +240,21 @@ export default function OrderPage() {
           <section className="card p-4">
             <h2 className="font-display text-lead font-bold">История</h2>
             <ol className="mt-2 text-sm">
+              {order.statusHistory.length === 0 ? (
+                // An order placed before the journal kept its steps: at least when it came in.
+                <li className="flex gap-3 py-1">
+                  <span className="w-32 shrink-0 tabular-nums text-ink-muted">
+                    {when(order.placedAt)}
+                  </span>
+                  <span>
+                    Оформлен
+                    <span className="text-ink-muted">
+                      {' '}
+                      — шаги до журнала статусов не сохранились
+                    </span>
+                  </span>
+                </li>
+              ) : null}
               {order.statusHistory.map((entry, index) => (
                 <li key={`${entry.status}-${index}`} className="flex gap-3 py-1">
                   <span className="w-32 shrink-0 tabular-nums text-ink-muted">
@@ -244,7 +272,8 @@ export default function OrderPage() {
           </section>
         </div>
 
-        <aside className="flex flex-col gap-4">
+        {/* On a phone the desk's actions come first: they are what the page is opened for. */}
+        <aside className="order-first flex flex-col gap-4 lg:order-none">
           <section className="card p-4">
             <h2 className="font-display text-lead font-bold">Курьер</h2>
             {courier ? (
@@ -280,7 +309,7 @@ export default function OrderPage() {
             ) : (
               <p className="mt-2 text-sm text-ink-muted">
                 {terminal
-                  ? 'Заказ закрыт.'
+                  ? 'Курьер больше не нужен.'
                   : delivery
                     ? 'Не назначен.'
                     : 'Доставка ещё не открыта.'}
@@ -342,6 +371,12 @@ export default function OrderPage() {
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
                   />
+                  {legal.some((status) => status !== ORDER_STATUS.DELIVERED) &&
+                  reason.trim().length < 3 ? (
+                    <p className="text-xs text-ink-muted">
+                      Отмена и возврат — с причиной: её увидит клиент.
+                    </p>
+                  ) : null}
                   {legal.map((status) => (
                     <button
                       key={status}
@@ -361,12 +396,14 @@ export default function OrderPage() {
                         )
                       }
                     >
-                      {ORDER_LABEL[status].text}
+                      {ORDER_ACTION[status] ?? ORDER_LABEL[status].text}
                     </button>
                   ))}
                 </>
               ) : null}
-              {terminal ? <p className="text-sm text-ink-muted">Заказ закрыт.</p> : null}
+              {terminal && legal.length === 0 ? (
+                <p className="text-sm text-ink-muted">Заказ закрыт.</p>
+              ) : null}
             </div>
           </section>
         </aside>
