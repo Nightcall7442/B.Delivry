@@ -181,6 +181,33 @@ export class ProductsService extends BaseService {
     return updated;
   }
 
+  /**
+   * A sale left alone for the whole reference week ends by itself: by then the lowest price of the
+   * week is the sale price, and the struck one is a price nobody has been charged in seven days —
+   * the very claim the honest sale refuses. The price stays; only the struck price goes. Run by the
+   * scheduler, in batches; returns how many ended.
+   */
+  async endStaleSales(now: Date = new Date(), batch = 500): Promise<number> {
+    const since = new Date(now.getTime() - SALE.REFERENCE_DAYS * DAY_MS);
+    let ended = 0;
+    for (;;) {
+      const stale = await this.repository.staleSales(since, batch);
+      if (stale.length === 0) break;
+      const count = await this.repository.endStaleSales(
+        stale.map((product) => product.id),
+        since,
+      );
+      ended += count;
+      for (const storeId of new Set(stale.map((product) => product.storeId))) {
+        await this.invalidate(storeId);
+      }
+      // A short page was the last; a page none of which ended (all cut again meanwhile) would
+      // come back the same.
+      if (stale.length < batch || count === 0) break;
+    }
+    return ended;
+  }
+
   /** Alcohol and tobacco are not sold through the app: refused on the way in, whatever the store. */
   private async assertAllowedCategory(categoryId: string | undefined): Promise<void> {
     if (categoryId === undefined) return;

@@ -170,6 +170,31 @@ export class ProductsRepository extends BaseRepository {
     return prices.length === 0 ? null : Math.min(...prices);
   }
 
+  /**
+   * Sales whose price has stood since `since` or longer — no price change on or after it — so the
+   * struck price is no longer one the good sold at within the reference week.
+   */
+  async staleSales(since: Date, limit: number): Promise<{ id: string; storeId: string }[]> {
+    return this.prisma.product.findMany({
+      where: this.scoped(staleSale(since)),
+      select: { id: true, storeId: true },
+      take: limit,
+    });
+  }
+
+  /**
+   * Ends those sales: the price stays, the struck one goes. The condition is checked again in the
+   * write, so a cut the seller made in between stands.
+   */
+  async endStaleSales(ids: string[], since: Date): Promise<number> {
+    if (ids.length === 0) return 0;
+    const { count } = await this.prisma.product.updateMany({
+      where: this.scoped({ id: { in: ids }, ...staleSale(since) }),
+      data: { oldPrice: null },
+    });
+    return count;
+  }
+
   /** A sale starts, moves or ends: both prices at once, the new price appended to the history. */
   async setSale(
     id: string,
@@ -258,4 +283,9 @@ export class ProductsRepository extends BaseRepository {
     });
     return row?.id ?? null;
   }
+}
+
+/** On sale, and the price not changed on or after `since`. */
+function staleSale(since: Date): Prisma.ProductWhereInput {
+  return { oldPrice: { not: null }, priceHistory: { none: { validFrom: { gte: since } } } };
 }

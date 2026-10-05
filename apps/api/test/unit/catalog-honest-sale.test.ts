@@ -4,7 +4,8 @@
  * «cut» on Tuesday shows no discount at all, and there is no «old price» to type: an edit may only
  * end a sale, and a spreadsheet's «old_price» goes through the same honest cut. A price raised to
  * or past the old one ends the sale by itself. A real cut is an event the customers who saved the
- * good hear about, once a day at most.
+ * good hear about, once a day at most. And a sale nobody touched for the whole week ends by
+ * itself: by then the struck price is one nobody has paid in seven days.
  *
  * Real ProductsService and the favorites sale handler; the repository, the stores, the cache and
  * the queue are fakes.
@@ -24,7 +25,9 @@ import {
   createProductSchema,
   updateProductSchema,
 } from '../../src/modules/products/schemas/index.js';
+import { ProductsRepository } from '../../src/modules/products/repository/products.repository.js';
 import { ProductsService } from '../../src/modules/products/service/products.service.js';
+import { systemContext } from '../../src/common/types/request-context.js';
 
 const TENANT = 't1';
 const DAY = 86_400_000;
@@ -325,5 +328,135 @@ describe('«подешевело» for the customers who saved it', () => {
     });
     await events.publish(sale());
     expect(jobs).toEqual([]);
+  });
+});
+
+describe('a sale left alone for the week', () => {
+  const NOW = new Date('2026-10-12T10:00:00Z');
+  const SINCE = new Date(NOW.getTime() - SALE.REFERENCE_DAYS * DAY);
+
+  interface Shelf {
+    id: string;
+    storeId: string;
+    price: number;
+    oldPrice: number | null;
+    /** Days ago of each price change, newest last. */
+    changed: number[];
+  }
+  const good = (id: string, storeId: string, oldPrice: number | null, changed: number[]) => ({
+    id,
+    storeId,
+    price: 18_000_00,
+    oldPrice,
+    changed,
+  });
+
+  /** Products and their history; the repository's stale test is the one it sends to the database. */
+  function sweep(shelf: Shelf[], options: { cutMeanwhile?: string } = {}) {
+    const invalidated: string[] = [];
+    const pages: number[] = [];
+    const stale = (row: Shelf) =>
+      row.oldPrice !== null &&
+      row.changed.every((daysAgo) => NOW.getTime() - daysAgo * DAY < SINCE.getTime());
+    const service = new ProductsService({
+      repository: {
+        async staleSales(since: Date, limit: number) {
+          expect(since).toEqual(SINCE);
+          const page = shelf.filter(stale).slice(0, limit);
+          pages.push(page.length);
+          return page.map(({ id, storeId }) => ({ id, storeId }));
+        },
+        async endStaleSales(ids: string[]) {
+          // The seller cut it again between the read and the write: the write's own check keeps it.
+          const cut = shelf.find((row) => row.id === options.cutMeanwhile);
+          if (cut) cut.changed.push(0);
+          let count = 0;
+          for (const row of shelf) {
+            if (ids.includes(row.id) && stale(row)) {
+              row.oldPrice = null;
+              count += 1;
+            }
+          }
+          return count;
+        },
+      },
+      stores: {},
+      cache: {
+        async invalidateByTag(tag: string) {
+          invalidated.push(tag);
+        },
+      },
+      logger,
+      events: { async publish() {} },
+    } as never);
+    const run = (batch?: number) =>
+      runWithContext(systemContext(TENANT, 'job', 'uz'), () => service.endStaleSales(NOW, batch));
+    return { run, invalidated, pages };
+  }
+
+  it('loses its struck price; the price itself stays', async () => {
+    const shelf = [
+      good('cut-8-days-ago', 's1', 22_000_00, [20, 8]),
+      good('cut-3-days-ago', 's1', 22_000_00, [20, 3]),
+      good('not-on-sale', 's2', null, [30]),
+      // Set before the history was kept (or by hand): no change in the week, nothing to lean on.
+      good('no-history', 's2', 25_000_00, []),
+    ];
+    const { run, invalidated } = sweep(shelf);
+    expect(await run()).toBe(2);
+    expect(shelf.map((row) => [row.id, row.price, row.oldPrice])).toEqual([
+      ['cut-8-days-ago', 18_000_00, null],
+      ['cut-3-days-ago', 18_000_00, 22_000_00],
+      ['not-on-sale', 18_000_00, null],
+      ['no-history', 18_000_00, null],
+    ]);
+    // The shop window of each stall it touched is read afresh.
+    expect(invalidated).toEqual(['store:s1', 'categories', 'store:s2', 'categories']);
+  });
+
+  it('goes page by page, and a page cut again meanwhile does not spin', async () => {
+    const shelf = Array.from({ length: 5 }, (_, i) => good(`p${i}`, 's1', 22_000_00, [9]));
+    const { run, pages } = sweep(shelf);
+    expect(await run(2)).toBe(5);
+    expect(pages).toEqual([2, 2, 1]);
+
+    const again = [good('q1', 's1', 22_000_00, [9])];
+    const meanwhile = sweep(again, { cutMeanwhile: 'q1' });
+    expect(await meanwhile.run(1)).toBe(0);
+    expect(meanwhile.pages).toEqual([1]);
+    expect(again[0]?.oldPrice).toBe(22_000_00);
+  });
+
+  it('is asked of the database as: this tenant, on sale, no price change since the week began', async () => {
+    const sent: { op: string; where: Record<string, unknown> }[] = [];
+    const prisma = {
+      product: {
+        async findMany(args: { where: Record<string, unknown> }) {
+          sent.push({ op: 'findMany', where: args.where });
+          return [];
+        },
+        async updateMany(args: { where: Record<string, unknown>; data: unknown }) {
+          sent.push({ op: 'updateMany', where: args.where });
+          expect(args.data).toEqual({ oldPrice: null });
+          return { count: 1 };
+        },
+      },
+    };
+    const repository = new ProductsRepository(prisma as never);
+    await runWithContext(systemContext(TENANT, 'job', 'uz'), async () => {
+      await repository.staleSales(SINCE, 100);
+      await repository.endStaleSales(['p1'], SINCE);
+      // Nothing to end: no write at all.
+      expect(await repository.endStaleSales([], SINCE)).toBe(0);
+    });
+    const stale = {
+      tenantId: TENANT,
+      oldPrice: { not: null },
+      priceHistory: { none: { validFrom: { gte: SINCE } } },
+    };
+    expect(sent).toEqual([
+      { op: 'findMany', where: stale },
+      { op: 'updateMany', where: { ...stale, id: { in: ['p1'] } } },
+    ]);
   });
 });

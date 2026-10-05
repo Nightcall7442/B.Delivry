@@ -8,6 +8,7 @@ import { cleanupJob } from './workers/cleanup.job.js';
 import { findCourierJob } from './workers/find-courier.job.js';
 import { processPaymentJob } from './workers/process-payment.job.js';
 import { dailyReportsJob } from './workers/reports.job.js';
+import { endStaleSalesJob } from './workers/end-stale-sales.job.js';
 import { expireCashbackJob } from './workers/expire-cashback.job.js';
 import { runSubscriptionsJob } from './workers/run-subscriptions.job.js';
 import { sendNotificationJob } from './workers/send-notification.job.js';
@@ -46,6 +47,7 @@ export function buildJobHandlers(
   register(JOB.DAILY_REPORTS, dailyReportsJob(container));
   register(JOB.RUN_SUBSCRIPTIONS, runSubscriptionsJob(container));
   register(JOB.EXPIRE_CASHBACK, expireCashbackJob(container));
+  register(JOB.END_STALE_SALES, endStaleSalesJob(container));
 
   return handlers;
 }
