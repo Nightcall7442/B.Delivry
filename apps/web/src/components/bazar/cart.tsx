@@ -10,6 +10,7 @@ import { isApiError, room } from '@bazar/api-client';
 import { CASHBACK } from '@bazar/constants';
 import { createT, type T } from '@bazar/i18n';
 import {
+  CART_NOTE_MAX,
   decodeShare,
   encodeShare,
   basketGrams,
@@ -33,6 +34,7 @@ import { useAuth } from '@/features/auth';
 import {
   groupByStore,
   useCartActions,
+  useCartNotes,
   useCartQuantities,
   useCartReady,
   type CartLine,
@@ -358,6 +360,15 @@ function ReceiptLine({
 }) {
   const [asking, setAsking] = useState(false);
   const [price, setPrice] = useState('');
+  const { notes, setNote } = useCartNotes();
+  const note = notes[line.product.id] ?? '';
+  // «Без кости»: typed here, carried to the stall with the order line.
+  const [wishing, setWishing] = useState(false);
+  const [wish, setWish] = useState('');
+  const keepWish = () => {
+    setNote(line.product.id, wish);
+    setWishing(false);
+  };
   const { product, quantity } = line;
   const step = product.quantityStep || 1;
   const min = product.minQuantity || step;
@@ -421,6 +432,41 @@ function ReceiptLine({
             {t('haggle.ask')}
           </button>
         )}
+        {/* Its own line, under «поторговаться». */}
+        <div>
+          {wishing ? (
+            <form
+              className={s.rcAsk}
+              onSubmit={(e) => {
+                e.preventDefault();
+                keepWish();
+              }}
+            >
+              <input
+                value={wish}
+                onChange={(e) => setWish(e.target.value)}
+                onBlur={keepWish}
+                maxLength={CART_NOTE_MAX}
+                autoFocus
+                className={`${s.rcField} ${s.rcWishField}`}
+                placeholder={t('cart.wishPlaceholder')}
+                aria-label={t('cart.wish')}
+              />
+            </form>
+          ) : (
+            <button
+              type="button"
+              className={note ? s.rcWish : s.rcLink}
+              onClick={() => {
+                setWish(note);
+                setWishing(true);
+              }}
+              aria-label={note ? t('cart.wishEdit') : undefined}
+            >
+              {note ? `«${note}»` : t('cart.wish')}
+            </button>
+          )}
+        </div>
         <div className={s.stepper}>
           <button
             type="button"

@@ -22,9 +22,12 @@ import {
 } from 'react';
 import type { ReactNode } from 'react';
 
-import type { CartQuantities } from '@bazar/storefront';
+import { cleanNote, notesFor, readNotes, withoutNotes } from '@bazar/storefront';
+import type { CartNotes, CartQuantities } from '@bazar/storefront';
 
 const KEY = 'bazar.cart';
+/** «Без кости»: the wish for each line, beside the quantities (see @bazar/storefront cart-notes). */
+const NOTES_KEY = 'bazar.cart.notes';
 
 interface CartApi {
   quantities: CartQuantities;
@@ -34,6 +37,9 @@ interface CartApi {
   /** Whole-cart write: "repeat order", a recipe set. */
   replace: (next: CartQuantities) => void;
   clear: (productIds?: readonly string[]) => void;
+  notes: CartNotes;
+  /** The wish for one line; empty takes it off. */
+  setNote: (productId: string, note: string) => void;
 }
 
 const CartContext = createContext<CartApi | null>(null);
@@ -56,16 +62,28 @@ function read(): CartQuantities {
   }
 }
 
-export type { CartLine, CartQuantities, CartStoreGroup } from '@bazar/storefront';
+function readStoredNotes(): CartNotes {
+  try {
+    const raw = window.localStorage.getItem(NOTES_KEY);
+    return raw ? readNotes(JSON.parse(raw)) : {};
+  } catch {
+    return {};
+  }
+}
+
+export type { CartLine, CartNotes, CartQuantities, CartStoreGroup } from '@bazar/storefront';
 export { groupByStore } from '@bazar/storefront';
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [quantities, setQuantities] = useState<CartQuantities>({});
+  const [notes, setNotes] = useState<CartNotes>({});
   const [ready, setReady] = useState(false);
   const hydrated = useRef(false);
 
   useEffect(() => {
-    setQuantities(read());
+    const stored = read();
+    setQuantities(stored);
+    setNotes(notesFor(readStoredNotes(), stored));
     hydrated.current = true;
     setReady(true);
   }, []);
@@ -79,6 +97,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [quantities]);
 
+  useEffect(() => {
+    if (!hydrated.current) return;
+    try {
+      window.localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+    } catch {
+      // As above: kept in state for this session.
+    }
+  }, [notes]);
+
+  const setNote = useCallback((productId: string, note: string) => {
+    const clean = cleanNote(note);
+    setNotes((current) => {
+      if ((current[productId] ?? '') === clean) return current;
+      const draft = { ...current };
+      if (clean === '') delete draft[productId];
+      else draft[productId] = clean;
+      return draft;
+    });
+  }, []);
+
   const setQuantity = useCallback((productId: string, quantity: number) => {
     // Weighted goods step by 0.5, so round the float dust away.
     const next = Number(Math.max(0, quantity).toFixed(3));
@@ -89,10 +127,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       else draft[productId] = next;
       return draft;
     });
+    // A line taken out takes its wish with it.
+    if (next <= 0) setNotes((current) => withoutNotes(current, [productId]));
   }, []);
 
   const replace = useCallback((next: CartQuantities) => {
-    setQuantities(Object.fromEntries(Object.entries(next).filter(([, q]) => q > 0)));
+    const kept = Object.fromEntries(Object.entries(next).filter(([, q]) => q > 0));
+    setQuantities(kept);
+    setNotes((current) => notesFor(current, kept));
   }, []);
 
   const clear = useCallback((productIds?: readonly string[]) => {
@@ -102,11 +144,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       for (const id of productIds) delete draft[id];
       return draft;
     });
+    setNotes((current) => (productIds ? withoutNotes(current, productIds) : {}));
   }, []);
 
   const value = useMemo(
-    () => ({ quantities, ready, setQuantity, replace, clear }),
-    [quantities, ready, setQuantity, replace, clear],
+    () => ({ quantities, ready, setQuantity, replace, clear, notes, setNote }),
+    [quantities, ready, setQuantity, replace, clear, notes, setNote],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
@@ -131,6 +174,12 @@ export function useCartReady(): boolean {
 export function useCartActions(): Pick<CartApi, 'setQuantity' | 'replace' | 'clear'> {
   const { setQuantity, replace, clear } = useCart();
   return { setQuantity, replace, clear };
+}
+
+/** «Без кости»: the wishes for the lines, and setting one. */
+export function useCartNotes(): Pick<CartApi, 'notes' | 'setNote'> {
+  const { notes, setNote } = useCart();
+  return { notes, setNote };
 }
 
 /** Distinct products, not units — "3 позиции", the way a basket badge counts. */

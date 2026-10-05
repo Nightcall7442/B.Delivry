@@ -1004,6 +1004,25 @@
   font-variant-numeric: tabular-nums;
   color: var(--pomegranate);
 }
+/* The customer's own words to the stall: italic, in ink, a button to change them. */
+.rcWish {
+  display: block;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-family: var(--font-serif), 'Alegreya', Georgia, serif;
+  font-style: italic;
+  font-size: var(--fs-body);
+  line-height: 20px;
+  color: var(--ink-paper);
+  cursor: pointer;
+}
+.rcWishField {
+  width: 100%;
+  max-width: 320px;
+}
 .rcAsk {
   display: flex;
   gap: 8px;

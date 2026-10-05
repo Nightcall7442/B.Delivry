@@ -1,6 +1,7 @@
 /**
  * The bazaar's moment of truth: before "Забрал заказ" the courier says what was actually bought.
  * Weighed lines: what the scale showed, photographed. Counted lines: as many as the stall had.
+ * Each line carries the customer's wish for it, if any («без кости»).
  * Any line the stall did not have at all is «Нет у продавца» — it leaves the bill and the order
  * goes on (the customer is told, and paid back if they already paid); only when nothing is left
  * does the order fail. The customer sees all of it and the new total before paying.
@@ -169,6 +170,12 @@ export function WeighingSheet({
                 заказано {line.item.quantity} {unit} · {formatMoney(line.item.unitPrice.amount)} /{' '}
                 {unit}
               </Text>
+              {line.item.comment ? (
+                // The customer's own words for this line: «без кости», «покрупнее».
+                <Text role="caption" style={s.wishLine}>
+                  «{line.item.comment}»
+                </Text>
+              ) : null}
               <View style={s.controls}>
                 {line.missing ? (
                   <Text role="muted" style={{ flex: 1 }}>
@@ -340,6 +347,7 @@ const s = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   figures: { fontVariant: ['tabular-nums'] },
+  wishLine: { color: color.ink, fontStyle: 'italic', marginTop: 2 },
   // Pomegranate, as on the shift sheet: the palette's one red, and it reads on paper.
   error: { ...scale.body, color: color.brand500 },
 });

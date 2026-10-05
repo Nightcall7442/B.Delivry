@@ -438,6 +438,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
                       </span>
                     </>
                   )}
+                  {item.comment ? <span className={s.rcWish}>«{item.comment}»</span> : null}
                 </span>
                 <span className={s.rcSum}>{t.money((item.actualTotal ?? item.total).amount)}</span>
               </li>

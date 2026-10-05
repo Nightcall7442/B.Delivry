@@ -20,6 +20,7 @@ import {
   haggleFor,
   isOpenAt,
   isOtherCityRefusal,
+  orderLine,
   orderReasonText,
   paymentMethodText,
   plusActive,
@@ -29,7 +30,7 @@ import {
 } from '@bazar/storefront';
 import type { HaggleDto, OrderQuoteDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppState, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 import { caps, scene } from '@/components/bazar';
@@ -60,7 +61,12 @@ import { FreeDeliveryBar } from '@/components/shop/FreeDeliveryBar';
 import { Shell } from '@/components/ui/Shell';
 
 import { useAddress } from '@/features/address/store';
-import { groupByStore, useCartActions, useCartQuantities } from '@/features/cart/store';
+import {
+  groupByStore,
+  useCartActions,
+  useCartNotes,
+  useCartQuantities,
+} from '@/features/cart/store';
 import { useOrderList } from '@/features/orders/store';
 import { getStore, listProducts, listProductsByIds } from '@/lib/catalog';
 import { useData, useList } from '@/lib/use-data';
@@ -92,6 +98,7 @@ export function CheckoutScreen({
   const { address, setAddress } = useAddress();
   const quantities = useCartQuantities();
   const { clear, setQuantity } = useCartActions();
+  const { notes } = useCartNotes();
   const { orders: pastOrders } = useOrderList();
   // Agreed (haggled) prices: the quote already uses them; the lines should show the same.
   const [haggles, setHaggles] = useState<HaggleDto[]>([]);
@@ -143,15 +150,19 @@ export function CheckoutScreen({
       }),
     [extraStores, allGroups],
   );
-  const toItems = (g: { lines: { product: { id: string }; quantity: number }[] } | null) =>
-    g?.lines.map((line) => ({ productId: line.product.id, quantity: line.quantity })) ?? [];
-  const items = useMemo(() => toItems(group), [group]);
+  // Each line with its wish for the stall («без кости»), when the customer left one.
+  const toItems = useCallback(
+    (g: { lines: { product: { id: string }; quantity: number }[] } | null) =>
+      g?.lines.map((line) => orderLine(line.product.id, line.quantity, notes)) ?? [],
+    [notes],
+  );
+  const items = useMemo(() => toItems(group), [group, toItems]);
   const groupStores = useMemo(
     () => [
       { storeId, items },
       ...followers.map((f) => ({ storeId: f.store.id, items: toItems(f.group) })),
     ],
-    [storeId, items, followers],
+    [storeId, items, followers, toItems],
   );
   // B2B: pay by invoice once an operator approved the company.
   const [business, setBusiness] = useState(false);

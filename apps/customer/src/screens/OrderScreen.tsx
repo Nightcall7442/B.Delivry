@@ -630,25 +630,33 @@ function OrderSheet({
                   <Photo uri={item.weighingPhotoUrl} style={s.thumb} />
                 </Pressable>
               ) : null}
-              {item.actualQuantity === 0 ? (
-                // The stall did not have it: the line stays visible, off the bill.
-                <Text role="muted" numberOfLines={2} style={{ flex: 1 }}>
-                  <Text role="muted" style={{ textDecorationLine: 'line-through' }}>
-                    {tr(item.name, locale)}
-                  </Text>{' '}
-                  {t('order.missing')}
-                </Text>
-              ) : (
-                <Text role="muted" numberOfLines={1} style={{ flex: 1, color: color.ink }}>
-                  {tr(item.name, locale)}{' '}
-                  <Text role="muted">
-                    × {t.qty(item.actualQuantity ?? item.quantity)} {unitLabel(locale)[item.unit]}
-                    {item.actualQuantity !== null && item.actualQuantity !== item.quantity
-                      ? t('order.ordered', { quantity: item.quantity })
-                      : ''}
+              <View style={{ flex: 1, minWidth: 0 }}>
+                {item.actualQuantity === 0 ? (
+                  // The stall did not have it: the line stays visible, off the bill.
+                  <Text role="muted" numberOfLines={2}>
+                    <Text role="muted" style={{ textDecorationLine: 'line-through' }}>
+                      {tr(item.name, locale)}
+                    </Text>{' '}
+                    {t('order.missing')}
                   </Text>
-                </Text>
-              )}
+                ) : (
+                  <Text role="muted" numberOfLines={1} style={{ color: color.ink }}>
+                    {tr(item.name, locale)}{' '}
+                    <Text role="muted">
+                      × {t.qty(item.actualQuantity ?? item.quantity)} {unitLabel(locale)[item.unit]}
+                      {item.actualQuantity !== null && item.actualQuantity !== item.quantity
+                        ? t('order.ordered', { quantity: item.quantity })
+                        : ''}
+                    </Text>
+                  </Text>
+                )}
+                {item.comment ? (
+                  // What the customer asked the stall for this line.
+                  <Text role="caption" numberOfLines={2} style={{ fontStyle: 'italic' }}>
+                    «{item.comment}»
+                  </Text>
+                ) : null}
+              </View>
               <Text role="muted" style={{ color: color.ink }}>
                 {t.money((item.actualTotal ?? item.total).amount)}
               </Text>
