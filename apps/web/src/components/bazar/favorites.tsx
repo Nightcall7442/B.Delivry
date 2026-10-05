@@ -139,6 +139,9 @@ export function BazaarFavorites({ locale }: { locale: string }) {
             <div className={s.head}>
               <h2 className={s.headTitle}>{t('fav.products')}</h2>
             </div>
+            {products.some((product) => !product.available) ? (
+              <p className={s.say}>{t('fav.backHint')}</p>
+            ) : null}
             <div className={s.grid}>
               {products.map((product, i) => (
                 <ProductCard

@@ -661,6 +661,7 @@ export const uz: Catalogue = {
   'fav.guest':
     'Kiring — mahsulot va rastalardagi yuraklar shu yerda, istalgan qurilmada saqlanadi.',
   'fav.soldOut': 'bugun yoʻq',
+  'fav.backHint': 'Bugun yoʻq narsa paydo boʻlsa — xabar beramiz.',
   'deals.title': 'Bugungi chegirmalar',
   'deals.all': 'barcha chegirmalar →',
   'deals.honest': 'Ustidan chizilgani — haftaning eng past narxi, chegirmalar halol',

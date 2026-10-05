@@ -101,6 +101,11 @@ export function FavoritesScreen() {
         {products.length > 0 ? (
           <View style={s.section}>
             <Eyebrow>{t('fav.products')}</Eyebrow>
+            {products.some((product) => !product.available) ? (
+              <Say step="lead" color={scene.creamMuted}>
+                {t('fav.backHint')}
+              </Say>
+            ) : null}
             <View style={s.grid}>
               {products.map((product, i) => (
                 <ProductTile

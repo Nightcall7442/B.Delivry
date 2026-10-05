@@ -48,9 +48,12 @@ export function ProductCard({
   };
   const remove = () => setQuantity(product.id, qty - step < min ? 0 : qty - step);
   const off = discountPercent(product);
+  // Saved, but not on the counter today: the photo fades, the sign says so, no «+».
+  const soldOut = !product.available;
   const note = [
+    soldOut ? t('fav.soldOut') : null,
     stall ? (stall.ownerName ?? tr(stall.name, locale)) : null,
-    arrivedToday(product) ? t('store.arrivedToday') : null,
+    !soldOut && arrivedToday(product) ? t('store.arrivedToday') : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -58,7 +61,7 @@ export function ProductCard({
     <div className={s.card}>
       <Link
         href={href}
-        className={`${s.cardPhoto} ${image ? 'photo-grade' : ''}`}
+        className={`${s.cardPhoto} ${image ? 'photo-grade' : ''} ${soldOut ? s.cardDim : ''}`}
         style={image ? { backgroundImage: `url(${photo(image, 960)})` } : undefined}
         aria-label={tr(product.name, locale)}
       />
@@ -81,7 +84,7 @@ export function ProductCard({
           <div className={s.signSay}>«{tr(product.description, locale)}»</div>
         ) : null}
         {note ? <div className={s.signNote}>{note}</div> : null}
-        {qty > 0 ? (
+        {soldOut ? null : qty > 0 ? (
           // «− N +»: a step back where it was added, hanging off the same corner.
           <span className={s.signStepper}>
             <button

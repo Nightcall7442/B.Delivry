@@ -28,6 +28,14 @@ import type { CreateProductInput, ProductListFilters, UpdateProductInput } from 
 
 const DAY_MS = 86_400_000;
 
+interface Buyable {
+  available: boolean;
+  stock: { toString(): string } | number | null;
+}
+/** On the counter for a customer: switched on, and some left when the seller counts it. */
+const buyable = (product: Buyable): boolean =>
+  product.available && (product.stock === null || Number(product.stock) > 0);
+
 export interface ProductsServiceDeps extends ServiceDeps {
   repository: ProductsRepository;
   stores: StoresService;
@@ -101,6 +109,8 @@ export class ProductsService extends BaseService {
     }
 
     await this.invalidate(product.storeId);
+    // A refill — stock typed in again, or a spreadsheet row — puts it back on the counter.
+    await this.announceIfBack(product, updated);
     return this.get(updated.id);
   }
 
@@ -306,6 +316,26 @@ export class ProductsService extends BaseService {
     await this.assertOwnsStore(product.storeId);
     await this.repository.setAvailability(id, available);
     await this.invalidate(product.storeId);
+    await this.announceIfBack(product, { ...product, available });
+  }
+
+  /**
+   * «Снова в наличии»: a good that could not be bought and now can is news to whoever saved it
+   * (the favorites handler tells them, once a day at most). Only the turn from «no» to «yes» —
+   * an edit of a good that was on the counter all along says nothing.
+   */
+  private async announceIfBack(before: Buyable, after: Buyable & ProductWithImages): Promise<void> {
+    if (buyable(before) || !buyable(after)) return;
+    await this.publish(
+      createEvent(PRODUCT_EVENT.BACK_IN_STOCK, {
+        productId: after.id,
+        storeId: after.storeId,
+        name: after.name as Record<string, string>,
+        price: after.price,
+        currency: after.currency,
+        imageUrl: after.images[0]?.url ?? null,
+      }),
+    );
   }
 
   async remove(id: string): Promise<void> {

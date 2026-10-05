@@ -370,6 +370,10 @@
   box-shadow: var(--shadow);
   cursor: pointer;
 }
+/* Not on the counter today. */
+.cardDim {
+  opacity: 0.45;
+}
 .cardPhoto::before {
   content: '';
   position: absolute;
