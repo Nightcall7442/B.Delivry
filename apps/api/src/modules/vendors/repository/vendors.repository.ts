@@ -1,7 +1,7 @@
 /**
  * Vendors persistence (Prisma). Tenant-scoped.
  */
-import type { Role } from '@bazar/constants';
+import { GUARANTEE, type Role } from '@bazar/constants';
 import type { Prisma, Vendor } from '@prisma/client';
 import { BaseRepository } from '../../../common/base/base.repository.js';
 import type { PaginatedResult } from '../../../common/pagination/index.js';
@@ -128,35 +128,71 @@ export class VendorsRepository extends BaseRepository {
   }
 
   /**
-   * What the platform owes this vendor: the goods total of delivered orders,
-   * minus commission. Computed on demand rather than kept as a running column,
-   * because a wrong stored balance is worse than a slightly slow query.
+   * What the platform owes this vendor: the goods total of delivered orders, minus commission.
+   * Computed on demand rather than kept as a running column, because a wrong stored balance is
+   * worse than a slightly slow query.
+   *
+   * Bazara's money-back guarantee, kept here: an order's money is the vendor's to take only once
+   * the customer can no longer complain about it — the freshness window after delivery has passed
+   * and no complaint about the order is open. Until then it is owed but on hold.
    */
-  async pendingPayout(vendorId: string, since?: Date): Promise<PayoutSummary> {
-    const aggregate = await this.prisma.order.aggregate({
-      where: {
-        ...this.tenantScope(),
-        status: 'DELIVERED',
-        store: { vendorId },
-        ...(since !== undefined ? { deliveredAt: { gte: since } } : {}),
+  async pendingPayout(
+    vendorId: string,
+    since?: Date,
+    now: Date = new Date(),
+  ): Promise<PayoutSummary> {
+    const windowMs = GUARANTEE.FRESHNESS_WINDOW_HOURS * 3_600_000;
+    const cutoff = new Date(now.getTime() - windowMs);
+    const delivered: Prisma.OrderWhereInput = {
+      ...this.tenantScope(),
+      status: 'DELIVERED',
+      store: { vendorId },
+      ...(since !== undefined ? { deliveredAt: { gte: since } } : {}),
+    };
+    const complained: Prisma.OrderWhereInput = {
+      tickets: {
+        some: {
+          status: { in: ['OPEN', 'PENDING'] },
+          topic: { in: ['ORDER_ISSUE', 'PRODUCT_QUALITY'] },
+        },
       },
-      _sum: { subtotal: true },
-      _count: true,
-    });
+    };
+    const [all, held, next, vendor] = await Promise.all([
+      this.prisma.order.aggregate({ where: delivered, _sum: { subtotal: true }, _count: true }),
+      this.prisma.order.aggregate({
+        where: { ...delivered, OR: [{ deliveredAt: { gt: cutoff } }, complained] },
+        _sum: { subtotal: true },
+        _count: true,
+      }),
+      // When the first of the window-held orders clears; a complaint has no clock of its own.
+      this.prisma.order.findFirst({
+        where: { ...delivered, AND: [{ deliveredAt: { gt: cutoff } }], NOT: complained },
+        orderBy: { deliveredAt: 'asc' },
+        select: { deliveredAt: true },
+      }),
+      this.prisma.vendor.findUnique({
+        where: { id: vendorId },
+        select: { commissionPercent: true },
+      }),
+    ]);
 
-    const vendor = await this.prisma.vendor.findUnique({
-      where: { id: vendorId },
-      select: { commissionPercent: true },
-    });
-
-    const gross = aggregate._sum.subtotal ?? 0;
-    const commission = Math.round((gross * (vendor?.commissionPercent ?? 0)) / 100);
+    const net = (gross: number) =>
+      gross - Math.round((gross * (vendor?.commissionPercent ?? 0)) / 100);
+    const pending = net(all._sum.subtotal ?? 0);
+    const onHold = net(held._sum.subtotal ?? 0);
 
     return {
       vendorId,
-      pending: gross - commission,
+      pending,
+      available: pending - onHold,
+      onHold,
+      onHoldOrders: held._count,
+      releasesAt:
+        next?.deliveredAt === null || next?.deliveredAt === undefined
+          ? null
+          : new Date(next.deliveredAt.getTime() + windowMs).toISOString(),
       currency: 'UZS',
-      orderCount: aggregate._count,
+      orderCount: all._count,
     };
   }
 }

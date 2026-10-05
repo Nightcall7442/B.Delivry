@@ -408,7 +408,16 @@ function vendors(options: { row?: Record<string, unknown> | null; userRoles?: st
       },
       async pendingPayout(id: string) {
         calls.payouts.push(id);
-        return { vendorId: id, pending: 0, currency: 'UZS', orderCount: 0 };
+        return {
+          vendorId: id,
+          pending: 0,
+          available: 0,
+          onHold: 0,
+          onHoldOrders: 0,
+          releasesAt: null,
+          currency: 'UZS',
+          orderCount: 0,
+        };
       },
     },
     auth: {
