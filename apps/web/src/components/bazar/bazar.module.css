@@ -108,6 +108,17 @@
 .round:hover {
   transform: translateY(-1px);
 }
+/* «Поделиться»: ink on cream, beside the heart. */
+.shareButton {
+  border: 0;
+  cursor: pointer;
+}
+/* The heart and the share, side by side at the top bar's end. */
+.topEnd {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 10px;
+}
 /* «Избранное»: pomegranate on cream, filled once saved. */
 .heart {
   color: var(--pomegranate);
@@ -511,6 +522,57 @@
   color: var(--ink-paper);
   font-size: var(--fs-caption);
   font-variant-numeric: tabular-nums;
+}
+/* Room under the last line for the «− N +» tab, so it never covers the price. */
+.signStepping {
+  padding-bottom: 26px;
+}
+/* «− N +»: the chosen badge grown two buttons, hanging off the sign's bottom corner. */
+.signStepper {
+  position: absolute;
+  right: -8px;
+  bottom: -14px;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--ochre);
+  color: var(--ink-paper);
+  box-shadow: var(--shadow);
+}
+.signStep {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--cream) 55%, transparent);
+  color: var(--ink-paper);
+  font-weight: 800;
+  font-size: var(--fs-lead);
+  line-height: 1;
+  cursor: pointer;
+}
+/* A 28px disc, a 44px target. */
+.signStep::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+.signStepMore {
+  background: var(--pomegranate);
+  color: var(--cream);
+}
+.signStepCount {
+  padding: 0 7px;
+  font-size: var(--fs-caption);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* ---- the bottom bar: voice line + basket disc, or «Оформить» ---- */

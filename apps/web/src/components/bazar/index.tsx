@@ -11,7 +11,7 @@ import type { ProductDto, StoreDto } from '@bazar/types';
 import Link from 'next/link';
 import { useState } from 'react';
 
-import { Bag, Heart, Mic } from '@/components/go/icons';
+import { Bag, Check, Heart, Mic, ShareGlyph } from '@/components/go/icons';
 import { useCartActions, useCartQuantities } from '@/features/cart';
 import { useFavorite, type FavoriteKind } from '@/features/favorites';
 
@@ -38,13 +38,15 @@ export function ProductCard({
   const qty = quantities[product.id] ?? 0;
   const image = product.images[0]?.url ?? null;
   const step = product.quantityStep || 1;
+  const min = product.minQuantity || step;
   // The sign swings on its pin when the product goes into the basket — not when a page opens
   // on a basket that already holds it.
   const [swing, setSwing] = useState(false);
   const add = () => {
     if (qty === 0) setSwing(true);
-    setQuantity(product.id, qty === 0 ? product.minQuantity || step : qty + step);
+    setQuantity(product.id, qty === 0 ? min : qty + step);
   };
+  const remove = () => setQuantity(product.id, qty - step < min ? 0 : qty - step);
   const off = discountPercent(product);
   const note = [
     stall ? (stall.ownerName ?? tr(stall.name, locale)) : null,
@@ -63,7 +65,7 @@ export function ProductCard({
       <HeartButton kind="product" id={product.id} locale={locale} t={t} className={s.heartCard} />
       {off > 0 ? <span className={s.saleBadge}>−{off} %</span> : null}
       <div
-        className={`${s.sign} ${index % 2 ? s.signRight : ''} ${qty > 0 ? s.signChosen : ''} ${swing ? s.signSwing : ''}`}
+        className={`${s.sign} ${index % 2 ? s.signRight : ''} ${qty > 0 ? `${s.signChosen} ${s.signStepping}` : ''} ${swing ? s.signSwing : ''}`}
         style={{ transform: `rotate(${[-1.2, 1, 0.6, -0.8][index % 4]}deg)` }}
         onAnimationEnd={() => setSwing(false)}
       >
@@ -79,14 +81,34 @@ export function ProductCard({
           <div className={s.signSay}>«{tr(product.description, locale)}»</div>
         ) : null}
         {note ? <div className={s.signNote}>{note}</div> : null}
-        <button
-          type="button"
-          onClick={add}
-          className={`${s.plus} ${qty > 0 ? s.plusChosen : ''}`}
-          aria-label={t('common.add')}
-        >
-          {qty > 0 ? t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` }) : '+'}
-        </button>
+        {qty > 0 ? (
+          // «− N +»: a step back where it was added, hanging off the same corner.
+          <span className={s.signStepper}>
+            <button
+              type="button"
+              onClick={remove}
+              className={s.signStep}
+              aria-label={t('common.less')}
+            >
+              −
+            </button>
+            <span className={s.signStepCount}>
+              {t.qty(qty)} {units[product.unit]}
+            </span>
+            <button
+              type="button"
+              onClick={add}
+              className={`${s.signStep} ${s.signStepMore}`}
+              aria-label={t('common.more')}
+            >
+              +
+            </button>
+          </span>
+        ) : (
+          <button type="button" onClick={add} className={s.plus} aria-label={t('common.add')}>
+            +
+          </button>
+        )}
       </div>
     </div>
   );
@@ -117,6 +139,38 @@ export function HeartButton({
       aria-label={t(saved ? 'fav.forget' : 'fav.save')}
     >
       <Heart size={20} filled={saved} />
+    </button>
+  );
+}
+
+/**
+ * «Поделиться»: the system sheet where there is one (phones), else the link to the clipboard and a
+ * tick for a moment. A dismissed sheet is not an error.
+ */
+export function ShareButton({ text, path, t }: { text: string; path: string; t: T }) {
+  const [copied, setCopied] = useState(false);
+  const share = async () => {
+    const url = new URL(path, window.location.origin).toString();
+    try {
+      if (navigator.share) await navigator.share({ text, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {
+      // Dismissed, or the clipboard was refused: nothing to report.
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={() => void share()}
+      className={`${s.round} ${s.shareButton}`}
+      aria-label={copied ? t('cart.linkCopied') : t('common.share')}
+      title={copied ? t('cart.linkCopied') : t('common.share')}
+    >
+      {copied ? <Check /> : <ShareGlyph />}
     </button>
   );
 }

@@ -4,7 +4,7 @@
  * grouped by the stall that sells it — the person first, their signs under
  * them, the way you would walk it.
  */
-import { arrivedToday, tr, unitLabel } from '@bazar/storefront';
+import { arrivedToday, tr } from '@bazar/storefront';
 import type { MapStoreDto } from '@bazar/storefront';
 import type { MessageKey } from '@bazar/i18n';
 import type { ProductDto } from '@bazar/types';
@@ -23,17 +23,16 @@ import {
   Say,
   Scene,
   SceneButton,
-  Sign,
   ground,
   scene,
   sceneFont,
   useSceneTop,
 } from '@/components/bazar';
+import { ProductTile, TILE_GAP, useTileWidth } from '@/components/shop/ProductTile';
 import { Bone, LoadError } from '@/components/ui/Page';
-import { useCart, useCartActions, useCartCount } from '@/features/cart/store';
+import { useCartCount } from '@/features/cart/store';
 import { DEFAULT_POINT, useAddress } from '@/features/address/store';
 import { listCategories, listProducts, listStores } from '@/lib/catalog';
-import { saleNote } from '@/lib/sale';
 import { useData, useList, useLoad } from '@/lib/use-data';
 import { ArrowLeft, Photo, Search, noOutline, scale, useLocale } from '@bazar/mobile';
 
@@ -160,7 +159,6 @@ export function SearchScreen() {
               store={store}
               items={items}
               onOpen={() => router.push(`/store/${store.id}`)}
-              onProduct={(id) => router.push(`/product/${id}`)}
             />
           ))
         )}
@@ -195,17 +193,13 @@ function StallGroup({
   store,
   items,
   onOpen,
-  onProduct,
 }: {
   store: MapStoreDto;
   items: ProductDto[];
   onOpen: () => void;
-  onProduct: (productId: string) => void;
 }) {
   const { locale, t } = useLocale();
-  const { quantities } = useCart();
-  const { setQuantity } = useCartActions();
-  const units = unitLabel(locale);
+  const tileWidth = useTileWidth();
   const person = store.ownerPhotoUrl ?? store.coverUrl;
   return (
     <View style={s.group}>
@@ -223,34 +217,9 @@ function StallGroup({
         </View>
       </Pressable>
       <View style={s.grid}>
-        {items.map((product, i) => {
-          const qty = quantities[product.id] ?? 0;
-          return (
-            <Sign
-              key={product.id}
-              style={s.sign}
-              tilt={[-1, 1, 0.5, -0.5][i % 4] ?? 0}
-              title={tr(product.name, locale)}
-              price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
-              note={
-                [saleNote(product, t), arrivedToday(product) ? t('store.arrivedToday') : null]
-                  .filter(Boolean)
-                  .join(' · ') || undefined
-              }
-              count={qty}
-              countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
-              onPress={() => onProduct(product.id)}
-              onAdd={() =>
-                setQuantity(
-                  product.id,
-                  qty === 0
-                    ? product.minQuantity || product.quantityStep || 1
-                    : qty + (product.quantityStep || 1),
-                )
-              }
-            />
-          );
-        })}
+        {items.map((product, i) => (
+          <ProductTile key={product.id} product={product} index={i} style={{ width: tileWidth }} />
+        ))}
       </View>
     </View>
   );
@@ -329,6 +298,5 @@ const s = StyleSheet.create({
     borderColor: scene.ochre,
     backgroundColor: scene.kraft,
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 14 },
-  sign: { width: '47%', flexGrow: 1 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: TILE_GAP, rowGap: 18 },
 });

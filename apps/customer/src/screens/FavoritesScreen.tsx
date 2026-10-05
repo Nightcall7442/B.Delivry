@@ -1,11 +1,10 @@
 /**
- * «Избранное»: the stalls the customer keeps going back to, then their goods as cardboard signs,
- * newest heart first. What is sold out today stays on the list (it is still the one they want)
- * with a note instead of a price; a stall that has since been hidden simply is not shown.
+ * «Избранное»: the stalls the customer keeps going back to, then their goods on the counter,
+ * newest heart first. What is sold out today stays on the list (it is still the one they want),
+ * faded, with «сегодня нет» and no «+»; a stall that has since been hidden simply is not shown.
  */
-import { tr, unitLabel } from '@bazar/storefront';
+import { tr } from '@bazar/storefront';
 import type { MapStoreDto } from '@bazar/storefront';
-import type { ProductDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -18,33 +17,29 @@ import {
   Say,
   Scene,
   SceneButton,
-  Sign,
   scene,
   useSceneTop,
 } from '@/components/bazar';
+import { ProductTile, TILE_GAP, useTileWidth } from '@/components/shop/ProductTile';
 import { Bone, LoadError } from '@/components/ui/Page';
-import { useCart, useCartActions, useCartCount } from '@/features/cart/store';
+import { useCartCount } from '@/features/cart/store';
 import { useFavorites } from '@/features/favorites/store';
 import { getStore, listProductsByIds } from '@/lib/catalog';
-import { saleNote } from '@/lib/sale';
 import { useLoad } from '@/lib/use-data';
 import { ArrowLeft, Button, Heart, Photo, useAuth, useLocale } from '@bazar/mobile';
 
 /** One page of the catalogue by id: the newest hearts are the ones that matter. */
 const SHOWN = 100;
-const TILTS = [-1, 1, 0.5, -0.5];
 
 export function FavoritesScreen() {
   const router = useRouter();
-  const { locale, t } = useLocale();
+  const { t } = useLocale();
   const insets = useSafeAreaInsets();
   const top = useSceneTop();
   const count = useCartCount();
   const { user, ready: authReady } = useAuth();
   const favorites = useFavorites();
-  const { quantities } = useCart();
-  const { setQuantity } = useCartActions();
-  const units = unitLabel(locale);
+  const tileWidth = useTileWidth();
 
   const productIds = favorites.product.slice(0, SHOWN);
   const storeIds = favorites.store.slice(0, SHOWN);
@@ -65,9 +60,6 @@ export function FavoritesScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load.data, productIds.join(',')]);
   const stores = load.data?.stores ?? [];
-
-  const noteFor = (product: ProductDto): string | undefined =>
-    product.available ? (saleNote(product, t) ?? undefined) : t('fav.soldOut');
 
   const body = () => {
     if (!authReady || (user && !favorites.ready)) return <Skeleton />;
@@ -111,35 +103,11 @@ export function FavoritesScreen() {
             <Eyebrow>{t('fav.products')}</Eyebrow>
             <View style={s.grid}>
               {products.map((product, i) => (
-                <Sign
+                <ProductTile
                   key={product.id}
-                  style={s.sign}
-                  tilt={TILTS[i % TILTS.length] ?? 0}
-                  title={tr(product.name, locale)}
-                  price={
-                    product.available
-                      ? `${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`
-                      : undefined
-                  }
-                  note={noteFor(product)}
-                  count={quantities[product.id] ?? 0}
-                  countLabel={t('scene.inCart', {
-                    count: `${t.qty(quantities[product.id] ?? 0)} ${units[product.unit]}`,
-                  })}
-                  onPress={() => router.push(`/product/${product.id}`)}
-                  {...(product.available
-                    ? {
-                        onAdd: () => {
-                          const qty = quantities[product.id] ?? 0;
-                          setQuantity(
-                            product.id,
-                            qty === 0
-                              ? product.minQuantity || product.quantityStep || 1
-                              : qty + (product.quantityStep || 1),
-                          );
-                        },
-                      }
-                    : {})}
+                  product={product}
+                  index={i}
+                  style={{ width: tileWidth }}
                 />
               ))}
             </View>
@@ -250,6 +218,5 @@ const s = StyleSheet.create({
     borderColor: scene.ochre,
     backgroundColor: scene.kraft,
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, rowGap: 14 },
-  sign: { width: '47%', flexGrow: 1 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: TILE_GAP, rowGap: 18 },
 });

@@ -17,7 +17,6 @@ import {
   shopfronts,
   stallGoods,
   tr,
-  unitLabel,
 } from '@bazar/storefront';
 import { haversineMeters } from '@bazar/maps';
 import type { CategoryDto, LatLngDto, ProductDto } from '@bazar/types';
@@ -31,7 +30,6 @@ import {
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
   type ListRenderItemInfo,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -48,7 +46,6 @@ import {
   Scene,
   isEvening,
   SceneButton,
-  ProductCard,
   Say,
   SceneHead,
   ShopSign,
@@ -57,12 +54,12 @@ import {
   sceneFont,
   useSceneTop,
 } from '@/components/bazar';
+import { ProductTile, useTileWidth } from '@/components/shop/ProductTile';
 import { LoadError } from '@/components/ui/Page';
 import { DEFAULT_POINT, useAddress } from '@/features/address/store';
 import { useDeliverable } from '@/features/address/zone';
-import { useCart, useCartActions } from '@/features/cart/store';
+import { useCart } from '@/features/cart/store';
 import { REACH_METERS, listCategories, listProducts, listStores } from '@/lib/catalog';
-import { saleNote } from '@/lib/sale';
 import { EMPTY, useLoad } from '@/lib/use-data';
 import { Bell, Mic, radius, scale, shadow, useAuth, useLocale } from '@bazar/mobile';
 
@@ -106,10 +103,8 @@ export function SceneHomeScreen() {
   const { user } = useAuth();
   const { address } = useAddress();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const top = useSceneTop();
   const { quantities } = useCart();
-  const { setQuantity } = useCartActions();
   const here = address?.point ?? DEFAULT_POINT;
   const storeLoad = useLoad(() => listStores(here), [here.lat, here.lng]);
   // No address yet, or the phone is in another city: the counters below are someone else's.
@@ -127,7 +122,6 @@ export function SceneHomeScreen() {
   const productLoad = useLoad(() => listProducts(), []);
   const dealLoad = useLoad(() => listProducts({ onSale: true }), []);
   const evening = isEvening();
-  const units = unitLabel(locale);
   // The tag's temperature is the real one at Chorsu or nothing — never a number from the code.
   const [temperature, setTemperature] = useState<number | null>(null);
   useEffect(() => {
@@ -187,49 +181,15 @@ export function SceneHomeScreen() {
   }).format(new Date());
   const failed = !storeLoad.data && storeLoad.error;
   // Two to a row, like signs on a counter; the last odd one keeps its half.
-  const cardWidth = (width - 20 * 2 - 12) / 2;
-  const addOne = (product: ProductDto) => {
-    const qty = quantities[product.id] ?? 0;
-    setQuantity(
-      product.id,
-      qty === 0
-        ? product.minQuantity || product.quantityStep || 1
-        : qty + (product.quantityStep || 1),
-    );
-  };
+  const cardWidth = useTileWidth();
   const renderProduct = ({ item: product, index: i }: ListRenderItemInfo<ProductDto>) => {
-    const qty = quantities[product.id] ?? 0;
     const stall = stores.find((store) => store.id === product.storeId);
     return (
-      <ProductCard
+      <ProductTile
+        product={product}
+        index={i}
+        stall={stall ? (stall.ownerName ?? tr(stall.name, locale)) : undefined}
         style={{ width: cardWidth }}
-        compact
-        photo={product.images[0]?.url ?? null}
-        tilt={[-1.2, 1, 0.6, -0.8][i % 4] ?? 0}
-        side={i % 2 ? 'right' : 'left'}
-        title={tr(product.name, locale)}
-        price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
-        say={product.description ? tr(product.description, locale) : undefined}
-        note={
-          [
-            saleNote(product, t),
-            stall ? (stall.ownerName ?? tr(stall.name, locale)) : null,
-            arrivedToday(product) ? t('store.arrivedToday') : null,
-          ]
-            .filter(Boolean)
-            .join(' · ') || undefined
-        }
-        count={qty}
-        countLabel={t('scene.inCart', { count: `${t.qty(qty)} ${units[product.unit]}` })}
-        onPress={() => router.push(`/product/${product.id}`)}
-        onAdd={() =>
-          setQuantity(
-            product.id,
-            qty === 0
-              ? product.minQuantity || product.quantityStep || 1
-              : qty + (product.quantityStep || 1),
-          )
-        }
       />
     );
   };
@@ -329,27 +289,14 @@ export function SceneHomeScreen() {
                   style={s.rail}
                   contentContainerStyle={s.deals}
                 >
-                  {deals.map((product, i) => {
-                    const qty = quantities[product.id] ?? 0;
-                    return (
-                      <ProductCard
-                        key={product.id}
-                        style={{ width: DEAL_WIDTH }}
-                        compact
-                        photo={product.images[0]?.url ?? null}
-                        tilt={[-1.2, 1, 0.6, -0.8][i % 4] ?? 0}
-                        title={tr(product.name, locale)}
-                        price={`${t.money(product.price.amount, product.price.currency)} / ${units[product.unit]}`}
-                        note={saleNote(product, t) ?? undefined}
-                        count={qty}
-                        countLabel={t('scene.inCart', {
-                          count: `${t.qty(qty)} ${units[product.unit]}`,
-                        })}
-                        onPress={() => router.push(`/product/${product.id}`)}
-                        onAdd={() => addOne(product)}
-                      />
-                    );
-                  })}
+                  {deals.map((product, i) => (
+                    <ProductTile
+                      key={product.id}
+                      product={product}
+                      index={i}
+                      style={{ width: DEAL_WIDTH }}
+                    />
+                  ))}
                 </ScrollView>
               </>
             ) : null}
