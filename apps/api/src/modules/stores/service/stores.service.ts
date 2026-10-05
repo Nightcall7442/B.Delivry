@@ -195,7 +195,8 @@ export class StoresService extends BaseService {
       throw new StoreClosedError(id);
     }
     // The platform shut this vendor: no new orders, even while the stall's own status says ACTIVE.
-    if (await this.repository.vendorIsShut(store.vendorId)) throw new StoreClosedError(id);
+    const vendor = await this.repository.vendorTerms(store.vendorId);
+    if (vendor.shut) throw new StoreClosedError(id);
 
     return {
       id: store.id,
@@ -209,6 +210,7 @@ export class StoresService extends BaseService {
       minOrder: store.minOrder,
       freeDeliveryThreshold: store.freeDeliveryThreshold,
       currency: 'UZS',
+      commissionPercent: vendor.commissionPercent,
     };
   }
 

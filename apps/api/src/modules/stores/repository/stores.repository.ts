@@ -25,6 +25,20 @@ export class StoresRepository extends BaseRepository {
   }
 
   /** The platform has suspended or rejected this stall's vendor: the stall is shut for the public. */
+  /** What placing an order needs of the vendor: is it shut, and its own rate (null: the tariff's). */
+  async vendorTerms(
+    vendorId: string,
+  ): Promise<{ shut: boolean; commissionPercent: number | null }> {
+    const vendor = await this.prisma.vendor.findFirst({
+      where: { id: vendorId, ...this.tenantScope() },
+      select: { status: true, commissionPercent: true },
+    });
+    return {
+      shut: vendor !== null && (SHUT_VENDOR_STATUSES as readonly string[]).includes(vendor.status),
+      commissionPercent: vendor?.commissionPercent ?? null,
+    };
+  }
+
   async vendorIsShut(vendorId: string): Promise<boolean> {
     const shut = await this.prisma.vendor.findFirst({
       where: { id: vendorId, ...this.tenantScope(), status: { in: [...SHUT_VENDOR_STATUSES] } },

@@ -209,6 +209,8 @@ export class OrdersService extends BaseService {
           addressId: input.addressId,
           // A group's followers ride on the leader's trip: no second payout.
           courierFee: input.groupFollower === true ? 0 : quote.courierFee.amount,
+          // The vendor's own rate when the desk set one, else the zone tariff's.
+          commissionPercent: store.commissionPercent ?? quote.commissionPercent,
           currency,
           recipientName: input.recipientName ?? null,
           recipientPhone: input.recipientPhone ?? null,

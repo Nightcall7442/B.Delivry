@@ -128,7 +128,9 @@ export class VendorsRepository extends BaseRepository {
   }
 
   /**
-   * What the platform owes this vendor: the goods total of delivered orders, minus commission.
+   * What the platform owes this vendor: the goods total of delivered orders, minus commission —
+   * each order at the rate it was placed at (the vendor's own, else the tariff's; it used to be
+   * the vendor's own or nothing, so a stall on the tariff was shown its whole subtotal).
    * Computed on demand rather than kept as a running column, because a wrong stored balance is
    * worse than a slightly slow query.
    *
@@ -157,42 +159,47 @@ export class VendorsRepository extends BaseRepository {
         },
       },
     };
-    const [all, held, next, vendor] = await Promise.all([
-      this.prisma.order.aggregate({ where: delivered, _sum: { subtotal: true }, _count: true }),
-      this.prisma.order.aggregate({
-        where: { ...delivered, OR: [{ deliveredAt: { gt: cutoff } }, complained] },
+    // One sum per rate: the rate is the order's, so the cut is taken rate by rate.
+    const byRate = (where: Prisma.OrderWhereInput) =>
+      this.prisma.order.groupBy({
+        by: ['commissionPercent'],
+        where,
         _sum: { subtotal: true },
-        _count: true,
-      }),
+        _count: { _all: true },
+      });
+    const [all, held, next] = await Promise.all([
+      byRate(delivered),
+      byRate({ ...delivered, OR: [{ deliveredAt: { gt: cutoff } }, complained] }),
       // When the first of the window-held orders clears; a complaint has no clock of its own.
       this.prisma.order.findFirst({
         where: { ...delivered, AND: [{ deliveredAt: { gt: cutoff } }], NOT: complained },
         orderBy: { deliveredAt: 'asc' },
         select: { deliveredAt: true },
       }),
-      this.prisma.vendor.findUnique({
-        where: { id: vendorId },
-        select: { commissionPercent: true },
-      }),
     ]);
 
-    const net = (gross: number) =>
-      gross - Math.round((gross * (vendor?.commissionPercent ?? 0)) / 100);
-    const pending = net(all._sum.subtotal ?? 0);
-    const onHold = net(held._sum.subtotal ?? 0);
+    type Rate = (typeof all)[number];
+    const net = (rates: Rate[]) =>
+      rates.reduce((sum, rate) => {
+        const gross = rate._sum.subtotal ?? 0;
+        return sum + gross - Math.round((gross * rate.commissionPercent) / 100);
+      }, 0);
+    const count = (rates: Rate[]) => rates.reduce((sum, rate) => sum + rate._count._all, 0);
+    const pending = net(all);
+    const onHold = net(held);
 
     return {
       vendorId,
       pending,
       available: pending - onHold,
       onHold,
-      onHoldOrders: held._count,
+      onHoldOrders: count(held),
       releasesAt:
         next?.deliveredAt === null || next?.deliveredAt === undefined
           ? null
           : new Date(next.deliveredAt.getTime() + windowMs).toISOString(),
       currency: 'UZS',
-      orderCount: all._count,
+      orderCount: count(all),
     };
   }
 }

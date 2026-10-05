@@ -58,6 +58,8 @@ export interface Quote {
   freeDeliveryThreshold: Money | null;
   /** Platform cut of the goods, held back from the vendor payout. */
   commission: Money;
+  /** The tariff's rate behind it; the order keeps it unless the vendor has a rate of its own. */
+  commissionPercent: number;
   reason: string | null;
   heavy: boolean;
   heavySurcharge: Money;

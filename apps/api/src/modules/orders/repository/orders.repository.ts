@@ -59,6 +59,8 @@ export interface CreateOrderData {
   promisedAt: Date | null;
   addressId: string;
   courierFee: number;
+  /** The platform's cut of the goods, fixed now: a later change of rate does not reach back. */
+  commissionPercent: number;
   couponId: string | null;
   currency: string;
   recipientName: string | null;
@@ -94,6 +96,7 @@ export class OrdersRepository extends BaseRepository {
         promisedAt: data.promisedAt,
         addressId: data.addressId,
         courierFee: data.courierFee,
+        commissionPercent: data.commissionPercent,
         couponId: data.couponId,
         recipientName: data.recipientName,
         recipientPhone: data.recipientPhone,

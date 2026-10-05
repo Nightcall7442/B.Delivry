@@ -1075,6 +1075,9 @@ model Order {
   addressId    String?
   // Delivery fee before Plus / thresholds / coupons waived it: the courier's payout base.
   courierFee   Int       @default(0)
+  // The platform's cut of the goods, fixed when the order is placed: the vendor's own rate when
+  // the desk set one, else the zone tariff's. The stall is paid the subtotal less this.
+  commissionPercent Float @default(0)
   // "Заказ родителям": who opens the door when it is not the customer. The
   // courier calls this number; the recipient gets one SMS when the order sets off.
   recipientName  String?

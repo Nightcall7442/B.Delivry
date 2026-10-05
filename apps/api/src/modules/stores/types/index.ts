@@ -34,6 +34,8 @@ export interface OpenStore {
   minOrder: number | null;
   freeDeliveryThreshold: number | null;
   currency: string;
+  /** The vendor's own commission rate, set by the desk; null — the zone tariff's applies. */
+  commissionPercent: number | null;
 }
 
 export interface ScheduleEntry {
