@@ -313,15 +313,23 @@ export function BazaarLogin({ locale }: { locale: string }) {
               </button>
             </div>
           ) : null}
+          {/* The documents are linked where the sentence names them, not repeated after it. */}
           <p className={s.rcHint}>
-            {t('login.terms')}{' '}
-            <Link href={`${home}/offer`} className={s.rcLink}>
-              Оферта
-            </Link>{' '}
-            ·{' '}
-            <Link href={`${home}/privacy`} className={s.rcLink}>
-              Политика
-            </Link>
+            {t('login.agree')
+              .split(/(\{offer\}|\{policy\})/)
+              .map((part) =>
+                part === '{offer}' ? (
+                  <Link key={part} href={`${home}/offer`} className={s.rcLink}>
+                    {t('login.offerLink')}
+                  </Link>
+                ) : part === '{policy}' ? (
+                  <Link key={part} href={`${home}/privacy`} className={s.rcLink}>
+                    {t('login.policyLink')}
+                  </Link>
+                ) : (
+                  part
+                ),
+              )}
           </p>
         </form>
       </div>

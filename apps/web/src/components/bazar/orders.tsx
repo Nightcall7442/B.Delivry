@@ -36,7 +36,7 @@ export function BazaarOrders({ locale }: { locale: string }) {
           <Link href={home} className={s.round} aria-label={t('common.back')}>
             <ArrowLeft />
           </Link>
-          <span className={s.tag}>{t('receipt.title')}</span>
+          <span className={s.tag}>{t('menu.orders')}</span>
         </div>
         <div className={s.greeting} style={{ padding: '12px 0 26px' }}>
           <h1 className={`${s.display} ${s.displayPage}`}>{t('orders.title')}</h1>

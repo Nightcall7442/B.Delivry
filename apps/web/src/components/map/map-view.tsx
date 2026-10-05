@@ -189,6 +189,22 @@ function LibreMap({
     instance.on('error', (event: LibreError) => {
       if (String(event.error?.message ?? '').includes('styles/')) fail.current();
     });
+    // The style names places in Latin («Amir Timur Avenue»): the page's own language first, then
+    // Russian, then whatever the map has.
+    instance.on('load', () => {
+      const lang = window.location.pathname.split('/')[1] === 'uz' ? 'uz' : 'ru';
+      for (const layer of instance.getStyle().layers ?? []) {
+        if (layer.type !== 'symbol') continue;
+        const field = instance.getLayoutProperty(layer.id, 'text-field') as unknown;
+        if (!JSON.stringify(field ?? '').includes('name')) continue;
+        instance.setLayoutProperty(layer.id, 'text-field', [
+          'coalesce',
+          ['get', `name:${lang}`],
+          ['get', 'name:ru'],
+          ['get', 'name'],
+        ]);
+      }
+    });
     map.current = instance;
     if (process.env.NODE_ENV !== 'production')
       (window as unknown as { __map?: LibreGl }).__map = instance;

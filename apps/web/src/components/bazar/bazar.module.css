@@ -445,6 +445,9 @@
   font-variant-numeric: tabular-nums;
   color: var(--pomegranate);
 }
+.signNow {
+  white-space: nowrap;
+}
 .signPrice small {
   font-size: var(--fs-lead);
   color: var(--ink-soft);
@@ -476,6 +479,9 @@
 /* A discount card on the rail: wide enough for the sign, narrow enough that the next one peeks. */
 .dealCard {
   flex: 0 0 min(240px, 68vw);
+  /* A long word in the name («ПОДСОЛНЕЧНОЕ,») must not widen one card past its siblings. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 /* Square on the rail, so the sign with both prices is in view with the photo. */
 .dealCard .cardPhoto {
@@ -755,6 +761,15 @@
 }
 .pill svg {
   color: var(--ochre);
+}
+.pillSolid {
+  height: 44px;
+  padding: 0 18px;
+  font-size: var(--fs-body);
+  color: var(--ink-paper);
+  background: var(--cream);
+  border-color: var(--cream);
+  text-decoration: none;
 }
 .pillWarn {
   color: var(--ochre-light);
@@ -1711,7 +1726,9 @@
   outline: none;
 }
 .phone input::placeholder {
-  color: var(--ink-soft);
+  /* A hint of the format, not a number already typed. */
+  color: color-mix(in srgb, var(--ink-soft) 55%, transparent);
+  font-weight: 500;
 }
 .codeField {
   font-size: var(--fs-headline);
@@ -1752,11 +1769,16 @@
   .phoneOnly {
     display: none !important;
   }
-  /* A wide screen: the basket bar is a pill in the corner, not a band across the counters. */
+  /* A wide screen: the basket bar is a pill in the corner, not a band across the counters. It sits
+     over the cards' corner, so it is solid there — the glass let the price tags show through. */
   .bar {
     justify-content: flex-end;
     padding-right: clamp(20px, 4vw, 40px);
     background: none;
+  }
+  .bar .glass {
+    background: rgb(var(--ground-deep-rgb) / 0.94);
+    box-shadow: var(--shadow);
   }
   .barInner {
     width: auto;
@@ -1771,6 +1793,12 @@
     max-width: 1120px;
   }
   .narrow > :not(.top) {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  /* The back arrow stands over the slip's own edge, not 200 px to the left of the title. */
+  .narrow > .top {
     max-width: 640px;
     margin-left: auto;
     margin-right: auto;
@@ -1883,9 +1911,10 @@
   gap: 10px;
   margin-top: 16px;
 }
+/* Side by side when both are there; one alone (a guest has no «last time») takes the row. */
 @media (min-width: 640px) {
   .shortcuts {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   }
 }
 .shortcut {
@@ -2246,4 +2275,47 @@
 .regularError {
   font-size: var(--fs-caption);
   color: var(--ochre-light);
+}
+
+/* A laptop: four cards to a row instead of three tall ones, and the rails lay out every card —
+   a mouse cannot swipe, and a hidden scrollbar hid the rest (a chip was cut mid-word). */
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+  .rail {
+    flex-wrap: wrap;
+    overflow: visible;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* The site's foot: a quiet row of links on the ground, clear of the basket bar. */
+.siteFooter {
+  margin-top: 56px;
+  padding: 22px 0 140px;
+  border-top: 1px dashed color-mix(in srgb, var(--cream) 22%, transparent);
+}
+.siteFooterLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+}
+.siteFooterLinks a {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--cream-muted);
+  text-decoration: none;
+}
+.siteFooterLinks a:hover {
+  color: var(--cream);
+  text-decoration: underline;
+}
+.siteFooterLine {
+  margin: 14px 0 0;
+  font-size: var(--fs-caption);
+  color: var(--cream-muted);
 }

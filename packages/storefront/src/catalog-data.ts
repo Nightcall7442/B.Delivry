@@ -607,7 +607,7 @@ const PRODUCT_SEEDS: ProductSeed[] = [
     'p-obi-non',
     'non-uyi',
     'bakery',
-    'Обі нон, тандырный',
+    'Оби нон, тандырный',
     'Obi non',
     6000,
     PRODUCT_UNIT.PCS,

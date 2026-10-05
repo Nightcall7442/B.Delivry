@@ -1,4 +1,5 @@
-import { bundleGuests, getBundle, tr } from '@bazar/storefront';
+import { createT } from '@bazar/i18n';
+import { bundleGuests, bundleTitle, getBundle } from '@bazar/storefront';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
@@ -9,10 +10,19 @@ export const dynamic = 'force-dynamic';
 
 type Params = Promise<{ locale: string; slug: string }>;
 
-export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { locale, slug } = await params;
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: Promise<{ guests?: string }>;
+}): Promise<Metadata> {
+  const [{ locale, slug }, { guests }] = await Promise.all([params, searchParams]);
   const bundle = getBundle(slug);
-  return { title: bundle ? `${tr(bundle.title, locale)} — Bazar Delivery` : 'Набор не найден' };
+  if (!bundle) return { title: 'Набор не найден' };
+  // The tab says the same company as the page: «Плов на 12 человек», not the set's own six.
+  const company = bundleGuests(bundle, guests === undefined ? null : Number(guests));
+  return { title: `${bundleTitle(createT(locale), bundle, company)} — Bazar Delivery` };
 }
 
 export default async function BundlePage({

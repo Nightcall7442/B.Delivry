@@ -35,7 +35,7 @@ describe('the basket', () => {
     expect(basketItemOf('Помидоры бакинские', 'KG')?.key).toBe('tomatoes');
     expect(basketItemOf('Курица охлаждённая', 'KG')?.key).toBe('chicken');
     expect(basketItemOf('Яйца С1, 10 шт', 'PCS')?.key).toBe('eggs');
-    expect(basketItemOf('Обі нон, тандырный', 'PCS')?.key).toBe('bread');
+    expect(basketItemOf('Оби нон, тандырный', 'PCS')?.key).toBe('bread');
     expect(basketItemOf('Лепёшка домашняя', 'PCS')?.key).toBe('bread');
   });
 

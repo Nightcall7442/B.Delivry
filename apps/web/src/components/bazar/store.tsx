@@ -17,6 +17,7 @@ import { useAddress } from '@/features/address';
 
 import { BasketBar, HeartButton, ProductCard, ShareButton } from './index';
 import { RegularCard } from './regular-card';
+import { SiteFooter } from './site-footer';
 import s from './bazar.module.css';
 
 export function BazaarStore({
@@ -186,6 +187,7 @@ export function BazaarStore({
             />
           ))}
         </div>
+        <SiteFooter locale={locale} />
       </div>
       <BasketBar products={products} locale={locale} t={t} evening={evening} />
     </main>

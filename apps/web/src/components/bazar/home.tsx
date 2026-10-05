@@ -29,12 +29,13 @@ import type { CategoryDto, PriceIndexDto, ProductDto } from '@bazar/types';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
-import { Bell } from '@/components/go/icons';
+import { Burger, Receipt } from '@/components/go/icons';
 import { useAddress, useDeliverable } from '@/features/address';
 import { useAuth } from '@/features/auth';
 
 import { GuestStepper } from './guest-stepper';
 import { BasketBar, ProductCard } from './index';
+import { SiteFooter } from './site-footer';
 import s from './bazar.module.css';
 
 /**
@@ -208,16 +209,24 @@ export function BazaarHome({
                 ? 'Чорсу · вечер · до 21:00'
                 : 'Чорсу · утро'}
           </span>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Link href={`${home}/orders`} className={s.round} aria-label={t('menu.orders')}>
-              <b>
-                <Bell />
-              </b>
+          {/* Signed in: the orders (a receipt, not a bell) and the profile — the initial, or the
+              menu glyph without a name. A guest gets «Войти», not an avatar of nobody. */}
+          {user ? (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Link href={`${home}/orders`} className={s.round} aria-label={t('menu.orders')}>
+                <b>
+                  <Receipt />
+                </b>
+              </Link>
+              <Link href={`${home}/profile`} className={s.round} aria-label={t('profile.title')}>
+                <b>{user.firstName ? user.firstName.slice(0, 1).toUpperCase() : <Burger />}</b>
+              </Link>
+            </div>
+          ) : (
+            <Link href={`${home}/login`} className={`${s.pill} ${s.pillSolid}`}>
+              {t('common.signIn')}
             </Link>
-            <Link href={`${home}/profile`} className={s.round} aria-label={t('profile.title')}>
-              <b>{(user?.firstName ?? 'А').slice(0, 1).toUpperCase()}</b>
-            </Link>
-          </div>
+          )}
         </div>
 
         <div className={s.greeting}>
@@ -246,7 +255,8 @@ export function BazaarHome({
 
         <div className={s.head}>
           <h2 className={s.headTitle}>{t('scene.vendorsHere')}</h2>
-          <Link href={`${home}/stores`} className={s.headAction}>
+          {/* The row map lists every stall: the stores route only led back here. */}
+          <Link href={`${home}/catalog`} className={s.headAction}>
             {t('scene.vendorsAll', { count: stores.length })}
           </Link>
         </div>
@@ -361,6 +371,7 @@ export function BazaarHome({
             />
           ))}
         </div>
+        <SiteFooter locale={locale} />
       </div>
 
       <BasketBar products={shown} locale={locale} t={t} evening={evening} />

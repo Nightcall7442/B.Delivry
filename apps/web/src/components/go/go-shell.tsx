@@ -203,11 +203,12 @@ export function Menu({ locale, onClose }: { locale: string; onClose: () => void 
           )}
         </div>
         <div
-          className="mt-4 flex items-center gap-2 text-sm"
+          className="mt-4 flex flex-wrap items-center gap-2 text-sm"
           role="group"
           aria-label={t('theme.title')}
         >
-          <span className="mr-1 text-ink-muted">{t('theme.title')}</span>
+          {/* The label takes its own line: three chips beside it ran past the drawer's edge. */}
+          <span className="w-full text-ink-muted">{t('theme.title')}</span>
           {THEMES.map((option) => (
             <button
               key={option}
