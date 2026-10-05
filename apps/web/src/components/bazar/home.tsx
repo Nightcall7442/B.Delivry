@@ -27,7 +27,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Bell } from '@/components/go/icons';
-import { useAddress } from '@/features/address';
+import { useAddress, useDeliverable } from '@/features/address';
 import { useAuth } from '@/features/auth';
 
 import { BasketBar, ProductCard } from './index';
@@ -56,6 +56,8 @@ export function BazaarHome({
   const t = createT(locale);
   const { user } = useAuth();
   const { address } = useAddress();
+  // «We are not operating in your location», said here rather than at checkout.
+  const outOfZone = useDeliverable(address?.point) === false;
   const evening = isEvening();
   // The tag's temperature is the real one at Chorsu or nothing — never a number from the code.
   const [temperature, setTemperature] = useState<number | null>(null);
@@ -141,6 +143,15 @@ export function BazaarHome({
             {t(evening ? 'scene.evening' : 'scene.morning')}
             {user?.firstName ? `, ${user.firstName}` : ''}
           </h1>
+          {outOfZone ? (
+            <Link
+              href={`${home}/address`}
+              className={`${s.pill} ${s.pillWarn}`}
+              style={{ marginTop: 12 }}
+            >
+              {t('scene.outOfZone')} →
+            </Link>
+          ) : null}
         </div>
 
         <div className={s.head}>

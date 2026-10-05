@@ -59,6 +59,7 @@ import {
 } from '@/components/bazar';
 import { LoadError } from '@/components/ui/Page';
 import { DEFAULT_POINT, useAddress } from '@/features/address/store';
+import { useDeliverable } from '@/features/address/zone';
 import { useCart, useCartActions } from '@/features/cart/store';
 import { REACH_METERS, listCategories, listProducts, listStores } from '@/lib/catalog';
 import { saleNote } from '@/lib/sale';
@@ -113,7 +114,15 @@ export function SceneHomeScreen() {
   const storeLoad = useLoad(() => listStores(here), [here.lat, here.lng]);
   // No address yet, or the phone is in another city: the counters below are someone else's.
   const away = useAwayFrom(here);
-  const nudge = !address ? 'scene.whereAreYou' : away ? 'scene.awayFromAddress' : null;
+  // Go Bazar's «we are not operating in your location», said here rather than at checkout.
+  const deliverable = useDeliverable(address?.point);
+  const nudge = !address
+    ? 'scene.whereAreYou'
+    : deliverable === false
+      ? 'scene.outOfZone'
+      : away
+        ? 'scene.awayFromAddress'
+        : null;
   const categoryLoad = useLoad(() => listCategories(), []);
   const productLoad = useLoad(() => listProducts(), []);
   const dealLoad = useLoad(() => listProducts({ onSale: true }), []);
@@ -262,7 +271,13 @@ export function SceneHomeScreen() {
             {nudge ? (
               <Glass
                 style={s.nudge}
-                onPress={() => router.push({ pathname: '/address', params: { locate: '1' } })}
+                // Away from the address: find the phone. Out of zone: pick another address.
+                onPress={() =>
+                  router.push({
+                    pathname: '/address',
+                    params: nudge === 'scene.outOfZone' ? {} : { locate: '1' },
+                  })
+                }
               >
                 <Text style={s.nudgeText}>{t(nudge)} →</Text>
               </Glass>

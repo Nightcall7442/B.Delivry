@@ -20,7 +20,7 @@ import bz from '@/components/bazar/bazar.module.css';
 import { GoShell } from '@/components/go/go-shell';
 import { HomeGlyph, Target } from '@/components/go/icons';
 import { PIN_SVG, type MarkerKind } from '@/components/map/map-view';
-import { DEFAULT_POINT, useAddress } from '@/features/address';
+import { DEFAULT_POINT, useAddress, useDeliverable } from '@/features/address';
 import { useAuth } from '@/features/auth';
 import { api } from '@/lib/api';
 import { describePoint, loadYmaps } from '@/lib/map/ymaps';
@@ -107,6 +107,7 @@ export function AddressPicker({ locale }: { locale: string }) {
   // re-prices as the map moves, so the sheet is never a blank slip.
   const trips = tripsTo(point);
   const far = (trips[0]?.trip.distanceMeters ?? 0) > FAR_METERS;
+  const outOfZone = useDeliverable(point) === false;
   const name = (bazaar: { name: { ru: string; uz: string } }) =>
     locale === 'uz' ? bazaar.name.uz : bazaar.name.ru;
 
@@ -218,7 +219,11 @@ export function AddressPicker({ locale }: { locale: string }) {
             </li>
           ))}
         </ul>
-        {far ? <span className={bz.stamp}>{t('address.far')}</span> : null}
+        {outOfZone ? (
+          <span className={bz.stamp}>{t('address.outOfZone')}</span>
+        ) : far ? (
+          <span className={bz.stamp}>{t('address.far')}</span>
+        ) : null}
         <p className={bz.rcHint}>
           {t('address.fromHint', { threshold: t.money(FREE_DELIVERY_THRESHOLD.amount) })}
         </p>

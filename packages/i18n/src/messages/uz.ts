@@ -663,4 +663,6 @@ export const uz: Catalogue = {
   'deals.honest': 'Ustidan chizilgani — haftaning eng past narxi, chegirmalar halol',
   'deals.note': '−{percent} % · avval {old}',
   'order.missing': 'sotuvchida yoʻq — hisobdan olib tashlandi',
+  'scene.outOfZone': 'Bu manzilga hozircha yetkazmaymiz — boshqasini tanlang',
+  'address.outOfZone': 'Bu yerga hozircha yetkazmaymiz: manzil yetkazish hududidan tashqarida',
 };

@@ -41,6 +41,7 @@ import {
 } from '@bazar/storefront';
 
 import { DEFAULT_POINT, useAddress } from '@/features/address/store';
+import { useDeliverable } from '@/features/address/zone';
 
 const coords = (p: LatLngDto) => `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`;
 /** Past this the pin is out among the fields, and the board says so. */
@@ -188,6 +189,7 @@ export function AddressScreen() {
   // re-prices as the map moves, so the sheet is never a blank slip.
   const trips = tripsTo(point);
   const far = (trips[0]?.trip.distanceMeters ?? 0) > FAR_METERS;
+  const outOfZone = useDeliverable(point) === false;
 
   return (
     <Shell
@@ -278,7 +280,11 @@ export function AddressScreen() {
           <Text style={s.fee}>{t.money(trip.fee.amount)}</Text>
         </View>
       ))}
-      {far ? <Text style={s.far}>{t('address.far')}</Text> : null}
+      {outOfZone ? (
+        <Text style={s.far}>{t('address.outOfZone')}</Text>
+      ) : far ? (
+        <Text style={s.far}>{t('address.far')}</Text>
+      ) : null}
       <Text style={s.hint}>
         {t('address.fromHint', { threshold: t.money(FREE_DELIVERY_THRESHOLD.amount) })}
       </Text>
