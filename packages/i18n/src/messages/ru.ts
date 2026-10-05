@@ -328,7 +328,7 @@ export const ru = {
   'subs.title': 'Подписки',
   'subs.intro':
     'Одна и та же корзина — каждую неделю, без напоминаний. Заказ оформляется за 2 часа до окна, отменить можно до приезда курьера.',
-  'subs.empty': 'Подписок пока нет. Откройте любой заказ и нажмите «Повторять каждую неделю».',
+  'subs.empty': 'Откройте любой заказ и нажмите «Повторять каждую неделю».',
   'subs.repeatWeekly': 'Повторять каждую неделю',
   'subs.pickDay': 'В какой день',
   'subs.pickTime': 'К какому времени',
@@ -359,6 +359,7 @@ export const ru = {
   // ---------------------------------------------------------------- plus
   'menu.plus': 'Bazar Plus',
   'plus.title': 'Bazar Plus',
+  'plus.perMonth': '{price} в месяц',
   'plus.tagline': 'Доставка бесплатно и курьер — первым. {price} в месяц.',
   'plus.perk1': 'Бесплатная доставка на все заказы',
   'plus.perk2': 'Приоритет: курьера ищем шире и раньше',
@@ -484,6 +485,8 @@ export const ru = {
   'menu.docs': 'Документы',
   'menu.neighbour': 'Стать курьером махалли',
   'neighbour.title': 'Курьер махалли',
+  // The courier's own home: the radius is counted from it.
+  'neighbour.home': 'Ваш дом',
   'neighbour.intro':
     'Носите заказы соседям пешком в радиусе {km}\u00a0км от дома и зарабатывайте на каждом. Заказы приходят в приложение курьера — тот же номер телефона.',
   'neighbour.apply': 'Хочу носить заказы соседям',
@@ -555,7 +558,7 @@ export const ru = {
   'status.COURIER_ARRIVED.title': 'Курьер у двери',
   'status.COURIER_ARRIVED.hint': 'Встречайте — заказ уже здесь',
   'status.DELIVERED.title': 'Заказ доставлен',
-  'status.DELIVERED.hint': 'Спасибо! Оцените курьера',
+  'status.DELIVERED.hint': 'Спасибо! Как вам заказ?',
   'status.CANCELLED.title': 'Заказ отменён',
   'status.CANCELLED.hint': 'Деньги вернутся, если были списаны',
   'status.FAILED.title': 'Не удалось доставить',

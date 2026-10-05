@@ -309,7 +309,7 @@ export const uz: Catalogue = {
   'subs.title': 'Obunalar',
   'subs.intro':
     'Oʻsha savat — har hafta, eslatmasiz. Buyurtma oynadan 2 soat oldin rasmiylashadi, kuryer kelguncha bekor qilish mumkin.',
-  'subs.empty': 'Hali obuna yoʻq. Istalgan buyurtmani oching va «Har hafta takrorlash»ni bosing.',
+  'subs.empty': 'Istalgan buyurtmani oching va «Har hafta takrorlash»ni bosing.',
   'subs.repeatWeekly': 'Har hafta takrorlash',
   'subs.pickDay': 'Qaysi kuni',
   'subs.pickTime': 'Qaysi vaqtga',
@@ -339,6 +339,7 @@ export const uz: Catalogue = {
   'weekdayAcc.6': 'shanba',
   'menu.plus': 'Bazar Plus',
   'plus.title': 'Bazar Plus',
+  'plus.perMonth': 'oyiga {price}',
   'plus.tagline': 'Yetkazish bepul, kuryer — birinchi navbatda. Oyiga {price}.',
   'plus.perk1': 'Barcha buyurtmalarga bepul yetkazish',
   'plus.perk2': 'Ustuvorlik: kuryerni kengroq va ertaroq qidiramiz',
@@ -461,6 +462,7 @@ export const uz: Catalogue = {
   'menu.docs': 'Hujjatlar',
   'menu.neighbour': 'Mahalla kuryeri boʻlish',
   'neighbour.title': 'Mahalla kuryeri',
+  'neighbour.home': 'Uyingiz',
   'neighbour.intro':
     'Uydan {km} km radiusda qoʻshnilarga buyurtmalarni piyoda olib boring va har biridan daromad qiling. Buyurtmalar kuryer ilovasiga keladi — oʻsha telefon raqami.',
   'neighbour.apply': 'Qoʻshnilarga buyurtma olib bormoqchiman',
@@ -529,7 +531,7 @@ export const uz: Catalogue = {
   'status.COURIER_ARRIVED.title': 'Kuryer eshik oldida',
   'status.COURIER_ARRIVED.hint': 'Kutib oling — buyurtma yetib keldi',
   'status.DELIVERED.title': 'Buyurtma yetkazildi',
-  'status.DELIVERED.hint': 'Rahmat! Kuryerni baholang',
+  'status.DELIVERED.hint': 'Rahmat! Buyurtma sizga yoqdimi?',
   'status.CANCELLED.title': 'Buyurtma bekor qilindi',
   'status.CANCELLED.hint': 'Pul yechilgan boʻlsa, qaytariladi',
   'status.FAILED.title': 'Yetkazib boʻlmadi',

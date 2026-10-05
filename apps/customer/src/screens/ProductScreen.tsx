@@ -37,9 +37,10 @@ import {
   Pin,
   Say,
   Scene,
-  SceneButton,
   scene,
+  SceneButton,
   sceneFont,
+  TopFade,
   useSceneTop,
   useSwing,
 } from '@/components/bazar';
@@ -365,6 +366,7 @@ function ProductBody({
         ) : null}
       </ScrollView>
 
+      <TopFade height={top + 58} />
       <View style={[s.top, { top }]}>
         <SceneButton
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
@@ -411,6 +413,7 @@ const s = StyleSheet.create({
     right: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    zIndex: 2,
   },
   topEnd: { flexDirection: 'row', gap: 10 },
   tagWrap: { paddingHorizontal: 20, alignItems: 'flex-start' },

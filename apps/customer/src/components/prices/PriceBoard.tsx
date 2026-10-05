@@ -48,7 +48,7 @@ export function PriceBoard({ index, onPress }: { index: PriceIndexDto; onPress: 
               <Text style={s.name} numberOfLines={1}>
                 {tr(item.title, locale)}
               </Text>
-              <Text style={s.price} numberOfLines={1}>
+              <Text style={s.price}>
                 {t.money(item.median, index.currency)}
                 {trend !== 'flat' ? (
                   <Text style={trend === 'up' ? s.up : s.down}>{trend === 'up' ? ' ▲' : ' ▼'}</Text>
@@ -112,7 +112,8 @@ const s = StyleSheet.create({
   },
   cell: { width: '33.33%', paddingRight: 8 },
   name: { fontFamily: sceneFont.uiText, ...scale.caption, color: scene.creamMuted },
-  price: { fontFamily: sceneFont.hand, fontSize: 21, lineHeight: 24, color: scene.cream },
+  // A step down from 21: «12 000 soʻm» is a word longer than «сум» and was cut in a third of a row.
+  price: { fontFamily: sceneFont.hand, fontSize: 19, lineHeight: 22, color: scene.cream },
   up: { fontFamily: sceneFont.ui, fontSize: 10, color: scene.ochreLight },
   down: { fontFamily: sceneFont.ui, fontSize: 10, color: scene.creamMuted },
 });

@@ -114,7 +114,7 @@ export function BazaarStore({
           ) : null}
           <div className={s.pills}>
             <span className={s.pill}>
-              <Star size={14} /> {store.rating.toFixed(1)}
+              <Star size={14} /> {t.rating(store.rating)}
               {store.reviewCount ? ` · ${store.reviewCount}` : ''}
             </span>
             <span className={s.pill}>

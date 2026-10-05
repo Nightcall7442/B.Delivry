@@ -24,13 +24,15 @@ export interface T {
   money(minor: number, currency?: Currency): string;
   /** A weight or count with the language's decimal mark: 1,04 — never 1.04. */
   qty(value: number): string;
+  /** A rating to one decimal in the language's mark: «4,8», «5,0». */
+  rating(value: number): string;
   /** "12 октября" / "12 oktabr": browsers lack Uzbek month names, so the catalogue carries them. */
   date(value: string | Date): string;
   /**
    * «понедельник, 5 октября» · «5 октября в 15:18» on the Tashkent clock. Built from the catalogue,
    * not Intl: a browser renders Uzbek as «M10 5, MON», the server does not, and the page fails to hydrate.
    */
-  when(value: string | Date, parts?: { weekday?: boolean; time?: boolean }): string;
+  when(value: string | Date, parts?: { weekday?: boolean; year?: boolean; time?: boolean }): string;
   /** «15:18» on the Tashkent clock. */
   time(value: string | Date): string;
   locale: Locale;
@@ -83,6 +85,11 @@ export function createT(locale: string): T {
     maximumFractionDigits: 2,
   });
   t.qty = (value) => qty.format(value);
+  const rating = new Intl.NumberFormat(loc === 'en' ? NUMBER_LOCALE.en : NUMBER_LOCALE.ru, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+  t.rating = (value) => rating.format(value);
   t.date = (value) => {
     const at = typeof value === 'string' ? new Date(value) : value;
     const months = (own['months'] ?? RU['months'] ?? '').split(',');
@@ -100,6 +107,7 @@ export function createT(locale: string): T {
     const at = tashkent(value);
     const months = (own['months'] ?? RU['months'] ?? '').split(',');
     let text = `${at.getUTCDate()} ${months[at.getUTCMonth()] ?? ''}`;
+    if (parts.year) text = `${text} ${at.getUTCFullYear()}`;
     if (parts.weekday) {
       const weekdays = (own['weekdays'] ?? RU['weekdays'] ?? '').split(',');
       text = t('date.withWeekday', { date: text, weekday: weekdays[at.getUTCDay()] ?? '' });

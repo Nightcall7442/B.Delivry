@@ -387,14 +387,23 @@ export function SectionHead({
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: ground(1) },
+  // Top-aligned: a title on two lines («Гарантии и вопросы») keeps the back button on its first
+  // line instead of floating between the two.
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 12,
     paddingHorizontal: 16,
     paddingBottom: 8,
   },
-  headerSlot: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerSlot: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   // The title stands on the ground: cream serif, whatever the theme.
   title: { flex: 1, fontFamily: sceneFont.display, ...scale.headline, color: scene.cream },
   floating: { position: 'absolute', left: 0, right: 0, top: 0, zIndex: 5 },
@@ -421,13 +430,16 @@ const s = StyleSheet.create({
   glass: { backgroundColor: color.glassSoft },
   glassFill: { ...StyleSheet.absoluteFill, borderRadius: 20, overflow: 'hidden' },
   badge: {
+    // Up and out on the disc's corner, ringed in its cream: it sat on the bag glyph itself.
     position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
+    top: -6,
+    right: -6,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
     paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: scene.cream,
     backgroundColor: scene.ochre,
     alignItems: 'center',
     justifyContent: 'center',

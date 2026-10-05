@@ -347,7 +347,8 @@ export function resolveBundle(
     lines,
     missing,
     total,
-    perGuest: Math.round(total / guests),
+    // «≈ 35 100 сум на человека»: an estimate in whole hundreds, not «35 083».
+    perGuest: Math.round(total / guests / 10_000) * 10_000,
     storeIds: [...new Set(lines.map((line) => line.product.storeId))],
   };
 }

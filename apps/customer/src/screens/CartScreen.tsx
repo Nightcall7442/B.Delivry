@@ -23,6 +23,7 @@ import {
   tr,
   unitLabel,
 } from '@bazar/storefront';
+import { createT } from '@bazar/i18n';
 import { CASHBACK } from '@bazar/constants';
 import type { ProductDto } from '@bazar/types';
 import { isApiError, room } from '@bazar/api-client';
@@ -33,16 +34,17 @@ import { Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  caps,
   Display,
   Glass,
+  ground,
   Printed,
   Say,
   Scene,
-  SceneButton,
-  caps,
-  ground,
   scene,
+  SceneButton,
   sceneFont,
+  TopFade,
   useSceneTop,
 } from '@/components/bazar';
 import { useAddress } from '@/features/address/store';
@@ -266,6 +268,7 @@ export function CartScreen() {
         })}
       </ScrollView>
 
+      <TopFade height={top + 76} />
       <View style={[s.top, { top }]}>
         <SceneButton
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
@@ -318,11 +321,7 @@ export function CartScreen() {
 
 /** Tashkent clock for «now + minutes». */
 function etaClock(minutes: number): string {
-  return new Date(Date.now() + minutes * 60_000).toLocaleTimeString('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Tashkent',
-  });
+  return createT('ru').time(new Date(Date.now() + minutes * 60_000));
 }
 
 function Receipt({
@@ -359,14 +358,8 @@ function Receipt({
   onCheckout: (() => void) | null;
 }) {
   const { locale, t } = useLocale();
-  const date = new Date().toLocaleString('ru-RU', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Tashkent',
-  });
+  // In the receipt's language: «ПН, 05.10» stayed Russian on an Uzbek receipt.
+  const date = t.when(new Date(), { time: true });
   const person = store?.ownerPhotoUrl ?? store?.coverUrl ?? null;
   return (
     <View style={[s.paper, { transform: [{ rotate: `${tilt}deg` }] }]}>
@@ -383,7 +376,7 @@ function Receipt({
           <Text style={s.vendorName} numberOfLines={1}>
             {store?.ownerName ?? (store ? tr(store.name, locale) : '')}
           </Text>
-          <Text style={s.vendorMeta} numberOfLines={1}>
+          <Text style={s.vendorMeta} numberOfLines={2}>
             {store?.ownerName ? tr(store.name, locale) : ''}
             {store?.standNumber ? ` · ${store.standNumber}` : ''}
           </Text>
@@ -534,10 +527,7 @@ function ReceiptRow({
             {t('haggle.accepted', {
               price: t.money(haggle.offeredPrice.amount),
               unit,
-              time: new Date(haggle.expiresAt).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
+              time: t.time(haggle.expiresAt),
             })}
           </Text>
         ) : haggle?.status === 'PENDING' ? (
@@ -618,6 +608,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    zIndex: 2,
   },
   subtitle: { ...caps, color: scene.creamMuted },
   hint: {
@@ -660,10 +651,11 @@ const s = StyleSheet.create({
   },
   paperTitle: { fontFamily: sceneFont.display, ...scale.title, color: scene.ink },
   paperDate: { ...caps, color: scene.inkSoft, fontVariant: ['tabular-nums'] },
+  // Beside the title, above the date line: lower down it was stamped over the time.
   stamp: {
     position: 'absolute',
-    right: 16,
-    top: 36,
+    right: 14,
+    top: 12,
     color: scene.pomegranate,
     borderWidth: 2.5,
     borderColor: scene.pomegranate,
@@ -769,6 +761,7 @@ const s = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   bottom: { position: 'absolute', left: 20, right: 20, gap: 8 },
+  // Solid, not glass: the totals scroll under these two and showed through them.
   chip: {
     flex: 1,
     height: 50,
@@ -776,6 +769,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    backgroundColor: ground(0.95),
   },
   chipText: {
     fontFamily: sceneFont.ui,

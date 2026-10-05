@@ -37,6 +37,8 @@ describe('t', () => {
     expect(createT('uz').qty(1.5)).toBe('1,5');
     expect(createT('uz').qty(12000)).toBe(createT('ru').qty(12000));
     expect(createT('en').qty(1.5)).toBe('1.5');
+    expect(createT('uz').rating(4.8)).toBe('4,8');
+    expect(createT('ru').rating(5)).toBe('5,0');
   });
 
   it('writes a moment on the Tashkent clock from the catalogue, in any runtime zone', () => {

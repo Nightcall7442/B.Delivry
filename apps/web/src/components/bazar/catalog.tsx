@@ -9,6 +9,7 @@
 
 import { createT } from '@bazar/i18n';
 import {
+  bindShortWords,
   closesToday,
   isEvening,
   photo,
@@ -249,7 +250,7 @@ export function BazaarCatalog({
           className={s.rowSign}
           style={{ transform: `rotate(${tilt}deg)`, marginTop: -22, alignSelf: 'flex-start' }}
         >
-          {tr(cat.name, locale)}
+          {bindShortWords(tr(cat.name, locale))}
         </span>
         {empty ? (
           <span className={s.counterHint}>{t('map.empty')}</span>

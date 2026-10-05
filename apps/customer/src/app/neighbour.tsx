@@ -58,7 +58,7 @@ export default function NeighbourRoute() {
       ) : (
         <>
           <Text role="body" style={{ marginTop: 12 }}>
-            {t('checkout.where')}: {address?.text ?? '—'}
+            {t('neighbour.home')}: {address?.text ?? '—'}
           </Text>
           {error ? (
             <Text role="caption" style={{ marginTop: 6, color: color.danger }}>

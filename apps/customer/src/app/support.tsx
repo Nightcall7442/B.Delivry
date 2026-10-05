@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Linking, View } from 'react-native';
 
 import { Card, Page, Glyph } from '@/components/ui/Page';
-import { Chat, Leaf, Phone, Row, Text, api, useAuth, useT } from '@bazar/mobile';
+import { Chat, Clock, Leaf, Phone, Row, Text, api, useAuth, useT } from '@bazar/mobile';
 
 export default function SupportRoute() {
   const t = useT();
@@ -15,7 +15,7 @@ export default function SupportRoute() {
       <Card
         style={{ marginTop: 8, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}
       >
-        <Glyph icon={Chat} size={48} />
+        <Glyph icon={Clock} size={48} />
         <Text role="muted" style={{ flex: 1 }}>
           {t('support.hours')}
         </Text>

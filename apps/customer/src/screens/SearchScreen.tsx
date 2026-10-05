@@ -18,14 +18,15 @@ import {
   Display,
   Eyebrow,
   Glass,
+  ground,
   RowSign,
-  SHADOW_REACH,
   Say,
   Scene,
-  SceneButton,
-  ground,
   scene,
+  SceneButton,
   sceneFont,
+  SHADOW_REACH,
+  TopFade,
   useSceneTop,
 } from '@/components/bazar';
 import { ProductTile, TILE_GAP, useTileWidth } from '@/components/shop/ProductTile';
@@ -164,6 +165,7 @@ export function SearchScreen() {
         )}
       </ScrollView>
 
+      <TopFade height={top + 58} />
       <View style={[s.top, { top }]}>
         <SceneButton
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}

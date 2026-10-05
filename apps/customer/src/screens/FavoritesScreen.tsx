@@ -16,8 +16,9 @@ import {
   Eyebrow,
   Say,
   Scene,
-  SceneButton,
   scene,
+  SceneButton,
+  TopFade,
   useSceneTop,
 } from '@/components/bazar';
 import { ProductTile, TILE_GAP, useTileWidth } from '@/components/shop/ProductTile';
@@ -138,6 +139,7 @@ export function FavoritesScreen() {
         {body()}
       </ScrollView>
 
+      <TopFade height={top + 58} />
       <View style={[s.top, { top }]}>
         <SceneButton
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
@@ -171,7 +173,7 @@ function StallRow({ store }: { store: MapStoreDto }) {
           <Eyebrow>
             {[
               store.standNumber ?? tr(store.name, locale),
-              store.reviewCount > 0 ? `★ ${store.rating.toFixed(1)}` : null,
+              store.reviewCount > 0 ? `★ ${t.rating(store.rating)}` : null,
             ]
               .filter(Boolean)
               .join(' · ')}
@@ -210,6 +212,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    zIndex: 2,
   },
   pad: { paddingHorizontal: 20 },
   section: { paddingHorizontal: 20, paddingTop: 24, gap: 12 },

@@ -303,6 +303,12 @@ export function CheckoutScreen({
   const deliverable = quote?.deliverable ?? false;
   // A disabled button explains nothing: it carries the reason itself.
   const blocker = quote && !deliverable ? orderReasonText(quote.reason, locale) : null;
+  // Below the minimum the button says what is missing: the total beside the reason was above the
+  // minimum (that is for goods; the total carries delivery) and read as a contradiction.
+  const shortOf =
+    quote && !deliverable && quote.reason?.includes('minimum')
+      ? Math.max(0, quote.minOrder.amount - quote.totals.subtotal.amount)
+      : 0;
   const subtotal = totals?.subtotal.amount ?? group?.subtotal.amount ?? 0;
   const total = totals?.total.amount ?? subtotal;
   const ready = Boolean(
@@ -374,10 +380,13 @@ export function CheckoutScreen({
             address
               ? quoting
                 ? t('checkout.calculating')
-                : (blocker ?? (otherCity && error ? error : t('checkout.order')))
+                : shortOf > 0
+                  ? t('checkout.shortOf', { amount: t.money(shortOf) })
+                  : (blocker ?? (otherCity && error ? error : t('checkout.order')))
               : t('checkout.needAddress')
           }
-          trailing={t.money(total)}
+          // A dead button carries its reason alone: a price beside it split onto a second line.
+          {...(ready ? { trailing: t.money(total) } : {})}
           style={{ justifyContent: 'space-between' }}
           disabled={!ready}
           onPress={submit}
@@ -655,7 +664,7 @@ export function CheckoutScreen({
             <View style={{ marginTop: 4 }}>
               {f.group.lines.map((line) => (
                 <View key={line.product.id} style={s.item}>
-                  <Text role="muted" numberOfLines={1} style={{ flex: 1, color: color.ink }}>
+                  <Text role="muted" style={{ flex: 1, color: color.ink }}>
                     {tr(line.product.name, locale)}{' '}
                     <Text role="muted">× {t.qty(line.quantity)}</Text>
                   </Text>
@@ -675,7 +684,8 @@ export function CheckoutScreen({
         <View style={{ marginTop: 4 }}>
           {group?.lines.map((line) => (
             <View key={line.product.id} style={s.item}>
-              <Text role="muted" numberOfLines={1} style={{ flex: 1, color: color.ink }}>
+              {/* The whole name and the quantity: one cut line hid «× 0,5». */}
+              <Text role="muted" style={{ flex: 1, color: color.ink }}>
                 {tr(line.product.name, locale)} <Text role="muted">× {t.qty(line.quantity)}</Text>
               </Text>
               {line.product.unit === 'KG' ? (

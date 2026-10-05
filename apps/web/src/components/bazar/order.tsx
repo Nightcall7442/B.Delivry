@@ -280,7 +280,7 @@ export function BazaarOrder({ orderId, locale }: { orderId: string; locale: stri
               <span style={{ minWidth: 0, flex: 1 }}>
                 <span className={s.rcVendorName}>{courierInfo.firstName}</span>
                 <span className={s.rcVendorMeta}>
-                  ★ {courierInfo.rating.toFixed(1)} ·{' '}
+                  ★ {t.rating(courierInfo.rating)} ·{' '}
                   {courierInfo.neighbour
                     ? t('order.neighbour')
                     : VEHICLES.includes(courierInfo.vehicleType)

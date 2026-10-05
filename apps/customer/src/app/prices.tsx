@@ -170,21 +170,16 @@ export default function PricesRoute() {
                       }}
                     >
                       <View style={{ flex: 1, minWidth: 0 }}>
-                        <Text
-                          role="title"
-                          numberOfLines={1}
-                          style={{ fontSize: 17, lineHeight: 24 }}
-                        >
+                        {/* Wrapped, not cut: the shop's price and the unit are the point of the row. */}
+                        <Text role="title" style={{ fontSize: 17, lineHeight: 24 }}>
                           {tr(item.title, locale)}{' '}
                           <Text role="caption">
                             {t('prices.per', { per: tr(item.per, locale) })}
                           </Text>
                         </Text>
-                        <Text role="caption" numberOfLines={1}>
-                          {range}
-                        </Text>
+                        <Text role="caption">{range}</Text>
                         {item.shops !== null ? (
-                          <Text role="caption" numberOfLines={1}>
+                          <Text role="caption">
                             {t('prices.shops', { price: money(item.shops) })}
                           </Text>
                         ) : null}

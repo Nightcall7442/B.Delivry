@@ -138,16 +138,8 @@ export function OrdersScreen() {
             const photo = store?.ownerPhotoUrl ?? store?.coverUrl ?? null;
             const person = photo ?? order.store.logoUrl ?? null;
             const placed = new Date(order.placedAt);
-            const when = placed.toLocaleString(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', {
-              weekday: 'short',
-              day: 'numeric',
-              month: 'short',
-              // The history reaches back past New Year: an old slip says which year it is from.
-              year: placed.getFullYear() === thisYear ? undefined : 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZone: 'Asia/Tashkent',
-            });
+            // The history reaches back past New Year: an old slip says which year it is from.
+            const when = t.when(placed, { year: placed.getFullYear() !== thisYear, time: true });
             const statusText = orderStatusText(locale)[status];
             return (
               <Printed key={order.id}>

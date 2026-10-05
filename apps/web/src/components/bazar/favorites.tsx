@@ -133,7 +133,7 @@ export function BazaarFavorites({ locale }: { locale: string }) {
                         {store.ownerName ?? tr(store.name, locale)}
                       </span>
                       {store.reviewCount > 0 ? (
-                        <span className={s.vendorLine}>★ {store.rating.toFixed(1)}</span>
+                        <span className={s.vendorLine}>★ {t.rating(store.rating)}</span>
                       ) : null}
                     </span>
                   </Link>

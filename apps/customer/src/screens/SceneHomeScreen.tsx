@@ -18,6 +18,7 @@ import {
   shopfronts,
   stallGoods,
   tr,
+  firstWords,
 } from '@bazar/storefront';
 import { haversineMeters } from '@bazar/maps';
 import type { CategoryDto, LatLngDto, ProductDto } from '@bazar/types';
@@ -26,6 +27,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -41,19 +43,20 @@ import {
   Display,
   Eyebrow,
   Glass,
+  isEvening,
   KraftTag,
   RowSign,
-  SHADOW_REACH,
-  Scene,
-  isEvening,
-  SceneButton,
   Say,
-  SceneHead,
-  ShopSign,
-  VendorCard,
+  Scene,
   scene,
+  SceneButton,
   sceneFont,
+  SceneHead,
+  SHADOW_REACH,
+  ShopSign,
+  TopFade,
   useSceneTop,
+  VendorCard,
 } from '@/components/bazar';
 import { PriceBoard } from '@/components/prices/PriceBoard';
 import { OshCard } from '@/components/shop/OshCard';
@@ -64,7 +67,7 @@ import { useDeliverable } from '@/features/address/zone';
 import { useCart } from '@/features/cart/store';
 import { REACH_METERS, listCategories, listProducts, listStores } from '@/lib/catalog';
 import { EMPTY, useLoad } from '@/lib/use-data';
-import { Bell, Mic, api, radius, scale, shadow, useAuth, useLocale } from '@bazar/mobile';
+import { Mic, Receipt, User, api, radius, scale, shadow, useAuth, useLocale } from '@bazar/mobile';
 
 const TILTS = [-1.5, 1, -1, 1.5, -1, 1];
 /** A discount card on the rail: a little narrower than half the screen, so the next one peeks. */
@@ -183,12 +186,7 @@ export function SceneHomeScreen() {
       ? router.push({ pathname: '/checkout', params: { store: [...stalls][0] ?? '', stores: '' } })
       : router.push('/(tabs)/cart');
 
-  const dateLine = new Intl.DateTimeFormat(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    timeZone: 'Asia/Tashkent',
-  }).format(new Date());
+  const dateLine = t.when(new Date(), { weekday: true });
   const failed = !storeLoad.data && storeLoad.error;
   // Two to a row, like signs on a counter; the last odd one keeps its half.
   const cardWidth = useTileWidth();
@@ -220,9 +218,11 @@ export function SceneHomeScreen() {
         renderItem={renderProduct}
         columnWrapperStyle={s.row}
         ItemSeparatorComponent={RowGap}
-        initialNumToRender={6}
-        maxToRenderPerBatch={4}
-        windowSize={5}
+        // The web list never rendered past its first batches: the last goods of the day left a
+        // blank band under the counter. A browser draws the whole counter at once; a phone windows it.
+        initialNumToRender={Platform.OS === 'web' ? counter.length : 8}
+        maxToRenderPerBatch={Platform.OS === 'web' ? counter.length : 6}
+        windowSize={Platform.OS === 'web' ? 21 : 7}
         showsVerticalScrollIndicator={false}
         // Room under the tag row, as on the web: at night the lamps hang in it, not over the date.
         contentContainerStyle={{ paddingTop: top + 80, paddingBottom: 110 + insets.bottom }}
@@ -387,20 +387,32 @@ export function SceneHomeScreen() {
         }
       />
 
+      <TopFade height={top + 58} />
       <View style={[s.top, { top }]}>
         <KraftTag>
-          {temperature !== null
-            ? `Чорсу · ${evening ? 'вечер' : 'утро'} · ${degrees(temperature)}`
-            : evening
-              ? 'Чорсу · вечер · до 21:00'
-              : 'Чорсу · утро'}
+          {[
+            t('scene.place'),
+            t(evening ? 'scene.eveningTag' : 'scene.morningTag'),
+            temperature !== null
+              ? degrees(temperature)
+              : evening
+                ? t('shop.until', { time: '21:00' })
+                : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         </KraftTag>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <SceneButton onPress={() => router.push('/(tabs)/orders')}>
-            <Bell size={20} color={scene.pomegranate} />
+          <SceneButton onPress={() => router.push('/(tabs)/orders')} label={t('tabs.orders')}>
+            <Receipt size={20} color={scene.pomegranate} />
           </SceneButton>
-          <SceneButton onPress={() => router.push('/(tabs)/profile')}>
-            <Text style={s.initial}>{(user?.firstName ?? 'А').slice(0, 1).toUpperCase()}</Text>
+          <SceneButton onPress={() => router.push('/(tabs)/profile')} label={t('tabs.profile')}>
+            {/* The initial, or a figure: «А» stood for nobody, and was Cyrillic in Uzbek too. */}
+            {user?.firstName ? (
+              <Text style={s.initial}>{user.firstName.slice(0, 1).toUpperCase()}</Text>
+            ) : (
+              <User size={20} color={scene.pomegranate} />
+            )}
           </SceneButton>
         </View>
       </View>
@@ -447,10 +459,7 @@ export function SceneHomeScreen() {
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /** The motto is a sentence; the card has room for four words of it. */
-function shortLine(text: string): string {
-  const words = text.replace(/[.!…]+$/, '').split(' ');
-  return words.length <= 4 ? words.join(' ') : `${words.slice(0, 4).join(' ')}…`;
-}
+const shortLine = (text: string): string => firstWords(text, 4);
 
 const s = StyleSheet.create({
   top: {

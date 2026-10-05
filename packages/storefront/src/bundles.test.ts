@@ -62,7 +62,8 @@ describe('«Ош на N человек»', () => {
   it('says what one guest costs', () => {
     const resolved = resolveBundle(plov, SHELF, 12);
     expect(resolved.guests).toBe(12);
-    expect(resolved.perGuest).toBe(Math.round(resolved.total / 12));
+    expect(resolved.perGuest).toBe(Math.round(resolved.total / 12 / 10_000) * 10_000);
+    expect(resolved.perGuest % 10_000).toBe(0);
   });
 
   it('keeps the company within the set’s range, and a fixed set at its own', () => {

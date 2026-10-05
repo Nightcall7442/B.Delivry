@@ -24,6 +24,7 @@ import {
   tr,
   trendOf,
   type MapStoreDto,
+  firstWords,
 } from '@bazar/storefront';
 import type { CategoryDto, PriceIndexDto, ProductDto } from '@bazar/types';
 import Link from 'next/link';
@@ -118,10 +119,7 @@ function OshBoard({ locale, home }: { locale: string; home: string }) {
 }
 
 /** The motto is a sentence; the card has room for four words of it. */
-function shortLine(text: string): string {
-  const words = text.replace(/[.!…]+$/, '').split(' ');
-  return words.length <= 4 ? words.join(' ') : `${words.slice(0, 4).join(' ')}…`;
-}
+const shortLine = (text: string): string => firstWords(text, 4);
 
 export function BazaarHome({
   stores,

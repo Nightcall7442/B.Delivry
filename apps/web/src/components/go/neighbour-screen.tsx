@@ -51,7 +51,7 @@ export function NeighbourScreen({ locale }: { locale: string }) {
       ) : (
         <>
           <p className="mt-3 text-sm">
-            {t('checkout.where')}: <span className="font-medium">{address?.text ?? '—'}</span>
+            {t('neighbour.home')}: <span className="font-medium">{address?.text ?? '—'}</span>
           </p>
           {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
           <button type="button" className="btn-go mt-4" onClick={() => void apply()}>
