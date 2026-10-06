@@ -20,13 +20,13 @@
     "@bazar/utils": "workspace:*",
     "@fontsource-variable/alegreya": "5.3.0",
     "@fontsource-variable/manrope": "5.3.0",
-    "next": "^15.5.26",
+    "next": "^15.5.27",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@bazar/config": "workspace:*",
-    "@types/node": "^22.20.4",
+    "@types/node": "^22.20.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^4.3.0",
