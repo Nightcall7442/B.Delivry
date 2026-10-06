@@ -4,6 +4,7 @@ import type { VendorRowDto, VendorStatus } from '@bazar/types';
 import { useEffect, useState } from 'react';
 
 import { api } from '@/lib/api';
+import { formatUzPhone } from '@bazar/utils/phone';
 
 const LEGAL: Record<VendorRowDto['legalType'], string> = {
   UNREGISTERED: 'без регистрации',
@@ -43,14 +44,36 @@ export default function VendorsPage() {
     }
   };
 
-  const Table = ({ rows, pendingRows }: { rows: VendorRowDto[]; pendingRows: boolean }) => (
+  // Suspending shuts every stall of the seller at once: the desk says so before it happens.
+  const suspend = (row: VendorRowDto) => {
+    const stalls = row._count.stores;
+    if (
+      window.confirm(
+        `Приостановить «${row.displayName}»? ${stalls > 0 ? `Все его точки (${stalls}) закроются для покупателей.` : ''}`,
+      )
+    ) {
+      void decide(row, 'SUSPENDED', 'приостановлен');
+    }
+  };
+
+  // A function, not a component made inside the page (that remounts on every render). Fixed column
+  // widths: the two tables stand one above the other and their columns line up.
+  const table = (rows: VendorRowDto[], pendingRows: boolean) => (
     <div className="card mt-3 overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full min-w-[640px] table-fixed text-sm">
+        <colgroup>
+          <col className="w-[34%]" />
+          <col className="w-[30%]" />
+          <col className="w-[14%]" />
+          <col />
+        </colgroup>
         <thead className="text-left">
           <tr>
             <th className="px-4 py-3">Лавка</th>
             <th className="px-4 py-3">Продавец</th>
-            <th className="px-4 py-3">{pendingRows ? 'Подана' : 'Точек'}</th>
+            <th className={`px-4 py-3 ${pendingRows ? '' : 'text-right'}`}>
+              {pendingRows ? 'Подана' : 'Точек'}
+            </th>
             <th className="px-4 py-3" />
           </tr>
         </thead>
@@ -58,7 +81,9 @@ export default function VendorsPage() {
           {rows.length === 0 ? (
             <tr>
               <td className="px-4 py-3 text-ink-muted" colSpan={4}>
-                Пусто
+                {pendingRows
+                  ? 'Новых заявок нет. Их подают в приложении и на сайте — «Стать продавцом».'
+                  : 'Пока ни одного: одобренные продавцы появятся здесь.'}
               </td>
             </tr>
           ) : null}
@@ -73,9 +98,9 @@ export default function VendorsPage() {
               </td>
               <td className="px-4 py-2 tabular-nums">
                 {row.legalName}
-                <div className="text-xs text-ink-muted">{row.phone}</div>
+                <div className="text-xs text-ink-muted">{formatUzPhone(row.phone)}</div>
               </td>
-              <td className="px-4 py-2 tabular-nums">
+              <td className={`px-4 py-2 tabular-nums ${pendingRows ? '' : 'text-right'}`}>
                 {pendingRows
                   ? new Date(row.createdAt).toLocaleDateString('ru-RU', {
                       day: 'numeric',
@@ -102,11 +127,7 @@ export default function VendorsPage() {
                     </button>
                   </>
                 ) : (
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() => void decide(row, 'SUSPENDED', 'приостановлен')}
-                  >
+                  <button type="button" className="btn-secondary" onClick={() => suspend(row)}>
                     Приостановить
                   </button>
                 )}
@@ -128,9 +149,9 @@ export default function VendorsPage() {
       {/* On the ground, not on paper: ochre as text, the one accent that reads there. */}
       {note ? <p className="mt-2 text-sm text-[var(--ochre-light)]">{note}</p> : null}
       <h2 className="mt-4 font-display text-lead font-bold">Заявки</h2>
-      <Table rows={pending} pendingRows />
+      {table(pending, true)}
       <h2 className="mt-6 font-display text-lead font-bold">Работают</h2>
-      <Table rows={active} pendingRows={false} />
+      {table(active, false)}
     </div>
   );
 }

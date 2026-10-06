@@ -17,11 +17,13 @@ import {
   Display,
   Eyebrow,
   Glass,
+  ground,
   Say,
   Scene,
-  SceneButton,
   scene,
+  SceneButton,
   sceneFont,
+  TopFade,
   useSceneTop,
 } from '@/components/bazar';
 import { Bone, LoadError } from '@/components/ui/Page';
@@ -81,13 +83,7 @@ export function StoreScreen({ storeId }: { storeId: string }) {
       : null;
   const hero = store?.counterPhotoUrl ?? store?.coverUrl ?? null;
   const person = store?.ownerPhotoUrl ?? null;
-  const takenAt = store?.counterPhotoAt
-    ? new Date(store.counterPhotoAt).toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Asia/Tashkent',
-      })
-    : null;
+  const takenAt = store?.counterPhotoAt ? t.time(store.counterPhotoAt) : null;
 
   return (
     <View style={{ flex: 1 }}>
@@ -149,7 +145,7 @@ export function StoreScreen({ storeId }: { storeId: string }) {
               <Glass style={s.pill}>
                 <Star size={14} color={scene.ochreLight} fill={scene.ochreLight} />
                 <Text style={s.pillText}>
-                  {store.rating.toFixed(1)}
+                  {t.rating(store.rating)}
                   {store.reviewCount ? ` · ${store.reviewCount}` : ''}
                 </Text>
               </Glass>
@@ -234,6 +230,7 @@ export function StoreScreen({ storeId }: { storeId: string }) {
         <StoryViewer stores={[store]} start={0} cta={false} onClose={() => setStory(false)} />
       ) : null}
 
+      <TopFade height={top + 58} />
       <View style={[s.top, { top }]}>
         <SceneButton
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
@@ -298,6 +295,7 @@ const s = StyleSheet.create({
     right: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    zIndex: 2,
   },
   topEnd: { flexDirection: 'row', gap: 10 },
   person: { paddingHorizontal: 20, gap: 8 },
@@ -330,7 +328,15 @@ const s = StyleSheet.create({
     color: scene.cream,
     fontVariant: ['tabular-nums'],
   },
-  closed: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.ochreLight },
+  // On the counter photo: a step up, heavier, with the scrim's shadow under it.
+  closed: {
+    fontFamily: sceneFont.uiHeavy,
+    ...scale.body,
+    color: scene.ochreLight,
+    textShadowColor: ground(0.9),
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
   counter: { paddingHorizontal: 20, paddingTop: 22, gap: 12 },
   chips: { paddingHorizontal: 20, gap: 6 },
   chip: { height: 32, paddingHorizontal: 12, justifyContent: 'center' },

@@ -3,9 +3,11 @@
  * whether it is open sit above them; a tap on a slip opens the order. Pull to read them again:
  * the list also refreshes itself (socket and poll, see `features/vendor`).
  */
-import { scale } from '@bazar/mobile';
+import { radius, scale } from '@bazar/mobile';
 import {
+  HALL,
   TONE,
+  alpha,
   pickPile,
   shownPile,
   tr,
@@ -18,6 +20,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   FlatList,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -40,8 +43,22 @@ const TAB_CLEARANCE = 88;
 export function OrdersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { ready, store, orders, ordersReady, ordersFailed, reloadOrders, reloadStore } =
-    useVendor();
+  const {
+    ready,
+    stores,
+    store,
+    selectStore,
+    orders,
+    ordersReady,
+    ordersFailed,
+    reloadOrders,
+    reloadStore,
+    waitingElsewhere,
+  } = useVendor();
+  // The tab badge counts every stall: say where the other new orders wait, one tap to go there.
+  const elsewhere = waitingElsewhere[0];
+  const elsewhereStore = elsewhere ? stores.find((row) => row.id === elsewhere.storeId) : undefined;
+  const elsewhereCount = waitingElsewhere.reduce((sum, row) => sum + row.count, 0);
   const piles = useMemo(() => vendorPiles(orders), [orders]);
   const [pick, setPick] = useState<PilePick | null>(null);
   const shown = shownPile(pick, piles);
@@ -94,6 +111,21 @@ export function OrdersScreen() {
       ) : (
         <>
           <PileTabs piles={piles} shown={shown} onPick={(pile) => setPick(pickPile(pile, piles))} />
+          {elsewhere && elsewhereStore ? (
+            <Pressable
+              onPress={() => selectStore(elsewhere.storeId)}
+              accessibilityRole="button"
+              style={({ pressed }) => [s.elsewhere, pressed && { opacity: 0.85 }]}
+            >
+              <RNText style={s.elsewhereText} numberOfLines={2}>
+                {elsewhereCount === 1
+                  ? 'Ещё 1 новый заказ'
+                  : `Ещё новых заказов: ${elsewhereCount}`}{' '}
+                — {tr(elsewhereStore.name, 'ru')}
+                {waitingElsewhere.length > 1 ? ' и другие' : ''} →
+              </RNText>
+            </Pressable>
+          ) : null}
           <FlatList
             data={piles[shown]}
             keyExtractor={(order) => order.id}
@@ -121,6 +153,18 @@ export function OrdersScreen() {
 const Gap = () => <View style={s.gap} />;
 
 const s = StyleSheet.create({
+  elsewhere: {
+    marginHorizontal: 20,
+    marginTop: 4,
+    marginBottom: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: radius.paper,
+    borderWidth: 1,
+    borderColor: alpha(HALL.ochre, 0.6),
+    backgroundColor: alpha(HALL.ochre, 0.14),
+  },
+  elsewhereText: { fontFamily: sceneFont.ui, ...scale.body, color: TONE.creamLight },
   head: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -26,6 +26,7 @@ import { ground } from '@/components/bazar';
 import { AddressProvider } from '@/features/address/store';
 import { CartProvider } from '@/features/cart/store';
 import { FavoritesProvider } from '@/features/favorites/store';
+import { patchOkinaOnWeb } from '@/lib/okina';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -45,6 +46,7 @@ export default function RootLayout() {
   useEffect(() => {
     // A font that fails to load is not a reason to show a blank app.
     if (loaded || error) SplashScreen.hideAsync().catch(() => {});
+    if (loaded) patchOkinaOnWeb();
   }, [loaded, error]);
 
   if (!loaded && !error) return null;

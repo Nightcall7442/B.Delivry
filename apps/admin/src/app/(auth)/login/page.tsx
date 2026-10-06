@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { useAuth } from '@/features/auth';
+import { formatUzPhone } from '@bazar/utils/phone';
 
 const ERROR_TEXT: Record<string, string> = {
   INVALID_OTP: 'Код не подошёл.',
@@ -78,7 +79,7 @@ export default function LoginPage() {
 
           {user && !isStaff ? (
             <p className="mt-4 rounded-paper bg-saffron-100 p-3 text-sm">
-              {user.phone} — не сотрудник.{' '}
+              {formatUzPhone(user.phone)} — не сотрудник.{' '}
               <button type="button" className="underline" onClick={() => void signOut()}>
                 Выйти
               </button>

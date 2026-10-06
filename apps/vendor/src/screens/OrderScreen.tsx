@@ -31,7 +31,7 @@ export function OrderScreen({ orderId }: { orderId: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { acknowledge, reloadOrders } = useVendor();
-  const { order, failure, reload, adopt } = useOrder(orderId);
+  const { order, failure, missing, reload, adopt } = useOrder(orderId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [declining, setDeclining] = useState(false);
@@ -83,7 +83,11 @@ export function OrderScreen({ orderId }: { orderId: string }) {
       {order === null ? (
         failure ? (
           <View style={s.content}>
-            <LoadError text={failure} onRetry={() => void reload()} />
+            {missing ? (
+              <LoadError text={failure} action="← К заказам" onRetry={back} />
+            ) : (
+              <LoadError text={failure} onRetry={() => void reload()} />
+            )}
           </View>
         ) : (
           <OrderSkeleton />

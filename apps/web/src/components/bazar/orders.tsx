@@ -21,13 +21,6 @@ export function BazaarOrders({ locale }: { locale: string }) {
   const { orders, ready } = useOrderList();
   const home = `/${locale}`;
   const status = orderStatusText(locale);
-  const day = new Intl.DateTimeFormat(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Tashkent',
-  });
 
   return (
     <main className={`hall ${s.scene}`}>
@@ -36,7 +29,7 @@ export function BazaarOrders({ locale }: { locale: string }) {
           <Link href={home} className={s.round} aria-label={t('common.back')}>
             <ArrowLeft />
           </Link>
-          <span className={s.tag}>{t('receipt.title')}</span>
+          <span className={s.tag}>{t('menu.orders')}</span>
         </div>
         <div className={s.greeting} style={{ padding: '12px 0 26px' }}>
           <h1 className={`${s.display} ${s.displayPage}`}>{t('orders.title')}</h1>
@@ -75,7 +68,7 @@ export function BazaarOrders({ locale }: { locale: string }) {
                   <span className={s.rcTitle}>
                     {t('order.number', { number: order.number ?? order.id.slice(0, 6) })}
                   </span>
-                  <span>{day.format(new Date(order.placedAt))}</span>
+                  <span>{t.when(order.placedAt, { time: true })}</span>
                 </div>
                 <div className={s.slipBody}>
                   <span style={{ minWidth: 0, flex: 1 }}>

@@ -5,6 +5,7 @@ import { formatMoney } from '@bazar/utils/money';
 import { useEffect, useState } from 'react';
 
 import { api } from '@/lib/api';
+import { formatUzPhone } from '@bazar/utils/phone';
 
 /** B2B: applications from cafés and canteens; approving sets the invoice credit. */
 export default function CompaniesPage() {
@@ -47,7 +48,9 @@ export default function CompaniesPage() {
     }
   };
 
-  const Table = ({ rows, approvedRows }: { rows: CustomerDto[]; approvedRows: boolean }) => (
+  // A function, not a component made inside the page: a component made here is a new one on every
+  // keystroke, and React would remount the inputs — they lost focus after one character.
+  const table = (rows: CustomerDto[], approvedRows: boolean) => (
     <div className="card mt-3 overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="text-left">
@@ -63,7 +66,9 @@ export default function CompaniesPage() {
           {rows.length === 0 ? (
             <tr>
               <td className="px-4 py-3 text-ink-muted" colSpan={5}>
-                Пусто
+                {approvedRows
+                  ? 'Пока ни одной: одобренные заявки переходят сюда.'
+                  : 'Новых заявок нет. Компании подают их в приложении — «Для бизнеса».'}
               </td>
             </tr>
           ) : null}
@@ -74,7 +79,7 @@ export default function CompaniesPage() {
                 <div className="text-xs text-ink-muted">ИНН {row.companyInn}</div>
               </td>
               <td className="px-4 py-2 tabular-nums">
-                {row.firstName ?? ''} {row.phone}
+                {row.firstName ?? ''} {formatUzPhone(row.phone)}
                 <div className="text-xs text-ink-muted">
                   заказов: {row.orderCount}
                   {approvedRows ? ` · лимит ${formatMoney(row.creditLimit)}` : ''}
@@ -128,9 +133,9 @@ export default function CompaniesPage() {
       {/* On the ground, not on paper: ochre as text, the one accent that reads there. */}
       {note ? <p className="mt-2 text-sm text-[var(--ochre-light)]">{note}</p> : null}
       <h2 className="mt-4 font-display text-lead font-bold">Заявки</h2>
-      <Table rows={pending} approvedRows={false} />
+      {table(pending, false)}
       <h2 className="mt-6 font-display text-lead font-bold">Одобренные</h2>
-      <Table rows={approved} approvedRows />
+      {table(approved, true)}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import { PricesScreen } from '@/components/go/prices-screen';
 import { priceIndex } from '@/lib/catalog';
+import { titled } from '@/lib/metadata';
 
-export const metadata = { title: 'Цены базара — Bazar Delivery' };
+export const generateMetadata = titled('prices.title');
 export const dynamic = 'force-dynamic';
 
 export default async function PricesPage({

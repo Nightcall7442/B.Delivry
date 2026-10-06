@@ -8,7 +8,14 @@ import {
   type StoreTag,
   type StoreType,
 } from '@bazar/constants';
-import { arrivedToday, isShopfront, tagLabel, tr } from '@bazar/storefront';
+import {
+  STORE_TYPE_LABEL,
+  UNIT_LABEL,
+  arrivedToday,
+  isShopfront,
+  tagLabel,
+  tr,
+} from '@bazar/storefront';
 import type { HaggleDto, ProductDto, SalesReportDto, StoreDto } from '@bazar/types';
 import { formatMoney } from '@bazar/utils/money';
 import { useParams } from 'next/navigation';
@@ -115,6 +122,7 @@ function Shop({
   const [opens, setOpens] = useState(today ? clock(today.opensAt) : '08:00');
   const [closes, setCloses] = useState(today ? clock(today.closesAt) : '23:00');
   const [busy, setBusy] = useState(false);
+  const shopType = type !== STORE_TYPE.BAZAAR_STALL && type !== STORE_TYPE.ENTREPRENEUR;
   const minutes = (value: string) => {
     const [h, m] = value.split(':').map(Number);
     return (h ?? 0) * 60 + (m ?? 0);
@@ -167,11 +175,11 @@ function Shop({
           <img src={store.logoUrl} alt="" className="h-12 w-12 rounded-lg object-contain" />
         ) : null}
         <div className="flex-1">
-          <div className="font-medium">Магазин</div>
-          <div className="text-xs text-ink-muted">
-            Тип точки, сеть (филиалы одной сети — одна витрина, заказ уходит в ближайший), свои
-            минимальный заказ и порог бесплатной доставки, часы работы на каждый день. Логотип стоит
-            на вывеске вместо лица продавца.
+          <div className="font-display text-lead font-bold">Тип, часы и условия</div>
+          <div className="max-w-2xl text-xs text-ink-muted">
+            {shopType
+              ? 'Филиалы одной сети — одна витрина, заказ уходит в ближайший. Логотип стоит на вывеске вместо лица продавца.'
+              : 'Свои минимальный заказ и порог бесплатной доставки; пусто — как в тарифе.'}
           </div>
         </div>
         <label className={`btn-secondary cursor-pointer ${busy ? 'opacity-50' : ''}`}>
@@ -184,54 +192,75 @@ function Shop({
           />
         </label>
       </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-3">
-        <select
-          className="field"
-          value={type}
-          onChange={(e) => setType(e.target.value as StoreType)}
-        >
-          {Object.values(STORE_TYPE).map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </select>
-        <input
-          className="field"
-          value={chain}
-          onChange={(e) => setChain(e.target.value.toLowerCase())}
-          placeholder="Сеть: korzinka"
-          maxLength={40}
-        />
-        <div className="flex items-center gap-2">
+      {/* Every field keeps its name above it: a filled «50000» says nothing on its own. */}
+      <div className="mt-3 grid items-end gap-3 sm:grid-cols-3">
+        <label className="block">
+          <span className="eyebrow">Тип точки</span>
+          <select
+            className="field mt-1"
+            value={type}
+            onChange={(e) => setType(e.target.value as StoreType)}
+          >
+            {Object.values(STORE_TYPE).map((value) => (
+              <option key={value} value={value}>
+                {STORE_TYPE_LABEL[value]}
+              </option>
+            ))}
+          </select>
+        </label>
+        {/* A chain is the shops' business: a stall at the bazaar has none. */}
+        {shopType ? (
+          <label className="block">
+            <span className="eyebrow">Сеть</span>
+            <input
+              className="field mt-1"
+              value={chain}
+              onChange={(e) => setChain(e.target.value.toLowerCase())}
+              placeholder="korzinka"
+              maxLength={40}
+            />
+          </label>
+        ) : null}
+        <label className="block">
+          <span className="eyebrow">Часы каждый день</span>
+          <span className="mt-1 flex items-center gap-2">
+            <input
+              className="field tabular-nums"
+              type="time"
+              lang="ru"
+              value={opens}
+              onChange={(e) => setOpens(e.target.value)}
+            />
+            <span className="text-ink-muted">—</span>
+            <input
+              className="field tabular-nums"
+              type="time"
+              lang="ru"
+              value={closes}
+              onChange={(e) => setCloses(e.target.value)}
+            />
+          </span>
+        </label>
+        <label className="block">
+          <span className="eyebrow">Минимальный заказ, сум</span>
           <input
-            className="field tabular-nums"
-            type="time"
-            value={opens}
-            onChange={(e) => setOpens(e.target.value)}
+            className="field mt-1 tabular-nums"
+            value={minOrder}
+            onChange={(e) => setMinOrder(e.target.value)}
+            placeholder="по тарифу"
+            inputMode="numeric"
           />
-          <span className="text-ink-muted">—</span>
+        </label>
+        <label className="block">
+          <span className="eyebrow">Бесплатная доставка от, сум</span>
           <input
-            className="field tabular-nums"
-            type="time"
-            value={closes}
-            onChange={(e) => setCloses(e.target.value)}
+            className="field mt-1 tabular-nums"
+            value={freeFrom}
+            onChange={(e) => setFreeFrom(e.target.value)}
+            placeholder="по тарифу"
+            inputMode="numeric"
           />
-        </div>
-        <input
-          className="field tabular-nums"
-          value={minOrder}
-          onChange={(e) => setMinOrder(e.target.value)}
-          placeholder="Минимальный заказ, сум"
-          inputMode="numeric"
-        />
-        <input
-          className="field tabular-nums"
-          value={freeFrom}
-          onChange={(e) => setFreeFrom(e.target.value)}
-          placeholder="Бесплатная доставка от, сум"
-          inputMode="numeric"
-        />
+        </label>
         <button type="button" className="btn-primary" disabled={busy} onClick={() => void save()}>
           Сохранить
         </button>
@@ -274,7 +303,8 @@ function ImportCsv({
     }
   };
   return (
-    <div className="mt-3">
+    // On paper, not on the ground: a field on the dark hall reads as a muddy box.
+    <div className="card mt-3 p-4">
       <p className="text-sm text-ink-muted">
         Колонки:{' '}
         <code>name_ru;name_uz;price;unit;category;image_url;stock;weight_grams;old_price</code> —
@@ -359,8 +389,9 @@ function Promotion({
   };
   return (
     <div className="card mt-3 flex flex-wrap items-center gap-3 p-4">
-      <div className="flex-1">
-        <div className="font-medium">Реклама: первое место на главной</div>
+      {/* The title takes the whole row on a phone; the buttons wrap under it. */}
+      <div className="min-w-[16rem] flex-1">
+        <div className="font-display text-lead font-bold">Реклама: первое место на главной</div>
         <div className="text-xs tabular-nums text-ink-muted">
           {live
             ? `Поднята до ${new Date(store.promotedUntil!).toLocaleDateString('ru-RU')} · пометка «Реклама» у покупателя`
@@ -494,7 +525,7 @@ function Owner({
           </div>
         )}
         <div className="flex-1">
-          <div className="font-medium">За прилавком</div>
+          <div className="font-display text-lead font-bold">За прилавком</div>
           <div className="text-xs text-ink-muted">
             Имя, с какого года на базаре и одна фраза в ваших словах — так покупатель узнаёт, у кого
             берёт.
@@ -582,12 +613,12 @@ function CounterPhoto({
           <img src={store.counterPhotoUrl} alt="" className="h-full w-full object-cover" />
         </span>
       ) : (
-        <div className="flex h-20 w-28 items-center justify-center rounded-lg bg-sand-100 text-xs text-ink-muted">
+        <div className="flex h-20 w-28 shrink-0 items-center justify-center rounded-lg border border-dashed border-line-strong text-xs text-ink-muted">
           нет фото
         </div>
       )}
       <div className="flex-1">
-        <div className="font-medium">Прилавок сейчас</div>
+        <div className="font-display text-lead font-bold">Прилавок сейчас</div>
         <div className="text-xs text-ink-muted">
           {store.counterPhotoAt
             ? `Снято ${new Date(store.counterPhotoAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
@@ -703,7 +734,7 @@ function Products({
                   <div>
                     <div className="font-medium">{tr(product.name, 'ru')}</div>
                     <div className="text-xs text-ink-muted">
-                      за {product.unit.toLowerCase()}
+                      за {UNIT_LABEL[product.unit]}
                       {arrivedToday(product) ? ' · сегодня привезли' : ''}
                     </div>
                   </div>
@@ -811,7 +842,7 @@ function Arrivals({
           </label>
         ))}
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="card mt-4 flex flex-wrap items-center gap-2 p-4">
         <input
           value={photoUrl}
           onChange={(e) => setPhotoUrl(e.target.value)}
@@ -859,6 +890,16 @@ function Revenue({ storeId }: { storeId: string }) {
   }, [storeId]);
   if (!report) return <p className="mt-3 text-sm text-ink-muted">Считаем…</p>;
   const max = Math.max(1, ...report.series.map((point) => point.value));
+  const byDay = new Map(report.series.map((point) => [point.at.slice(0, 10), point.value]));
+  const days = Array.from({ length: 30 }, (_, i) => {
+    const at = new Date(Date.now() - (29 - i) * 86_400_000);
+    const key = at.toISOString().slice(0, 10);
+    return {
+      key,
+      value: byDay.get(key) ?? 0,
+      label: at.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }),
+    };
+  });
   const delivered = report.byStatus.DELIVERED ?? 0;
   return (
     <div className="mt-3">
@@ -876,16 +917,26 @@ function Revenue({ storeId }: { storeId: string }) {
         ))}
       </div>
       <div className="card mt-3 p-4">
-        <div className="eyebrow">По дням</div>
-        <div className="mt-3 flex h-32 items-end gap-1">
-          {report.series.map((point) => (
+        <div className="flex items-baseline justify-between gap-3">
+          <div className="eyebrow">По дням, 30 дней</div>
+          <div className="text-xs tabular-nums text-ink-muted">
+            лучший день — {formatMoney(max === 1 ? 0 : max)}
+          </div>
+        </div>
+        {/* Every day of the month, the quiet ones too: two sales are two thin bars, not two walls. */}
+        <div className="mt-3 flex h-32 items-end gap-[3px] border-b border-line">
+          {days.map((day) => (
             <div
-              key={point.at}
-              className="flex-1 rounded-t bg-saffron-500"
-              style={{ height: `${Math.max(2, (point.value / max) * 100)}%` }}
-              title={`${new Date(point.at).toLocaleDateString('ru-RU')}: ${formatMoney(point.value)}`}
+              key={day.key}
+              className={`flex-1 rounded-t ${day.value > 0 ? 'bg-saffron-500' : 'bg-line'}`}
+              style={{ height: day.value > 0 ? `${Math.max(4, (day.value / max) * 100)}%` : '2px' }}
+              title={`${day.label}: ${formatMoney(day.value)}`}
             />
           ))}
+        </div>
+        <div className="mt-1 flex justify-between text-xs tabular-nums text-ink-muted">
+          <span>{days[0]?.label}</span>
+          <span>{days[days.length - 1]?.label}</span>
         </div>
       </div>
       <p className="mt-2 text-xs text-ink-muted">

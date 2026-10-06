@@ -1,8 +1,7 @@
-import type { Metadata } from 'next';
-
 import { AddressPicker } from '@/components/go/address-picker';
+import { titled } from '@/lib/metadata';
 
-export const metadata: Metadata = { title: 'Адрес доставки — Bazar Delivery' };
+export const generateMetadata = titled('menu.address');
 
 export default async function AddressPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

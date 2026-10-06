@@ -166,7 +166,10 @@ export function BazaarLogin({ locale }: { locale: string }) {
           </Link>
           <span className={s.tag}>{t('login.tagline')}</span>
         </div>
-        <div className={s.greeting} style={{ minHeight: '26vh', padding: '12px 0 22px' }}>
+        <div
+          className={`${s.greeting} ${s.greetingOnPhoto}`}
+          style={{ minHeight: '26vh', padding: '12px 0 22px' }}
+        >
           <div className="eyebrow">{t('login.taglineHint')}</div>
           <h1 className={`${s.display} ${evening ? s.displayEvening : ''}`}>
             {t(evening ? 'scene.evening' : 'scene.morning')}
@@ -313,15 +316,23 @@ export function BazaarLogin({ locale }: { locale: string }) {
               </button>
             </div>
           ) : null}
+          {/* The documents are linked where the sentence names them, not repeated after it. */}
           <p className={s.rcHint}>
-            {t('login.terms')}{' '}
-            <Link href={`${home}/offer`} className={s.rcLink}>
-              Оферта
-            </Link>{' '}
-            ·{' '}
-            <Link href={`${home}/privacy`} className={s.rcLink}>
-              Политика
-            </Link>
+            {t('login.agree')
+              .split(/(\{offer\}|\{policy\})/)
+              .map((part) =>
+                part === '{offer}' ? (
+                  <Link key={part} href={`${home}/offer`} className={s.rcLink}>
+                    {t('login.offerLink')}
+                  </Link>
+                ) : part === '{policy}' ? (
+                  <Link key={part} href={`${home}/privacy`} className={s.rcLink}>
+                    {t('login.policyLink')}
+                  </Link>
+                ) : (
+                  part
+                ),
+              )}
           </p>
         </form>
       </div>

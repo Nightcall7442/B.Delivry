@@ -55,8 +55,19 @@ export function NoStall({ busy, onRetry }: { busy: boolean; onRetry: () => void 
   );
 }
 
-/** «Could not load · Retry»: the line said aloud, one way to try again. */
-export function LoadError({ text, onRetry }: { text: string; onRetry: () => void }) {
+/**
+ * «Could not load · Retry»: the line said aloud, one way to try again — or, when trying again
+ * cannot help (the order is gone), the one way out: `action`.
+ */
+export function LoadError({
+  text,
+  onRetry,
+  action = 'Повторить',
+}: {
+  text: string;
+  onRetry: () => void;
+  action?: string;
+}) {
   return (
     <View style={s.error}>
       <RNText style={s.errorText}>{text}</RNText>
@@ -64,10 +75,10 @@ export function LoadError({ text, onRetry }: { text: string; onRetry: () => void
         onPress={onRetry}
         hitSlop={4}
         accessibilityRole="button"
-        accessibilityLabel="Повторить"
+        accessibilityLabel={action}
         style={({ pressed }) => [s.retry, press.base, pressed && press.down]}
       >
-        <RNText style={s.retryText}>Повторить →</RNText>
+        <RNText style={s.retryText}>{action}</RNText>
       </Pressable>
     </View>
   );

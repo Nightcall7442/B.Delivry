@@ -85,7 +85,15 @@ export function ProductCard({
         <span className={s.pin} aria-hidden />
         <div className={s.signTitle}>{tr(product.name, locale)}</div>
         <div className={s.signPrice}>
-          {t.money(product.price.amount)} <small>/ {units[product.unit]}</small>
+          {/* Price and unit are one piece: «18 000 сум /» never ends a line with «кг» under it. */}
+          <span className={s.signNow}>
+            {t.money(product.price.amount)}
+            {'\u00a0'}
+            <small>
+              /{'\u00a0'}
+              {units[product.unit]}
+            </small>
+          </span>
           {off > 0 && product.oldPrice ? (
             <del className={s.signOld}>{t.money(product.oldPrice.amount)}</del>
           ) : null}

@@ -149,13 +149,15 @@ export class AddressesService extends BaseService {
 
 /**
  * One human-readable line for the courier. Landmark comes last but is often
- * the part they actually navigate by.
+ * the part they actually navigate by. The house number follows the street bare («ул. Навои, 12»),
+ * as on every sign in Tashkent; the flat is «кв.», not the transliterated «kv.» that read as a typo
+ * in the Russian UI.
  */
 export function formatAddress(address: Address): string {
   const parts = [
     address.street,
-    address.house === null ? null : `d. ${address.house}`,
-    address.apartment === null ? null : `kv. ${address.apartment}`,
+    address.house,
+    address.apartment === null || address.apartment === '' ? null : `кв. ${address.apartment}`,
     address.landmark,
   ].filter((part): part is string => part !== null && part.length > 0);
 

@@ -11,7 +11,8 @@
 }
 
 /* ---- top bar ---- */
-/* Over the film it is the film's own scrim, not a band: the bar keeps no fill of its own. */
+/* Over the film it is the film's own scrim, not a band — but dense enough, and frosted, that the
+   chapters' text scrolling under it never reads through the wordmark. */
 .bar {
   position: fixed;
   inset: 0 0 auto 0;
@@ -20,7 +21,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 24px;
-  background: linear-gradient(rgb(var(--ground-deep-rgb) / 0.75), rgb(var(--ground-deep-rgb) / 0));
+  background: linear-gradient(
+    rgb(var(--ground-deep-rgb) / 0.94) 0%,
+    rgb(var(--ground-deep-rgb) / 0.82) 70%,
+    rgb(var(--ground-deep-rgb) / 0) 100%
+  );
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 .wordmark {
   font-family: var(--font-serif), Georgia, serif;

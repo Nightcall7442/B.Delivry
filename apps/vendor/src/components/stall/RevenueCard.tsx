@@ -80,7 +80,8 @@ function Payout({ payout }: { payout: VendorPayoutDto }) {
       <View style={s.rule} />
       <View style={s.line}>
         <View style={{ flex: 1 }}>
-          <RNText style={s.lineLabel}>К выплате</RNText>
+          {/* The payout is the seller's, not one stall's: it says so on every stall it is shown. */}
+          <RNText style={s.lineLabel}>К выплате · по всем прилавкам</RNText>
           <RNText style={s.muted}>{delivered(payout.orderCount)}</RNText>
         </View>
         <RNText style={s.lineMoney}>

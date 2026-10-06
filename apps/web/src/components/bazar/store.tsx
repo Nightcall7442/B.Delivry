@@ -17,6 +17,7 @@ import { useAddress } from '@/features/address';
 
 import { BasketBar, HeartButton, ProductCard, ShareButton } from './index';
 import { RegularCard } from './regular-card';
+import { SiteFooter } from './site-footer';
 import s from './bazar.module.css';
 
 export function BazaarStore({
@@ -48,13 +49,7 @@ export function BazaarStore({
     : null;
   const hero = store.counterPhotoUrl ?? store.coverUrl ?? null;
   const face = store.ownerPhotoUrl ?? null;
-  const takenAt = store.counterPhotoAt
-    ? new Date(store.counterPhotoAt).toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Asia/Tashkent',
-      })
-    : null;
+  const takenAt = store.counterPhotoAt ? t.time(store.counterPhotoAt) : null;
 
   return (
     <main className={`hall ${s.scene}`}>
@@ -88,7 +83,7 @@ export function BazaarStore({
           </span>
         </div>
 
-        <div className={s.greeting}>
+        <div className={`${s.greeting} ${hero ? s.greetingOnPhoto : ''}`}>
           <div className={s.person}>
             {store.ownerName ? (
               <span
@@ -119,7 +114,7 @@ export function BazaarStore({
           ) : null}
           <div className={s.pills}>
             <span className={s.pill}>
-              <Star size={14} /> {store.rating.toFixed(1)}
+              <Star size={14} /> {t.rating(store.rating)}
               {store.reviewCount ? ` · ${store.reviewCount}` : ''}
             </span>
             <span className={s.pill}>
@@ -186,6 +181,7 @@ export function BazaarStore({
             />
           ))}
         </div>
+        <SiteFooter locale={locale} />
       </div>
       <BasketBar products={products} locale={locale} t={t} evening={evening} />
     </main>

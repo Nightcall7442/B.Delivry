@@ -98,9 +98,18 @@ export function BazaarFavorites({ locale }: { locale: string }) {
               </Link>
             </>
           ) : favorites.ready && empty ? (
-            <p className={s.say} style={{ maxWidth: '40ch', margin: '10px 0 0' }}>
-              {t('fav.empty')}
-            </p>
+            <>
+              <p className={s.say} style={{ maxWidth: '40ch', margin: '10px 0 0' }}>
+                {t('fav.empty')}
+              </p>
+              <Link
+                href={`${home}/catalog`}
+                className={`${s.pill} ${s.pillSolid}`}
+                style={{ marginTop: 16 }}
+              >
+                {t('common.toStores')} →
+              </Link>
+            </>
           ) : null}
         </div>
 
@@ -124,7 +133,7 @@ export function BazaarFavorites({ locale }: { locale: string }) {
                         {store.ownerName ?? tr(store.name, locale)}
                       </span>
                       {store.reviewCount > 0 ? (
-                        <span className={s.vendorLine}>★ {store.rating.toFixed(1)}</span>
+                        <span className={s.vendorLine}>★ {t.rating(store.rating)}</span>
                       ) : null}
                     </span>
                   </Link>

@@ -91,7 +91,7 @@ export default function BusinessRoute() {
             }}
           >
             <Glyph icon={icon} size={34} tint={color.tile} stroke={color.brand500} />
-            <Text role="caption" numberOfLines={2} style={{ color: color.ink, fontWeight: '600' }}>
+            <Text role="caption" style={{ color: color.ink, fontWeight: '600' }}>
               {label}
             </Text>
           </View>

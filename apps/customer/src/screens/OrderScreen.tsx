@@ -347,7 +347,7 @@ function OrderSheet({
               {courierInfo.firstName}
             </Text>
             <Text role="muted">
-              ★ {courierInfo.rating.toFixed(1)} ·{' '}
+              ★ {t.rating(courierInfo.rating)} ·{' '}
               {courierInfo.neighbour
                 ? t('order.neighbour')
                 : VEHICLES.includes(courierInfo.vehicleType)
@@ -402,10 +402,7 @@ function OrderSheet({
                       {orderStatusText(locale)[entry.status].title}
                     </Text>
                     <Text role="caption" style={{ fontVariant: ['tabular-nums'] }}>
-                      {new Date(entry.at).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {t.time(entry.at)}
                     </Text>
                   </View>
                   {photos.length > 0 ? (
@@ -550,11 +547,10 @@ function OrderSheet({
             <>
               <Text role="muted">
                 {t('order.freshness', {
-                  time:
-                    freshnessDeadline(order)?.toLocaleTimeString(
-                      locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU',
-                      { hour: '2-digit', minute: '2-digit' },
-                    ) ?? '',
+                  time: (() => {
+                    const deadline = freshnessDeadline(order);
+                    return deadline ? t.time(deadline) : '';
+                  })(),
                 })}
               </Text>
               <Field
@@ -640,7 +636,7 @@ function OrderSheet({
                     {t('order.missing')}
                   </Text>
                 ) : (
-                  <Text role="muted" numberOfLines={1} style={{ color: color.ink }}>
+                  <Text role="muted" style={{ color: color.ink }}>
                     {tr(item.name, locale)}{' '}
                     <Text role="muted">
                       × {t.qty(item.actualQuantity ?? item.quantity)} {unitLabel(locale)[item.unit]}

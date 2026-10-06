@@ -6,7 +6,7 @@
  * navigation. Colours are «Свет купола» (@bazar/storefront) and do not follow
  * the app theme — a scene is the same in the dark.
  */
-import { GROUND, HALL, TONE, alpha, hallLight } from '@bazar/storefront';
+import { GROUND, HALL, TONE, alpha, bindShortWords, hallLight } from '@bazar/storefront';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, type ImageSource } from 'expo-image';
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
@@ -146,8 +146,10 @@ export function Scene({
       <LinearGradient
         colors={
           evening
-            ? [ground(0.7), ground(0.1), ground(0.05), ground(0.7), ground(0.98)]
-            : [ground(0.55), ground(0.05), ground(0), ground(0.55), ground(0.95)]
+            ? [ground(0.7), ground(0.38), ground(0.5), ground(0.8), ground(0.98)]
+            : // The middle used to be clear: titles, subtitles and the status line sat on bare
+              // pastry, white tiles and red meat. Held down now, still a photograph at the top.
+              [ground(0.55), ground(0.3), ground(0.45), ground(0.75), ground(0.96)]
         }
         locations={[0, 0.22, 0.4, 0.6, 1]}
         style={StyleSheet.absoluteFill}
@@ -195,6 +197,21 @@ export function SceneButton({
   );
 }
 
+/**
+ * The hall under the floating top buttons: what scrolls up fades into the ground before it runs
+ * under the back button and the tag, instead of section heads and tile names showing through.
+ */
+export function TopFade({ height }: { height: number }) {
+  return (
+    <LinearGradient
+      pointerEvents="none"
+      colors={[ground(0.97), ground(0.9), ground(0)]}
+      locations={[0, 0.72, 1]}
+      style={[s.topFade, { height }]}
+    />
+  );
+}
+
 /** Reads the top inset once so scenes can place their header under the notch. */
 export function useSceneTop(): number {
   const insets = useSafeAreaInsets();
@@ -225,9 +242,9 @@ export function Display({
           ...size,
           color: scene.cream,
           letterSpacing: -size.fontSize * 0.012,
-          textShadowColor: ground(0.5),
+          textShadowColor: ground(0.7),
           textShadowOffset: { width: 0, height: 2 },
-          textShadowRadius: 8,
+          textShadowRadius: 10,
         },
         style,
       ]}
@@ -259,9 +276,9 @@ export function Say({
           fontFamily: sceneFont.italic,
           ...scale[step],
           color,
-          textShadowColor: ground(0.6),
+          textShadowColor: ground(0.85),
           textShadowOffset: { width: 0, height: 1 },
-          textShadowRadius: 4,
+          textShadowRadius: 6,
         },
         style,
       ]}
@@ -635,7 +652,7 @@ export function RowSign({
         pressed && press.down,
       ]}
     >
-      <Text style={s.rowSignText}>{title}</Text>
+      <Text style={s.rowSignText}>{bindShortWords(title)}</Text>
     </Pressable>
   );
 }
@@ -835,6 +852,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     ...shadow.paper,
   },
+  topFade: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1 },
   eyebrow: {
     ...caps,
     color: scene.ochreLight,

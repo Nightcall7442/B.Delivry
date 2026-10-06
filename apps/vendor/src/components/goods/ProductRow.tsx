@@ -62,7 +62,8 @@ export function ProductRow({
                   <RNText style={s.struck}>
                     {formatMoney(product.oldPrice.amount, product.oldPrice.currency)}
                   </RNText>{' '}
-                  −{discountPercent(product)} %
+                  {/* One piece: «−7» never ends a line with «%» alone on the next. */}
+                  {`−${discountPercent(product)}\u00a0%`}
                 </RNText>
               ) : null}
             </RNText>
@@ -95,11 +96,15 @@ export function ProductRow({
           onValueChange={onToggle}
           trackColor={{ false: TONE.paperEdge, true: HALL.pomegranate }}
           thumbColor={TONE.creamLight}
+          // react-native-web paints the «on» thumb in its own teal unless told otherwise.
+          {...WEB_THUMB}
         />
       </Pressable>
     </Paper>
   );
 }
+
+const WEB_THUMB = { activeThumbColor: TONE.creamLight } as object;
 
 const s = StyleSheet.create({
   main: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, minHeight: 48 },

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { api } from '@/lib/api';
+import { formatUzPhone } from '@bazar/utils/phone';
 
 /** B2B invoices: what is open, what is overdue; the bank transfer arrived → "Оплачен". */
 export default function InvoicesPage() {
@@ -63,6 +64,13 @@ export default function InvoicesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center text-ink-muted">
+                  Счетов пока нет: они появятся, когда компания с оплатой по счёту сделает заказ.
+                </td>
+              </tr>
+            ) : null}
             {rows.map((order) => {
               const late = order.dueAt !== null && Date.parse(order.dueAt) < Date.now();
               const paid = order.paymentStatus === 'CAPTURED';
@@ -75,7 +83,8 @@ export default function InvoicesPage() {
                     <div className="text-xs text-ink-muted">{tr(order.store.name, 'ru')}</div>
                   </td>
                   <td className="px-4 py-2 tabular-nums">
-                    {order.customer?.firstName ?? ''} {order.customer?.phone ?? ''}
+                    {order.customer?.firstName ?? ''}{' '}
+                    {order.customer?.phone ? formatUzPhone(order.customer.phone) : ''}
                   </td>
                   <td className={`px-4 py-2 ${late && !paid ? 'text-danger' : ''}`}>
                     {order.dueAt ? new Date(order.dueAt).toLocaleDateString('ru-RU') : '—'}

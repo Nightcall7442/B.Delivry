@@ -1,6 +1,7 @@
 import { BazaarOrder } from '@/components/bazar/order';
+import { titled } from '@/lib/metadata';
 
-export const metadata = { title: 'Ваш заказ — Bazar Delivery' };
+export const generateMetadata = titled('checkout.orderTitle');
 
 export default async function OrderPage({
   params,

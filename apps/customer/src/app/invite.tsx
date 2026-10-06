@@ -97,7 +97,8 @@ export default function InviteRoute() {
             <Button
               label={t('invite.apply')}
               disabled={friend.trim().length < 4}
-              style={{ height: 44, paddingHorizontal: 16 }}
+              // The field's height: the button's own 56 minimum stood taller than it, top-aligned.
+              style={{ height: 44, minHeight: 44, paddingHorizontal: 16 }}
               onPress={() => void apply()}
             />
           </View>

@@ -36,7 +36,7 @@ import { Pressable, StyleSheet, Text as RNText, View } from 'react-native';
 
 import { Sheet } from '@/components/goods/Sheet';
 import { SlipInput } from '@/components/goods/SlipInput';
-import { sceneFont } from '@/components/scene';
+import { capital, sceneFont } from '@/components/scene';
 
 type Update = Extract<ProductEditResult, { ok: true }>['update'];
 
@@ -181,7 +181,7 @@ export function EditSheet({
         error={errors.stock}
         hint={
           view.stock === null
-            ? 'Пусто — остаток не считается, товар продаётся, пока он включён'
+            ? 'Пусто — остаток не считается, товар продаётся, пока\u00a0он\u00a0включён'
             : 'Покупатели не закажут больше, чем здесь записано'
         }
         editable={!busy}
@@ -189,7 +189,7 @@ export function EditSheet({
       {view.oldPrice !== null ? (
         <View style={s.sale}>
           <RNText style={s.saleText}>
-            Скидка −{discountPercent(view)} %: покупатель видит{' '}
+            Скидка {`−${discountPercent(view)}\u00a0%`}: покупатель видит{' '}
             <RNText style={s.struck}>
               {formatMoney(view.oldPrice.amount, view.oldPrice.currency)}
             </RNText>{' '}
@@ -212,7 +212,7 @@ export function EditSheet({
           keyboardType="decimal-pad"
           placeholder="Без скидки"
           error={errors.sale}
-          hint={`Зачёркнутой покупатель увидит самую низкую цену за ${SALE.REFERENCE_DAYS} дней — скидка честная. У кого товар в избранном, получат уведомление.`}
+          hint={`Зачёркнутой покупатель увидит самую низкую цену за ${SALE.REFERENCE_DAYS}\u00a0дней — скидка честная. У кого товар в избранном, получат уведомление.`}
           editable={!busy}
         />
       )}
@@ -221,37 +221,45 @@ export function EditSheet({
           <RNText style={s.tiersTitle}>
             {isSetPriced(view.unit) ? 'Оптом и «3 за …»' : 'Оптом дешевле'}
           </RNText>
-          {tierRows.map((row, i) => (
-            <View key={i} style={s.tierRow}>
-              <SlipInput
-                label={isSetPriced(view.unit) ? `Сколько, ${unit}` : `От, ${unit}`}
-                value={row.quantity}
-                onChangeText={(text) =>
-                  setTierRows((rows) =>
-                    rows.map((r, j) => (j === i ? { ...r, quantity: figures(text) } : r)),
-                  )
-                }
-                keyboardType={isFractionalUnit(view.unit) ? 'decimal-pad' : 'number-pad'}
-                editable={!busy}
-              />
-              <SlipInput
-                label={isSetPriced(view.unit) ? 'За все, сум' : `По, сум / ${unit}`}
-                value={row.price}
-                onChangeText={(text) =>
-                  setTierRows((rows) =>
-                    rows.map((r, j) => (j === i ? { ...r, price: figures(text) } : r)),
-                  )
-                }
-                keyboardType="decimal-pad"
-                editable={!busy}
-              />
-            </View>
-          ))}
+          {/* Labels once, over the columns; each row shows an example in place of empty boxes. */}
+          {tierRows.map((row, i) => {
+            const example = tierExample(view, i);
+            return (
+              <View key={i} style={s.tierRow}>
+                <SlipInput
+                  label={isSetPriced(view.unit) ? `Сколько, ${unit}` : `От, ${unit}`}
+                  hideLabel={i > 0}
+                  value={row.quantity}
+                  placeholder={example.quantity}
+                  onChangeText={(text) =>
+                    setTierRows((rows) =>
+                      rows.map((r, j) => (j === i ? { ...r, quantity: figures(text) } : r)),
+                    )
+                  }
+                  keyboardType={isFractionalUnit(view.unit) ? 'decimal-pad' : 'number-pad'}
+                  editable={!busy}
+                />
+                <SlipInput
+                  label={isSetPriced(view.unit) ? 'За все, сум' : `По, сум / ${unit}`}
+                  hideLabel={i > 0}
+                  value={row.price}
+                  placeholder={example.price}
+                  onChangeText={(text) =>
+                    setTierRows((rows) =>
+                      rows.map((r, j) => (j === i ? { ...r, price: figures(text) } : r)),
+                    )
+                  }
+                  keyboardType="decimal-pad"
+                  editable={!busy}
+                />
+              </View>
+            );
+          })}
           <RNText style={errors.tiers ? s.failure : s.tiersHint}>
             {errors.tiers ??
               (isSetPriced(view.unit)
-                ? 'Например, 3 шт за 10 000: столько возьмут — столько и заплатят. Пустые строки — без акции.'
-                : 'Например, от 10 кг по 16 000: цена за весь заказ, кто берёт больше. Пустые строки — без опта.')}
+                ? 'Возьмут столько — заплатят за все столько. Пустые строки — без акции.'
+                : `Кто берёт больше, платит меньше за каждый ${unit} — на весь заказ. Пустые строки — без опта.`)}
           </RNText>
         </View>
       ) : (
@@ -300,8 +308,28 @@ const s = StyleSheet.create({
   struck: { textDecorationLine: 'line-through', color: HALL.ink },
   actions: { flexDirection: 'row', gap: 8, marginTop: 4 },
   tiers: { gap: 8, marginTop: 4 },
-  tiersTitle: { fontFamily: sceneFont.heavy, ...scale.body, color: HALL.ink },
+  tiersTitle: { ...capital, color: TONE.inkSoft },
   tierRow: { flexDirection: 'row', gap: 8 },
   tiersHint: { fontFamily: sceneFont.ui, ...scale.caption, color: TONE.inkSoft },
   tiersLink: { fontFamily: sceneFont.heavy, ...scale.body, color: HALL.pomegranate },
 });
+
+/**
+ * What a row of the tiers could say, from the good's own price: 5 / 10 / 20 kg at 5 / 10 / 15 %
+ * less, or 3 / 5 / 10 pieces for 10 % less in all — an example in the empty field, not a value.
+ */
+function tierExample(
+  product: Pick<StallProduct, 'unit' | 'price'>,
+  row: number,
+): { quantity: string; price: string } {
+  const soum = product.price.amount / 100;
+  // Grouped by hand: Hermes has no Uzbek or Russian number data to lean on.
+  const round = (value: number) =>
+    String(Math.round(value / 500) * 500).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
+  if (isSetPriced(product.unit)) {
+    const pieces = [3, 5, 10][row] ?? 3;
+    return { quantity: String(pieces), price: round(soum * pieces * 0.9) };
+  }
+  const from = [5, 10, 20][row] ?? 5;
+  return { quantity: String(from), price: round(soum * (1 - 0.05 * (row + 1))) };
+}

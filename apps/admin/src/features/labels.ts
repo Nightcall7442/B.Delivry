@@ -22,6 +22,21 @@ export const ORDER_LABEL: Record<OrderStatus, { text: string; tone: string }> = 
   REFUNDED: { text: 'Возврат', tone: 'bg-sand-100 text-ink-muted' },
 };
 
+/** The desk's buttons say what they do, not the status they leave behind. */
+export const ORDER_ACTION: Partial<Record<OrderStatus, string>> = {
+  CANCELLED: 'Отменить заказ',
+  FAILED: 'Не доставлен',
+  DELIVERED: 'Отметить доставленным',
+  REFUNDED: 'Вернуть деньги',
+};
+
+/** The desk's reading of the customer's «если чего-то нет». */
+export const SUBSTITUTION_DESK: Record<string, string> = {
+  CALL: 'Позвонить клиенту',
+  REPLACE: 'Заменить похожим, не дороже',
+  REMOVE: 'Убрать позицию',
+};
+
 export const COURIER_LABEL: Record<CourierStatus, { text: string; tone: string }> = {
   ONLINE: { text: 'На смене', tone: 'bg-brand-50 text-brand-700' },
   BUSY: { text: 'Везёт', tone: 'bg-brand-100 text-brand-800' },
@@ -60,7 +75,8 @@ export const when = (iso: string): string =>
   });
 
 export const ago = (iso: string | null): string => {
-  if (!iso) return 'давно';
+  // Never reported is not «long ago».
+  if (!iso) return 'нет сигнала';
   const seconds = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
   if (seconds < 60) return `${seconds} с назад`;
   if (seconds < 3600) return `${Math.round(seconds / 60)} мин назад`;

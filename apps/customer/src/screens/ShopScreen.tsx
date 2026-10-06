@@ -37,12 +37,13 @@ import {
   BasketGlyph,
   Eyebrow,
   Glass,
+  ground,
   Say,
   Scene,
-  SceneButton,
-  ground,
   scene,
+  SceneButton,
   sceneFont,
+  TopFade,
   useSceneTop,
 } from '@/components/bazar';
 import { ProductTile } from '@/components/shop/ProductTile';
@@ -315,6 +316,7 @@ export function ShopScreen({ store }: { store: MapStoreDto }) {
         }
       />
 
+      <TopFade height={top + 58} />
       <View style={[s.top, { top }]}>
         <SceneButton
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
@@ -377,6 +379,7 @@ const s = StyleSheet.create({
     right: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    zIndex: 2,
   },
   topEnd: { flexDirection: 'row', gap: 10 },
   // The painted board over the door: lapis with an ochre rule under the name — paper's corners.

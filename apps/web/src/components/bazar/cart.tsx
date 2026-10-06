@@ -145,11 +145,7 @@ export function BazaarCart({
 
   const first = groups[0] ? storeById.get(groups[0].storeId) : null;
   const ground = first?.counterPhotoUrl ?? first?.coverUrl ?? null;
-  const today = new Intl.DateTimeFormat(locale === 'uz' ? 'uz-Latn-UZ' : 'ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    timeZone: 'Asia/Tashkent',
-  }).format(new Date());
+  const today = t.when(new Date());
 
   return (
     <main className={`hall ${s.scene}`}>
@@ -174,7 +170,7 @@ export function BazaarCart({
         </div>
 
         <div className={s.greeting} style={{ padding: '12px 0 26px' }}>
-          <div className="eyebrow">{today}</div>
+          {/* The date is on the receipts themselves, as on a real one. */}
           <h1 className={`${s.display} ${s.displayPage}`}>{t('cart.title')}</h1>
           {groups.length > 0 ? (
             <p className={s.say} style={{ margin: '6px 0 0' }}>
@@ -401,10 +397,7 @@ function ReceiptLine({
             {t('haggle.accepted', {
               price: t.money(haggle.offeredPrice.amount),
               unit,
-              time: new Date(haggle.expiresAt).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
+              time: t.time(haggle.expiresAt),
             })}
           </div>
         ) : haggle?.status === 'PENDING' ? (

@@ -39,11 +39,19 @@ function asOfParts(t: T, iso: string): { date: string; time: string } {
   return { date: t.date(new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1)), time };
 }
 
+// A phone narrower than 420 px gives the row's words the room: the arrow and the percent beside
+// the price already say which way it went.
 function Spark({ weeks }: { weeks: (number | null)[] }) {
   const path = sparkPath(weeks, 48, 22, 3);
-  if (path === null) return <span className="w-12 shrink-0" aria-hidden />;
+  if (path === null) return <span className="w-12 shrink-0 max-[419px]:hidden" aria-hidden />;
   return (
-    <svg width={48} height={22} viewBox="0 0 48 22" aria-hidden className="shrink-0 text-ink-muted">
+    <svg
+      width={48}
+      height={22}
+      viewBox="0 0 48 22"
+      aria-hidden
+      className="shrink-0 text-ink-muted max-[419px]:hidden"
+    >
       <path d={path} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" />
     </svg>
   );
@@ -139,19 +147,20 @@ export function PricesScreen({ locale, index }: { locale: string; index: PriceIn
                   className={`flex items-center gap-3 py-3 ${i > 0 ? 'border-t border-line' : ''}`}
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-serif text-[length:var(--fs-lead)] font-bold leading-6 text-ink">
+                    {/* Wrapped, not cut: the shop's price and the unit are the point of the row. */}
+                    <p className="font-serif text-[length:var(--fs-lead)] font-bold leading-6 text-ink">
                       {tr(item.title, locale)}{' '}
-                      <span className="font-sans text-xs font-normal text-ink-muted">
+                      <span className="whitespace-nowrap font-sans text-xs font-normal text-ink-muted">
                         {t('prices.per', { per: tr(item.per, locale) })}
                       </span>
                     </p>
-                    <p className="truncate text-xs text-ink-muted">
+                    <p className="text-xs text-ink-muted">
                       {item.min === item.max
                         ? t.n('prices.stalls', item.stalls)
                         : `${t.n('prices.stalls', item.stalls)} · ${t('prices.range', { min: money(item.min), max: money(item.max) })}`}
                     </p>
                     {item.shops !== null ? (
-                      <p className="truncate text-xs text-ink-muted">
+                      <p className="text-xs text-ink-muted">
                         {t('prices.shops', { price: money(item.shops) })}
                       </p>
                     ) : null}

@@ -181,15 +181,16 @@ export function Row({
       {bare ? icon : <View style={[s.rowTile, { backgroundColor: tile }]}>{icon}</View>}
       <View style={{ flex: 1, minWidth: 0 }}>
         {eyebrow ? <Text role="caption">{eyebrow}</Text> : null}
+        {/* Two lines, then three: a cut row hid the order's total and the support hours. */}
         <Text
           role={eyebrow ? 'body' : 'title'}
-          numberOfLines={1}
+          numberOfLines={2}
           style={eyebrow ? { fontWeight: '500' } : undefined}
         >
           {title}
         </Text>
         {subtitle ? (
-          <Text role="muted" numberOfLines={1}>
+          <Text role="muted" numberOfLines={3}>
             {subtitle}
           </Text>
         ) : null}

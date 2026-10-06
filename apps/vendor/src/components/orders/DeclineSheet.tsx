@@ -25,11 +25,11 @@ import {
   ScrollView,
   StyleSheet,
   Text as RNText,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { NoteInput } from '@/components/goods/NoteInput';
 import { capital, sceneFont } from '@/components/scene';
 
 export function DeclineSheet({
@@ -110,16 +110,13 @@ export function DeclineSheet({
                 <RNText style={s.label}>
                   {reason === 'OTHER' ? 'Напишите причину' : 'Уточните, если нужно'}
                 </RNText>
-                <TextInput
+                <NoteInput
                   value={note}
                   onChangeText={setNote}
                   editable={!busy}
-                  multiline
                   maxLength={DECLINE_NOTE_MAX}
                   accessibilityLabel="Причина отказа"
                   placeholder={reason === 'OTHER' ? 'Что случилось?' : 'Например, какой товар'}
-                  placeholderTextColor={TONE.inkSoft}
-                  style={s.input}
                 />
               </View>
             ) : null}
@@ -128,6 +125,10 @@ export function DeclineSheet({
               <RNText accessibilityRole="alert" style={s.error}>
                 {error}
               </RNText>
+            ) : null}
+
+            {reason === null ? (
+              <RNText style={s.aside}>Выберите причину — она нужна, чтобы отменить заказ.</RNText>
             ) : null}
 
             <View style={s.actions}>
@@ -191,21 +192,6 @@ const s = StyleSheet.create({
   chipText: { fontFamily: sceneFont.uiHeavy, ...scale.body, color: HALL.ink },
   chipTextChosen: { color: TONE.creamLight },
   label: { ...capital, color: TONE.inkSoft, marginBottom: 4 },
-  // A line to write on: kraft wash, dashed rule underneath.
-  input: {
-    minHeight: 56,
-    borderRadius: radius.paper,
-    borderBottomWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: TONE.paperEdge,
-    backgroundColor: alpha(TONE.kraft, 0.45),
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    textAlignVertical: 'top',
-    fontFamily: sceneFont.ui,
-    fontSize: scale.lead.fontSize,
-    color: HALL.ink,
-  },
   error: { fontFamily: sceneFont.ui, ...scale.body, color: HALL.pomegranate },
   actions: { gap: 8, marginTop: 4 },
 });

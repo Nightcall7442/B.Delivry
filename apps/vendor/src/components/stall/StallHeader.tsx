@@ -16,7 +16,7 @@ import {
   tr,
 } from '@bazar/storefront';
 import type { StoreDto } from '@bazar/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text as RNText, View } from 'react-native';
 
 import { Paper, capital, sceneFont } from '@/components/scene';
@@ -34,8 +34,8 @@ function useNow(everyMs: number): Date {
   return now;
 }
 
-const pillLabel = (store: StoreDto) =>
-  [tr(store.name, 'ru'), store.standNumber].filter(Boolean).join(' · ');
+// The name alone: the stand number is under the name in the card, and a pill cut it to «· М…».
+const pillLabel = (store: StoreDto) => tr(store.name, 'ru');
 
 export function StallHeader({
   stores,
@@ -50,10 +50,13 @@ export function StallHeader({
   const now = useNow(30_000);
   // The API's own rule (an active stall inside today's hours), read on the phone's clock.
   const open = isOpenAt(store, now);
+  // The section is remounted for every stall: the strip starts at the chosen pill, not at the first.
+  const strip = useRef<ScrollView>(null);
   return (
     <View style={s.root}>
       {stores.length > 1 ? (
         <ScrollView
+          ref={strip}
           horizontal
           showsHorizontalScrollIndicator={false}
           style={s.pillsScroll}
@@ -66,6 +69,15 @@ export function StallHeader({
               <Pressable
                 key={row.id}
                 onPress={() => onSelect(row.id)}
+                onLayout={
+                  active
+                    ? (event) =>
+                        strip.current?.scrollTo({
+                          x: Math.max(0, event.nativeEvent.layout.x - 16),
+                          animated: false,
+                        })
+                    : undefined
+                }
                 accessibilityRole="tab"
                 accessibilityState={{ selected: active }}
                 accessibilityLabel={`Прилавок ${pillLabel(row)}`}
@@ -94,7 +106,7 @@ export function StallHeader({
         />
         <View style={s.line}>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <RNText style={s.name} numberOfLines={2}>
+            <RNText style={s.name} numberOfLines={3}>
               {tr(store.name, 'ru')}
             </RNText>
             {store.standNumber ? (
@@ -127,7 +139,7 @@ const s = StyleSheet.create({
   // Glass over the ground, as the courier's back button: the hall's own base at half strength.
   pill: {
     minHeight: 48,
-    maxWidth: 240,
+    maxWidth: 260,
     paddingHorizontal: 18,
     justifyContent: 'center',
     borderRadius: radius.pill,

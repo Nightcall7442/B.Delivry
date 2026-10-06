@@ -107,6 +107,10 @@
     color-scheme: light dark;
   }
 
+  /* No paragraph ends with one word alone on its last line. */
+  p {
+    text-wrap: pretty;
+  }
   body {
     @apply bg-surface font-sans text-ink antialiased;
   }

@@ -286,9 +286,7 @@ export function sparkPath(
 export function changeText(t: T, changePercent: number | null): string {
   const trend = trendOf(changePercent);
   if (trend === 'flat' || changePercent === null) return t('prices.flat');
-  // Not Intl: a browser without Uzbek data writes «3.3» where the server wrote «3,3».
-  const percent = String(Math.abs(changePercent));
   return t(trend === 'up' ? 'prices.up' : 'prices.down', {
-    percent: t.locale === 'en' ? percent : percent.replace('.', ','),
+    percent: t.qty(Math.abs(changePercent)),
   });
 }

@@ -1,6 +1,7 @@
 import { SubscriptionsScreen } from '@/components/go/subscriptions-screen';
+import { titled } from '@/lib/metadata';
 
-export const metadata = { title: 'Подписки — Bazar Delivery' };
+export const generateMetadata = titled('subs.title');
 
 export default async function SubscriptionsPage({
   params,

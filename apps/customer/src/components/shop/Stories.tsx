@@ -4,6 +4,7 @@
  * photo, the person behind the counter and one way in. Auto-advances like
  * the format everyone already knows; nothing to learn.
  */
+import { createT } from '@bazar/i18n';
 import { TONE, alpha, tr, type MapStoreDto } from '@bazar/storefront';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -44,7 +45,8 @@ const stall = (name: string) => {
 };
 const timeOf = (store: MapStoreDto) =>
   store.counterPhotoAt
-    ? new Date(store.counterPhotoAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    ? // The Tashkent clock, the same for every language: not the phone's zone and its AM/PM.
+      createT('ru').time(store.counterPhotoAt)
     : null;
 
 export function Stories({ stores }: { stores: readonly MapStoreDto[] }) {

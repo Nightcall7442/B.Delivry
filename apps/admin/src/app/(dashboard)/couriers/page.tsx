@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { COURIER_LABEL, VEHICLE_LABEL, ago } from '@/features/labels';
 import { api } from '@/lib/api';
+import { formatUzPhone } from '@bazar/utils/phone';
 
 export default function CouriersPage() {
   const [couriers, setCouriers] = useState<CourierDto[]>([]);
@@ -44,7 +45,9 @@ export default function CouriersPage() {
                     <div className="font-medium">
                       {courier.firstName} {courier.lastName}
                     </div>
-                    <div className="tabular-nums text-ink-muted">{courier.phone}</div>
+                    <div className="tabular-nums text-ink-muted">
+                      {formatUzPhone(courier.phone)}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`badge ${label.tone}`}>{label.text}</span>

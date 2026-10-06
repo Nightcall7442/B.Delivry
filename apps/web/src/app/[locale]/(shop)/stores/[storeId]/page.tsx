@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { createT } from '@bazar/i18n';
 import { isShopfront, tr } from '@bazar/storefront';
 
 import { BazaarShop } from '@/components/bazar/shop';
@@ -12,6 +13,7 @@ import {
   listShelves,
   listStores,
 } from '@/lib/catalog';
+import { BRAND } from '@/lib/metadata';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +22,9 @@ type Params = Promise<{ locale: string; storeId: string }>;
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, storeId } = await params;
   const store = await getStore(locale, storeId);
-  return { title: store ? `${tr(store.name, locale)} — Bazar Delivery` : 'Магазин не найден' };
+  return {
+    title: `${store ? tr(store.name, locale) : createT(locale)('meta.storeMissing')} — ${BRAND}`,
+  };
 }
 
 export default async function StorePage({ params }: { params: Params }) {

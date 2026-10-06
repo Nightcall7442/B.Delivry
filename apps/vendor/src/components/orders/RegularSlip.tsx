@@ -9,7 +9,7 @@ import type { OrderDto, RegularDto } from '@bazar/types';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text as RNText, View } from 'react-native';
 
-import { SlipInput } from '@/components/goods/SlipInput';
+import { NoteInput } from '@/components/goods/NoteInput';
 import { Paper, capital, sceneFont } from '@/components/scene';
 
 export function RegularSlip({ order }: { order: OrderDto }) {
@@ -32,7 +32,7 @@ export function RegularSlip({ order }: { order: OrderDto }) {
   }, [order.id]);
 
   if (regular === null) return null;
-  const name = order.customer?.firstName?.trim() || 'Покупатель';
+  const name = order.customer?.firstName?.trim() || null;
   const back = regular.previousOrders > 0;
 
   const save = async () => {
@@ -53,8 +53,8 @@ export function RegularSlip({ order }: { order: OrderDto }) {
       <RNText style={s.label}>{back ? 'Свой покупатель' : 'Новый покупатель'}</RNText>
       <RNText style={s.headline}>
         {back
-          ? `${name} — ${regular.previousOrders + 1}-й заказ у вас`
-          : `${name} — первый заказ у вас`}
+          ? `${name ? `${name} — ` : ''}${regular.previousOrders + 1}-й заказ у вас`
+          : `${name ? `${name} — ` : ''}первый заказ у вас`}
       </RNText>
       {back && regular.since ? (
         <RNText style={s.line}>Покупает у вас с {dateLabel(regular.since)}</RNText>
@@ -66,21 +66,22 @@ export function RegularSlip({ order }: { order: OrderDto }) {
       ) : null}
       {regular.wishes.length > 0 ? (
         <RNText style={s.line}>
-          Просил(а): {regular.wishes.map((wish) => `«${wish}»`).join(', ')}
+          Пожелания в прошлых заказах: {regular.wishes.map((wish) => `«${wish}»`).join(', ')}
         </RNText>
       ) : null}
 
       {editing ? (
         <View style={s.edit}>
-          <SlipInput
-            label="Ваша заметка о покупателе"
+          <RNText style={s.label}>Ваша заметка о покупателе</RNText>
+          <NoteInput
             value={draft}
             onChangeText={setDraft}
             maxLength={200}
             placeholder="Кость отдельно, любит постное"
-            hint="Видите только вы — покупатель её не видит"
+            accessibilityLabel="Ваша заметка о покупателе"
             autoFocus
           />
+          <RNText style={s.hint}>Видите только вы — покупатель её не видит.</RNText>
           <View style={s.pair}>
             <Button
               label={saving ? 'Сохраняем…' : 'Запомнить'}
@@ -138,4 +139,5 @@ const s = StyleSheet.create({
   edit: { gap: 8, marginTop: 6 },
   pair: { flexDirection: 'row', gap: 8 },
   error: { fontFamily: sceneFont.ui, ...scale.body, color: HALL.pomegranate },
+  hint: { fontFamily: sceneFont.ui, ...scale.caption, color: TONE.inkSoft },
 });

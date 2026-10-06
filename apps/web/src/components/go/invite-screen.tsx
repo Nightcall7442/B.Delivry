@@ -94,12 +94,12 @@ export function InviteScreen({ locale }: { locale: string }) {
             <input
               value={friend}
               onChange={(e) => setFriend(e.target.value.toUpperCase())}
-              className="go-field h-11 flex-1 uppercase"
+              className="go-field h-11 min-w-0 flex-1 uppercase"
               placeholder={t('invite.codePlaceholder')}
             />
             <button
               type="button"
-              className="btn-go-secondary h-11 px-4"
+              className="btn-go-secondary h-11 w-auto shrink-0 px-4"
               disabled={friend.trim().length < 4}
               onClick={() => void apply()}
             >

@@ -29,9 +29,10 @@ import {
   ProductCard,
   Say,
   Scene,
-  SceneButton,
   scene,
+  SceneButton,
   sceneFont,
+  TopFade,
   useSceneTop,
 } from '@/components/bazar';
 import { GuestStepper } from '@/components/shop/GuestStepper';
@@ -175,6 +176,7 @@ export function BundleScreen({ slug, guests: asked }: { slug: string; guests?: n
         )}
       </ScrollView>
 
+      <TopFade height={top + 58} />
       <View style={[s.top, { top }]}>
         <SceneButton
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}

@@ -242,9 +242,9 @@ export const OCCASION_BUNDLES: readonly Bundle[] = [
       en: 'Wedding table for thirty',
     },
     description: {
-      ru: 'Баранина, рис, морковь и зелень для большого казана, лепёшки и фрукты — оптом, одной доставкой.',
-      uz: 'Katta qozonga qoʻy goʻshti, guruch, sabzi va koʻkat, non va meva — ulgurji, bitta yetkazma.',
-      en: 'Lamb, rice, carrots and greens for the big kazan, bread and fruit — wholesale, one delivery.',
+      ru: 'Баранина, рис, морковь и зелень для большого казана, лепёшки и фрукты — оптом, к одному дню.',
+      uz: 'Katta qozonga qoʻy goʻshti, guruch, sabzi va koʻkat, non va meva — ulgurji, bir kunga.',
+      en: 'Lamb, rice, carrots and greens for the big kazan, bread and fruit — wholesale, for one day.',
     },
     serves: 30,
     photo: PHOTOS['bundle-plov'] ?? '',
@@ -347,7 +347,8 @@ export function resolveBundle(
     lines,
     missing,
     total,
-    perGuest: Math.round(total / guests),
+    // «≈ 35 100 сум на человека»: an estimate in whole hundreds, not «35 083».
+    perGuest: Math.round(total / guests / 10_000) * 10_000,
     storeIds: [...new Set(lines.map((line) => line.product.storeId))],
   };
 }

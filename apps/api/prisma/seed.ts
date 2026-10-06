@@ -86,6 +86,24 @@ const REGIONS: { code: string; uz: string; ru: string; en: string; city: string 
   },
 ];
 
+/** Each centre's name in every language: the UI is Russian too, and «Toshkent» there reads as a typo. */
+const CITY_NAMES: Record<string, { uz: string; ru: string; en: string }> = {
+  Toshkent: { uz: 'Toshkent', ru: 'Ташкент', en: 'Tashkent' },
+  Nurafshon: { uz: 'Nurafshon', ru: 'Нурафшан', en: 'Nurafshan' },
+  Andijon: { uz: 'Andijon', ru: 'Андижан', en: 'Andijan' },
+  Buxoro: { uz: 'Buxoro', ru: 'Бухара', en: 'Bukhara' },
+  Fargona: { uz: 'Fargʻona', ru: 'Фергана', en: 'Fergana' },
+  Jizzax: { uz: 'Jizzax', ru: 'Джизак', en: 'Jizzakh' },
+  Urganch: { uz: 'Urganch', ru: 'Ургенч', en: 'Urgench' },
+  Namangan: { uz: 'Namangan', ru: 'Наманган', en: 'Namangan' },
+  Navoiy: { uz: 'Navoiy', ru: 'Навои', en: 'Navoi' },
+  Qarshi: { uz: 'Qarshi', ru: 'Карши', en: 'Karshi' },
+  Nukus: { uz: 'Nukus', ru: 'Нукус', en: 'Nukus' },
+  Samarqand: { uz: 'Samarqand', ru: 'Самарканд', en: 'Samarkand' },
+  Guliston: { uz: 'Guliston', ru: 'Гулистан', en: 'Gulistan' },
+  Termiz: { uz: 'Termiz', ru: 'Термез', en: 'Termez' },
+};
+
 /**
  * Top-level catalogue. Slugs are the ids the storefront fixtures use for
  * `categoryId`, so products seed by slug without a lookup table.
@@ -147,15 +165,16 @@ async function seedGeography(): Promise<number> {
       update: {},
     });
 
+    const cityName = CITY_NAMES[region.city] ?? {
+      uz: region.city,
+      ru: region.city,
+      en: region.city,
+    };
     await prisma.geoPlace.upsert({
       where: { level_code: { level: 'CITY', code: `${region.code}-C` } },
-      create: {
-        level: 'CITY',
-        code: `${region.code}-C`,
-        name: { uz: region.city, ru: region.city, en: region.city },
-        parentId: parent.id,
-      },
-      update: {},
+      create: { level: 'CITY', code: `${region.code}-C`, name: cityName, parentId: parent.id },
+      // Reference data: a re-seed brings the names of an older seed up to date.
+      update: { name: cityName },
     });
 
     count += 2;

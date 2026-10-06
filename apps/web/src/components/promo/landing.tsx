@@ -76,6 +76,7 @@ const has = (key: string) => SEGMENTS.some((s) => s.key === key);
 const COPY = {
   ru: {
     signIn: 'Войти',
+    sum: 'сум',
     scroll: 'листайте',
     loading: 'Открываем ряд',
     dome: {
@@ -157,6 +158,7 @@ const COPY = {
   },
   uz: {
     signIn: 'Kirish',
+    sum: 'soʻm',
     scroll: 'varaqlang',
     loading: 'Rastani ochamiz',
     dome: {
@@ -320,7 +322,13 @@ export function PromoLanding({ locale }: { locale: string }) {
                   <span className={styles.productSign}>
                     <b>{name}</b>
                     <span className={styles.productPrice}>
-                      {price} <small>сум / {unit}</small>
+                      {price}
+                      {'\u00a0'}
+                      <small>
+                        {c.sum}
+                        {'\u00a0/\u00a0'}
+                        {unit}
+                      </small>
                     </span>
                     <span className={styles.productSay}>{say}</span>
                     <span className={styles.productWho}>{who}</span>
@@ -425,7 +433,13 @@ function Film({ p, c, onP }: { p: number; c: Copy; onP: (p: number) => void }) {
         <div className={styles.sign}>
           <div className={styles.signTitle}>{c.row.sign[0]}</div>
           <div className={styles.signPrice}>
-            {c.row.sign[1]} <small>сум / {c.row.sign[2]}</small>
+            {c.row.sign[1]}
+            {'\u00a0'}
+            <small>
+              {c.sum}
+              {'\u00a0/\u00a0'}
+              {c.row.sign[2]}
+            </small>
           </div>
           <div className={styles.signNote}>{c.row.sign[3]}</div>
         </div>

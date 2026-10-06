@@ -1,6 +1,7 @@
 import { InvoiceView } from '@/components/go/invoice-view';
+import { titled } from '@/lib/metadata';
 
-export const metadata = { title: 'Накладная — Bazar Delivery' };
+export const generateMetadata = titled('order.invoice');
 
 export default async function InvoicePage({
   params,

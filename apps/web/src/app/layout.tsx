@@ -4,12 +4,10 @@
  */
 import { brandingCss } from '@bazar/storefront';
 import type { Metadata, Viewport } from 'next';
-import { headers } from 'next/headers';
 
 import { Providers } from '@/app/providers';
-import { DEFAULT_BRAND } from '@/features/branding';
 import { THEME_BOOT } from '@/features/theme-boot';
-import { serverApi } from '@/lib/api';
+import { currentTenant } from '@/lib/tenant';
 
 import '@/styles/globals.css';
 
@@ -20,16 +18,7 @@ import '@fontsource-variable/manrope';
 import '@fontsource-variable/alegreya';
 import '@fontsource-variable/alegreya/wght-italic.css';
 import '@fontsource-variable/caveat';
-
-/** White-label: the brand behind the host the browser opened (the default tenant otherwise). */
-async function currentTenant() {
-  const host = (await headers()).get('host') ?? undefined;
-  try {
-    return await serverApi().tenants.current(host);
-  } catch {
-    return DEFAULT_BRAND;
-  }
-}
+import '@/styles/okina.css';
 
 export async function generateMetadata(): Promise<Metadata> {
   const tenant = await currentTenant();

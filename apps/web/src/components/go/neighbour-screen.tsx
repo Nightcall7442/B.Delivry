@@ -37,7 +37,7 @@ export function NeighbourScreen({ locale }: { locale: string }) {
   return (
     <GoShell locale={locale} back="history" expanded header={<h1>{t('neighbour.title')}</h1>}>
       <p className="mt-1 text-sm text-ink-muted">
-        {t('neighbour.intro', { km: NEIGHBOUR_COURIER.HOME_RADIUS_METERS / 1000 })}
+        {t('neighbour.intro', { km: t.qty(NEIGHBOUR_COURIER.HOME_RADIUS_METERS / 1000) })}
       </p>
       {!ready ? null : !user ? (
         <Link
@@ -51,7 +51,7 @@ export function NeighbourScreen({ locale }: { locale: string }) {
       ) : (
         <>
           <p className="mt-3 text-sm">
-            {t('checkout.where')}: <span className="font-medium">{address?.text ?? '—'}</span>
+            {t('neighbour.home')}: <span className="font-medium">{address?.text ?? '—'}</span>
           </p>
           {error ? <p className="mt-2 text-sm text-danger">{error}</p> : null}
           <button type="button" className="btn-go mt-4" onClick={() => void apply()}>

@@ -9,6 +9,7 @@
 
 import { createT } from '@bazar/i18n';
 import {
+  bindShortWords,
   closesToday,
   isEvening,
   photo,
@@ -26,6 +27,7 @@ import { ArrowLeft } from '@/components/go/icons';
 import { useAddress } from '@/features/address';
 
 import { BasketBar, ProductCard } from './index';
+import { SiteFooter } from './site-footer';
 import s from './bazar.module.css';
 
 export function BazaarCatalog({
@@ -162,28 +164,23 @@ export function BazaarCatalog({
                 <p className={s.rcHint}>{t('search.empty')}</p>
               </section>
             ) : (
-              groups.map(({ store, items }) => (
-                <section key={store.id}>
-                  <div className={s.head}>
-                    <h2 className={s.headTitle}>{store.ownerName ?? tr(store.name, locale)}</h2>
-                    <Link href={`${home}/stores/${store.id}`} className={s.headAction}>
-                      {store.ownerName ? tr(store.name, locale) : ''} →
-                    </Link>
-                  </div>
-                  <div className={s.grid}>
-                    {items.map((product, i) => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        locale={locale}
-                        t={t}
-                        index={i}
-                        href={`${home}/stores/${store.id}`}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ))
+              // One grid, each card naming its stall: a group per stall left one card on a row
+              // with two thirds of a wide screen empty.
+              <div className={s.grid}>
+                {groups
+                  .flatMap(({ store, items }) => items.map((product) => ({ store, product })))
+                  .map(({ store, product }, i) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      stall={store}
+                      locale={locale}
+                      t={t}
+                      index={i}
+                      href={`${home}/stores/${store.id}`}
+                    />
+                  ))}
+              </div>
             )}
           </>
         ) : (
@@ -233,6 +230,7 @@ export function BazaarCatalog({
             </div>
           </>
         ) : null}
+        <SiteFooter locale={locale} />
       </div>
       {walking ? <BasketBar products={goods} locale={locale} t={t} evening={evening} /> : null}
     </main>
@@ -252,7 +250,7 @@ export function BazaarCatalog({
           className={s.rowSign}
           style={{ transform: `rotate(${tilt}deg)`, marginTop: -22, alignSelf: 'flex-start' }}
         >
-          {tr(cat.name, locale)}
+          {bindShortWords(tr(cat.name, locale))}
         </span>
         {empty ? (
           <span className={s.counterHint}>{t('map.empty')}</span>

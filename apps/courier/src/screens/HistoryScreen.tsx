@@ -124,7 +124,8 @@ export function HistoryScreen() {
               <RNText style={s.profile}>
                 {[
                   data.courier.firstName,
-                  `★ ${data.courier.rating.toFixed(1)}`,
+                  // A rating means something after the first delivery, not before.
+                  data.courier.completedOrders > 0 ? `★ ${data.courier.rating.toFixed(1)}` : null,
                   deliveries(data.courier.completedOrders),
                 ]
                   .filter(Boolean)

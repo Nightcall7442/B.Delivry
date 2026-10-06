@@ -21,6 +21,7 @@ import { api } from '@/lib/api';
 import { SHELF_PAGE } from '@/lib/catalog';
 
 import { BasketBar, HeartButton, ProductCard, ShareButton } from './index';
+import { SiteFooter } from './site-footer';
 import s from './bazar.module.css';
 
 export function BazaarShop({
@@ -258,6 +259,7 @@ export function BazaarShop({
         <div ref={sentinel} className={s.more}>
           {loading ? t('shop.loading') : ''}
         </div>
+        <SiteFooter locale={locale} />
       </div>
       <BasketBar products={items} locale={locale} t={t} evening={evening} />
     </main>

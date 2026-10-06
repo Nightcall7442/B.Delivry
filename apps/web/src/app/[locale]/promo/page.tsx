@@ -3,13 +3,20 @@
  * frame (the Apple product-page technique) and a kraft sheet with the rows.
  * Fonts (Alegreya, Caveat) come from the root layout.
  */
-import { PromoLanding } from '@/components/promo/landing';
+import { createT } from '@bazar/i18n';
+import type { Metadata } from 'next';
 
-export const metadata = {
-  title: 'Bazar Delivery — свежее с базара за 40 минут',
-  description:
-    'Продавцы Чорсу, Алайского и Фархадского — у вас в телефоне. Взвесим при вас, привезём за 40 минут.',
-};
+import { PromoLanding } from '@/components/promo/landing';
+import { BRAND } from '@/lib/metadata';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const t = createT((await params).locale);
+  return { title: t('meta.promo', { name: BRAND }), description: t('meta.promoDescription') };
+}
 
 export default async function PromoPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

@@ -85,7 +85,8 @@ const s = StyleSheet.create({
     fontFamily: sceneFont.display,
     ...scale.title,
     color: HALL.ink,
-    fontVariant: ['tabular-nums'],
+    // Lining figures: an order number is compared by eye and read aloud.
+    fontVariant: ['lining-nums', 'tabular-nums'],
   },
   money: {
     fontFamily: sceneFont.heavy,

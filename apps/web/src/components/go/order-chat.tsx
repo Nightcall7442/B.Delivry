@@ -80,12 +80,7 @@ export function OrderChat({
               className={`max-w-[80%] rounded-paper px-3 py-2 text-sm ${mine ? 'self-end bg-[var(--kraft)]' : 'self-start bg-sand-100'}`}
             >
               <p>{message.text}</p>
-              <p className="mt-0.5 text-xs text-ink-muted">
-                {new Date(message.createdAt).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </p>
+              <p className="mt-0.5 text-xs text-ink-muted">{t.time(message.createdAt)}</p>
             </div>
           );
         })}

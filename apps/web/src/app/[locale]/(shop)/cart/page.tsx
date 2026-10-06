@@ -1,7 +1,8 @@
 import { BazaarCart } from '@/components/bazar/cart';
 import { listProducts, listStores } from '@/lib/catalog';
+import { titled } from '@/lib/metadata';
 
-export const metadata = { title: 'Корзина — Bazar Delivery' };
+export const generateMetadata = titled('cart.title');
 export const dynamic = 'force-dynamic';
 
 export default async function CartPage({ params }: { params: Promise<{ locale: string }> }) {

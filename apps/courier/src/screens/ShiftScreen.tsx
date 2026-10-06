@@ -21,6 +21,7 @@ import {
 } from '@bazar/mobile';
 import { GROUND, HALL, SUBSTITUTION_TEXT, TONE, alpha, hallLight, plural } from '@bazar/storefront';
 import { formatMoney } from '@bazar/utils/money';
+import { formatUzPhone } from '@bazar/utils/phone';
 import type { DeliveryDto, DeliveryOfferDto, OrderDto } from '@bazar/types';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -33,6 +34,7 @@ import {
   Text as RNText,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -75,6 +77,8 @@ const STEP: Record<DeliveryDto['status'], { title: string; hint: string; button:
 export function ShiftScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  const [sheetHeight, setSheetHeight] = useState(0);
   const { user, signOut } = useAuth();
   const {
     courier,
@@ -105,7 +109,14 @@ export function ShiftScreen() {
 
   return (
     <View style={s.root}>
-      <MapView center={center} zoom={13} markers={markers} inset={0.45} />
+      {/* The map ends under the sheet, whatever its height: a fixed 45 % left a dark band over a
+          short sheet. */}
+      <MapView
+        center={center}
+        zoom={13}
+        markers={markers}
+        inset={sheetHeight > 0 ? Math.min(0.6, sheetHeight / height) : 0.45}
+      />
 
       <View style={[s.top, { paddingTop: insets.top + 8 }]}>
         <View style={s.shiftCard}>
@@ -114,18 +125,23 @@ export function ShiftScreen() {
               {courier ? `${courier.firstName}` : (user?.firstName ?? 'Курьер')}
             </RNText>
             <RNText style={s.meta}>
-              {courier
-                ? `★ ${courier.rating.toFixed(1)} · ${courier.completedOrders} ${plural(courier.completedOrders, 'доставка', 'доставки', 'доставок')} · ${online ? 'на смене' : 'не на смене'}`
-                : 'Аккаунт ждёт подтверждения оператором'}
+              {courier ? courierMeta(courier, online) : 'Аккаунт ждёт подтверждения оператором'}
             </RNText>
           </View>
-          <Switch
-            value={online}
-            disabled={busy || !courier}
-            onValueChange={(next) => void setOnline(next)}
-            trackColor={{ false: TONE.paperEdge, true: HALL.pomegranate }}
-            thumbColor={TONE.creamLight}
-          />
+          {/* The screen's main control: named, and big enough for a thumb on a moving scooter. */}
+          <View style={s.shiftSwitch}>
+            <RNText style={s.shiftLabel}>Смена</RNText>
+            <Switch
+              value={online}
+              disabled={busy || !courier}
+              onValueChange={(next) => void setOnline(next)}
+              trackColor={{ false: TONE.inkSoft, true: HALL.pomegranate }}
+              thumbColor={TONE.creamLight}
+              accessibilityLabel={online ? 'Закончить смену' : 'Начать смену'}
+              style={s.switch}
+              {...WEB_THUMB}
+            />
+          </View>
         </View>
         {/* Under the shift card, over the map: clear of the sheet with the offers and the big button. */}
         {courier ? (
@@ -142,7 +158,10 @@ export function ShiftScreen() {
         ) : null}
       </View>
 
-      <View style={[s.sheet, { paddingBottom: insets.bottom + 16 }]}>
+      <View
+        style={[s.sheet, { paddingBottom: insets.bottom + 16 }]}
+        onLayout={(event) => setSheetHeight(event.nativeEvent.layout.height)}
+      >
         <View style={s.grip} />
         <ScrollView contentContainerStyle={s.sheetContent} keyboardShouldPersistTaps="handled">
           {error ? <Text style={s.error}>{error}</Text> : null}
@@ -182,7 +201,10 @@ export function ShiftScreen() {
             }}
             style={s.signOut}
           >
-            <RNText style={s.signOutText}>{user?.phone} · Выйти</RNText>
+            <RNText style={s.signOutText}>
+              {user?.phone ? `${formatUzPhone(user.phone)} · ` : ''}
+              <RNText style={s.signOutAction}>Выйти</RNText>
+            </RNText>
           </Pressable>
         </ScrollView>
       </View>
@@ -435,9 +457,12 @@ const s = StyleSheet.create({
     borderRadius: radius.paper,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    transform: [{ rotate: '-0.4deg' }],
     ...shadow.paper,
   },
+  shiftSwitch: { alignItems: 'center', gap: 4 },
+  shiftLabel: { ...capital, color: TONE.inkSoft },
+  // Larger than the platform's default switch: it starts and ends the working day.
+  switch: { transform: [{ scale: 1.25 }] },
   name: { fontFamily: sceneFont.display, ...scale.title, color: HALL.ink },
   meta: {
     fontFamily: sceneFont.ui,
@@ -562,6 +587,11 @@ const s = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   signOut: { alignSelf: 'center', paddingVertical: 8 },
+  signOutAction: {
+    fontFamily: sceneFont.uiHeavy,
+    color: HALL.pomegranate,
+    textDecorationLine: 'underline',
+  },
   signOutText: {
     fontFamily: sceneFont.ui,
     ...scale.body,
@@ -569,3 +599,15 @@ const s = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 });
+
+const WEB_THUMB = { activeThumbColor: TONE.creamLight } as object;
+
+/** «★ 4.9 · 12 доставок · на смене»; a newcomer has no rating to show yet. */
+export function courierMeta(
+  courier: { rating: number; completedOrders: number },
+  online: boolean,
+): string {
+  const state = online ? 'на смене' : 'не на смене';
+  if (courier.completedOrders === 0) return `первая смена впереди · ${state}`;
+  return `★ ${courier.rating.toFixed(1)} · ${courier.completedOrders} ${plural(courier.completedOrders, 'доставка', 'доставки', 'доставок')} · ${state}`;
+}

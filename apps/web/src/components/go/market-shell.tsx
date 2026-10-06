@@ -115,7 +115,7 @@ export function MarketShell({
               </Link>
             ) : null}
             <Link href={`/${locale}/cart`} className={bz.round} aria-label={t('cart.title')}>
-              <b className="relative">
+              <b className={bz.iconBadge}>
                 <Bag />
                 {count > 0 ? <span className={bz.badge}>{count}</span> : null}
               </b>
@@ -153,7 +153,8 @@ export function MarketShell({
         {header ? (
           <div
             className={`${bz.greeting} [&_h1]:font-serif [&_h1]:text-[length:var(--fs-headline)] [&_h1]:font-bold [&_h1]:leading-[34px] [&_h1]:text-[var(--cream)] md:[&_h1]:text-[length:var(--fs-display)] md:[&_h1]:leading-[46px] [&_p]:text-[var(--cream-muted)]`}
-            style={{ minHeight: 0, padding: '14px 0 22px' }}
+            // The evening garland hangs at ~80–100px: the title starts under it, not through it.
+            style={{ minHeight: 0, padding: '34px 0 22px' }}
           >
             {header}
           </div>
@@ -168,7 +169,7 @@ export function MarketShell({
       {/* Phones: the glass tab bar of the scene. */}
       <nav className={`${bz.bar} ${bz.phoneOnly}`}>
         <div
-          className={`${bz.barInner} ${bz.glass} !h-16 !gap-0 !px-1`}
+          className={`${bz.barInner} ${bz.glass} ${bz.glassSolid} !h-16 !gap-0 !px-1`}
           style={{ justifyContent: 'space-around' }}
         >
           {tabs.map((tab) => {
@@ -180,8 +181,10 @@ export function MarketShell({
                 href={tab.href}
                 className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 text-xs ${active ? 'text-[var(--ochre-light)]' : 'text-[var(--cream-muted)]'}`}
               >
-                {tab.icon}
-                {tab.badge ? <span className={bz.badge}>{tab.badge}</span> : null}
+                <span className={bz.iconBadge}>
+                  {tab.icon}
+                  {tab.badge ? <span className={bz.badge}>{tab.badge}</span> : null}
+                </span>
                 {tab.label}
               </Link>
             );

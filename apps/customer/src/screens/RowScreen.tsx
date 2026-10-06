@@ -24,16 +24,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   BasketGlyph,
+  caps,
   Display,
   Eyebrow,
+  ground,
   Say,
   Scene,
-  SceneButton,
-  Sign,
-  caps,
-  ground,
   scene,
+  SceneButton,
   sceneFont,
+  Sign,
+  TopFade,
   useSceneTop,
 } from '@/components/bazar';
 import { Bone, LoadError } from '@/components/ui/Page';
@@ -146,6 +147,7 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
       )}
 
       {/* Header, stall strip and the bottom bar float over every page. */}
+      <TopFade height={top + 72} />
       <View style={[s.top, { top }]}>
         <SceneButton
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
@@ -209,7 +211,8 @@ export function RowScreen({ categoryId }: { categoryId: string }) {
             </>
           ) : null}
         </Pressable>
-        <CartPill count={count} onPress={() => router.push('/(tabs)/cart')} />
+        {/* An empty basket says nothing: «0 / 0 товаров» was the count said twice. */}
+        {count > 0 ? <CartPill count={count} onPress={() => router.push('/(tabs)/cart')} /> : null}
       </View>
     </View>
   );
@@ -246,13 +249,7 @@ function StallPage({
   const rest = products.length - shown.length;
   const photo = store.counterPhotoUrl ?? store.coverUrl;
   const person = store.ownerPhotoUrl ?? store.coverUrl;
-  const takenAt = store.counterPhotoAt
-    ? new Date(store.counterPhotoAt).toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Asia/Tashkent',
-      })
-    : null;
+  const takenAt = store.counterPhotoAt ? t.time(store.counterPhotoAt) : null;
 
   return (
     <Scene source={photo} style={{ width, height }}>
@@ -273,11 +270,11 @@ function StallPage({
             <Display step="headline" numberOfLines={1}>
               {store.ownerName ?? tr(store.name, locale)}
             </Display>
-            <Text style={s.personMeta} numberOfLines={1}>
+            <Text style={s.personMeta} numberOfLines={2}>
               {[
                 store.standNumber,
                 store.ownerSince ? t('scene.sinceYear', { year: store.ownerSince }) : null,
-                store.rating ? `★ ${store.rating.toFixed(1)}` : null,
+                store.rating ? `★ ${t.rating(store.rating)}` : null,
                 t('scene.weighed'),
               ]
                 .filter(Boolean)
@@ -336,10 +333,7 @@ function CartPill({ count, onPress }: { count: number; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [s.cartPill, pressed && { opacity: 0.9 }]}>
       <BasketGlyph color={scene.cream} size={22} />
-      <View>
-        <Text style={s.cartCount}>{count}</Text>
-        <Text style={s.cartLabel}>{t.n('cart.items', count)}</Text>
-      </View>
+      <Text style={s.cartLabel}>{t.n('cart.items', count)}</Text>
     </Pressable>
   );
 }
@@ -352,6 +346,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    zIndex: 2,
   },
   subtitle: { ...caps, color: scene.creamMuted },
   // The label is right-aligned over the faces' own column: a long word («PESHTAXTALAR») grows
@@ -417,11 +412,10 @@ const s = StyleSheet.create({
     gap: 12,
     ...shadow.paper,
   },
-  cartCount: {
+  cartLabel: {
     fontFamily: sceneFont.uiHeavy,
-    ...scale.lead,
+    ...scale.body,
     color: scene.cream,
     fontVariant: ['tabular-nums'],
   },
-  cartLabel: { fontFamily: sceneFont.ui, ...scale.caption, color: scene.creamMuted },
 });

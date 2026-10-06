@@ -14,11 +14,14 @@ import { Linking, Pressable, StyleSheet, Text as RNText, View } from 'react-nati
 import { caps, scene, sceneFont } from '@/components/bazar';
 import { Page } from '@/components/ui/Page';
 import {
+  Banknote,
   Basket,
   Button,
   Chat,
   Chevron,
   Chip,
+  Clock,
+  Gift,
   Heart,
   Home,
   Leaf,
@@ -38,6 +41,7 @@ import {
   useAuth,
   useLocale,
 } from '@bazar/mobile';
+import { formatUzPhone } from '@bazar/utils/phone';
 
 type IconComponent = ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
 interface Item {
@@ -48,11 +52,11 @@ interface Item {
 
 const SERVICES: Item[] = [
   { key: 'menu.favorites', href: '/favorites', icon: Heart },
-  { key: 'menu.subscriptions', href: '/subscriptions', icon: Receipt },
+  { key: 'menu.subscriptions', href: '/subscriptions', icon: Clock },
   { key: 'menu.plus', href: '/plus', icon: Star },
   { key: 'menu.list', href: '/list', icon: Mic },
-  { key: 'menu.invite', href: '/invite', icon: Heart },
-  { key: 'menu.business', href: '/business', icon: Basket },
+  { key: 'menu.invite', href: '/invite', icon: Gift },
+  { key: 'menu.business', href: '/business', icon: Banknote },
   { key: 'menu.docs', href: '/documents', icon: Receipt },
   { key: 'menu.neighbour', href: '/neighbour', icon: Scooter },
   { key: 'menu.seller', href: '/seller', icon: Basket },
@@ -100,22 +104,21 @@ export function ProfileScreen() {
       <View style={s.card}>
         <View style={s.cardHead}>
           <View style={s.avatar}>
-            {user && !user.firstName ? (
+            {/* A guest gets the figure too: a «?» on the red disc read as an error. */}
+            {!user?.firstName ? (
               <User size={26} color={scene.cream} strokeWidth={2.4} />
             ) : (
-              <RNText style={s.avatarText}>
-                {(user?.firstName ?? '?').slice(0, 1).toUpperCase()}
-              </RNText>
+              <RNText style={s.avatarText}>{user.firstName.slice(0, 1).toUpperCase()}</RNText>
             )}
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <RNText style={s.eyebrow}>{user ? t('profile.regular') : t('profile.account')}</RNText>
             <RNText style={s.name} numberOfLines={1}>
-              {user ? (user.firstName ?? user.phone) : t('profile.guest')}
+              {user ? (user.firstName ?? formatUzPhone(user.phone)) : t('profile.guest')}
             </RNText>
             {user?.firstName || !user ? (
               <RNText style={s.phone} numberOfLines={2}>
-                {user ? user.phone : t('profile.guestHint')}
+                {user ? formatUzPhone(user.phone) : t('profile.guestHint')}
               </RNText>
             ) : null}
           </View>
@@ -143,7 +146,8 @@ export function ProfileScreen() {
               <RNText style={[s.stampValue, plus && { color: color.brand500 }]} numberOfLines={1}>
                 {plus
                   ? t('plus.activeUntil', { date: t.date(user.plusUntil ?? '') })
-                  : t.money(PLUS.PRICE_MINOR)}
+                  : // A price, said as one: beside the balance a bare sum read as a second balance.
+                    t('plus.perMonth', { price: t.money(PLUS.PRICE_MINOR) })}
               </RNText>
             </Pressable>
           </View>
