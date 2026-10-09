@@ -13,7 +13,7 @@ import type { ReactNode } from 'react';
 
 import { BottomSheet, type BottomSheetProps } from '@/components/go/bottom-sheet';
 import { ArrowLeft, Bag, Burger } from '@/components/go/icons';
-import { MapView, type MapViewProps } from '@/components/map/map-view';
+import { MapView, type MapViewProps } from '@/components/map/lazy-map';
 import { MarketShell } from '@/components/go/market-shell';
 import { useAuth } from '@/features/auth';
 import { useAppName } from '@/features/branding';

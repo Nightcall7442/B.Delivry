@@ -72,9 +72,29 @@ export function ProductCard({
       <Link
         href={href}
         className={`${s.cardPhoto} ${image ? 'photo-grade' : ''} ${soldOut ? s.cardDim : ''}`}
-        style={image ? { backgroundImage: `url(${photo(image, 960)})` } : undefined}
         aria-label={tr(product.name, locale)}
-      />
+      >
+        {image ? (
+          // An <img>, not a CSS background: a background loads whether or not it is on screen, so
+          // fifty tiles meant fifty photographs at once. This one waits until it is near, and
+          // the browser takes the 500 or the 960 copy by how wide the tile is on this screen.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            className={s.cardImage}
+            src={photo(image, 500)}
+            srcSet={`${photo(image, 500)} 500w, ${photo(image, 960)} 960w`}
+            sizes="(max-width: 640px) 92vw, (max-width: 1100px) 45vw, 320px"
+            alt=""
+            width={500}
+            height={625}
+            // The first two tiles are what the page opens on: they come first, the rest later.
+            loading={index < 2 ? 'eager' : 'lazy'}
+            fetchPriority={index === 0 ? 'high' : 'auto'}
+            decoding="async"
+            draggable={false}
+          />
+        ) : null}
+      </Link>
       <HeartButton kind="product" id={product.id} locale={locale} t={t} className={s.heartCard} />
       {off > 0 ? <span className={s.saleBadge}>−{off} %</span> : null}
       <div

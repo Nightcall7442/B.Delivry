@@ -5,8 +5,10 @@
  * Chorsu look. Real listings carry their own `images[]` from the API — this
  * map only feeds the fixtures.
  *
- * `photo(url, width)` only re-targets Wikimedia Commons thumbnails; these
- * URLs come back unchanged, so every consumer gets the 1024px file.
+ * `photo(url, width)` picks the size a screen needs. Our own files have smaller WebP copies
+ * (`photos/w250|w500|w960/<name>.webp`, made by `pnpm --filter @bazar/web photos`): a tile is
+ * about 34 KB instead of the 210 KB original, a face 12 KB — what a phone on mobile data feels.
+ * Wikimedia Commons thumbnails get their width swapped in place; anything else comes back as is.
  */
 
 const HOST = 'https://bazar-delivery.uz/photos';
@@ -69,9 +71,25 @@ export const PHOTOS: Record<string, string> = {
 
 export type PhotoWidth = 250 | 500 | 960 | 1280;
 
-/** Commons thumbnails are "<hash>/<file>/<N>px-<file>": swap the width in place. */
-export const photo = (url: string, width: PhotoWidth): string =>
-  url.replace(/\/\d+px-/, `/${width}px-`);
+/**
+ * The copy that answers each step. Our originals are 1024 px wide, so the 960 copy is as sharp as
+ * anything gets and also stands for the 1280 step: nobody pays for pixels the picture never had.
+ */
+const COPY_OF: Record<PhotoWidth, 250 | 500 | 960> = { 250: 250, 500: 500, 960: 960, 1280: 960 };
+
+/** "https://host/photos/p-beef.jpg" → "p-beef": a file of ours directly under /photos. */
+const ownName = (url: string): string | null => {
+  if (!url.startsWith(`${HOST}/`) || !url.endsWith('.jpg')) return null;
+  const name = url.slice(HOST.length + 1, -'.jpg'.length);
+  return name.length > 0 && !name.includes('/') ? name : null;
+};
+
+export const photo = (url: string, width: PhotoWidth): string => {
+  const name = ownName(url);
+  if (name !== null) return `${HOST}/w${COPY_OF[width]}/${name}.webp`;
+  // Commons thumbnails are "<hash>/<file>/<N>px-<file>": swap the width in place.
+  return url.replace(/\/\d+px-/, `/${width}px-`);
+};
 
 /** Real produce on the category tiles, the way a counter looks — not a pictogram. */
 export const CATEGORY_PHOTO: Record<string, string> = {

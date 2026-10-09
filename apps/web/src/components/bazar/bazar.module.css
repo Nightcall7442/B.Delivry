@@ -375,11 +375,20 @@
 .cardPhoto {
   position: relative;
   display: block;
+  overflow: hidden;
   aspect-ratio: 4 / 5;
   border-radius: var(--radius-photo);
   background: var(--ink-paper) center / cover no-repeat;
   box-shadow: var(--shadow);
   cursor: pointer;
+}
+.cardImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 /* Not on the counter today. */
 .cardDim {
@@ -389,6 +398,7 @@
   content: '';
   position: absolute;
   inset: 0;
+  z-index: 1;
   border-radius: inherit;
   background: linear-gradient(transparent 55%, rgb(var(--ground-deep-rgb) / 0.5));
   pointer-events: none;

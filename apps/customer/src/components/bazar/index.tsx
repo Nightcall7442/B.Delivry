@@ -6,7 +6,15 @@
  * navigation. Colours are «Свет купола» (@bazar/storefront) and do not follow
  * the app theme — a scene is the same in the dark.
  */
-import { GROUND, HALL, TONE, alpha, bindShortWords, hallLight } from '@bazar/storefront';
+import {
+  GROUND,
+  HALL,
+  TONE,
+  alpha,
+  bindShortWords,
+  hallLight,
+  photo as photoCopy,
+} from '@bazar/storefront';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image, type ImageSource } from 'expo-image';
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
@@ -122,7 +130,9 @@ export function Scene({
   evening?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
-  const uri = typeof source === 'string' ? { uri: source } : source;
+  // The hero fills the screen: the 960 copy, not the 1024 px original (and not the full
+  // picture of an upload, which `photo` leaves alone).
+  const uri = typeof source === 'string' ? { uri: photoCopy(source, 960) } : source;
   if (!uri) {
     return (
       <View style={[s.scene, style]}>
@@ -577,7 +587,7 @@ export function ProductCard({
           {photo ? (
             <>
               <Image
-                source={{ uri: photo }}
+                source={{ uri: photoCopy(photo, 500) }}
                 style={StyleSheet.absoluteFill}
                 contentFit="cover"
                 transition={FADE}
@@ -727,7 +737,7 @@ export function VendorCard({
         {photo ? (
           <>
             <Image
-              source={{ uri: photo }}
+              source={{ uri: photoCopy(photo, 500) }}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
               transition={FADE}

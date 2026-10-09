@@ -19,7 +19,7 @@ import { useCallback, useEffect, useState } from 'react';
 import bz from '@/components/bazar/bazar.module.css';
 import { GoShell } from '@/components/go/go-shell';
 import { HomeGlyph, Target } from '@/components/go/icons';
-import { PIN_SVG, type MarkerKind } from '@/components/map/map-view';
+import { PIN_SVG, type MarkerKind } from '@/components/map/map-pins';
 import { DEFAULT_POINT, useAddress, useDeliverable } from '@/features/address';
 import { useAuth } from '@/features/auth';
 import { api } from '@/lib/api';

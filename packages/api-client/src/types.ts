@@ -23,6 +23,8 @@ export interface ApiClientOptions {
   /** x-tenant slug for deployments that serve several tenants from one host. */
   tenant?: string;
   fetch?: typeof fetch;
+  /** Wait before the one retry of a read that failed in transit; tests set 0. Default 600 ms. */
+  retryDelayMs?: number;
   /** The refresh token was rejected: the app clears its session and shows login. */
   onSignedOut?: () => void;
 }
@@ -40,6 +42,8 @@ export interface RequestOptions {
   /** 'auto' attaches a token when there is one; 'none' never does (login, public lists). */
   auth?: 'auto' | 'none';
   signal?: AbortSignal;
+  /** Give up after this long; the default is 12 s for a read, 30 s for a write, 60 s for an upload. */
+  timeoutMs?: number;
 }
 
 export interface Paginated<T> {

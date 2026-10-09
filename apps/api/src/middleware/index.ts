@@ -28,6 +28,7 @@ export * from './rate-limit.middleware.js';
 export * from './rbac.middleware.js';
 export * from './request-id.middleware.js';
 export * from './request-logger.middleware.js';
+export * from './response-size.middleware.js';
 export * from './sanitize.middleware.js';
 export * from './security-headers.middleware.js';
 export * from './tenant.middleware.js';

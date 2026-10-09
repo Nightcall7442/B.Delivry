@@ -13,6 +13,7 @@ import {
   registerRateLimit,
   registerRequestId,
   registerRequestLogger,
+  registerResponseSize,
   registerSanitize,
   registerSecurityHeaders,
   registerTenantResolution,
@@ -48,6 +49,7 @@ export async function createApp(container: Container): Promise<FastifyInstance> 
   });
 
   await registerSecurityHeaders(app, config.security);
+  await registerResponseSize(app);
 
   registerRequestId(app);
   registerLocale(app);
