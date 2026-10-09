@@ -7,7 +7,8 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", ".expo/**"],
-      "env": ["NEXT_PUBLIC_*", "EXPO_PUBLIC_*"]
+      "env": ["NEXT_PUBLIC_*", "EXPO_PUBLIC_*"],
+      "passThroughEnv": ["SENTRY_AUTH_TOKEN", "SENTRY_ORG", "SENTRY_PROJECT", "SENTRY_RELEASE"]
     },
     "dev": {
       "cache": false,

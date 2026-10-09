@@ -1,5 +1,6 @@
 import path from 'node:path';
 
+import { withSentryConfig } from '@sentry/nextjs/config';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
@@ -66,4 +67,40 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const sentryAuthToken = process.env['SENTRY_AUTH_TOKEN'] || undefined;
+
+/**
+ * Sentry's build step: readable stack traces for the minified code (source maps uploaded at build
+ * time, then deleted so they are not served) — and nothing else. Left alone, the plugin switches
+ * source maps on for every build, token or not: the image would carry tens of MB of them and the
+ * build take longer. So without SENTRY_AUTH_TOKEN (a developer, CI, a plain image) it does
+ * nothing at all. The SDK itself starts from NEXT_PUBLIC_SENTRY_DSN (src/lib/monitoring,
+ * docs/monitoring.md).
+ */
+export default withSentryConfig(nextConfig, {
+  org: process.env['SENTRY_ORG'],
+  project: process.env['SENTRY_PROJECT'],
+  authToken: sentryAuthToken,
+  silent: !process.env['CI'],
+  telemetry: false,
+  sourcemaps: { disable: sentryAuthToken === undefined, deleteSourcemapsAfterUpload: true },
+  // Navigations are not traced, so the hook the SDK asks for to trace them is not wanted.
+  suppressOnRouterTransitionStartWarning: true,
+  // Errors only: tracing (and the route list it groups transactions by) is cut out of the bundle —
+  // about 20 KB of what the browser fetches on its first error.
+  routeManifestInjection: false,
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeTracing: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+    excludeReplayWorker: true,
+  },
+  // Errors reach Sentry through `onRequestError` (src/instrumentation.ts). The wrappers that
+  // would also trace every page, route and the middleware cost build time and server weight.
+  webpack: {
+    autoInstrumentServerFunctions: false,
+    autoInstrumentMiddleware: false,
+    autoInstrumentAppDirectory: false,
+  },
+});
