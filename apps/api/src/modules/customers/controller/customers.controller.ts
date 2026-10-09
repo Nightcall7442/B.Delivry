@@ -3,6 +3,7 @@
  */
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { BaseController } from '../../../common/base/base.controller.js';
+import { toCustomerDto } from '../../../common/dto/index.js';
 import { body, params, query } from '../../../middleware/validation.middleware.js';
 import type { CustomersService } from '../service/customers.service.js';
 import type { CustomerListFilters, UpdateCustomerInput } from '../types/index.js';
@@ -13,7 +14,7 @@ export class CustomersController extends BaseController {
   }
 
   me = async (_request: FastifyRequest, reply: FastifyReply) =>
-    this.ok(reply, await this.service.me());
+    this.ok(reply, toCustomerDto(await this.service.me()));
 
   referral = async (_request: FastifyRequest, reply: FastifyReply) =>
     this.ok(reply, await this.service.referral());
@@ -25,29 +26,33 @@ export class CustomersController extends BaseController {
 
   applyBusiness = async (request: FastifyRequest, reply: FastifyReply) => {
     const { companyName, companyInn } = body<{ companyName: string; companyInn: string }>(request);
-    return this.ok(reply, await this.service.applyBusiness(companyName, companyInn));
+    return this.ok(reply, toCustomerDto(await this.service.applyBusiness(companyName, companyInn)));
   };
 
   setBusiness = async (request: FastifyRequest, reply: FastifyReply) => {
     const { id } = params<{ id: string }>(request);
     return this.ok(
       reply,
-      await this.service.setBusiness(
-        id,
-        body<{ approved: boolean; creditDays: number; creditLimit: number }>(request),
+      toCustomerDto(
+        await this.service.setBusiness(
+          id,
+          body<{ approved: boolean; creditDays: number; creditLimit: number }>(request),
+        ),
       ),
     );
   };
 
   updateMe = async (request: FastifyRequest, reply: FastifyReply) =>
-    this.ok(reply, await this.service.updateMe(body<UpdateCustomerInput>(request)));
+    this.ok(reply, toCustomerDto(await this.service.updateMe(body<UpdateCustomerInput>(request))));
 
-  list = async (request: FastifyRequest, reply: FastifyReply) =>
-    this.paginated(reply, await this.service.list(query<CustomerListFilters>(request)));
+  list = async (request: FastifyRequest, reply: FastifyReply) => {
+    const page = await this.service.list(query<CustomerListFilters>(request));
+    return this.paginated(reply, { ...page, items: page.items.map(toCustomerDto) });
+  };
 
   get = async (request: FastifyRequest, reply: FastifyReply) => {
     const { id } = params<{ id: string }>(request);
-    return this.ok(reply, await this.service.get(id));
+    return this.ok(reply, toCustomerDto(await this.service.get(id)));
   };
 
   block = async (request: FastifyRequest, reply: FastifyReply) => {

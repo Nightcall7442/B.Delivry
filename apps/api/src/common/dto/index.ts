@@ -33,6 +33,7 @@ import type {
   CourierDto,
   CourierShiftDto,
   CurrentUserDto,
+  CustomerDto,
   DeliveryDto,
   HaggleDto,
   ImageDto,
@@ -54,6 +55,7 @@ import type {
 } from '@bazar/types';
 import { isStallOnlyView } from '../../modules/orders/domain/order-party.js';
 import { getContext } from '../tenant/tenant-context.js';
+import type { CustomerWithUser } from '../../modules/customers/index.js';
 import type { HaggleRow } from '../../modules/haggle/index.js';
 import type { LookRow } from '../../modules/looks/index.js';
 import type { SubscriptionWithNames } from '../../modules/subscriptions/index.js';
@@ -399,6 +401,42 @@ type CourierRow = Courier & {
     avatarUrl: string | null;
   };
 };
+
+/**
+ * The customer as the apps and the desk read them: the name and the phone live on the user, money
+ * as amount and currency. The raw row used to go out as it was — the B2B fields happened to be on
+ * it, the name and the phone were not (the companies desk showed neither).
+ */
+export function toCustomerDto(row: CustomerWithUser): CustomerDto {
+  const date = (value: Date | null) => (value === null ? null : iso(value));
+  return {
+    id: row.id,
+    tenantId: row.tenantId,
+    createdAt: iso(row.createdAt),
+    updatedAt: iso(row.updatedAt),
+    userId: row.userId,
+    firstName: row.user.firstName,
+    lastName: row.user.lastName,
+    phone: row.user.phone,
+    email: row.user.email,
+    defaultAddressId: row.defaultAddressId,
+    orderCount: row.orderCount,
+    totalSpent: money(row.totalSpent, row.currency),
+    balance: money(row.balance, row.currency),
+    loyaltyPoints: row.loyaltyPoints,
+    plusUntil: date(row.plusUntil),
+    referralCode: row.referralCode,
+    marketingOptIn: row.marketingOptIn,
+    blockedAt: date(row.blockedAt),
+    lastOrderAt: date(row.lastOrderAt),
+    companyName: row.companyName,
+    companyInn: row.companyInn,
+    businessAppliedAt: date(row.businessAppliedAt),
+    businessApprovedAt: date(row.businessApprovedAt),
+    creditDays: row.creditDays,
+    creditLimit: row.creditLimit,
+  };
+}
 
 /** The courier's own profile (or an operator's view of it). */
 export function toCourierDto(row: CourierRow, activeOrderCount = 0): CourierDto {

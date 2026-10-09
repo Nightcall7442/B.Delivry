@@ -61,6 +61,10 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter @bazar/api exec prisma generate
 
+      # The order journey (apps/api/test/integration) runs on this database: the schema has to be there.
+      - name: Migrate the test database
+        run: pnpm --filter @bazar/api exec prisma migrate deploy
+
       - name: Run tests
         run: pnpm test
 
