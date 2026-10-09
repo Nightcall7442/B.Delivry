@@ -9,30 +9,27 @@
 ## Как включить
 
 1. Sentry → проект → _Settings → Client Keys (DSN)_ → скопировать DSN.
-2. Собрать сайт с `NEXT_PUBLIC_SENTRY_DSN=<DSN>` (значение вшивается в сборку — менять его после
-   сборки нельзя). Для образа:
+2. Задать `NEXT_PUBLIC_SENTRY_DSN=<DSN>` **при сборке**: значение вшивается в код, поэтому после
+   смены переменной сайт нужно пересобрать.
+   - **Railway:** сервис `web` → _Variables_ → `NEXT_PUBLIC_SENTRY_DSN` (по желанию ещё
+     `NEXT_PUBLIC_SENTRY_ENVIRONMENT`, по умолчанию `production`) → _Redeploy_. Переменная доходит до
+     сборки потому, что `Dockerfile` объявляет её как `ARG`: Railway передаёт в сборку только такие.
+   - **Docker:** `docker build -f Dockerfile --build-arg NEXT_PUBLIC_SENTRY_DSN=https://…@….ingest.sentry.io/… -t bazar-delivery/web .`
+   - **Локально:** `NEXT_PUBLIC_SENTRY_DSN=… pnpm --filter @bazar/web build`.
 
-   ```
-   docker build -f Dockerfile \
-     --build-arg NEXT_PUBLIC_SENTRY_DSN=https://…@….ingest.sentry.io/… \
-     --build-arg NEXT_PUBLIC_SENTRY_ENVIRONMENT=production \
-     -t bazar-delivery/web .
-   ```
+## Читаемые стеки (source maps)
 
-3. Чтобы стеки в Sentry читались (а не «a.js:1:48213»), к сборке добавляют загрузку source maps:
-   `SENTRY_ORG` (в нашем случае `no-name-a7`), `SENTRY_PROJECT` (`javascript-nextjs`) и токен
-   `SENTRY_AUTH_TOKEN` (_Settings → Developer Settings → Organization Tokens_). Токен — секрет сборки,
-   не `--build-arg`:
+Без них в Sentry стек минифицированный («a.js:1:48213»). Загрузка карт включается, только если при
+сборке заданы `SENTRY_AUTH_TOKEN` (_Settings → Developer Settings → Organization Tokens_),
+`SENTRY_ORG` (у нас `no-name-a7`) и `SENTRY_PROJECT` (`javascript-nextjs`) — `next.config.ts`
+подхватывает их сам. Работает для **локальной сборки и CI** (`turbo.json` пропускает эти переменные).
 
-   ```
-   docker build … \
-     --build-arg SENTRY_ORG=no-name-a7 --build-arg SENTRY_PROJECT=javascript-nextjs \
-     --build-arg SENTRY_RELEASE=$(git rev-parse HEAD) \
-     --secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN
-   ```
-
-   Без токена карты не создаются и не грузятся. С токеном после сборки в образе не должно остаться
-   `*.map`: `find apps/web/.next -name '*.map'` — пусто, кроме трёх файлов edge (их делает сам Next).
+**В образе для Railway это не подключено.** Первая версия (#75) принимала токен как секрет сборки
+(`RUN --mount=type=secret`), и Railway отклонил такой `Dockerfile` на проверке («The Dockerfile failed
+validation»): деплой сайта упал, не начав сборку. Поэтому в `Dockerfile` остались только DSN и
+окружение. Подключать загрузку карт стоит отдельным изменением и сразу проверять деплоем: нужна форма,
+которую Railway принимает (переменная сервиса, объявленная как `ARG`), и проверка, что после сборки в
+образе не остались `*.map`.
 
 ## Что уходит в Sentry, а что нет
 
@@ -80,7 +77,7 @@ source maps для каждой сборки (в образе десятки М�
   сети, `ChunkLoadError` не уходят; 5xx несёт теги; не больше 10 событий) и Node-сервер из
   `standalone`-сборки (как в образе: без переменных Sentry в рантайме). **Не проверено на настоящем
   Sentry:** приём событий в проекте `javascript-nextjs` и загрузка source maps (нужен токен) ещё ни
-  разу не видели живых данных. Сборка образа с `--secret` тоже не прогонялась (в среде нет Docker).
+  разу не видели живых данных. Сборка образа в Docker не прогонялась (в среде нет Docker).
 - Реклама-блокировщики режут запросы к `*.sentry.io`. Обход (`tunnelRoute`) не включён: путь
   через наш сервер конфликтует с locale-middleware и добавляет трафик через сервер.
 - Админка (`apps/admin`, тоже Next) и API (Fastify) не подключены.
