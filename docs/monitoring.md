@@ -8,7 +8,7 @@
 
 ## Как включить
 
-1. Sentry → проект → *Settings → Client Keys (DSN)* → скопировать DSN.
+1. Sentry → проект → _Settings → Client Keys (DSN)_ → скопировать DSN.
 2. Собрать сайт с `NEXT_PUBLIC_SENTRY_DSN=<DSN>` (значение вшивается в сборку — менять его после
    сборки нельзя). Для образа:
 
@@ -21,7 +21,7 @@
 
 3. Чтобы стеки в Sentry читались (а не «a.js:1:48213»), к сборке добавляют загрузку source maps:
    `SENTRY_ORG` (в нашем случае `no-name-a7`), `SENTRY_PROJECT` (`javascript-nextjs`) и токен
-   `SENTRY_AUTH_TOKEN` (*Settings → Developer Settings → Organization Tokens*). Токен — секрет сборки,
+   `SENTRY_AUTH_TOKEN` (_Settings → Developer Settings → Organization Tokens_). Токен — секрет сборки,
    не `--build-arg`:
 
    ```
@@ -70,7 +70,7 @@ source maps для каждой сборки (в образе десятки М�
 ## Как проверить
 
 Задать DSN, открыть сайт, в консоли браузера: `setTimeout(() => { throw new Error('sentry test') })` —
-через несколько секунд ошибка в *Issues*. Отдельно проверить сервер: страница, которая бросает
+через несколько секунд ошибка в _Issues_. Отдельно проверить сервер: страница, которая бросает
 исключение в серверном компоненте, появится там же с `runtime: node`.
 
 ## Чего здесь нет (и стоит помнить)
