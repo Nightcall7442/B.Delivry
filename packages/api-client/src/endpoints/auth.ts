@@ -47,7 +47,9 @@ export const authApi = (http: Http, tokens: TokenStore) => ({
     try {
       await http.request<void>('POST', '/auth/logout');
     } finally {
-      // The server session may already be gone; the device forgets either way.
+      // The server session may already be gone; the device forgets either way — the session and
+      // the answers kept for it.
+      http.clearCache();
       await tokens.set(null);
     }
   },

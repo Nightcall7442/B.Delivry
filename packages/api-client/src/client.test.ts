@@ -282,3 +282,194 @@ describe('Http.renew', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe('Http remembers what the server said and asks «same as before?»', () => {
+  const tag = (value: string) => ({ 'content-type': 'application/json', etag: value });
+  const reply = (status: number, body: unknown, etag?: string) =>
+    new Response(status === 304 ? null : JSON.stringify(body), {
+      status,
+      headers: etag === undefined ? {} : tag(etag),
+    });
+  const make = (fetchMock: unknown) =>
+    new Http({
+      baseUrl: 'http://api/api/v1',
+      tokens: memoryTokens({ accessToken: 'A', refreshToken: 'R' }),
+      locale: () => 'ru',
+      fetch: fetchMock as typeof fetch,
+    });
+  const sentHeaders = (mock: ReturnType<typeof vi.fn>, call: number) =>
+    (mock.mock.calls[call] as unknown as [string, RequestInit])[1].headers as Record<
+      string,
+      string
+    >;
+
+  it('sends the tag back, and gives the same data from memory when the answer is 304', async () => {
+    const mock = vi
+      .fn()
+      .mockResolvedValueOnce(reply(200, { ok: true, data: [{ id: 'o1' }] }, 'W/"v1"'))
+      .mockResolvedValueOnce(reply(304, null, 'W/"v1"'))
+      .mockResolvedValueOnce(reply(304, null, 'W/"v1"'));
+    const http = make(mock);
+
+    const first = await http.request<{ id: string }[]>('GET', '/orders');
+    const again = await http.request<{ id: string }[]>('GET', '/orders');
+
+    expect(first).toEqual([{ id: 'o1' }]);
+    expect(again).toEqual([{ id: 'o1' }]);
+    expect(sentHeaders(mock, 0)['if-none-match']).toBeUndefined();
+    expect(sentHeaders(mock, 1)['if-none-match']).toBe('W/"v1"');
+    // Each caller gets a copy of its own: changing one cannot change what is remembered.
+    first.push({ id: 'x' });
+    expect(await http.request('GET', '/orders')).toEqual([{ id: 'o1' }]);
+  });
+
+  it('takes the new body, and the new tag, when the list changed', async () => {
+    const mock = vi
+      .fn()
+      .mockResolvedValueOnce(reply(200, { ok: true, data: [1] }, 'W/"v1"'))
+      .mockResolvedValueOnce(reply(200, { ok: true, data: [1, 2] }, 'W/"v2"'))
+      .mockResolvedValueOnce(reply(304, null, 'W/"v2"'));
+    const http = make(mock);
+    await http.request('GET', '/orders');
+    expect(await http.request('GET', '/orders')).toEqual([1, 2]);
+    expect(await http.request('GET', '/orders')).toEqual([1, 2]);
+    expect(sentHeaders(mock, 2)['if-none-match']).toBe('W/"v2"');
+  });
+
+  it('keeps one answer per page, per language, and never for a write', async () => {
+    const mock = vi.fn(async () => reply(200, { ok: true, data: 1 }, 'W/"v1"'));
+    let language = 'ru';
+    const http = new Http({
+      baseUrl: 'http://api/api/v1',
+      tokens: memoryTokens(null),
+      locale: () => language,
+      fetch: mock as unknown as typeof fetch,
+    });
+    await http.request('GET', '/stores', { query: { page: 1 } });
+    await http.request('GET', '/stores', { query: { page: 2 } });
+    language = 'uz';
+    await http.request('GET', '/stores', { query: { page: 1 } });
+    await http.request('POST', '/orders', { body: {} });
+    await http.request('POST', '/orders', { body: {} });
+    for (let i = 0; i < 5; i += 1) expect(sentHeaders(mock, i)['if-none-match']).toBeUndefined();
+  });
+
+  it('asks again without a tag when a 304 comes for one it no longer holds', async () => {
+    const mock = vi
+      .fn()
+      .mockResolvedValueOnce(reply(304, null))
+      .mockResolvedValueOnce(reply(200, { ok: true, data: 'fresh' }, 'W/"v9"'));
+    const http = make(mock);
+    expect(await http.request('GET', '/orders')).toBe('fresh');
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
+
+  it('forgets everything on sign-out', async () => {
+    const mock = vi
+      .fn()
+      .mockResolvedValueOnce(reply(200, { ok: true, data: 1 }, 'W/"v1"'))
+      .mockResolvedValueOnce(reply(200, { ok: true, data: 1 }, 'W/"v1"'));
+    const http = make(mock);
+    await http.request('GET', '/orders');
+    http.clearCache();
+    await http.request('GET', '/orders');
+    expect(sentHeaders(mock, 1)['if-none-match']).toBeUndefined();
+  });
+
+  it('keeps its memory within bounds: the oldest answers go first', async () => {
+    const mock = vi.fn(async () => reply(200, { ok: true, data: 1 }, 'W/"v1"'));
+    const http = make(mock);
+    // 60 different pages: more than it keeps.
+    for (let page = 0; page < 60; page += 1)
+      await http.request('GET', '/stores', { query: { page } });
+    await http.request('GET', '/stores', { query: { page: 59 } });
+    await http.request('GET', '/stores', { query: { page: 0 } });
+    // The latest page is remembered; the first has been let go.
+    expect(sentHeaders(mock, 60)['if-none-match']).toBe('W/"v1"');
+    expect(sentHeaders(mock, 61)['if-none-match']).toBeUndefined();
+  });
+});
+
+describe('Http on a weak connection', () => {
+  const ok = (data: unknown) => json(200, { ok: true, data });
+  const make = (fetchMock: unknown) =>
+    new Http({
+      baseUrl: 'http://api/api/v1',
+      tokens: memoryTokens(null),
+      retryDelayMs: 0,
+      fetch: fetchMock as typeof fetch,
+    });
+  /** A connection that never answers, but lets go when asked to. */
+  const silent = (_url: string, init?: RequestInit) =>
+    new Promise<Response>((_resolve, reject) => {
+      // As fetch does: an already-cancelled signal fails at once.
+      if (init?.signal?.aborted) return reject(new Error('aborted'));
+      init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+    });
+
+  it('asks a read once more when the connection dropped, and gives the answer', async () => {
+    const mock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('Network request failed'))
+      .mockResolvedValueOnce(ok([1, 2]));
+    expect(await make(mock).request('GET', '/stores')).toEqual([1, 2]);
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks again after a 503 from the gateway, but not after an error that is the API’s own', async () => {
+    const down = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('upstream down', { status: 503 }))
+      .mockResolvedValueOnce(ok('back'));
+    expect(await make(down).request('GET', '/stores')).toBe('back');
+
+    const refused = vi.fn(async () =>
+      json(404, { ok: false, error: { code: 'NOT_FOUND', message: 'no such store' } }),
+    );
+    await expect(make(refused).request('GET', '/stores/x')).rejects.toMatchObject({ status: 404 });
+    expect(refused).toHaveBeenCalledTimes(1);
+  });
+
+  it('gives up with a NETWORK error after the second failure', async () => {
+    const mock = vi.fn().mockRejectedValue(new TypeError('Network request failed'));
+    await expect(make(mock).request('GET', '/stores')).rejects.toMatchObject({ code: 'NETWORK' });
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
+
+  it('never sends a write twice by itself: the first may have reached the server', async () => {
+    const mock = vi.fn().mockRejectedValue(new TypeError('Network request failed'));
+    await expect(make(mock).request('POST', '/orders', { body: {} })).rejects.toMatchObject({
+      code: 'NETWORK',
+    });
+    expect(mock).toHaveBeenCalledTimes(1);
+
+    const gateway = vi.fn(async () => new Response('bad gateway', { status: 502 }));
+    await expect(make(gateway).request('POST', '/orders', { body: {} })).rejects.toBeInstanceOf(
+      ApiError,
+    );
+    expect(gateway).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops waiting for a connection that says nothing', async () => {
+    const mock = vi.fn(silent);
+    const started = Date.now();
+    const failure = await make(mock)
+      .request('GET', '/stores', { timeoutMs: 30 })
+      .catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(ApiError);
+    expect((failure as ApiError).code).toBe('NETWORK');
+    expect(String((failure as ApiError).cause)).toMatch(/no answer within 30 ms/);
+    // Two tries of 30 ms, not the minutes a stalled phone would wait.
+    expect(Date.now() - started).toBeLessThan(2000);
+    expect(mock).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry what the caller itself cancelled', async () => {
+    const mock = vi.fn(silent);
+    const controller = new AbortController();
+    const pending = make(mock).request('GET', '/stores', { signal: controller.signal });
+    controller.abort();
+    await expect(pending).rejects.toMatchObject({ code: 'NETWORK' });
+    expect(mock).toHaveBeenCalledTimes(1);
+  });
+});

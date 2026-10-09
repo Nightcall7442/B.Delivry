@@ -35,7 +35,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AfterDelivery } from '@/components/go/after-delivery';
 import { ArrowLeft, Chat, HomeGlyph, Phone } from '@/components/go/icons';
 import { OrderChat } from '@/components/go/order-chat';
-import { MapView } from '@/components/map/map-view';
+import { MapView } from '@/components/map/lazy-map';
 import { DEFAULT_POINT } from '@/features/address';
 import { useAuth } from '@/features/auth';
 import { useCartActions, useCartQuantities } from '@/features/cart';

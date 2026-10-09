@@ -16,6 +16,34 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import styles from './promo.module.css';
 
 const PARALLEL = 4;
+/** On a weak connection: how many strips to keep ahead of the reader, and behind. */
+const LEAN_AHEAD = 2;
+const LEAN_BEHIND = 1;
+/** …and how many must have arrived before the veil lifts: the opening and one more. */
+const LEAN_VEIL_STRIPS = 2;
+
+interface NetworkInformation {
+  saveData?: boolean;
+  effectiveType?: string;
+  downlink?: number;
+}
+
+/**
+ * Data saver on, or a connection that is 3G or slower: the whole film (19 MB on a phone) is not
+ * worth a visitor's data, nor their wait behind a progress bar. Browsers that cannot say are
+ * taken to be fine.
+ */
+function isLeanConnection(): boolean {
+  const connection = (navigator as Navigator & { connection?: NetworkInformation }).connection;
+  if (!connection) return false;
+  return (
+    connection.saveData === true ||
+    connection.effectiveType === 'slow-2g' ||
+    connection.effectiveType === '2g' ||
+    connection.effectiveType === '3g' ||
+    (connection.downlink !== undefined && connection.downlink < 1.5)
+  );
+}
 
 export function ScrollFilm({
   id,
@@ -124,13 +152,17 @@ export function ScrollFilm({
       if (!motion) motion = requestAnimationFrame(settle);
     };
 
-    // Nearest-first loading: whichever unloaded strip is closest to the reader.
+    // Nearest-first loading: whichever unloaded strip is closest to the reader — on a weak
+    // connection only those within a short reach of them, more as they scroll on.
+    const lean = isLeanConnection();
+    const veilStrips = lean ? Math.min(strips, LEAN_VEIL_STRIPS) : strips;
     const pending = new Set(Array.from({ length: strips }, (_, i) => i));
     const next = () => {
       const here = Math.floor(wanted / per);
       let best = -1;
       let dist = Infinity;
       for (const i of pending) {
+        if (lean && (i < here - LEAN_BEHIND || i > here + LEAN_AHEAD)) continue;
         const d = Math.abs(i - here);
         if (d < dist) {
           dist = d;
@@ -146,7 +178,7 @@ export function ScrollFilm({
         img.onload = () => {
           ready[index] = true;
           done += 1;
-          setLoaded(done / strips);
+          setLoaded(Math.min(1, done / veilStrips));
           if (index <= Math.floor(current / per) || shown < 0) nudge();
           resolve();
         };
@@ -154,15 +186,23 @@ export function ScrollFilm({
         img.src = strip(index);
         images[index] = img;
       });
-    const worker = async () => {
-      while (!cancelled) {
+    // Keeps the connections busy with the strips next in line; called again as each lands and as
+    // the reader moves, which is what lets a weak connection fetch only around them.
+    const parallel = lean ? 1 : PARALLEL;
+    let inflight = 0;
+    const pump = () => {
+      while (!cancelled && inflight < parallel) {
         const i = next();
         if (i < 0) return;
         pending.delete(i);
-        await fetchOne(i);
+        inflight += 1;
+        void fetchOne(i).then(() => {
+          inflight -= 1;
+          pump();
+        });
       }
     };
-    void Promise.all(Array.from({ length: PARALLEL }, worker));
+    pump();
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 3);
@@ -185,6 +225,7 @@ export function ScrollFilm({
         const target = map.current ? map.current(p) : p * (frames - 1);
         wanted = Math.min(frames - 1, Math.max(0, target));
         nudge();
+        if (lean) pump();
         setProgress((prev) => (Math.abs(prev - p) > 0.0015 || p === 0 || p === 1 ? p : prev));
       });
     };

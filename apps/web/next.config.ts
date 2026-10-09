@@ -42,6 +42,16 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      // Pictures, film frames, fonts and the map worker are files that are replaced by adding a new
+      // one, not by editing: Next sends everything in /public with max-age=0, which makes every
+      // return visit ask the server about every one of them. A week, and a day more of showing
+      // the old one while the new is fetched.
+      {
+        source: '/(photos|promo|scenes|fonts|maplibre)/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' },
+        ],
+      },
       {
         source: '/(.*)',
         headers: [

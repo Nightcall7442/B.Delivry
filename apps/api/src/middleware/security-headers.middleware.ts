@@ -37,8 +37,17 @@ export async function registerSecurityHeaders(
       callback(null, config.corsOrigins.includes(origin));
     },
     credentials: true,
-    allowedHeaders: ['content-type', 'authorization', TENANT_HEADER, REQUEST_ID_HEADER, 'x-locale'],
-    exposedHeaders: [REQUEST_ID_HEADER, 'x-ratelimit-remaining', 'retry-after'],
+    allowedHeaders: [
+      'content-type',
+      'authorization',
+      TENANT_HEADER,
+      REQUEST_ID_HEADER,
+      'x-locale',
+      // The apps ask «has this changed?» themselves (see @bazar/api-client): a browser lets a page
+      // send the validator and read the tag only when the API names them.
+      'if-none-match',
+    ],
+    exposedHeaders: [REQUEST_ID_HEADER, 'x-ratelimit-remaining', 'retry-after', 'etag'],
     maxAge: 86_400,
   });
 }
