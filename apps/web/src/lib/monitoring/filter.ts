@@ -10,7 +10,7 @@
  */
 import type { ErrorEvent, EventHint } from '@sentry/nextjs';
 
-import { scrubDeep } from './scrub';
+import { scrubDeep, stripRequest } from './scrub';
 
 /** Failures of the road, not of the page: a flaky connection loading a script, or a layout nit. */
 const NOISE: readonly RegExp[] = [
@@ -63,5 +63,7 @@ export function beforeSend(event: ErrorEvent, hint?: EventHint): ErrorEvent | nu
       ...(api.requestId ? { 'api.request_id': api.requestId } : {}),
     };
   }
+  // The request: no cookies, body or query, only the browser and the language; no query on any URL.
+  stripRequest(event);
   return scrubDeep(event);
 }

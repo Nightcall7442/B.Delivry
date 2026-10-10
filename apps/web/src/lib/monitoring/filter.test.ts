@@ -65,4 +65,30 @@ describe('beforeSend', () => {
     expect(JSON.stringify(out)).not.toMatch(/998\d{2}/);
     expect(out?.exception?.values?.[0]?.value).toBe('cannot format [phone]');
   });
+
+  it('keeps nothing of the request but the address (without its query), the browser and the language', () => {
+    const out = beforeSend(
+      event('boom', {
+        request: {
+          url: 'https://bazar-delivery.uz/ru/login?phone=998901234567#x',
+          query_string: 'phone=998901234567',
+          cookies: { session: 'abc' },
+          data: { phone: '+998901234567' },
+          headers: {
+            Cookie: 'a=b',
+            Authorization: 'Bearer x',
+            'X-Forwarded-For': '203.0.113.7',
+            'X-Envoy-External-Address': '203.0.113.7',
+            'User-Agent': 'Mozilla/5.0',
+            'Accept-Language': 'uz',
+          },
+        },
+      }),
+      { originalException: new TypeError('x') },
+    );
+    expect(out?.request).toEqual({
+      url: 'https://bazar-delivery.uz/ru/login',
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'uz' },
+    });
+  });
 });
