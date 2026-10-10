@@ -10,7 +10,8 @@
     "./money": "./src/money.ts",
     "./phone": "./src/phone.ts",
     "./string": "./src/string.ts",
-    "./date": "./src/date.ts"
+    "./date": "./src/date.ts",
+    "./scrub": "./src/scrub.ts"
   },
   "scripts": {
     "lint": "eslint src",
