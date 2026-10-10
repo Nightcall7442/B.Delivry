@@ -35,6 +35,7 @@ import {
 import { createMapProvider } from '../integrations/maps/index.js';
 import { createStorageProvider, type StorageProvider } from '../integrations/storage/index.js';
 import { buildJobHandlers } from '../jobs/index.js';
+import { reportJobFailure } from '../jobs/report-failure.js';
 import { createPaymentProviders } from '../integrations/payments/index.js';
 import { createNotificationProviders, createTelegramProvider } from '../integrations/index.js';
 
@@ -642,6 +643,8 @@ class MemoryQueue implements JobQueue {
       if (id !== undefined) this.pending.delete(id);
       void handler(payload as never).catch((error: unknown) => {
         this.logger.error({ err: error, queue: queueName, name }, 'job failed');
+        // No retries here, so the first failure is the last: reported like an exhausted BullMQ job.
+        reportJobFailure(queueName, name, 1, error);
       });
     }, options?.delayMs ?? 0);
     this.timers.add(timer);

@@ -2,6 +2,7 @@
  * Graceful shutdown: stop accepting connections, drain jobs, close prisma/redis.
  */
 import type { Logger } from '../infrastructure/logger/index.js';
+import { reportError } from '../infrastructure/telemetry/error-reporting.js';
 
 export interface ShutdownTarget {
   close(): Promise<void>;
@@ -53,13 +54,23 @@ export function registerShutdown({ logger, targets, timeoutMs = 15_000 }: Shutdo
   process.on('SIGINT', () => void shutdown('SIGINT'));
 
   // An unhandled rejection means state we cannot reason about any more.
+  //
+  // Error reporting (Sentry) does not install handlers of its own for these two (see
+  // error-reporting.ts): it would change how the process ends. These stay the only ones, and they
+  // report on the way into the same shutdown. The report is queued here; the shutdown closes the
+  // error-reporting target last, which sends it (2 s at most).
   process.on('unhandledRejection', (reason) => {
     logger.fatal({ err: reason }, 'unhandled rejection');
+    reportError(reason, {
+      level: 'fatal',
+      tags: { source: 'process', event: 'unhandledRejection' },
+    });
     void shutdown('unhandledRejection');
   });
 
   process.on('uncaughtException', (error) => {
     logger.fatal({ err: error }, 'uncaught exception');
+    reportError(error, { level: 'fatal', tags: { source: 'process', event: 'uncaughtException' } });
     void shutdown('uncaughtException');
   });
 }

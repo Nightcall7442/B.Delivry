@@ -84,7 +84,7 @@ export type { AuthConfig } from './auth.config.js';
 export type { DatabaseConfig } from './database.config.js';
 export type { MapsConfig } from './maps.config.js';
 export type { NotificationsConfig } from './notifications.config.js';
-export type { ObservabilityConfig } from './observability.config.js';
+export type { ErrorReportingConfig, ObservabilityConfig } from './observability.config.js';
 export type { PaymentsConfig } from './payments.config.js';
 export type { RedisConfig } from './redis.config.js';
 export type { SecurityConfig } from './security.config.js';

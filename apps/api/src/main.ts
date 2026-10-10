@@ -4,6 +4,13 @@
 import { buildContainer, createApp, registerShutdown, startServer } from './app/index.js';
 import { loadConfig } from './config/index.js';
 import { connectPrisma } from './infrastructure/database/prisma.client.js';
+import {
+  SHUTDOWN_FLUSH_MS,
+  errorReportingShutdownTarget,
+  initErrorReporting,
+  reportError,
+  setErrorReporter,
+} from './infrastructure/telemetry/error-reporting.js';
 import { initTracing } from './infrastructure/telemetry/tracing.js';
 import { registerSchedulers } from './jobs/index.js';
 import { runWorkers, type RunningWorkers } from './jobs/worker.js';
@@ -13,6 +20,10 @@ import { runWorkers, type RunningWorkers } from './jobs/worker.js';
  *
  *   config    - validated first, so a bad env kills the process here rather
  *               than surfacing as an undefined during someone's checkout
+ *   errors    - error reporting (Sentry), right after the container is built:
+ *               it needs a logger to warn through, which the container makes.
+ *               It patches nothing, so nothing created before it is missed.
+ *               Off, and not even loaded, without SENTRY_DSN.
  *   tracing   - the OTel SDK patches http/pg/ioredis, so it must run before
  *               anything imports a connection
  *   container - everything wired once, in dependency order
@@ -25,6 +36,9 @@ async function main(): Promise<void> {
   const config = loadConfig();
   const container = buildContainer(config);
   const { logger } = container;
+
+  const errors = await initErrorReporting(config.observability.errorReporting, logger);
+  setErrorReporter(errors);
 
   const tracing = await initTracing(config.observability, logger);
 
@@ -42,6 +56,8 @@ async function main(): Promise<void> {
       // a courier search than an API that will not boot.
       workers = await runWorkers(container, config).catch((error: unknown) => {
         logger.error({ err: error }, 'workers failed to start; the API keeps serving');
+        // A log line is read by nobody: with no worker, courier searches and notifications stop.
+        reportError(error, { level: 'error', tags: { source: 'boot', component: 'workers' } });
         return null;
       });
     }
@@ -62,14 +78,18 @@ async function main(): Promise<void> {
         { name: 'http', target: server },
         ...(workers === null ? [] : [{ name: 'workers', target: workers }]),
         { name: 'container', target: container },
-        // Tracing flushes its exporter on shutdown, so it closes last.
+        // Tracing flushes its exporter on shutdown, so it closes late...
         { name: 'tracing', target: { close: () => tracing.shutdown() } },
+        // ...and the error reports go out after everything else has had its chance to fail.
+        { name: 'error-reporting', target: errorReportingShutdownTarget(errors) },
       ],
     });
   } catch (error) {
     logger.fatal({ err: error }, 'failed to start');
+    reportError(error, { level: 'fatal', tags: { source: 'boot' } });
     await container.close();
     await tracing.shutdown();
+    await errors.flush(SHUTDOWN_FLUSH_MS);
     process.exit(1);
   }
 }

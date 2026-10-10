@@ -165,6 +165,16 @@ export const envSchema = z
     OTEL_SERVICE_NAME: z.string().default('bazar-api'),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().default('http://localhost:4318'),
     PROMETHEUS_METRICS_PATH: z.string().startsWith('/').default('/metrics'),
+    // Error reporting (Sentry). One variable switches it on: SENTRY_DSN. It is deliberately NOT
+    // validated here: a typo in an optional monitoring variable must never stop the API from
+    // booting. `initErrorReporting` checks the shape and, if it is wrong, logs a warning and runs
+    // without reporting.
+    SENTRY_DSN: blankIsUnset,
+    /** Falls back to APP_ENV, which is what the rest of the deployment already calls the stage. */
+    SENTRY_ENVIRONMENT: blankIsUnset,
+    /** Falls back to the commit Railway deployed, so a report names the build it came from. */
+    SENTRY_RELEASE: blankIsUnset,
+    RAILWAY_GIT_COMMIT_SHA: blankIsUnset,
   })
   .superRefine((env, ctx) => {
     // A provider selected without its credentials fails silently at 3am

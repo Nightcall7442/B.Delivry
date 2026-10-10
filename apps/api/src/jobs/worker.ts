@@ -6,9 +6,17 @@ import { buildContainer, type Container } from '../app/container.js';
 import { registerShutdown } from '../app/shutdown.js';
 import { loadConfig, type Config } from '../config/index.js';
 import { createRedis } from '../infrastructure/redis/redis.client.js';
+import {
+  SHUTDOWN_FLUSH_MS,
+  errorReportingShutdownTarget,
+  initErrorReporting,
+  reportError,
+  setErrorReporter,
+} from '../infrastructure/telemetry/error-reporting.js';
 import { jobDuration } from '../infrastructure/telemetry/metrics.js';
 import { buildJobHandlers, registerSchedulers } from './index.js';
 import { requeueStalledSearches } from './recover.js';
+import { reportFailedJob } from './report-failure.js';
 import { QUEUE, type JobName, type QueueName } from './queues.js';
 
 /**
@@ -77,6 +85,8 @@ export async function runWorkers(container: Container, config: Config): Promise<
         { queue: queueName, job: job?.name, attempt: job?.attemptsMade, err: error },
         'job failed',
       );
+      // Only once the retries are spent: until then the next attempt may well succeed.
+      reportFailedJob(queueName, job, error);
     });
 
     return worker;
@@ -118,13 +128,26 @@ export async function runWorkers(container: Container, config: Config): Promise<
 export async function startWorkers(): Promise<void> {
   const config = loadConfig();
   const container = buildContainer(config);
-  const workers = await runWorkers(container, config);
+  // A dedicated worker service is a process of its own; inside the API, main.ts has done this.
+  const errors = await initErrorReporting(config.observability.errorReporting, container.logger);
+  setErrorReporter(errors);
+  let workers: RunningWorkers;
+  try {
+    workers = await runWorkers(container, config);
+  } catch (error) {
+    // Nobody is consuming the queues. Send it before the rejection ends the process, as it always did.
+    reportError(error, { level: 'fatal', tags: { source: 'boot', component: 'workers' } });
+    await errors.flush(SHUTDOWN_FLUSH_MS);
+    throw error;
+  }
 
   registerShutdown({
     logger: container.logger,
     targets: [
       { name: 'workers', target: workers },
       { name: 'container', target: container },
+      // Last, so a failure while closing the others is still sent.
+      { name: 'error-reporting', target: errorReportingShutdownTarget(errors) },
     ],
   });
 }

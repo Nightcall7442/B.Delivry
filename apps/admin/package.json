@@ -20,6 +20,7 @@
     "@bazar/utils": "workspace:*",
     "@fontsource-variable/alegreya": "5.3.0",
     "@fontsource-variable/manrope": "5.3.0",
+    "@sentry/nextjs": "10.75.3",
     "next": "^15.5.26",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"

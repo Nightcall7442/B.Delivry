@@ -7,7 +7,16 @@ COPY . .
 RUN pnpm install --frozen-lockfile --filter "@bazar/admin..."
 ARG NEXT_PUBLIC_API_URL=https://api.bazar-delivery.uz/api/v1
 ARG NEXT_PUBLIC_WS_URL=wss://api.bazar-delivery.uz
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL NEXT_TELEMETRY_DISABLED=1
+# Error reports (docs/monitoring.md): with no DSN the desk sends nothing and the build is unchanged.
+# On Railway, set the service variable NEXT_PUBLIC_SENTRY_DSN — a variable reaches the build only if
+# it is declared here as an ARG. The commit sha names the release the reports belong to; it is read
+# only when a DSN is set.
+ARG NEXT_PUBLIC_SENTRY_DSN=
+ARG NEXT_PUBLIC_SENTRY_ENVIRONMENT=production
+ARG RAILWAY_GIT_COMMIT_SHA=
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN NEXT_PUBLIC_SENTRY_ENVIRONMENT=$NEXT_PUBLIC_SENTRY_ENVIRONMENT \
+    RAILWAY_GIT_COMMIT_SHA=$RAILWAY_GIT_COMMIT_SHA
 RUN pnpm --filter @bazar/admin build
 
 FROM node:22-alpine AS run
