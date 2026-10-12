@@ -32,6 +32,9 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "487ef4be-dd5f-4ce8-b15e-cda71bbd7a05"
       }
     },
     "owner": "yaqubov1405"
