@@ -9,6 +9,9 @@ build/
 out/
 .expo/
 .expo-shared/
+# native projects from `expo prebuild`: generated from app.json, never edited by hand
+apps/*/android/
+apps/*/ios/
 *.tsbuildinfo
 .turbo/
 

@@ -12,6 +12,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.bazar-delivery.uz/api/v1",
         "EXPO_PUBLIC_WS_URL": "wss://api.bazar-delivery.uz",
+        "EXPO_PUBLIC_WEB_URL": "https://bazar-delivery.uz",
         "EXPO_PUBLIC_MAPS_PROVIDER": "osm"
       },
       "ios": {
@@ -26,6 +27,7 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.bazar-delivery.uz/api/v1",
         "EXPO_PUBLIC_WS_URL": "wss://api.bazar-delivery.uz",
+        "EXPO_PUBLIC_WEB_URL": "https://bazar-delivery.uz",
         "EXPO_PUBLIC_MAPS_PROVIDER": "osm"
       }
     }
